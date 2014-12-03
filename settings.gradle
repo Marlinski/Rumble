@@ -1,0 +1,2 @@
+include ':app', ':tinybus'
+project(':tinybus').projectDir = new File('libs/tinybus/tinybus')

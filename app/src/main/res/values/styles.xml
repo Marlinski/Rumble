@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    </style>
+
+    <color name="wifi_color">#99CC00</color>
+    <color name="wifi_color_toggled">#669900</color>
+    <color name="bluetooth_color">#33B5E5</color>
+    <color name="bluetooth_color_toggled">#0099CC</color>
+    <color name="white">#ffeeeeee</color>
+    <color name="status_background">#efefef</color>
+
+    <style name="Drawer.Interfaces.Name" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16.0sp</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">#ff333333</item>
+    </style>
+
+    <style name="Drawer.Neighbour.Item" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16.0sp</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">#ffffffff</item>
+    </style>
+
+    <style name="Drawer.Navigation.Item" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16.0sp</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">#ffffffff</item>
+    </style>
+
+    <style name="Drawer.SectionTitle" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16.0sp</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">#ffffffff</item>
+    </style>
+
+    <style name="Status.Info.Author" parent="@android:style/TextAppearance">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">#888888</item>
+    </style>
+
+    <style name="Status.Info.ID" parent="@android:style/TextAppearance">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">#888888</item>
+    </style>
+
+    <style name="Status.Info.TimeOfArrival" parent="@android:style/TextAppearance">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">italic</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">#888888</item>
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="Status.Info.TimeOfCreation" parent="@android:style/TextAppearance">
+        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:textStyle">italic</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">#888888</item>
+    </style>
+
+    <style name="Status.Body" parent="@android:style/TextAppearance">
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:typeface">sans</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+        <item name="android:textColor">#121212</item>
+    </style>
+
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Rumble</string>
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
+    <string name="home_tab">Home</string>
+    <string name="hashtag_tab">HashTags</string>
+    <string name="discussion_tab">Chat</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="navigation_drawer_title">Navigation</string>
+    <string name="navigation_drawer_status_list">Status</string>
+    <string name="navigation_drawer_status_favored">Favorites</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="action_search">Filter</string>
+    <string name="action_compose">Compose</string>
+    <string name="action_network">Networking</string>
+
+
+    <string name="menu_interfaces_title">Interfaces</string>
+    <string name="menu_neighbors_title">Neighborhood</string>
+    <string name="interface_bluetooth">Bluetooth</string>
+    <string name="interface_wifi">WiFi</string>
+    <string name="drawer_force_scan">Force Scan</string>
+
+    <string name="settings_title">Settings</string>
+
+    <string name="status_created">created</string>
+    <string name="status_received">received</string>
+    <string name="second_ago">a second ago</string>
+    <string name="seconds_ago">seconds ago</string>
+    <string name="minute_ago"> ago</string>
+    <string name="minutes_ago">mins ago</string>
+    <string name="day_ago">a day ago</string>
+    <string name="days_ago">days ago</string>
+    <string name="hour_ago">an hour ago</string>
+    <string name="hours_ago">hours ago</string>
+    <string name="month_ago">a month ago</string>
+    <string name="months_ago">months ago</string>
+    <string name="year_ago">a year ago</string>
+    <string name="years_ago">years ago</string>
+    <string name="too_old">ooooooold</string>
+
+</resources>

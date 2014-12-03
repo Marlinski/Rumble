@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/neighbours_list_item"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
+
+    <ImageView android:id="@+id/neighbour_item_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="Neighbour Profile Picture"
+        android:gravity="left"
+        android:src="@drawable/ic_contact_picture" />
+
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/neighbours_item_wireless"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_marginRight="12dip"
+        android:gravity="right"
+        android:minHeight="48dp">
+
+        <ImageView android:id="@+id/neighbour_item_bluetooth"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Bluetooth Activated"
+            android:gravity="top"
+            android:visibility="invisible"
+            android:src="@drawable/ic_bluetooth_grey600_18dp" />
+
+        <ImageView android:id="@+id/neighbour_item_wifi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Wifi Activated"
+            android:gravity="bottom"
+            android:visibility="invisible"
+            android:src="@drawable/ic_signal_wifi_0_bar_grey600_18dp" />
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/neighbours_item_info"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:minHeight="48dp">
+
+        <TextView android:id="@+id/neighbour_item_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:gravity="left"
+            style="@style/Drawer.Neighbour.Item"/>
+
+        <TextView android:id="@+id/neighbour_item_id"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:gravity="left"
+            style="@style/Drawer.Neighbour.Item"/>
+    </LinearLayout>
+
+</LinearLayout>
