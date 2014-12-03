@@ -64,7 +64,7 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         EventBus.getDefault().unregister(this);
     }
 
-    public void getStatus() {
+    public void getStatuses() {
         DatabaseFactory.getStatusDatabase(activity).getStatuses(this);
     }
 
@@ -119,7 +119,7 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
     }
 
     public void onEvent(NewStatusEvent status) {
-        getStatus();
+        getStatuses();
     }
 
     private class TimeElapsed {

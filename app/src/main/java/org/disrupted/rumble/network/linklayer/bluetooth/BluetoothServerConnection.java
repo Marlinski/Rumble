@@ -73,7 +73,7 @@ public class BluetoothServerConnection extends Connection{
         }
 
         onConnectionEstablished(macAddress);
-        protocol.onConnected(inputStream,outputStream);
+        protocol.onConnected(macAddress, inputStream,outputStream);
 
         if(!isBeingKilled)
             kill();
@@ -84,16 +84,7 @@ public class BluetoothServerConnection extends Connection{
         this.isBeingKilled = true;
         if(protocol.isRunning()) {
             protocol.stop();
-            /*
-            try {
-                inputStream.close();
-            } catch( Exception ignore){
-            }
-            try {
-                outputStream.close();
-            } catch( Exception ignore){
-            }
-            */
+
             try {
                 mmConnectedSocket.close();
             } catch( Exception ignore){

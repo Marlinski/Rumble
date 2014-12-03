@@ -106,7 +106,7 @@ public class BluetoothClient extends Connection {
         }
 
         onConnectionEstablished(macAddress);
-        protocol.onConnected(inputStream,outputStream);
+        protocol.onConnected(macAddress, inputStream, outputStream);
 
         if(!isBeingKilled)
             kill();
@@ -116,17 +116,8 @@ public class BluetoothClient extends Connection {
     public void kill() {
         this.isBeingKilled = true;
         if(protocol.isRunning()) {
-            /*
-            if (inputStream != null) {
-                try {inputStream.close();} catch (Exception ignore) {}
-                inputStream = null;
-            }
+            protocol.stop();
 
-            if (outputStream != null) {
-                try {outputStream.close();} catch (Exception ignore) {}
-                outputStream = null;
-            }
-            */
             if (mmConnectedSocket != null) {
                 try {mmConnectedSocket.close();} catch (Exception ignore) {}
                 mmConnectedSocket = null;

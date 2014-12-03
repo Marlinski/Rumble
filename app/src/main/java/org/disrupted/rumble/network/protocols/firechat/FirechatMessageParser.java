@@ -52,17 +52,18 @@ public class FirechatMessageParser {
             jsonStatus.put(USER, message.getAuthor());
             jsonStatus.put(MESSAGE, message.getPost());
 
-            String firechat = "Nearby";
+            String firechat = "#Nearby";
             if(message.getHashtagSet().size() > 0)
                 firechat = message.getHashtagSet().iterator().next();
             //todo: strip the '#' from the hashtag
+            firechat = firechat.substring(1);
 
             jsonStatus.put(FIRECHAT, firechat);
             jsonStatus.put(NAME, message.getAuthor());
         } catch ( JSONException e ) {
         }
 
-        return jsonStatus.toString();
+        return jsonStatus.toString()+"\n";
     }
 
     public StatusMessage networkToStatus(String message) throws JSONException{

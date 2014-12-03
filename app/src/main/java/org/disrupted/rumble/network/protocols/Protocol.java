@@ -25,6 +25,8 @@ import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.Message;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.network.NeighbourRecord;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
 
@@ -40,16 +42,17 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * The Protocol abstract class is a generic implementation of a message-based protocol.
  * When connection is established by the LinkLayer (for instance BluetoothConnection),
- * it calls protocol.onConnected()
+ * it calls protocol.onConnected() which in turns calls the protocol specific method
+ * to be implemented initializeConneciton()
  *
- * onConnected listens for incomming packet (processingPacketFromNetwork) from the network
- * and creates another thread for processing incoming command (processingCommandFromQueue) that
- * are sent from upper layer (Routing, UI).
+ * onConnected then listens for incomming packet (processingPacketFromNetwork) from the network
+ * and also creates another thread for processing incoming command (processingCommandFromQueue)
+ * that are sent from upper layer (Routing or UI).
  *
  *    - When a packet is received, abstract method onPacketReceived is called
  *    - When a command is received, abstract method onCommandReceived is called
  *
- * Any Protocol Implemetation have access to the InputStream and OutputStream for any protocol
+ * A Protocol Implemetation have access to the InputStream and OutputStream for any protocol
  * specific interaction.
  *
  * @author Marlinski
@@ -63,8 +66,10 @@ public abstract class Protocol {
     protected BlockingQueue<ProtocolCommand> commandQueue;
     private boolean running = false;
     protected Thread queueThread = null;
+    protected String macAddress;
     protected InputStream in;
     protected OutputStream out;
+    protected NeighbourRecord record;
 
     public String getProtocolID() {
         return protocolID;
@@ -74,19 +79,30 @@ public abstract class Protocol {
 
     abstract public boolean isCommandSupported(String commandName);
 
+    abstract public void initializeConnection();
+
     abstract public boolean onPacketReceived(byte[] bytes, int size);
 
     abstract public boolean onCommandReceived(ProtocolCommand command);
+
+    abstract public void destroyConnection();
 
     public boolean isRunning() {
         return running;
     }
 
-    public void onConnected(InputStream in, OutputStream out) {
+    public final void onConnected(String macAddress, InputStream in, OutputStream out) {
+        this.macAddress = macAddress;
+        record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(macAddress);
+        if(record == null) {
+            Log.e(TAG, "[!] cannot get the record of user: "+macAddress);
+        }
         commandQueue = new LinkedBlockingQueue<ProtocolCommand>();
         this.in = in;
         this.out = out;
         running = true;
+
+        initializeConnection();
 
         queueThread = new Thread() {
             @Override
@@ -97,6 +113,9 @@ public abstract class Protocol {
         queueThread.start();
 
         processingPacketFromNetwork();
+
+        queueThread.interrupt();
+        destroyConnection();
     }
 
     public void processingPacketFromNetwork(){
@@ -109,7 +128,6 @@ public abstract class Protocol {
             }
         }
         catch(IOException e){
-            queueThread.interrupt();
         }
     }
 
@@ -120,7 +138,7 @@ public abstract class Protocol {
                 if(!isCommandSupported(command.getCommandName())){
                     continue;
                 }
-                Log.d(TAG, "[+] Command received " + command.getCommandName());
+                onCommandReceived(command);
             }
         }
         catch(InterruptedException e) {
@@ -128,21 +146,20 @@ public abstract class Protocol {
         }
     }
 
-
-
     public void stop() {
-        if(!running)
-            return;
+        // normally the socket.close(); raise exception
+        // and thus kills all the threads nicely
     }
 
     /*
      * "executeCommand" is called by the upper layers (Routing, UI)
      */
-    public boolean executeCommand(ProtocolCommand command) {
+    public final boolean executeCommand(ProtocolCommand command) {
         if(isCommandSupported(command.getCommandName())) {
             commandQueue.add(command);
             return true;
         } else {
+            Log.d(TAG, "[!] command is not supported: "+command.getCommandName());
             return false;
         }
     }
@@ -150,8 +167,8 @@ public abstract class Protocol {
     /*
      * The following list of method are called by the Protocol implementations
      */
-    public void onStatusMessageReceived(StatusMessage message) {
-        Log.d(TAG, "Status received:\n" + message.toString());
+    public final void onStatusMessageReceived(StatusMessage message) {
+        Log.d(TAG, "Status received from Network:\n" + message.toString());
         DatabaseFactory
                 .getStatusDatabase(NetworkCoordinator.getInstance())
                 .insertStatus(message,null);

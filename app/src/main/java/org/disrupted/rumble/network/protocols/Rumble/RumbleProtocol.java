@@ -41,10 +41,8 @@ public class RumbleProtocol extends Protocol {
     }
 
     @Override
-    public boolean isCommandSupported(String commandName) {
-        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
-            return true;
-        return false;
+    public void initializeConnection() {
+
     }
 
     @Override
@@ -53,7 +51,19 @@ public class RumbleProtocol extends Protocol {
     }
 
     @Override
+    public boolean isCommandSupported(String commandName) {
+        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
+            return true;
+        return false;
+    }
+
+    @Override
     public boolean onCommandReceived(ProtocolCommand command) {
         return false;
+    }
+
+    @Override
+    public void destroyConnection() {
+
     }
 }

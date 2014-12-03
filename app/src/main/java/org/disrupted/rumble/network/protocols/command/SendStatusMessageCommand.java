@@ -34,6 +34,10 @@ public class SendStatusMessageCommand extends ProtocolCommand {
         this.status = status;
     }
 
+    public StatusMessage getStatus() {
+        return status;
+    }
+
     @Override
     public String getCommandName() {
         return COMMAND_NAME;

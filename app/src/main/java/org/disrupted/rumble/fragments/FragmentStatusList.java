@@ -62,7 +62,7 @@ public class FragmentStatusList extends Fragment implements View.OnClickListener
                                                       }
                                                   }
         );
-        statusListAdapter.getStatus();
+        statusListAdapter.getStatuses();
         statusList.setAdapter(statusListAdapter);
 
         sendButton = (ImageButton)mView.findViewById(R.id.button_send);

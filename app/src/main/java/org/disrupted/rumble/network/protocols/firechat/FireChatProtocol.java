@@ -21,21 +21,20 @@ package org.disrupted.rumble.network.protocols.firechat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.message.Message;
+import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -46,7 +45,7 @@ public class FireChatProtocol extends Protocol {
     public static final String ID = "Firechat";
 
     private static final FirechatMessageParser parser = new FirechatMessageParser();
-    private Thread queueThread = null;
+    public Thread statusThread = null;
 
     public Protocol newInstance() {
         return new FireChatProtocol();
@@ -56,6 +55,12 @@ public class FireChatProtocol extends Protocol {
         this.protocolID = ID;
     }
 
+    @Override
+    public void initializeConnection() {
+        statusThread = new MonitorNewStatusThread();
+        statusThread.start();
+    }
+
     public boolean isCommandSupported(String commandName) {
         if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
             return true;
@@ -63,7 +68,7 @@ public class FireChatProtocol extends Protocol {
     }
 
     @Override
-    synchronized public boolean onPacketReceived(byte[] bytes, int size) {
+    public boolean onPacketReceived(byte[] bytes, int size) {
         try {
             String jsonString = new String(bytes, 0, size, "UTF-8");
             StatusMessage status = parser.networkToStatus(jsonString);
@@ -76,9 +81,70 @@ public class FireChatProtocol extends Protocol {
     }
 
     @Override
-    synchronized public boolean onCommandReceived(ProtocolCommand command) {
+    public boolean onCommandReceived(ProtocolCommand command) {
         if(!isCommandSupported(command.getCommandName()))
             return false;
+        if(command instanceof SendStatusMessageCommand) {
+            StatusMessage statusMessage = ((SendStatusMessageCommand)command).getStatus();
+            String jsonStatus = parser.statusToNetwork(statusMessage);
+            try {
+                this.out.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
+            }
+            catch(IOException ignore){
+                Log.e(TAG, "[!] error while sending");
+            }
+        }
+
         return true;
     }
+
+    @Override
+    public void destroyConnection() {
+        statusThread.interrupt();
+    }
+
+    /*
+     * This thread monitors the new status received and forward them to the neighbour
+     * (unless it is one of his)
+     */
+    public class MonitorNewStatusThread extends Thread {
+
+        private BlockingQueue<StatusMessage> messageQueue;
+
+        public MonitorNewStatusThread() {
+            messageQueue = new LinkedBlockingDeque<StatusMessage>();
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            try {
+                EventBus.getDefault().register(this);
+                while(true) {
+                    StatusMessage message = messageQueue.take();
+
+                    if (message.getAuthor() == record.getName())
+                        continue;
+
+                    ProtocolCommand sendMessageCommand = new SendStatusMessageCommand(message);
+                    executeCommand(sendMessageCommand);
+                }
+            }
+            catch(InterruptedException e) {
+                EventBus.getDefault().unregister(this);
+                messageQueue.clear();
+                messageQueue = null;
+            }
+
+        }
+
+        public void onEvent(NewStatusEvent newStatus) {
+            if(newStatus.getStatus() == null)
+                return;
+            messageQueue.add(newStatus.getStatus());
+        }
+
+    }
+
+
 }

@@ -41,6 +41,7 @@ import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
+import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 
@@ -124,6 +125,11 @@ public class DrawerNeighborhoodFragment extends Fragment {
     }
 
     public void onEvent(NeighborhoodChanged event) {
+        refresh();
+    }
+
+    public void onEvent(DisconnectFromNeighbourDevice event) {
+        //todo: refresh only the neighbour being affected
         refresh();
     }
 
