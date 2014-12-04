@@ -46,7 +46,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.ReadableQueryCallback{
+public class StatusListAdapter extends BaseAdapter{
 
     private static final String TAG = "NeighborListAdapter";
 
@@ -58,7 +58,6 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         this.activity = activity;
         this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         statuses = null;
-        EventBus.getDefault().register(this);
     }
 
     public void clean() {
@@ -67,11 +66,6 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         statuses = null;
         inflater = null;
         activity = null;
-        EventBus.getDefault().unregister(this);
-    }
-
-    public void getStatuses() {
-        DatabaseFactory.getStatusDatabase(activity).getStatuses(this);
     }
 
     @Override
@@ -121,21 +115,10 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         return statuses.getCount();
     }
 
-    @Override
-    public void onReadableQueryFinished(Cursor answer) {
+    public void swap(Cursor cursor) {
         if(statuses != null)
             statuses.close();
-        statuses = answer;
-        activity.runOnUiThread(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                       notifyDataSetChanged();
-                                   }
-                               });
-    }
-
-    public void onEvent(NewStatusEvent status) {
-        getStatuses();
+        statuses = cursor;
     }
 
     private class TimeElapsed {
@@ -189,19 +172,15 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         private String getTimeInSeconds(){
             return Long.toString(time/ONE_SECOND_IN_MILLIS);
         }
-
         private String getTimeInMinutes(){
             return Long.toString(time/ONE_MINUTE_IN_MILLIS);
         }
-
         private String getTimeInHours(){
             return Long.toString(time/ONE_HOUR_IN_MILLIS);
         }
-
         private String getTimeInDays(){
             return Long.toString(time/ONE_DAY_IN_MILLIS);
         }
-
         private String getTimeInMonths(){
             return Long.toString(time/ONE_MONTH_IN_MILLIS);
         }

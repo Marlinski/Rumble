@@ -77,19 +77,20 @@ public class FireChatProtocol extends Protocol {
 
 
     /*
-     * Firechat messages are a simple char stream representing a JSON ending with LF
-     * however, if a file is attached to the message (like a picture), the message is quickly
+     * Firechat message is a simple char stream representing a JSON file, ending with LF.
+     * however, if a file is attached to the message (like a picture), the message is
      * followed by a binary stream representing the file.
      *
      *    I cannot use InputStream to read byte by byte with InputStream.read() trying to detect
      * the CRLF cause it would be way too long
      *
      *    On the other hand, I cannot use a BufferedInputStream either because it is char only
-     * and will be unable to read the following binary stream, and it will mess with the original
-     * InputStream as it reads ahead
+     * and it will be unable to read the following binary stream. plus, it will also mess with
+     * the original InputStream as it reads ahead
      *
      *    Solution is thus to use a PushedBackInputStream that will read a whole buffer (1024)
-     * and then it will search into it for a CRLF and pushback whatever follows.
+     * and then it will search into it for a CRLF and pushback (unread) whatever follows for
+     * further binary reading.
      */
     @Override
     public void processingPacketFromNetwork() throws IOException{
@@ -100,15 +101,16 @@ public class FireChatProtocol extends Protocol {
         while (true) {
             byte[] buffer=new byte[BUFFER_SIZE];
             int count = pbin.read(buffer,0,BUFFER_SIZE);
-            Log.d(TAG, "read "+count+" bytes");
+
             int i = 0;
             char currentCharVal = (char)buffer[i++];
             while( (currentCharVal!=CR) && (currentCharVal!=LF) && (i < count))
                 currentCharVal = (char) buffer[i++];
-            if(i == count) {
+
+            if((currentCharVal != CR) && (currentCharVal != LF)) {
+                //whatever it was, it was not a Firechat message
                 buffer = null;
             } else {
-                Log.d(TAG, "messages = "+new String(buffer, 0, i - 1));
                 try {
                     pbin.unread(buffer, i, count - i);
                     onPacketReceived(new String(buffer, 0, i - 1));
@@ -118,53 +120,6 @@ public class FireChatProtocol extends Protocol {
             }
         }
     }
-
-
-    /*
-    @Override
-    public void processingPacketFromNetwork() throws IOException{
-        final int CR = 13;
-        final int LF = 10;
-        //BufferedReader r = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        PushbackInputStream pbin = new PushbackInputStream(in);
-
-        while (true) {
-            char[] buffer=new char[BUFFER_SIZE];
-            int i=0;
-
-            //A firechat message is a JSON String ending with LF
-            int currentCharVal=r.read();
-            while( (currentCharVal!=CR) && (currentCharVal!=LF) && (currentCharVal>=0)) {
-                buffer[i++] = (char) currentCharVal;
-                if (i<BUFFER_SIZE)
-                    currentCharVal=r.read();
-                else
-                    break;
-            }
-
-            r.mark(0);
-            r.reset();
-            //r.close();
-
-            if (currentCharVal<0) {
-                //error while reading but we still try to process whatever we received
-                if (i > 0)
-                    onPacketReceived(new String(buffer, 0, i));
-
-                buffer = null;
-                continue;
-            }
-
-            if((currentCharVal != CR) && (currentCharVal != LF)) {
-                //we reached end of buffer, we silently discard the packet
-                buffer = null;
-                continue;
-            }
-
-            onPacketReceived(new String(buffer,0,i));
-        }
-    }
-    */
 
     public boolean onPacketReceived(String jsonString) {
         try {

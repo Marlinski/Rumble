@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.fragments;
 
+import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -36,12 +37,15 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class FragmentStatusList extends Fragment implements View.OnClickListener, DatabaseExecutor.WritableQueryCallback {
+public class FragmentStatusList extends Fragment implements View.OnClickListener, DatabaseExecutor.WritableQueryCallback, DatabaseExecutor.ReadableQueryCallback {
 
     private static final String TAG = "FragmentStatusList";
     private View mView;
@@ -62,8 +66,9 @@ public class FragmentStatusList extends Fragment implements View.OnClickListener
                                                       }
                                                   }
         );
-        statusListAdapter.getStatuses();
+        getStatuses();
         statusList.setAdapter(statusListAdapter);
+        EventBus.getDefault().register(this);
 
         sendButton = (ImageButton)mView.findViewById(R.id.button_send);
         sendButton.setOnClickListener(this);
@@ -80,6 +85,7 @@ public class FragmentStatusList extends Fragment implements View.OnClickListener
 
     @Override
     public void onDestroy() {
+        EventBus.getDefault().unregister(this);
         statusListAdapter.clean();
         super.onDestroy();
     }
@@ -113,4 +119,30 @@ public class FragmentStatusList extends Fragment implements View.OnClickListener
                                     }
         );
     }
+
+    public void getStatuses() {
+        DatabaseFactory.getStatusDatabase(getActivity()).getStatuses(this);
+    }
+
+    @Override
+    public void onReadableQueryFinished(Cursor answer) {
+        if(getActivity() == null) {
+            if(answer != null)
+                answer.close();
+            return;
+        }
+
+        statusListAdapter.swap(answer);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                statusListAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
+    public void onEvent(NewStatusEvent status) {
+        getStatuses();
+    }
+
 }
