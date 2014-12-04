@@ -49,11 +49,11 @@ import java.util.concurrent.LinkedBlockingQueue;
  * and also creates another thread for processing incoming command (processingCommandFromQueue)
  * that are sent from upper layer (Routing or UI).
  *
- *    - When a packet is received, abstract method onPacketReceived is called
+ *    - abstract method processingPacketFromNetwork should be an infinite loop.
+ *      When it returns connection stops
  *    - When a command is received, abstract method onCommandReceived is called
  *
- * A Protocol Implemetation have access to the InputStream and OutputStream for any protocol
- * specific interaction.
+ * The Protocol Implemetation have access to the InputStream and OutputStream
  *
  * @author Marlinski
  */
@@ -81,7 +81,7 @@ public abstract class Protocol {
 
     abstract public void initializeConnection();
 
-    abstract public boolean onPacketReceived(byte[] bytes, int size);
+    abstract public void processingPacketFromNetwork() throws IOException;
 
     abstract public boolean onCommandReceived(ProtocolCommand command);
 
@@ -112,23 +112,10 @@ public abstract class Protocol {
         };
         queueThread.start();
 
-        processingPacketFromNetwork();
+        try {  processingPacketFromNetwork();  }  catch(IOException ignore) { }
 
         queueThread.interrupt();
         destroyConnection();
-    }
-
-    public void processingPacketFromNetwork(){
-        try {
-            while (true) {
-                byte[] bytes = new byte[1024];
-                int size = in.read(bytes);
-                if(size > 0)
-                    onPacketReceived(bytes, size);
-            }
-        }
-        catch(IOException e){
-        }
     }
 
     public void processingCommandFromQueue(){

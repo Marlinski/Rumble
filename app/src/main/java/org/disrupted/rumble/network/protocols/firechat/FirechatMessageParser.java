@@ -20,9 +20,22 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
+import android.util.Log;
+import android.webkit.MimeTypeMap;
+
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
+import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PushbackInputStream;
 import java.util.Random;
 
 /**
@@ -42,6 +55,8 @@ public class FirechatMessageParser {
     private static final String FIRECHAT  = "firechat";
     private static final String NAME      = "name";
     private static final String LOCATION  = "loc";
+    private static final String LENGTH  = "length";
+
 
     public String statusToNetwork(StatusMessage message) {
 
@@ -55,7 +70,6 @@ public class FirechatMessageParser {
             String firechat = "#Nearby";
             if(message.getHashtagSet().size() > 0)
                 firechat = message.getHashtagSet().iterator().next();
-            //todo: strip the '#' from the hashtag
             firechat = firechat.substring(1);
 
             jsonStatus.put(FIRECHAT, firechat);
@@ -66,23 +80,71 @@ public class FirechatMessageParser {
         return jsonStatus.toString()+"\n";
     }
 
-    public StatusMessage networkToStatus(String message) throws JSONException{
+    public StatusMessage networkToStatus(String message, PushbackInputStream in) throws JSONException{
         StatusMessage retMessage = null;
         JSONObject object = new JSONObject(message);
 
+        String post = "";
+        long   length = 0;
+
         String author    = object.getString(NAME);
-        String post      = object.getString(MESSAGE);
         String timestamp = object.getString(TIMESTAMP);
         String uuid      = object.getString(UUID);
         String firechat  = object.getString(FIRECHAT);
 
+        try { post   = object.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
+        try { length = object.getLong(LENGTH); } catch(JSONException ignore){ length = 0; }
+
         retMessage = new StatusMessage(post+" #"+firechat, author);
+
+        Log.d(TAG, message);
+        if(length > 0) {
+            String fileName = author+"-"+timestamp+".jfif";
+            String filePath = downloadFile(fileName, length, in);
+            if(filePath != "") {
+                Log.d(TAG, "[+] downloaded !");
+                retMessage.setFileName(fileName);
+                retMessage.setFileSize(length);
+            }
+        }
         retMessage.setTimeOfCreation(timestamp);
         retMessage.setTimeOfArrival(timestamp);
         retMessage.setHopCount(1);
 
         return retMessage;
 
+    }
+
+    public String downloadFile(String fileName, long length, PushbackInputStream in) {
+        File directory = FileUtil.getWritableAlbumStorageDir(length);
+        Log.d(TAG, "[+] Downloading file to: "+directory);
+        if(directory != null) {
+            File attachedFile = new File(directory + File.separator + fileName);
+            FileOutputStream fos;
+            try {
+                if (!attachedFile.createNewFile())
+                    throw new FileNotFoundException("Cannot create file "+attachedFile.toString());
+
+                fos = new FileOutputStream(attachedFile);
+
+                final int BUFFER_SIZE = 1024;
+                while (length > 0) {
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int count;
+                    count = in.read(buffer, 0, BUFFER_SIZE);
+                    if (count < 0)
+                        throw new IOException("End of stream reached");
+                    length -= count;
+                    fos.write(buffer, 0, count);
+                }
+                fos.close();
+                return fileName;
+            }
+            catch (IOException e) {
+                Log.e(TAG, "[-] file has not been downloaded ",e);
+            }
+        }
+        return "";
     }
 
 

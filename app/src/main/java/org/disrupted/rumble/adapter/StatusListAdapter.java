@@ -23,6 +23,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +37,9 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.util.FileUtil;
+
+import java.io.File;
 
 import de.greenrobot.event.EventBus;
 
@@ -76,13 +82,23 @@ public class StatusListAdapter extends BaseAdapter implements DatabaseExecutor.R
         TextView  post    = (TextView) status.findViewById(R.id.status_item_body);
         TextView  created = (TextView) status.findViewById(R.id.status_item_created);
         TextView  arrived = (TextView) status.findViewById(R.id.status_item_received);
+        ImageView attachedImage = (ImageView) status.findViewById(R.id.status_item_attached_image);
 
         if(!statuses.moveToPosition(i))
             return status;
         author.setText(statuses.getString(1));
         post.setText(statuses.getString(2));
-        created.setText(new TimeElapsed(statuses.getLong(4)).display());
-        created.setText(new TimeElapsed(statuses.getLong(4)).display());
+        created.setText(new TimeElapsed(statuses.getLong(5)).display());
+
+        String filename = statuses.getString(4);
+        File directory = FileUtil.getReadableAlbumStorageDir();
+        if(directory != null) {
+            File attachedFile = new File(directory + File.separator + filename);
+            Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
+            attachedImage.setImageBitmap(bitmapImage);
+            attachedImage.setVisibility(View.VISIBLE);
+        }
+
         return status;
     }
 

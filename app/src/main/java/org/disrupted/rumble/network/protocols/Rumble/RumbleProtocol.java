@@ -24,6 +24,8 @@ import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 
+import java.io.IOException;
+
 /**
  * @author Marlinski
  */
@@ -46,8 +48,8 @@ public class RumbleProtocol extends Protocol {
     }
 
     @Override
-    public boolean onPacketReceived(byte[] bytes, int size) {
-        return false;
+    public void processingPacketFromNetwork() throws IOException {
+        
     }
 
     @Override

@@ -39,6 +39,7 @@ public class StatusDatabase extends Database {
     public static final String AUTHOR           = "author";
     public static final String POST             = "post";
     public static final String FILE_ID          = "file";
+    public static final String FILE_NAME        = "filename";
     public static final String TIME_OF_CREATION = "toc";
     public static final String TIME_OF_ARRIVAL  = "toa";
     public static final String HOP_COUNT        = "hopcount";
@@ -51,6 +52,7 @@ public class StatusDatabase extends Database {
                  + AUTHOR    + " TEXT, "
                  + POST      + " TEXT, "
                  + FILE_ID   + " INTEGER, "
+                 + FILE_NAME + " TEXT, "
                  + TIME_OF_CREATION  + " INTEGER, "
                  + TIME_OF_ARRIVAL   + " INTEGER, "
                  + HOP_COUNT + " INTEGER, "
@@ -109,6 +111,7 @@ public class StatusDatabase extends Database {
         contentValues.put(AUTHOR, status.getAuthor());
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_ID, status.getFileID());
+        contentValues.put(FILE_NAME, status.getFileName());
         /*
         //Attached file not yet supported
         if(message.getFilePath() != "") {

@@ -20,6 +20,8 @@
 package org.disrupted.rumble.message;
 
 
+import android.webkit.MimeTypeMap;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -37,7 +39,7 @@ public class StatusMessage extends Message {
     protected String      status;
     protected Set<String> hashtagSet;
     protected String      attachedFile;
-    protected String      filePath;
+    protected long        fileSize;
     protected String      timeOfCreation;
     protected String      timeOfArrival;
     protected Integer     hopCount;
@@ -58,7 +60,7 @@ public class StatusMessage extends Message {
         }
 
         attachedFile   = "";
-        filePath       = "";
+        fileSize       = 0;
         timeOfCreation = String.valueOf(System.currentTimeMillis() / 1000L);
         timeOfArrival  = String.valueOf(System.currentTimeMillis() / 1000L);
         hopCount       = 0;
@@ -67,15 +69,15 @@ public class StatusMessage extends Message {
         ttl            = 0;
     }
 
-    public void setAttachedFile(String filename){ this.attachedFile = filename; }
-    public void setFilePath(String filepath){     this.filePath     = filepath; }
-    public void setTimeOfCreation(String toc){    this.timeOfCreation = toc; }
-    public void setTimeOfArrival(String toa){     this.timeOfArrival  = toa; }
+    public void setFileName(String filename){     this.attachedFile   = filename; }
+    public void setFileSize(long size) {          this.fileSize       = size;     }
+    public void setTimeOfCreation(String toc){    this.timeOfCreation = toc;      }
+    public void setTimeOfArrival(String toa){     this.timeOfArrival  = toa;      }
     public void setHopCount(Integer hopcount){    this.hopCount       = hopcount; }
-    public void setForwarderList(String fl){      this.forwarderList  = fl; }
-    public void setScore(Integer score){          this.score          = score;}
-    public void setTTL(Integer ttl){              this.ttl            = ttl;}
-    public void addHashtag(String tag){           this.hashtagSet.add(tag); }
+    public void setForwarderList(String fl){      this.forwarderList  = fl;       }
+    public void setScore(Integer score){          this.score          = score;    }
+    public void setTTL(Integer ttl){              this.ttl            = ttl;      }
+    public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
 
     public String  getAuthor(){         return this.author; }
     public String  getPost(){           return this.status; }
@@ -86,9 +88,13 @@ public class StatusMessage extends Message {
     public String  getForwarderList(){  return this.forwarderList; }
     public Integer getScore(){          return this.score;}
     public Integer getTTL(){            return this.ttl;}
-    public String  getAttachedFile(){   return this.attachedFile; }
-    public String  getFilePath(){       return this.filePath; }
+    public String  getFileName(){       return this.attachedFile; }
+    public long    getFileSize(){       return this.fileSize; }
     public long    getFileID(){         return 0; }
+
+    public boolean hasAttachedFile() {
+        return (attachedFile != "");
+    }
 
     public String toString() {
         String s = new String();

@@ -59,13 +59,13 @@ public abstract class Connection implements Runnable{
     public Protocol getProtocol() {    return protocol;     }
 
 
-    protected void onConnectionFailed(String reason) {
+    protected final void onConnectionFailed(String reason) {
         Log.d(TAG, "[!] FAILED: "+getConnectionID() + "reason: "+reason);
         if(callback != null)
             this.callback.onConnectionFailed(this, reason);
     }
 
-    protected void onConnectionEstablished(String address) {
+    protected final void onConnectionEstablished(String address) {
         Log.d(TAG, "[+] STARTED: "+getConnectionID());
         NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
         if(networkCoordinator != null) {
@@ -75,7 +75,7 @@ public abstract class Connection implements Runnable{
             this.callback.onConnectionSucceeded(this);
     }
 
-    protected void onConnectionEnded(String address) {
+    protected final void onConnectionEnded(String address) {
         Log.d(TAG, "[-] ENDED: "+getConnectionID());
         NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
         if(networkCoordinator != null) {
