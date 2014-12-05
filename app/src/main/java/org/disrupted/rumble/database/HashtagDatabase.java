@@ -96,7 +96,10 @@ public class HashtagDatabase extends  Database{
         if(hashtagCount == 0) {
             res = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
         }else{
-            res = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
+            databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
+            Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '"+hashtag+"'", null, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst())
+                res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
         }
 
         if(res >= 0)

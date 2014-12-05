@@ -24,6 +24,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import org.disrupted.rumble.message.StatusMessage;
 
@@ -103,11 +104,11 @@ public class StatusDatabase extends Database {
                    " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
                 " JOIN "+HashtagDatabase.TABLE_NAME+" h"                     +
                    " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
-                " WHERE h."+HashtagDatabase.HASHTAG+" = ?");
+                " WHERE lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
 
         String[] array = new String[filters.size()];
         for(int i = 1; i < filters.size(); i++) {
-            query.append(" OR h."+HashtagDatabase.HASHTAG+" = ?");
+            query.append(" OR lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
         }
         Cursor cursor = database.rawQuery(query.toString(),filters.toArray(array));
         return cursor;
@@ -145,12 +146,6 @@ public class StatusDatabase extends Database {
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_ID, status.getFileID());
         contentValues.put(FILE_NAME, status.getFileName());
-        /*
-        //Attached file not yet supported
-        if(message.getFilePath() != "") {
-            DatabaseFactory.getDocumentDatabase().insertFile(message.getFilePath());
-        }
-        */
         contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
         contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
         contentValues.put(HOP_COUNT, status.getHopCount());
@@ -162,8 +157,10 @@ public class StatusDatabase extends Database {
 
         if(statusID >= 0) {
             for (String hashtag : status.getHashtagSet()) {
+                Log.d(TAG, "insert: "+hashtag);
                 long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag);
-                long statusTagID = DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
+                if(tagID >=0 )
+                    DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
             }
         }
 

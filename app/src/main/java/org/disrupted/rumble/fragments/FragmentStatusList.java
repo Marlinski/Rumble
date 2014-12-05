@@ -100,9 +100,9 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
         EventBus.getDefault().register(this);
 
         // the form to create a status
-        sendButton = (ImageButton)mView.findViewById(R.id.button_send);
+        sendButton = (ImageButton) mView.findViewById(R.id.button_send);
         sendButton.setOnClickListener(new OnClickSend());
-        this.textView = (TextView)mView.findViewById(R.id.user_status);
+        this.textView = (TextView) mView.findViewById(R.id.user_status);
 
         return mView;
     }
@@ -134,7 +134,7 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
 
     public void getStatuses() {
         progressBar.setVisibility(View.VISIBLE);
-        if(filterListAdapter.getCount() == 0) {
+        if (filterListAdapter.getCount() == 0) {
             DatabaseFactory.getStatusDatabase(getActivity())
                     .getStatuses(this);
         } else {
@@ -145,8 +145,8 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
 
     @Override
     public void onReadableQueryFinished(Cursor answer) {
-        if(getActivity() == null) {
-            if(answer != null)
+        if (getActivity() == null) {
+            if (answer != null)
                 answer.close();
             return;
         }
@@ -164,14 +164,14 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
     private class OnFilterClick implements AdapterView.OnItemClickListener {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-            filterListAdapter.deleteFilter((String)adapterView.getItemAtPosition(i));
+            filterListAdapter.deleteFilter((String) adapterView.getItemAtPosition(i));
             filterListAdapter.notifyDataSetChanged();
             filters.setClickable(false);
             getStatuses();
         }
     }
 
-    private class  OnClickSend implements View.OnClickListener {
+    private class OnClickSend implements View.OnClickListener {
         @Override
         public void onClick(View view) {
             if (textView == null)
@@ -189,7 +189,12 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
     }
 
     public void onEvent(NewStatusEvent status) {
-        getStatuses();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                getStatuses();
+            }
+        });
     }
 
 }

@@ -76,6 +76,7 @@ public class NetworkCoordinator extends Service {
             instance = this;
             LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
             LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
+            adapters.put(bluetoothAdapter.getID(), bluetoothAdapter);
             adapters.put(wifiAdapter.getID(), wifiAdapter);
         }
     }
