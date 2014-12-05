@@ -71,6 +71,7 @@ public class BluetoothServer extends Connection {
         mmServerSocket = tmp;
         if(tmp == null){
             onConnectionFailed("cannot open Listen Socket on service record "+bt_service_uuid);
+            return;
         }
 
         try {

@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi_managed;
+package org.disrupted.rumble.network.linklayer.wifi;
 
 import org.disrupted.rumble.network.NeighbourDevice;
 import org.disrupted.rumble.network.NetworkCoordinator;
@@ -28,11 +28,11 @@ import java.util.List;
 /**
  * @author Marlinski
  */
-public class WifiLinkLayerAdapter extends LinkLayerAdapter {
+public class WifiP2PLinkLayerAdapter extends LinkLayerAdapter {
 
-    private static final String ID = "Wifi-Managed";
+    private static final String ID = "Wifi-P2P";
 
-    public WifiLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
+    public WifiP2PLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         super(networkCoordinator);
     }
 
@@ -70,4 +70,8 @@ public class WifiLinkLayerAdapter extends LinkLayerAdapter {
     public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
 
     }
+
+
 }
+
+

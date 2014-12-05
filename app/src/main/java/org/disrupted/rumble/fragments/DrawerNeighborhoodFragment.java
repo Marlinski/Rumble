@@ -155,9 +155,15 @@ public class DrawerNeighborhoodFragment extends Fragment {
         ((HomeActivity) getActivity()).mNetworkCoordinator.forceScan();
     }
 
+
+    private ActionBar getActionBar() {
+        return ((ActionBarActivity) getActivity()).getSupportActionBar();
+    }
+
+
     /*
      * =======================================
-     * Bluetooth and Wifi Interface Management
+     * Bluetooth Interface Management
      * =======================================
      */
     public void onBluetoothToggleClicked(View view) {
@@ -169,12 +175,6 @@ public class DrawerNeighborhoodFragment extends Fragment {
         }
     }
 
-    private void onBluetoothDisable() {
-        Intent startDiscovery = new Intent(getActivity(), NetworkCoordinator.class);
-        startDiscovery.setAction(NetworkCoordinator.ACTION_FORCE_STOP_BLUETOOTH);
-        getActivity().startService(startDiscovery);
-    }
-
     private void onBluetoothEnable() {
         Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
 
@@ -183,15 +183,23 @@ public class DrawerNeighborhoodFragment extends Fragment {
             return;
         }
         Log.d(TAG, "[+] Sending START BLUETOOTH intent");
-        Intent startDiscovery= new Intent(getActivity(), NetworkCoordinator.class);
-        startDiscovery.setAction(NetworkCoordinator.ACTION_FORCE_START_BLUETOOTH);
-        getActivity().startService(startDiscovery);
+        Intent startBluetooth= new Intent(getActivity(), NetworkCoordinator.class);
+        startBluetooth.setAction(NetworkCoordinator.ACTION_FORCE_START_BLUETOOTH);
+        getActivity().startService(startBluetooth);
 
         if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
             BluetoothConfigureInteraction.discoverableBT(getActivity());
             return;
         }
     }
+
+
+    private void onBluetoothDisable() {
+        Intent stopBluetooth = new Intent(getActivity(), NetworkCoordinator.class);
+        stopBluetooth.setAction(NetworkCoordinator.ACTION_FORCE_STOP_BLUETOOTH);
+        getActivity().startService(stopBluetooth);
+    }
+
 
     public void manageBTCode(int requestCode, int resultCode, Intent data) {
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
@@ -219,8 +227,47 @@ public class DrawerNeighborhoodFragment extends Fragment {
         }
     }
 
-    private ActionBar getActionBar() {
-        return ((ActionBarActivity) getActivity()).getSupportActionBar();
+
+    /*
+     * =======================================
+     * Wifi Interface Management
+     * =======================================
+     */
+     public void onWifiToggleClicked(View view) {
+        boolean on = ((Switch) view).isChecked();
+        if (on) {
+            onWifiEnable();
+        } else {
+            onWifiDisable();
+        }
     }
+
+    private void onWifiEnable() {
+        Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
+        /*
+        if(!BluetoothConfigureInteraction.isEnabled(getActivity())) {
+            BluetoothConfigureInteraction.enableBT(getActivity());
+            return;
+        }
+        */
+        Log.d(TAG, "[+] Sending START Wifi intent");
+        Intent startWifi= new Intent(getActivity(), NetworkCoordinator.class);
+        startWifi.setAction(NetworkCoordinator.ACTION_FORCE_START_WIFI);
+        getActivity().startService(startWifi);
+        /*
+        if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
+            BluetoothConfigureInteraction.discoverableBT(getActivity());
+            return;
+        }
+        */
+    }
+
+
+    private void onWifiDisable() {
+        Intent stopWifi = new Intent(getActivity(), NetworkCoordinator.class);
+        stopWifi.setAction(NetworkCoordinator.ACTION_FORCE_STOP_WIFI);
+        getActivity().startService(stopWifi);
+    }
+
 
 }

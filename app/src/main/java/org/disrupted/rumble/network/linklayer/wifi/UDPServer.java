@@ -17,23 +17,47 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi_managed;
+package org.disrupted.rumble.network.linklayer.wifi;
 
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.protocols.Protocol;
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.SocketException;
 
 /**
  * @author Marlinski
  */
 public class UDPServer extends Connection {
 
-    public UDPServer(String macAddress, Protocol protocol, String type, ConnectionCallback callback) {
-        super(macAddress, protocol, type, callback);
+    protected int udpPort;
+    protected DatagramSocket mServerSocket;
+
+    public UDPServer(String macAddress, int port,String linkLayerID, Protocol protocol, ConnectionCallback callback) {
+        super(macAddress, protocol, linkLayerID, callback);
+        this.udpPort = port;
     }
 
     @Override
     public void run() {
+        DatagramSocket tmp = null;
 
+        try {
+            tmp = new DatagramSocket(udpPort);
+        }
+        catch(SocketException e){
+            onConnectionFailed("cannot open UDP Socket on port: "+udpPort+" ("+e.toString()+")");
+            return;
+        }
+
+        mServerSocket = tmp;
+        if(tmp == null){
+            onConnectionFailed("cannot open UDP Socket on port: "+udpPort);
+            return;
+        }
+        mServerSocket.close();
     }
 
     @Override

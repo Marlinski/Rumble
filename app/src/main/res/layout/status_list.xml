@@ -24,6 +24,30 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/filter_list"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:numColumns="3"
+        android:verticalSpacing="5dp"
+        android:horizontalSpacing="5dp"
+        android:stretchMode="columnWidth"
+        android:background="@color/light_grey"
+        android:paddingTop="5dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingBottom="5dp"
+        android:visibility="visible"
+        />
+
+    <ProgressBar
+        android:id="@+id/loadingStatusList"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminate="true" />
+
     <FrameLayout
         android:id="@+id/status_list_progressbar"
         android:layout_width="match_parent"

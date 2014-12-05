@@ -79,11 +79,13 @@ public class HomeActivity extends ActionBarActivity {
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
             }
 
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
+                invalidateOptionsMenu();
             }
 
             @Override
@@ -150,12 +152,9 @@ public class HomeActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (!isLeftDrawerOpen() && !isRightDrawerOpen()) {
-            getMenuInflater().inflate(R.menu.main, menu);
-            restoreActionBar();
-            return true;
-        }
-        return super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.main, menu);
+        restoreActionBar();
+        return true;
     }
 
     public void restoreActionBar() {
@@ -219,6 +218,9 @@ public class HomeActivity extends ActionBarActivity {
 
     public void onBluetoothToggleClicked(View view) {
         mNeighborhoodDrawerFragment.onBluetoothToggleClicked(view);
+    }
+    public void onWifiToggleClicked(View view) {
+        mNeighborhoodDrawerFragment.onWifiToggleClicked(view);
     }
     public void onForceScanClicked(View view) {
         mNeighborhoodDrawerFragment.onForceScanClicked(view);

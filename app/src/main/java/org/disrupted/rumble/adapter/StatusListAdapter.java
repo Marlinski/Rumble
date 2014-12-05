@@ -85,12 +85,14 @@ public class StatusListAdapter extends BaseAdapter{
         created.setText(new TimeElapsed(statuses.getLong(5)).display());
 
         String filename = statuses.getString(4);
-        File directory = FileUtil.getReadableAlbumStorageDir();
-        if(directory != null) {
-            File attachedFile = new File(directory + File.separator + filename);
-            Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
-            attachedImage.setImageBitmap(bitmapImage);
-            attachedImage.setVisibility(View.VISIBLE);
+        if(!filename.equals("")) {
+            File directory = FileUtil.getReadableAlbumStorageDir();
+            if (directory != null) {
+                File attachedFile = new File(directory + File.separator + filename);
+                Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
+                attachedImage.setImageBitmap(bitmapImage);
+                attachedImage.setVisibility(View.VISIBLE);
+            }
         }
 
         return status;

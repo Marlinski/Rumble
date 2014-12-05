@@ -27,6 +27,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.message.StatusMessage;
 
+import java.util.List;
+
 /**
  * @author Marlinski
  */
@@ -77,6 +79,37 @@ public class StatusDatabase extends Database {
     private Cursor getStatuses() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
+        return cursor;
+    }
+
+
+    public boolean getFilteredStatuses(final List<String> filters, DatabaseExecutor.ReadableQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.ReadableQuery() {
+                    @Override
+                    public Cursor read() {
+                        return getFilteredStatuses(filters);
+                    }
+                }, callback);
+    }
+    private Cursor getFilteredStatuses(List<String> filters) {
+        if(filters.size() == 0)
+            return getStatuses();
+
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        StringBuilder query = new StringBuilder(
+                "SELECT * FROM "+StatusDatabase.TABLE_NAME+" s"+
+                " JOIN " + StatusTagDatabase.TABLE_NAME+" m"+
+                   " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
+                " JOIN "+HashtagDatabase.TABLE_NAME+" h"                     +
+                   " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
+                " WHERE h."+HashtagDatabase.HASHTAG+" = ?");
+
+        String[] array = new String[filters.size()];
+        for(int i = 1; i < filters.size(); i++) {
+            query.append(" OR h."+HashtagDatabase.HASHTAG+" = ?");
+        }
+        Cursor cursor = database.rawQuery(query.toString(),filters.toArray(array));
         return cursor;
     }
 

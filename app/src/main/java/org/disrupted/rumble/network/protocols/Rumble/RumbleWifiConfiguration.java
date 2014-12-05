@@ -17,27 +17,20 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi_managed;
-
-import org.disrupted.rumble.network.linklayer.Connection;
-import org.disrupted.rumble.network.protocols.Protocol;
+package org.disrupted.rumble.network.protocols.Rumble;
 
 /**
  * @author Marlinski
  */
-public class UDPClient extends Connection {
+public class RumbleWifiConfiguration {
 
-    public UDPClient(String macAddress, Protocol protocol, String type, ConnectionCallback callback) {
-        super(macAddress, protocol, type, callback);
-    }
+    public static final String NSD_SERVICE_NAME = "Rumble";
+    public static final String NSD_SERVICE_TYPE = "_rumble._udp.";
 
-    @Override
-    public void run() {
+    public static final String MULTICAST_ADDRESS = "239.192.0.0";
 
-    }
+    public static final int MULTICAST_PORT = 9715;
 
-    @Override
-    public void kill() {
+    public static final int SERVER_PORT = 9716;
 
-    }
 }

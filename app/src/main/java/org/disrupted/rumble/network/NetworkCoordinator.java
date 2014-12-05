@@ -29,6 +29,7 @@ import android.util.Log;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 
 import java.util.HashMap;
@@ -56,7 +57,8 @@ public class NetworkCoordinator extends Service {
      */
     public static final String ACTION_FORCE_START_BLUETOOTH = "service.action.START_BLUETOOTH";
     public static final String ACTION_FORCE_STOP_BLUETOOTH  = "service.action.STOP_BLUETOOTH";
-
+    public static final String ACTION_FORCE_START_WIFI      = "service.action.START_WIFI";
+    public static final String ACTION_FORCE_STOP_WIFI       = "service.action.STOP_WIFI";
 
     private HashSet<NeighbourRecord> neighborhoodHistory;
     private Map<String, LinkLayerAdapter> adapters;
@@ -72,8 +74,9 @@ public class NetworkCoordinator extends Service {
             neighborhoodHistory = new HashSet<NeighbourRecord>();
             adapters = new HashMap<String, LinkLayerAdapter>();
             instance = this;
-            LinkLayerAdapter adapter = new BluetoothLinkLayerAdapter(this);
-            adapters.put(adapter.getID(), adapter);
+            LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
+            LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
+            adapters.put(wifiAdapter.getID(), wifiAdapter);
         }
     }
 
@@ -111,6 +114,14 @@ public class NetworkCoordinator extends Service {
         if(intent.getAction().equals(ACTION_FORCE_STOP_BLUETOOTH)) {
             Log.d(TAG, "[-] Receive STOP Bluetooth Intent");
             adapters.get(BluetoothLinkLayerAdapter.LinkLayerIdentifier).linkStop();
+        }
+        if(intent.getAction().equals(ACTION_FORCE_START_WIFI)) {
+            Log.d(TAG, "[+] Receive START Wifi Intent");
+            adapters.get(WifiManagedLinkLayerAdapter.LinkLayerIdentifier).linkStart();
+        }
+        if(intent.getAction().equals(ACTION_FORCE_STOP_WIFI)) {
+            Log.d(TAG, "[-] Receive STOP Wifi Intent");
+            adapters.get(WifiManagedLinkLayerAdapter.LinkLayerIdentifier).linkStop();
         }
         return START_STICKY;
     }
@@ -233,18 +244,15 @@ public class NetworkCoordinator extends Service {
         }
     }
 
-
+    /*
+     * Interface Selection
+     * It is very possible to be connected to the same neighbour from different adapter at
+     * the same time (for instance with Bluetooth and Wifi).
+     * In that case, and in order to optimize the resource, connector will find the best
+     * linklayer adapter and try to connect to it from it.
+     * todo: the scoring algorithm.
+     */
     private void connector(NeighbourRecord record) {
-
-        /*
-         * the decision to choose the network protocol is now
-         * link layer's
-         * **
-        if(record.isAlreadyConnected()) {
-            Log.d(TAG, "[+] already connected to the remote device");
-            return;
-        }
-        */
         NeighbourDevice neighbourDevice = record.getBestDevice();
         LinkLayerAdapter adapter = adapters.get(neighbourDevice.getType());
         adapter.connectTo(neighbourDevice, true);

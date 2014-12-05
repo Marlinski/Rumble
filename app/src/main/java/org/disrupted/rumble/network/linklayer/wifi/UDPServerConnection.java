@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi_managed;
+package org.disrupted.rumble.network.linklayer.wifi;
 
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.protocols.Protocol;
