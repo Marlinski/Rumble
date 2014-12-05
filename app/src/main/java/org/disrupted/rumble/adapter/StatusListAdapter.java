@@ -20,11 +20,16 @@
 package org.disrupted.rumble.adapter;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,10 +38,13 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
@@ -50,12 +58,14 @@ public class StatusListAdapter extends BaseAdapter{
 
     private static final String TAG = "NeighborListAdapter";
 
-    private Activity       activity;
-    private LayoutInflater inflater;
-    private Cursor         statuses;
+    private FragmentStatusList fragment;
+    private Activity           activity;
+    private LayoutInflater     inflater;
+    private Cursor             statuses;
 
-    public StatusListAdapter(Activity activity) {
+    public StatusListAdapter(Activity activity, FragmentStatusList fragment) {
         this.activity = activity;
+        this.fragment = fragment;
         this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         statuses = null;
     }
@@ -66,34 +76,68 @@ public class StatusListAdapter extends BaseAdapter{
         statuses = null;
         inflater = null;
         activity = null;
+        fragment = null;
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         View status = inflater.inflate(R.layout.status_item, null, true);
-        ImageView icon    = (ImageView) status.findViewById(R.id.status_item_icon);
-        TextView  author  = (TextView) status.findViewById(R.id.status_item_author);
-        TextView  post    = (TextView) status.findViewById(R.id.status_item_body);
-        TextView  created = (TextView) status.findViewById(R.id.status_item_created);
-        TextView  arrived = (TextView) status.findViewById(R.id.status_item_received);
-        ImageView attachedImage = (ImageView) status.findViewById(R.id.status_item_attached_image);
+        ImageView iconView    = (ImageView) status.findViewById(R.id.status_item_icon);
+        TextView  authorView  = (TextView) status.findViewById(R.id.status_item_author);
+        TextView  postView    = (TextView) status.findViewById(R.id.status_item_body);
+        TextView  tocView = (TextView) status.findViewById(R.id.status_item_created);
+        TextView  toaView = (TextView) status.findViewById(R.id.status_item_received);
+        ImageView attachedView = (ImageView) status.findViewById(R.id.status_item_attached_image);
 
         if(!statuses.moveToPosition(i))
             return status;
-        author.setText(statuses.getString(1));
-        post.setText(statuses.getString(2));
-        created.setText(new TimeElapsed(statuses.getLong(5)).display());
+        authorView.setText(statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR)));
+        tocView.setText(new TimeElapsed(statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION))).display());
 
-        String filename = statuses.getString(4);
+        String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
+
         if(!filename.equals("")) {
             File directory = FileUtil.getReadableAlbumStorageDir();
             if (directory != null) {
                 File attachedFile = new File(directory + File.separator + filename);
                 Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
-                attachedImage.setImageBitmap(bitmapImage);
-                attachedImage.setVisibility(View.VISIBLE);
+                attachedView.setImageBitmap(bitmapImage);
+                attachedView.setVisibility(View.VISIBLE);
             }
         }
+
+        String post = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
+        SpannableString ss = new SpannableString(post);
+        int beginCharPosition = -1;
+        int j;
+        for(j=0; j < post.length(); j++)
+        {
+            if(post.charAt(j) == '#')
+                beginCharPosition = j;
+            if((post.charAt(j) == ' ') && (beginCharPosition >= 0)){
+                final String word = post.substring(beginCharPosition,j);
+                ClickableSpan clickableSpan = new ClickableSpan() {
+                    @Override
+                    public void onClick(View textView) {
+                        fragment.addFilter(word);
+                    }
+                };
+                ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                beginCharPosition = -1;
+            }
+        }
+        if(beginCharPosition >= 0) {
+            final String word = post.substring(beginCharPosition,j);
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(View textView) {
+                    fragment.addFilter(word);
+                }
+            };
+            ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        postView.setText(ss);
+        postView.setMovementMethod(LinkMovementMethod.getInstance());
 
         return status;
     }

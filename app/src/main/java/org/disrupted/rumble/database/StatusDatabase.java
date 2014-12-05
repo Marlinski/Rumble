@@ -157,8 +157,8 @@ public class StatusDatabase extends Database {
 
         if(statusID >= 0) {
             for (String hashtag : status.getHashtagSet()) {
-                Log.d(TAG, "insert: "+hashtag);
-                long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag);
+
+                long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag.toLowerCase());
                 if(tagID >=0 )
                     DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
             }

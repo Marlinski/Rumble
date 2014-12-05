@@ -27,6 +27,7 @@ import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.os.IBinder;
 import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ import android.view.View;
 
 import org.disrupted.rumble.fragments.DrawerNavigationFragment;
 import org.disrupted.rumble.fragments.DrawerNeighborhoodFragment;
+import org.disrupted.rumble.fragments.FragmentStatusList;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 
@@ -229,6 +231,12 @@ public class HomeActivity extends ActionBarActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
+            case FragmentStatusList.REQUEST_IMAGE_CAPTURE:
+                Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.container);
+                if(fragment != null) {
+                    fragment.onActivityResult(requestCode, resultCode, data);
+                }
+                break;
             case BluetoothConfigureInteraction.REQUEST_ENABLE_BT:
             case BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE:
                 mNeighborhoodDrawerFragment.manageBTCode(requestCode, resultCode, data);

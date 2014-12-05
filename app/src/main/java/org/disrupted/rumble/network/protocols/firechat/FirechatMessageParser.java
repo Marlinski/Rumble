@@ -55,7 +55,8 @@ public class FirechatMessageParser {
     private static final String FIRECHAT  = "firechat";
     private static final String NAME      = "name";
     private static final String LOCATION  = "loc";
-    private static final String LENGTH  = "length";
+    private static final String LENGTH    = "length";
+    private static final String URL       = "url";
 
 
     public String statusToNetwork(StatusMessage message) {
@@ -65,7 +66,15 @@ public class FirechatMessageParser {
             jsonStatus.put(TIMESTAMP, message.getTimeOfCreation());
             jsonStatus.put(UUID, this.generateRandomUUID());
             jsonStatus.put(USER, message.getAuthor());
-            jsonStatus.put(MESSAGE, message.getPost());
+
+            if(message.getFileName() == "")
+                jsonStatus.put(MESSAGE, message.getPost());
+            else {
+                //todo use a FILE DATABASE
+                File file=new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
+                jsonStatus.put(LENGTH, file.length());
+                jsonStatus.put(URL, "image");
+            }
 
             String firechat = "#Nearby";
             if(message.getHashtagSet().size() > 0)

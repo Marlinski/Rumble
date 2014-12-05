@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols.firechat;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.disrupted.rumble.database.events.NewStatusEvent;
@@ -26,9 +28,12 @@ import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -140,6 +145,18 @@ public class FireChatProtocol extends Protocol {
             String jsonStatus = parser.statusToNetwork(statusMessage);
             try {
                 this.out.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
+                Log.d(TAG, jsonStatus.toString());
+                //todo it looks like sending and scanning at the same time disconnect the socket
+                if(statusMessage.getFileName() != "") {
+                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), statusMessage.getFileName());
+                    FileInputStream fis = new FileInputStream(attachedFile);
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int count;
+                    int total = 0;
+                    while ((count = fis.read(buffer)) > 0)
+                        this.out.write(buffer, 0, count);
+                    fis.close();
+                }
             }
             catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending");
@@ -148,6 +165,8 @@ public class FireChatProtocol extends Protocol {
 
         return true;
     }
+
+
 
     @Override
     public void destroyConnection() {

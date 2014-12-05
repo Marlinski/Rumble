@@ -79,6 +79,13 @@
         android:layout_gravity="bottom"
         android:background="#ffffff">
 
+        <ImageButton android:id="@+id/attached_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:src="@drawable/ic_control_point_black_24dp"
+            android:background="#00000000"/>
+
         <EditText android:id="@+id/user_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -92,6 +99,36 @@
             android:layout_gravity="center_vertical|right"
             android:src="@drawable/ic_send_black_36dp"
             android:background="#00000000"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/attached_menu"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:background="#ffffffff"
+        android:visibility="gone">
+
+        <ImageButton android:id="@+id/take_picture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/ic_photo_camera_black_48dp"
+            android:background="@drawable/attached_file_option"/>
+
+        <ImageButton android:id="@+id/attache_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|center_horizontal"
+            android:src="@drawable/ic_photo_album_black_48dp"
+            android:background="@drawable/attached_file_option"/>
 
     </LinearLayout>
+
 </LinearLayout>

@@ -29,6 +29,7 @@ import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.zip.Inflater;
 
@@ -45,7 +46,7 @@ public class FilterListAdapter extends BaseAdapter {
     public FilterListAdapter(Context context) {
         this.context = context;
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.filterList = null;
+        this.filterList = new LinkedList<String>();
     }
 
     @Override
@@ -88,6 +89,12 @@ public class FilterListAdapter extends BaseAdapter {
 
     public void deleteFilter(String filter) {
         filterList.remove(filter);
+    }
+
+    public void addFilter(String filter) {
+        if(filterList.contains(filter.toLowerCase()))
+            return;
+        filterList.add(filter.toLowerCase());
     }
 
     public List<String> getFilterList() {

@@ -200,7 +200,6 @@ public class DrawerNeighborhoodFragment extends Fragment {
         getActivity().startService(stopBluetooth);
     }
 
-
     public void manageBTCode(int requestCode, int resultCode, Intent data) {
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
             Log.d(TAG, "-- Bluetooth Enabled");
