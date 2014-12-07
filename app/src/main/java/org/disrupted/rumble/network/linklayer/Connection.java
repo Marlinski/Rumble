@@ -31,6 +31,7 @@ import org.disrupted.rumble.network.protocols.Protocol;
 public abstract class Connection implements Runnable{
 
     private static final String TAG = "Connection";
+    private static final String ID = "Generic Connection";
 
     protected String macAddress;
     protected String type;
@@ -48,7 +49,7 @@ public abstract class Connection implements Runnable{
         this.macAddress = macAddress;
         this.protocol = protocol;
         this.type = type;
-        this.connectionID = "Generic Connection";
+        this.connectionID = ID;
         this.callback = callback;
     }
 

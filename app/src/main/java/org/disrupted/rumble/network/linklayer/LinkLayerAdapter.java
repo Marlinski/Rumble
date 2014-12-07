@@ -30,10 +30,11 @@ import java.util.List;
 public abstract class LinkLayerAdapter {
 
     protected NetworkCoordinator networkCoordinator;
-    private boolean activated;
+    protected boolean activated;
 
     public LinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
+        this.activated = false;
     }
 
     public boolean isActivated() {

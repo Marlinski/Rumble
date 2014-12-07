@@ -20,18 +20,13 @@
 package org.disrupted.rumble;
 
 
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.res.Configuration;
-import android.os.IBinder;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,8 +34,8 @@ import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 
-import org.disrupted.rumble.fragments.DrawerNavigationFragment;
-import org.disrupted.rumble.fragments.DrawerNeighborhoodFragment;
+import org.disrupted.rumble.fragments.FragmentNavigationDrawer;
+import org.disrupted.rumble.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.fragments.FragmentStatusList;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
@@ -56,12 +51,14 @@ public class HomeActivity extends ActionBarActivity {
     private ActionBar actionBar;
     private ActionBarDrawerToggle mDrawerToggle;
     private DrawerLayout mDrawerLayout;
-    private DrawerNavigationFragment mNavigationDrawerFragment;
-    private DrawerNeighborhoodFragment mNeighborhoodDrawerFragment;
+    private FragmentNavigationDrawer mNavigationDrawerFragment;
+    private FragmentNetworkDrawer mNeighborhoodDrawerFragment;
 
+    /*
+     * don't bind to the service anymore, instead we call getInstance() when needed
     public NetworkCoordinator mNetworkCoordinator;
     public boolean mBound = false;
-
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,8 +101,8 @@ public class HomeActivity extends ActionBarActivity {
         actionBar.setHomeButtonEnabled(true);
         actionBar.setDisplayHomeAsUpEnabled(true);
 
-        mNavigationDrawerFragment   = (DrawerNavigationFragment)getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mNeighborhoodDrawerFragment = (DrawerNeighborhoodFragment)getSupportFragmentManager().findFragmentById(R.id.neighborhood_drawer);
+        mNavigationDrawerFragment   = (FragmentNavigationDrawer)getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+        mNeighborhoodDrawerFragment = (FragmentNetworkDrawer)getSupportFragmentManager().findFragmentById(R.id.neighborhood_drawer);
 
         /*
         // increase the dragging area to swipe between the drawer
@@ -140,16 +137,18 @@ public class HomeActivity extends ActionBarActivity {
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, NetworkCoordinator.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        //bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        /*
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
         }
+        */
     }
 
     @Override
@@ -244,6 +243,8 @@ public class HomeActivity extends ActionBarActivity {
         }
     }
 
+    /*
+     * removed until proven usefull ^^
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
@@ -261,4 +262,5 @@ public class HomeActivity extends ActionBarActivity {
             mBound = false;
         }
     };
+    */
 }

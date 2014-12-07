@@ -32,6 +32,7 @@ import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourDevice;
 import org.disrupted.rumble.network.NeighbourRecord;
+import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 
 import java.util.LinkedList;
@@ -68,10 +69,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        if(((HomeActivity) activity).mBound){
-            NeighbourRecord record = ((HomeActivity) activity).
-                    mNetworkCoordinator.
-                    getNeighbourRecordFromID(neighborhood.get(i));
+        if(NetworkCoordinator.getInstance() != null){
+            NeighbourRecord record = NetworkCoordinator.getInstance().
+                                     getNeighbourRecordFromID(neighborhood.get(i));
 
             name.setText(record.getName());
             id.setText(record.getID());
@@ -108,6 +108,11 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void updateList(List<String> newNeighborhood) {
         this.neighborhood.clear();
         this.neighborhood = newNeighborhood;
+        notifyDataSetChanged();
+    }
+
+    public void reset() {
+        this.neighborhood.clear();
         notifyDataSetChanged();
     }
 }

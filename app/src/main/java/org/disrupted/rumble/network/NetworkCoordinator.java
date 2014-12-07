@@ -105,6 +105,7 @@ public class NetworkCoordinator extends Service {
         }
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if(intent == null) return START_STICKY;
@@ -125,6 +126,14 @@ public class NetworkCoordinator extends Service {
             adapters.get(WifiManagedLinkLayerAdapter.LinkLayerIdentifier).linkStop();
         }
         return START_STICKY;
+    }
+
+    public boolean isLinkLayerEnabled(String linkLayerIdentifier) {
+        LinkLayerAdapter linkLayer = adapters.get(linkLayerIdentifier);
+        if(linkLayer == null)
+            return false;
+        else
+            return linkLayer.isActivated();
     }
 
     public boolean isScanning() {

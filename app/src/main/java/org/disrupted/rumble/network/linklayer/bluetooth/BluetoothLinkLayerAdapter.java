@@ -20,7 +20,6 @@
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -51,20 +50,14 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
     private static final String TAG = "BluetoothLinkLayerAdapter";
     public static final String LinkLayerIdentifier = "BLUETOOTH";
 
-    private BluetoothAdapter btAdapter;
     private BluetoothScanner btScanner;
     private boolean register;
-    private boolean activated;
 
-    private List<Connection> connectionToPerform;
 
     public BluetoothLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         super(networkCoordinator);
-        this.btAdapter = BluetoothUtil.getBluetoothAdapter(networkCoordinator);
         this.btScanner = BluetoothScanner.getInstance(networkCoordinator);
         register = false;
-        activated = false;
-        connectionToPerform = new LinkedList<Connection>();
     }
 
     public String getID() {
@@ -88,7 +81,6 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
         filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
         networkCoordinator.registerReceiver(mReceiver, filter);
         register = true;
-        activated = true;
     }
 
     public void onLinkStop() {
@@ -97,13 +89,15 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
         if(register)
             networkCoordinator.unregisterReceiver(mReceiver);
         register = false;
-        activated = false;
         networkCoordinator.removeNeighborsType(LinkLayerIdentifier);
     }
 
     @Override
     public boolean isScanning() {
-        return BluetoothUtil.getBluetoothAdapter(networkCoordinator).isDiscovering();
+        if(activated)
+            return BluetoothUtil.getBluetoothAdapter(networkCoordinator).isDiscovering();
+        else
+            return false;
     }
 
     public void forceDiscovery() {

@@ -44,7 +44,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     private static final String TAG = "WifiManagedLinkLayerAdapter";
 
-    public static final String LinkLayerIdentifier = "Wifi-Managed";
+    public static final String LinkLayerIdentifier = "WIFI-Managed";
 
     String macAddress;
     WifiManager wifiMan;
@@ -99,15 +99,17 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     @Override
     public void onLinkStop() {
+        ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
+        networkCoordinator.removeNeighborsType(LinkLayerIdentifier);
         if(!registered)
             return;
-
         if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
             mNsdManager.unregisterService(mRegistrationListener);
             mNsdManager.stopServiceDiscovery(mDiscoveryListener);
         }
         wifiInf = null;
         wifiMan = null;
+
     }
 
     @Override

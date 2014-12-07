@@ -26,13 +26,13 @@
         android:layout_width="@dimen/navigation_drawer_width"
         android:layout_height="match_parent"
         android:layout_gravity="start"
-        android:name="org.disrupted.rumble.fragments.DrawerNavigationFragment"
+        android:name="org.disrupted.rumble.fragments.FragmentNavigationDrawer"
         tools:layout="@layout/fragment_navigation_drawer" />
 
     <fragment android:id="@+id/neighborhood_drawer"
         android:layout_width="@dimen/navigation_drawer_width"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:name="org.disrupted.rumble.fragments.DrawerNeighborhoodFragment"
+        android:name="org.disrupted.rumble.fragments.FragmentNetworkDrawer"
         tools:layout="@layout/fragment_neighborhood_drawer" />
 </android.support.v4.widget.DrawerLayout>

@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.fragments;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -34,7 +35,6 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 
-import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
@@ -44,6 +44,7 @@ import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
 import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 
 import java.util.List;
 
@@ -52,7 +53,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class DrawerNeighborhoodFragment extends Fragment {
+public class FragmentNetworkDrawer extends Fragment {
 
     public static final String TAG = "NeighborhoodDrawerFragment";
 
@@ -78,7 +79,8 @@ public class DrawerNeighborhoodFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.neighborhood_drawer, container, false);
+        mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.network_drawer, container, false);
+        initializeInterfaces();
         initializeNeighbourview();
         initializeProgressBar();
         return mDrawerFragmentLayout;
@@ -93,10 +95,16 @@ public class DrawerNeighborhoodFragment extends Fragment {
         }
     }
 
+    public void initializeInterfaces() {
+        Switch bluetoothSwitch = ((Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth));
+        if (NetworkCoordinator.getInstance() != null)
+            bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+    }
+
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        if( ((HomeActivity)getActivity()).mBound) {
-            List<String> neighborhood = ((HomeActivity) getActivity()).mNetworkCoordinator.getNeighborList();
+        if(NetworkCoordinator.getInstance() != null) {
+            List<String> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
             listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         }else {
             listAdapter = new NeighborhoodListAdapter(getActivity());
@@ -105,8 +113,8 @@ public class DrawerNeighborhoodFragment extends Fragment {
     }
 
     public void initializeProgressBar() {
-        if(((HomeActivity)getActivity()).mBound) {
-            if(((HomeActivity)getActivity()).mNetworkCoordinator.isScanning()){
+        if(NetworkCoordinator.getInstance() != null) {
+            if(NetworkCoordinator.getInstance().isScanning()){
                 ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
                 ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
             }
@@ -142,24 +150,26 @@ public class DrawerNeighborhoodFragment extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if( ((HomeActivity)getActivity()).mBound) {
-                    List<String> neighborhood = ((HomeActivity) getActivity()).mNetworkCoordinator.getNeighborList();
-                    if (mDrawerNeighbourList.getAdapter() != null)
+                if(NetworkCoordinator.getInstance() != null) {
+                    List<String> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
+                    if (mDrawerNeighbourList.getAdapter() != null) {
                         ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
+                    }
+                } else {
+                    ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).reset();
                 }
             }
         });
     }
 
     public void onForceScanClicked(View view) {
-        ((HomeActivity) getActivity()).mNetworkCoordinator.forceScan();
+        NetworkCoordinator.getInstance().forceScan();
     }
 
 
     private ActionBar getActionBar() {
         return ((ActionBarActivity) getActivity()).getSupportActionBar();
     }
-
 
     /*
      * =======================================
@@ -217,7 +227,7 @@ public class DrawerNeighborhoodFragment extends Fragment {
         }
 
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_CANCELED)) {
-            ((Switch)getActivity().findViewById(R.id.toggle_bluetooth)).setChecked(false);
+            ((Switch)mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth)).setChecked(false);
         }
 
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == getActivity().RESULT_OK)) {

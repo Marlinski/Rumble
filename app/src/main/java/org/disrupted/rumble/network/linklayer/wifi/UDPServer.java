@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
+import android.util.Log;
+
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.protocols.Protocol;
 
@@ -32,12 +34,17 @@ import java.net.SocketException;
  */
 public class UDPServer extends Connection {
 
+    private static final String TAG = "UDPServer";
+    private static final String ID  = "UDPRumbleServer";
+
+    protected int BUFFER_SIZE = 1024;
     protected int udpPort;
     protected DatagramSocket mServerSocket;
 
     public UDPServer(String macAddress, int port,String linkLayerID, Protocol protocol, ConnectionCallback callback) {
         super(macAddress, protocol, linkLayerID, callback);
         this.udpPort = port;
+        this.connectionID = ID;
     }
 
     @Override
@@ -57,11 +64,22 @@ public class UDPServer extends Connection {
             onConnectionFailed("cannot open UDP Socket on port: "+udpPort);
             return;
         }
+
+        byte[] buffer = new byte[BUFFER_SIZE];
+        DatagramPacket packet = new DatagramPacket(buffer, BUFFER_SIZE);
+        try {
+            while(true) {
+                mServerSocket.receive(packet);
+            }
+        }
+        catch(IOException ignore) {
+        }
+
         mServerSocket.close();
     }
 
     @Override
     public void kill() {
-
+        mServerSocket.close();
     }
 }
