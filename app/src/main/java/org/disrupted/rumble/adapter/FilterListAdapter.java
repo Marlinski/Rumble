@@ -20,6 +20,7 @@
 package org.disrupted.rumble.adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,35 +29,62 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.fragments.FragmentStatusList;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.zip.Inflater;
 
 /**
  * @author Marlinski
  */
 public class FilterListAdapter extends BaseAdapter {
 
+    private static final String TAG = "FilterListAdapter";
+
+    public static class FilterEntry {
+        public String  filter;
+        public FragmentStatusList.OnFilterClick filterClick;
+        public FragmentStatusList.OnSubscriptionClick subscriptionClick;
+    }
+
     Context context;
-    LinearLayout filterListLayout;
     LayoutInflater inflater;
-    List<String> filterList;
+    List<FilterEntry> filterList;
+    List<String>      subscriptionList;
 
     public FilterListAdapter(Context context) {
         this.context = context;
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.filterList = new LinkedList<String>();
+        this.filterList = new LinkedList<FilterEntry>();
+        this.subscriptionList = new LinkedList<String>();
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         View filterView = inflater.inflate(R.layout.filter_item, null, true);
-        TextView filter = (TextView) filterView.findViewById(R.id.filter_text);
-        String filterText = filterList.get(i);
-        if(filterText.length() > 9)
-            filterText = filterText.substring(0,9) + "..";
-        filter.setText(filterText);
+        TextView filterTextView       = (TextView) filterView.findViewById(R.id.filter_text);
+        LinearLayout outerFilterView  = (LinearLayout) filterView.findViewById(R.id.filter_outer_text);
+        TextView subscriptionTextView = (TextView) filterView.findViewById(R.id.subscription_button);
+
+        FilterEntry entry = filterList.get(i);
+        filterTextView.setText(entry.filter);
+
+        if(entry.filterClick != null)
+            outerFilterView.setOnClickListener(new OnAdapterFilterClick(entry.filter, entry.filterClick));
+
+        if(subscriptionList.contains(entry.filter.toLowerCase())) {
+            subscriptionTextView.setText(R.string.filter_subscribed);
+            subscriptionTextView.setTextColor(context.getResources().getColor(R.color.white));
+            subscriptionTextView.setBackgroundColor(context.getResources().getColor(R.color.green));
+        } else {
+            subscriptionTextView.setText(R.string.filter_not_subscribed);
+            subscriptionTextView.setTextColor(context.getResources().getColor(R.color.black));
+            subscriptionTextView.setBackgroundColor(context.getResources().getColor(R.color.white));
+        }
+        if(entry.subscriptionClick != null)
+            subscriptionTextView.setOnClickListener(new OnAdapterSubscriptionClick(entry.filter, entry.subscriptionClick));
+
         return filterView;
     }
 
@@ -81,24 +109,69 @@ public class FilterListAdapter extends BaseAdapter {
         return 0;
     }
 
-    public void swap(List<String> filterList) {
-        if(this.filterList != null)
-            this.filterList.clear();
-        this.filterList = filterList;
-    }
-
     public void deleteFilter(String filter) {
-        filterList.remove(filter);
+        Iterator<FilterEntry> it = filterList.iterator();
+        while(it.hasNext()) {
+            if(it.next().filter.equals(filter)) {
+                it.remove();
+                return;
+            }
+        }
     }
 
-    public void addFilter(String filter) {
-        if(filterList.contains(filter.toLowerCase()))
-            return;
-        filterList.add(filter.toLowerCase());
+    public boolean addFilter(FilterEntry filter) {
+        for(FilterEntry entry : filterList) {
+            if((entry.filter).toLowerCase().equals(filter.filter.toLowerCase()))
+                return false;
+        }
+        filterList.add(filter);
+        return true;
     }
 
     public List<String> getFilterList() {
-        return filterList;
+        List<String> filters = new LinkedList<String>();
+        for(FilterEntry entry : filterList) {
+            filters.add(entry.filter);
+        }
+        return filters;
+    }
+
+    public void swapSubscriptions(List<String> subscriptions) {
+        if(!subscriptionList.isEmpty())
+            subscriptionList.clear();
+        subscriptionList = subscriptions;
+    }
+
+    public class OnAdapterFilterClick implements View.OnClickListener {
+
+        private String filter;
+        private FragmentStatusList.OnFilterClick callback;
+
+        public OnAdapterFilterClick(String filter, FragmentStatusList.OnFilterClick callback) {
+            this.filter = filter;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onClick(View view) {
+            callback.onClick(filter);
+        }
+    }
+
+    public class OnAdapterSubscriptionClick implements View.OnClickListener {
+
+        private String filter;
+        private FragmentStatusList.OnSubscriptionClick callback;
+
+        public OnAdapterSubscriptionClick(String filter, FragmentStatusList.OnSubscriptionClick callback) {
+            this.filter = filter;
+            this.callback = callback;
+        }
+
+        @Override
+        public void onClick(View view) {
+            callback.onClick(filter);
+        }
     }
 
 }

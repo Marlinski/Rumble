@@ -39,12 +39,15 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.FilterListAdapter;
 import org.disrupted.rumble.adapter.StatusListAdapter;
+import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.HashtagDatabase;
 import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
@@ -62,7 +65,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FragmentStatusList extends Fragment implements DatabaseExecutor.WritableQueryCallback, DatabaseExecutor.ReadableQueryCallback {
+public class FragmentStatusList extends Fragment {
 
     private static final String TAG = "FragmentStatusList";
 
@@ -73,13 +76,26 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
     private FilterListAdapter filterListAdapter;
     private TextView textView;
     private ImageButton sendButton;
-    private GridView filters;
+
+    private ListView filters;
+    private List<String> subscriptionList;
     private ProgressBar progressBar;
     private ImageButton plusButton;
     private LinearLayout attachedMenu;
     private boolean menuOpen;
+    private boolean loadingStatuses;
+    private boolean loadingSubscriptions;
 
     private Bitmap imageBitmap;
+
+
+    public interface OnFilterClick {
+        public void onClick(String filter);
+    }
+    public interface OnSubscriptionClick {
+        public void onClick(String filter);
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -87,13 +103,14 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
         mView = inflater.inflate(R.layout.status_list, container, false);
 
         // the filters
-        filters = (GridView) (mView.findViewById(R.id.filter_list));
+        filters = (ListView) (mView.findViewById(R.id.filter_list));
         filterListAdapter = new FilterListAdapter(getActivity());
         filters.setAdapter(filterListAdapter);
+        filters.setClickable(false);
+        subscriptionList = new LinkedList<String>();
 
         // progress bar
         progressBar = (ProgressBar) mView.findViewById(R.id.loadingStatusList);
-        filters.setOnItemClickListener(new OnFilterClick());
 
         // the list of status
         ListView statusList = (ListView) mView.findViewById(R.id.status_list);
@@ -105,8 +122,10 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
                                                       }
                                                   }
         );
-        getStatuses();
         statusList.setAdapter(statusListAdapter);
+        getStatuses();
+        getSubscriptions();
+
         EventBus.getDefault().register(this);
 
         // the additional menu to attach file
@@ -140,92 +159,121 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
         super.onDestroy();
     }
 
-    @Override
-    public void onWritableQueryFinished(boolean success) {
-        getActivity().runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            textView.setText("");
-                                            sendButton.setImageResource(R.drawable.ic_send_black_36dp);
-                                            sendButton.setClickable(true);
-                                        }
-                                    }
-        );
-    }
 
     public void getStatuses() {
-        progressBar.setVisibility(View.VISIBLE);
-        if (filterListAdapter.getCount() == 0) {
-            DatabaseFactory.getStatusDatabase(getActivity())
-                    .getStatuses(this);
-        } else {
-            DatabaseFactory.getStatusDatabase(getActivity())
-                    .getFilteredStatuses(filterListAdapter.getFilterList(), this);
-        }
-    }
-
-    @Override
-    public void onReadableQueryFinished(Cursor answer) {
-        if (getActivity() == null) {
-            if (answer != null)
-                answer.close();
-            return;
-        }
-        statusListAdapter.swap(answer);
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                progressBar.setVisibility(View.GONE);
-                statusListAdapter.notifyDataSetChanged();
-                filters.setClickable(true);
+                progressBar.setVisibility(View.VISIBLE);
+                loadingStatuses = true;
+                if (filterListAdapter.getCount() == 0) {
+                    DatabaseFactory.getStatusDatabase(getActivity())
+                            .getStatuses(onStatusesLoaded);
+                } else {
+                    DatabaseFactory.getStatusDatabase(getActivity())
+                            .getFilteredStatuses(filterListAdapter.getFilterList(), onStatusesLoaded);
+                }
             }
         });
     }
-
-    private class OnFilterClick implements AdapterView.OnItemClickListener {
+    DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
-        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        public void onReadableQueryFinished(Cursor cursor) {
+            final Cursor answer = cursor;
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (getActivity() == null) {
+                        if (answer != null)
+                            answer.close();
+                        return;
+                    }
+                    statusListAdapter.swap(answer);
+
+                    progressBar.setVisibility(View.GONE);
+                    statusListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
+
+    public void getSubscriptions() {
+        loadingSubscriptions = true;
+        DatabaseFactory.getSubscriptionDatabase(getActivity())
+                .getLocalUserSubscriptions(onSubscriptionsLoaded);
+
+    }
+    DatabaseExecutor.ReadableQueryCallback onSubscriptionsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(Cursor cursor) {
+            final Cursor answer = cursor;
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    loadingSubscriptions = false;
+                    if (getActivity() == null) {
+                        if (answer != null)
+                            answer.close();
+                        return;
+                    }
+                    List<String> subscriptions = new LinkedList<String>();
+                    if (answer.moveToFirst()) {
+                        do {
+                            subscriptions.add(answer.getString(answer.getColumnIndexOrThrow(HashtagDatabase.HASHTAG)));
+                        } while (answer.moveToNext());
+                    }
+                    answer.close();
+                    subscriptionList.clear();
+                    subscriptionList = subscriptions;
+                    filterListAdapter.swapSubscriptions(subscriptions);
+                    filterListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
+
+    OnFilterClick onFilterClick = new OnFilterClick() {
+        @Override
+        public void onClick(String filter) {
+            filterListAdapter.deleteFilter(filter);
+            filterListAdapter.notifyDataSetChanged();
+            getStatuses();
             if(filterListAdapter.getCount() == 0)
                 filters.setVisibility(View.GONE);
-            filterListAdapter.deleteFilter((String) adapterView.getItemAtPosition(i));
-            filterListAdapter.notifyDataSetChanged();
-            filters.setClickable(false);
-            getStatuses();
+
         }
-    }
+    };
+
+    OnSubscriptionClick onSubscriptionClick = new OnSubscriptionClick() {
+        @Override
+        public void onClick(String filter) {
+            if(subscriptionList.contains(filter.toLowerCase()))
+                DatabaseFactory.getSubscriptionDatabase(getActivity()).unsubscribeLocalUser(filter,onSubscribed);
+            else
+                DatabaseFactory.getSubscriptionDatabase(getActivity()).subscribeLocalUser(filter,onSubscribed);
+        }
+    };
+    DatabaseExecutor.WritableQueryCallback onSubscribed = new DatabaseExecutor.WritableQueryCallback() {
+        @Override
+        public void onWritableQueryFinished(boolean success) {
+            if(success)
+                getSubscriptions();
+        }
+    };
 
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
-        filterListAdapter.addFilter(filter);
-        filterListAdapter.notifyDataSetChanged();
-        getStatuses();
-    }
 
+        FilterListAdapter.FilterEntry entry = new FilterListAdapter.FilterEntry();
+        entry.filter = filter;
+        entry.filterClick = onFilterClick;
+        entry.subscriptionClick = onSubscriptionClick;
 
-    private class OnClickSend implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            if (textView == null)
-                return;
-
-            String message = textView.getText().toString();
-            if ((message == "") && (imageBitmap == null))
-                return;
-
-
-            StatusMessage statusMessage = new StatusMessage(message, "test");
-
-            try {
-                String filename = saveImageOnDisk();
-                statusMessage.setFileName(filename);
-            }
-            catch (IOException ignore) {
-            }
-
-            sendButton.setClickable(false);
-            sendButton.setImageResource(R.drawable.ic_send_grey600_36dp);
-            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, FragmentStatusList.this);
+        if(filterListAdapter.addFilter(entry)) {
+            filterListAdapter.notifyDataSetChanged();
+            getStatuses();
         }
     }
 
@@ -260,6 +308,7 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
         }
     }
 
+    //todo review this code, probably a bit dirty
     public String saveImageOnDisk() throws IOException{
         String filename = null;
         if(imageBitmap == null)
@@ -293,13 +342,57 @@ public class FragmentStatusList extends Fragment implements DatabaseExecutor.Wri
         }
     }
 
-    public void onEvent(NewStatusEvent status) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                getStatuses();
+
+
+    private class OnClickSend implements View.OnClickListener {
+        @Override
+        public void onClick(View view) {
+            if (textView == null)
+                return;
+
+            String message = textView.getText().toString();
+            if ((message == "") && (imageBitmap == null))
+                return;
+
+            Contact localContact = DatabaseFactory.getContactDatabase(getActivity()).getLocalContact();
+            StatusMessage statusMessage = new StatusMessage(message, localContact.getName());
+
+            try {
+                String filename = saveImageOnDisk();
+                statusMessage.setFileName(filename);
             }
-        });
+            catch (IOException ignore) {
+            }
+
+            sendButton.setClickable(false);
+            sendButton.setImageResource(R.drawable.ic_send_grey600_36dp);
+            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, onMessageSaved);
+        }
+    }
+
+    DatabaseExecutor.WritableQueryCallback onMessageSaved = new DatabaseExecutor.WritableQueryCallback() {
+        @Override
+        public void onWritableQueryFinished(boolean success) {
+            getActivity().runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                textView.setText("");
+                                                sendButton.setImageResource(R.drawable.ic_send_black_36dp);
+                                                sendButton.setClickable(true);
+                                            }
+                                        }
+            );
+        }
+    };
+
+
+
+
+    /*
+     * Events that come from outside the activity (like new status for instance)
+     */
+    public void onEvent(NewStatusEvent status) {
+        getStatuses();
     }
 
 }

@@ -24,7 +24,7 @@
     android:shape="rectangle"   >
 
     <solid
-        android:color="@color/blue" >
+        android:color="@color/white" >
     </solid>
 
     <padding

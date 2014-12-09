@@ -17,31 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.app;
+package org.disrupted.rumble.database.events;
 
-import android.app.Application;
-import android.content.ContentValues;
-
-import org.disrupted.rumble.database.ContactDatabase;
-import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.contact.Contact;
 
 /**
  * @author Marlinski
  */
-public class RumbleApplication extends Application{
+public class NewContactEvent extends ResourceEvent {
 
-    private DatabaseFactory mDatabaseFactory;
+    public Contact contact;
 
-    // name of the Rumble Image directory as it appears on Photo Album
-    public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
-
-    // minimum 10 MB available for Rumble to save files
-    public static long MINIMUM_FREE_SPACE_AVAILABLE = 10000000;
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mDatabaseFactory.getInstance(this);
+    public NewContactEvent(Contact contact){
+        this.contact = contact;
     }
 
 }

@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -40,12 +41,14 @@ public class DatabaseFactory {
 
     private static DatabaseFactory instance;
 
-    private DatabaseHelper          databaseHelper;
-    private final StatusDatabase    statusDatabase;
-    private final HashtagDatabase   hashtagDatabase;
-    private final StatusTagDatabase statusTagDatabase;
-    private final FileDatabase      fileDatabase;
-    private DatabaseExecutor        databaseExecutor;
+    private DatabaseHelper             databaseHelper;
+    private final StatusDatabase       statusDatabase;
+    private final HashtagDatabase      hashtagDatabase;
+    private final StatusTagDatabase    statusTagDatabase;
+    private final FileDatabase         fileDatabase;
+    private final SubscriptionDatabase subscriptionDatabase;
+    private final ContactDatabase      contactDatabase;
+    private DatabaseExecutor           databaseExecutor;
 
     public static DatabaseFactory getInstance(Context context) {
         synchronized (lock) {
@@ -68,27 +71,38 @@ public class DatabaseFactory {
     public static FileDatabase getDocumentDatabase(Context context) {
         return getInstance(context).fileDatabase;
     }
+    public static SubscriptionDatabase getSubscriptionDatabase(Context context) {
+        return getInstance(context).subscriptionDatabase;
+    }
+    public static ContactDatabase getContactDatabase(Context context) {
+        return getInstance(context).contactDatabase;
+    }
     public static DatabaseExecutor getDatabaseExecutor(Context context) {
         return getInstance(context).databaseExecutor;
     }
 
+
     private DatabaseFactory(Context context) {
-        this.databaseHelper    = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.statusDatabase    = new StatusDatabase(context, databaseHelper);
-        this.hashtagDatabase   = new HashtagDatabase(context, databaseHelper);
-        this.statusTagDatabase = new StatusTagDatabase(context, databaseHelper);
-        this.fileDatabase      = new FileDatabase(context, databaseHelper);
-        this.databaseExecutor  = new DatabaseExecutor();
+        this.databaseHelper       = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.statusDatabase       = new StatusDatabase(context, databaseHelper);
+        this.hashtagDatabase      = new HashtagDatabase(context, databaseHelper);
+        this.statusTagDatabase    = new StatusTagDatabase(context, databaseHelper);
+        this.fileDatabase         = new FileDatabase(context, databaseHelper);
+        this.contactDatabase      = new ContactDatabase(context, databaseHelper);
+        this.subscriptionDatabase = new SubscriptionDatabase(context, databaseHelper);
+        this.databaseExecutor     = new DatabaseExecutor();
     }
 
     public void reset(Context context) {
         DatabaseHelper old = this.databaseHelper;
         this.databaseHelper = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
 
+        this.contactDatabase.reset(databaseHelper);
         this.statusDatabase.reset(databaseHelper);
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.fileDatabase.reset(databaseHelper);
+        this.subscriptionDatabase.reset(databaseHelper);
         old.close();
     }
 
@@ -105,10 +119,12 @@ public class DatabaseFactory {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+            db.execSQL(ContactDatabase.CREATE_TABLE);
             db.execSQL(StatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(FileDatabase.CREATE_TABLE);
+            db.execSQL(SubscriptionDatabase.CREATE_TABLE);
 
             executeStatements(db, StatusTagDatabase.CREATE_INDEXS);
         }

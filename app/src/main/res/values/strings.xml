@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">Rumble</string>
+    <string name="pref_previously_started">previously_started</string>
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="home_tab">Home</string>
@@ -43,5 +44,13 @@
     <string name="year_ago">a year ago</string>
     <string name="years_ago">years ago</string>
     <string name="too_old">ooooooold</string>
+
+    <string name="filter_not_subscribed">not subscribed</string>
+    <string name="filter_subscribed">subscribed</string>
+    <string name="toast_subscribed_to">Subscribed to</string>
+
+    <string name="welcome_notice">I there! Welcome to the Rumble network, where speech is free and uncensored!</string>
+    <string name="warning_notice">All messages submitted to the network are meant to be public so better take a pseudonym!</string>
+    <string name="login">Log in!</string>
 
 </resources>

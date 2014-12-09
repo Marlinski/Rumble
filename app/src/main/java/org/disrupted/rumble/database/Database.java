@@ -22,6 +22,8 @@ package org.disrupted.rumble.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.disrupted.rumble.contact.Contact;
+import org.disrupted.rumble.database.events.NewContactEvent;
 import org.disrupted.rumble.database.events.NewHashtagEvent;
 import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
@@ -44,6 +46,10 @@ public abstract class Database {
     public Database(Context context, SQLiteOpenHelper databaseHelper) {
         this.context        = context;
         this.databaseHelper = databaseHelper;
+    }
+
+    public void notifyContactListListener(Contact contact) {
+        EventBus.getDefault().post(new NewContactEvent(contact));
     }
 
     public void notifyStatusListListener(StatusMessage status) {

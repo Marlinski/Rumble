@@ -21,7 +21,9 @@ package org.disrupted.rumble;
 
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
@@ -54,16 +56,12 @@ public class HomeActivity extends ActionBarActivity {
     private FragmentNavigationDrawer mNavigationDrawerFragment;
     private FragmentNetworkDrawer mNeighborhoodDrawerFragment;
 
-    /*
-     * don't bind to the service anymore, instead we call getInstance() when needed
-    public NetworkCoordinator mNetworkCoordinator;
-    public boolean mBound = false;
-     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+
+        setContentView(R.layout.home_activity);
         mTitle = getTitle();
         actionBar = getSupportActionBar();
 
@@ -128,6 +126,11 @@ public class HomeActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         mDrawerToggle.syncState();
@@ -137,18 +140,11 @@ public class HomeActivity extends ActionBarActivity {
     protected void onStart() {
         super.onStart();
         Intent intent = new Intent(this, NetworkCoordinator.class);
-        //bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        /*
-        if (mBound) {
-            unbindService(mConnection);
-            mBound = false;
-        }
-        */
     }
 
     @Override
@@ -243,24 +239,5 @@ public class HomeActivity extends ActionBarActivity {
         }
     }
 
-    /*
-     * removed until proven usefull ^^
-    private ServiceConnection mConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            Log.d(TAG, "[->] bound to Service NetworkCoordinator");
-            NetworkCoordinator.LocalBinder binder = (NetworkCoordinator.LocalBinder) service;
-            mNetworkCoordinator = binder.getService();
-            mBound = true;
-        }
 
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            Log.d(TAG, "[->] disconnected from Service NetworkCoordinator");
-            mNetworkCoordinator = null;
-            mBound = false;
-        }
-    };
-    */
 }

@@ -101,15 +101,17 @@ public class StatusDatabase extends Database {
         StringBuilder query = new StringBuilder(
                 "SELECT * FROM "+StatusDatabase.TABLE_NAME+" s"+
                 " JOIN " + StatusTagDatabase.TABLE_NAME+" m"+
-                   " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
+                " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
                 " JOIN "+HashtagDatabase.TABLE_NAME+" h"                     +
-                   " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
+                " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
                 " WHERE lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
+
 
         String[] array = new String[filters.size()];
         for(int i = 1; i < filters.size(); i++) {
             query.append(" OR lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
         }
+        query.append(" GROUP BY "+StatusDatabase.ID);
         Cursor cursor = database.rawQuery(query.toString(),filters.toArray(array));
         return cursor;
     }
