@@ -26,6 +26,7 @@ import android.util.Log;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.protocols.GenericProtocol;
 import org.disrupted.rumble.network.protocols.Protocol;
 
 import java.io.IOException;
@@ -43,32 +44,37 @@ import de.greenrobot.event.EventBus;
  *
  * @author Marlinski
  */
-public class BluetoothClient extends Connection {
+public abstract class BluetoothClient extends GenericProtocol implements Connection {
 
     private static final String TAG = "BluetoothClient";
 
-    private UUID bt_service_uuid;
-    private String bt_service_name;
+    protected UUID   bt_service_uuid;
+    protected String bt_service_name;
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
-    private BluetoothDevice mmBluetoothDevice;
-    private boolean secureSocket;
-    private BluetoothSocket mmConnectedSocket;
-    private InputStream inputStream;
-    private OutputStream outputStream;
+    protected String macAddress;
+    protected boolean secureSocket;
+    protected BluetoothDevice mmBluetoothDevice;
+    protected BluetoothSocket mmConnectedSocket;
+    protected InputStream inputStream;
+    protected OutputStream outputStream;
     private boolean isBeingKilled;
 
-    public BluetoothClient(String remoteMacAddress, UUID uuid, String name, boolean secure, Protocol message, ConnectionCallback callback){
-        super(remoteMacAddress, message, BluetoothLinkLayerAdapter.LinkLayerIdentifier, callback);
+    public BluetoothClient(String remoteMacAddress, UUID uuid, String name, boolean secure){
+        this.macAddress = remoteMacAddress;
         this.bt_service_uuid = uuid;
         this.bt_service_name = name;
         this.secureSocket = secure;
-        this.connectionID = "ConnectTO: "+this.macAddress+":"+bt_service_uuid.toString();
         this.mmConnectedSocket = null;
         this.inputStream = null;
         this.outputStream = null;
         this.isBeingKilled = false;
+    }
+
+    @Override
+    public String getType() {
+        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override
@@ -90,9 +96,11 @@ public class BluetoothClient extends Connection {
                 mmConnectedSocket = mmBluetoothDevice.createInsecureRfcommSocketToServiceRecord(bt_service_uuid);
 
             if(mmConnectedSocket == null) throw new Exception("[!] Unable to connect to"+macAddress+" to service "+ bt_service_uuid.toString());
+
             mmConnectedSocket.connect();
+
         } catch (Exception e) {
-            onConnectionFailed(e.toString());
+            Log.e(TAG, e.toString());
             return;
         }
 
@@ -101,12 +109,17 @@ public class BluetoothClient extends Connection {
             inputStream = mmConnectedSocket.getInputStream();
             outputStream = mmConnectedSocket.getOutputStream();
         } catch (IOException e) {
-            onConnectionFailed("Cannot get Input/Output stream from Bluetooth Socket");
+            Log.e(TAG, " [!] Cannot get Input/Output stream from Bluetooth Socket");
             return;
         }
 
-        onConnectionEstablished(macAddress);
-        protocol.onConnected(macAddress, inputStream, outputStream);
+        Log.d(TAG, "[+] ESTABLISHED: " + getConnectionID());
+        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
+        if(networkCoordinator != null)
+            networkCoordinator.addProtocol(macAddress, this);
+
+
+        onConnected();
 
         if(!isBeingKilled)
             kill();
@@ -115,14 +128,14 @@ public class BluetoothClient extends Connection {
     @Override
     public void kill() {
         this.isBeingKilled = true;
-        if(protocol.isRunning()) {
-            protocol.stop();
-
-            if (mmConnectedSocket != null) {
-                try {mmConnectedSocket.close();} catch (Exception ignore) {}
-                mmConnectedSocket = null;
+        if (isRunning()) {
+            stop();
+            try {
+                mmConnectedSocket.close();
+            } catch (Exception ignore) {
+                Log.e(TAG, "[!] unable to close() socket ", ignore);
             }
-            onConnectionEnded(macAddress);
+            Log.d(TAG, "[+] ENDED: " + getConnectionID());
         }
     }
 
