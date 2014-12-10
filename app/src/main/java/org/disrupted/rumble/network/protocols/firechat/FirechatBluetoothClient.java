@@ -19,26 +19,20 @@
 
 package org.disrupted.rumble.network.protocols.firechat;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
+import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -48,32 +42,38 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FireChatProtocol extends Protocol {
+public class FirechatBluetoothClient extends BluetoothClient {
 
-    private static final String TAG = "FirechatProtocol";
-    public static final String ID = "Firechat";
-
-
-    private static final int BUFFER_SIZE = 1024;
-    private PushbackInputStream pbin;
+    private static final String TAG = "FirechatBluetoothClient";
 
     private static final FirechatMessageParser parser = new FirechatMessageParser();
+    private static final int BUFFER_SIZE = 1024;
+    private PushbackInputStream pbin;
     public Thread statusThread = null;
 
-    public Protocol newInstance() {
-        return new FireChatProtocol();
-    }
-
-    public FireChatProtocol() {
-        this.protocolID = ID;
+    public FirechatBluetoothClient(String remoteMacAddress){
+        super(remoteMacAddress, FirechatBTConfiguration.FIRECHAT_BT_UUID_128, FirechatBTConfiguration.FIRECHAT_BT_STR, false);
     }
 
     @Override
-    public void initializeConnection() {
+    public String getConnectionID() {
+        return "ConnectTO Firechat: "+this.macAddress+":"+bt_service_uuid.toString();
+    }
+
+    @Override
+    public String getProtocolID() {
+        return "Firechat";
+    }
+
+
+    @Override
+    protected void initializeProtocol() {
         statusThread = new MonitorNewStatusThread();
         statusThread.start();
     }
 
+
+    @Override
     public boolean isCommandSupported(String commandName) {
         if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
             return true;
@@ -82,7 +82,7 @@ public class FireChatProtocol extends Protocol {
 
 
     /*
-     * Firechat message is a simple char stream representing a JSON file, ending with LF.
+     * A Firechat message is a simple char stream representing a JSON file, ending with LF.
      * however, if a file is attached to the message (like a picture), the message is
      * followed by a binary stream representing the file.
      *
@@ -101,7 +101,7 @@ public class FireChatProtocol extends Protocol {
     public void processingPacketFromNetwork() throws IOException{
         final int CR = 13;
         final int LF = 10;
-        pbin = new PushbackInputStream(in, BUFFER_SIZE);
+        pbin = new PushbackInputStream(inputStream, BUFFER_SIZE);
 
         while (true) {
             byte[] buffer=new byte[BUFFER_SIZE];
@@ -128,7 +128,7 @@ public class FireChatProtocol extends Protocol {
 
     public boolean onPacketReceived(String jsonString) {
         try {
-            StatusMessage status = parser.networkToStatus(jsonString, pbin);
+            StatusMessage status = parser.networkToStatus(jsonString, pbin, macAddress);
             onStatusMessageReceived(status);
         } catch (JSONException ignore) {
             Log.d(TAG, "malformed JSON");
@@ -137,14 +137,14 @@ public class FireChatProtocol extends Protocol {
     }
 
     @Override
-    public boolean onCommandReceived(ProtocolCommand command) {
+    protected boolean onCommandReceived(Command command) {
         if(!isCommandSupported(command.getCommandName()))
             return false;
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand)command).getStatus();
             String jsonStatus = parser.statusToNetwork(statusMessage);
             try {
-                this.out.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
+                outputStream.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
                 Log.d(TAG, jsonStatus.toString());
                 //todo it looks like sending and scanning at the same time disconnect the socket
                 if(statusMessage.getFileName() != "") {
@@ -154,7 +154,7 @@ public class FireChatProtocol extends Protocol {
                     int count;
                     int total = 0;
                     while ((count = fis.read(buffer)) > 0)
-                        this.out.write(buffer, 0, count);
+                        outputStream.write(buffer, 0, count);
                     fis.close();
                 }
             }
@@ -166,10 +166,12 @@ public class FireChatProtocol extends Protocol {
         return true;
     }
 
-
+    @Override
+    public void stop() {
+    }
 
     @Override
-    public void destroyConnection() {
+    protected void destroyProtocol() {
         statusThread.interrupt();
         try { pbin.close(); } catch(IOException ignore) {}
     }
@@ -194,9 +196,10 @@ public class FireChatProtocol extends Protocol {
                 while(true) {
                     StatusMessage message = messageQueue.take();
 
-                    //todo replace this with a ReceivedFrom table
+                    if(message.isForwarder(macAddress))
+                        continue;
 
-                    ProtocolCommand sendMessageCommand = new SendStatusMessageCommand(message);
+                    Command sendMessageCommand = new SendStatusMessageCommand(message);
                     executeCommand(sendMessageCommand);
                 }
             }
@@ -215,6 +218,8 @@ public class FireChatProtocol extends Protocol {
         }
 
     }
+
+
 
 
 }

@@ -36,23 +36,26 @@ import java.util.UUID;
 /**
  * @author Marlinski
  */
-public class BluetoothServer extends Connection {
+public abstract class BluetoothServer implements Connection {
 
     private static final String TAG = "BluetoothServer";
 
+    protected BluetoothServerSocket mmServerSocket;
     protected UUID bt_service_uuid;
     protected String bt_service_name;
+    protected boolean secureSocket;
 
-    protected BluetoothServerSocket mmServerSocket;
-    private boolean secureSocket;
-
-    public BluetoothServer(UUID uuid, String name, boolean secure, Protocol protocol, ConnectionCallback callback) {
-        super(BluetoothUtil.getBluetoothAdapter(NetworkCoordinator.getInstance()).getAddress(), protocol, BluetoothLinkLayerAdapter.LinkLayerIdentifier, callback);
+    public BluetoothServer(UUID uuid, String name, boolean secure) {
         this.bt_service_uuid = uuid;
         this.bt_service_name = name;
         this.secureSocket = secure;
-        this.connectionID = "BluetoothServer: "+bt_service_uuid.toString();
     }
+
+    @Override
+    public String getType() {
+        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    }
+
 
     public void run() {
         BluetoothServerSocket tmp = null;
@@ -64,13 +67,13 @@ public class BluetoothServer extends Connection {
             else
                 tmp = BluetoothUtil.getBluetoothAdapter(networkCoordinator).listenUsingInsecureRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
         } catch (IOException e) {
-            onConnectionFailed("cannot open Listen Socket on service record "+bt_service_uuid);
+            Log.d(TAG, "cannot open Listen Socket on service record "+bt_service_uuid);
             return;
         }
 
         mmServerSocket = tmp;
         if(tmp == null){
-            onConnectionFailed("cannot open Listen Socket on service record "+bt_service_uuid);
+            Log.d(TAG, "cannot open Listen Socket on service record "+bt_service_uuid);
             return;
         }
 
@@ -79,19 +82,24 @@ public class BluetoothServer extends Connection {
                 BluetoothSocket mmConnectedSocket = mmServerSocket.accept();
                 if (mmConnectedSocket != null) {
                     Log.d(TAG, "[+] Client connected");
+
                     NeighbourDevice neighbourDevice = new NeighbourDevice(
                             mmConnectedSocket.getRemoteDevice().getAddress(),
                             BluetoothLinkLayerAdapter.LinkLayerIdentifier);
                     neighbourDevice.setDeviceName(mmConnectedSocket.getRemoteDevice().getName());
                     networkCoordinator.newNeighbor(neighbourDevice);
-                    BluetoothServerConnection clientThread = new BluetoothServerConnection(mmConnectedSocket, protocol.newInstance(), null);
+
+                    BluetoothServerConnection clientThread = onClientConnected(mmConnectedSocket);
+
                     ThreadPoolCoordinator.getInstance().addConnection(clientThread,ThreadPoolCoordinator.PRIORITY_HIGH);
                 }
             }
         } catch (Exception e) {
-            onConnectionEnded(connectionID);
+            Log.d(TAG, "ENDED "+bt_service_uuid);
         }
     }
+
+    abstract protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket);
 
     @Override
     public void kill() {

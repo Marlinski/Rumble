@@ -21,11 +21,8 @@ package org.disrupted.rumble.network.protocols.firechat;
 
 
 import android.util.Log;
-import android.webkit.MimeTypeMap;
 
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,9 +31,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PushbackInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.LinkedHashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * @author Marlinski
@@ -89,7 +89,7 @@ public class FirechatMessageParser {
         return jsonStatus.toString()+"\n";
     }
 
-    public StatusMessage networkToStatus(String message, PushbackInputStream in) throws JSONException{
+    public StatusMessage networkToStatus(String message, PushbackInputStream in, String macAddress) throws JSONException{
         StatusMessage retMessage = null;
         JSONObject object = new JSONObject(message);
 
@@ -119,6 +119,7 @@ public class FirechatMessageParser {
         retMessage.setTimeOfCreation(timestamp);
         retMessage.setTimeOfArrival(timestamp);
         retMessage.setHopCount(1);
+        retMessage.addForwarder(macAddress);
 
         return retMessage;
 

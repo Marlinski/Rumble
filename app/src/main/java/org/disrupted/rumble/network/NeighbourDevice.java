@@ -24,8 +24,6 @@ import android.util.Log;
 import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
 import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.firechat.FireChatProtocol;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -105,12 +103,13 @@ public class NeighbourDevice {
     }
 
 
+    //todo make this less static and keep only isConnected
     public boolean isRumbler() {
-        return isConnected(RumbleProtocol.ID);
+        return isConnected("Rumble");
     }
 
     public boolean isFirechatter() {
-        return isConnected(FireChatProtocol.ID);
+        return isConnected("Firechat");
     }
 
     public boolean isConnected() {

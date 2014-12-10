@@ -17,13 +17,42 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.command;
+package org.disrupted.rumble.network.protocols.Rumble;
+
+import org.disrupted.rumble.network.linklayer.wifi.UDPServer;
+import org.disrupted.rumble.network.protocols.command.Command;
 
 /**
  * @author Marlinski
  */
-public abstract class ProtocolCommand {
+public class RumbleUDPServer extends UDPServer {
 
-    abstract public String getCommandName();
+    public RumbleUDPServer() {
+        super(RumbleWifiConfiguration.SERVER_PORT);
+    }
 
+    @Override
+    public String getConnectionID() {
+        return "RumbleUDPServer";
+    }
+
+    @Override
+    public String getProtocolID() {
+        return "Rumble";
+    }
+
+    @Override
+    public boolean isCommandSupported(String commandName) {
+        return false;
+    }
+
+    @Override
+    public boolean executeCommand(Command command) {
+        return false;
+    }
+
+    @Override
+    public void onConnected() {
+
+    }
 }

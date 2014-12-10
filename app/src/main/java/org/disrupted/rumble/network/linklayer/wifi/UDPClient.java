@@ -25,19 +25,6 @@ import org.disrupted.rumble.network.protocols.Protocol;
 /**
  * @author Marlinski
  */
-public class UDPClient extends Connection {
+public class UDPClient  {
 
-    public UDPClient(String macAddress, Protocol protocol, String type, ConnectionCallback callback) {
-        super(macAddress, protocol, type, callback);
-    }
-
-    @Override
-    public void run() {
-
-    }
-
-    @Override
-    public void kill() {
-
-    }
 }

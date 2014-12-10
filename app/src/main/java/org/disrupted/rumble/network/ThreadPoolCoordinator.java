@@ -76,8 +76,7 @@ public class ThreadPoolCoordinator {
             while (it.hasNext()) {
                 ConnectionThread element = it.next();
                 if (element.getConnection() != null) {
-                    if (element.getConnection().getMacAddress().equals(connection.getConnection().getMacAddress()) &&
-                        element.getConnection().getProtocol().getProtocolID().equals(connection.getConnection().getProtocol().getProtocolID()))
+                    if (element.getConnection().getConnectionID().equals(connection.getConnection().getConnectionID()))
                     return true;
                 }
             }
@@ -90,8 +89,7 @@ public class ThreadPoolCoordinator {
             Iterator<PriorityConnection> it = connectionQueue.iterator();
             while (it.hasNext()) {
                 PriorityConnection element = it.next();
-                if (element.getConnection().getMacAddress().equals(connection.getConnection().getMacAddress()) &&
-                    element.getConnection().getProtocol().getProtocolID().equals(connection.getConnection().getProtocol().getProtocolID()))
+                if (element.getConnection().getConnectionID().equals(connection.getConnection().getConnectionID()))
                     return element;
             }
         }
@@ -251,5 +249,4 @@ public class ThreadPoolCoordinator {
             Thread.currentThread().interrupt();
         }
     }
-
 }

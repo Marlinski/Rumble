@@ -17,13 +17,13 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.firechat;
+package org.disrupted.rumble.network.protocols.command;
 
 /**
  * @author Marlinski
  */
-public class FirechatUDPConfiguration {
+public abstract class Command {
 
-
+    abstract public String getCommandName();
 
 }

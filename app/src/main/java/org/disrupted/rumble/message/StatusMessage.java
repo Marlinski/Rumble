@@ -20,8 +20,11 @@
 package org.disrupted.rumble.message;
 
 
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -43,9 +46,9 @@ public class StatusMessage extends Message {
     protected String      timeOfCreation;
     protected String      timeOfArrival;
     protected Integer     hopCount;
-    protected String      forwarderList;
     protected Integer     score;
     protected Integer     ttl;
+    protected Set<String> forwarderList;
 
     public StatusMessage(String post, String author) {
         this.messageType = TYPE;
@@ -64,7 +67,7 @@ public class StatusMessage extends Message {
         timeOfCreation = String.valueOf(System.currentTimeMillis() / 1000L);
         timeOfArrival  = String.valueOf(System.currentTimeMillis() / 1000L);
         hopCount       = 0;
-        forwarderList  = "";
+        forwarderList  = new HashSet<String>();
         score          = 0;
         ttl            = 0;
     }
@@ -74,26 +77,50 @@ public class StatusMessage extends Message {
     public void setTimeOfCreation(String toc){    this.timeOfCreation = toc;      }
     public void setTimeOfArrival(String toa){     this.timeOfArrival  = toa;      }
     public void setHopCount(Integer hopcount){    this.hopCount       = hopcount; }
-    public void setForwarderList(String fl){      this.forwarderList  = fl;       }
     public void setScore(Integer score){          this.score          = score;    }
     public void setTTL(Integer ttl){              this.ttl            = ttl;      }
     public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
+    public void setForwarderList(Set<String> fl){
+        if(forwarderList.size() > 0)
+            forwarderList.clear();
+        this.forwarderList  = fl;
+    }
+    public void addForwarder(String macAddress) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(macAddress.getBytes());
+            byte[] digest = md.digest();
+            macAddress = new String(digest);
+        }
+        catch (NoSuchAlgorithmException ignore) {}
+        forwarderList.add(macAddress);
+    }
 
-    public String  getAuthor(){         return this.author; }
-    public String  getPost(){           return this.status; }
-    public Set<String> getHashtagSet(){ return this.hashtagSet; }
-    public String  getTimeOfCreation(){ return this.timeOfCreation; }
-    public String  getTimeOfArrival(){  return this.timeOfArrival; }
-    public Integer getHopCount(){       return this.hopCount; }
-    public String  getForwarderList(){  return this.forwarderList; }
-    public Integer getScore(){          return this.score;}
-    public Integer getTTL(){            return this.ttl;}
-    public String  getFileName(){       return this.attachedFile; }
-    public long    getFileSize(){       return this.fileSize; }
-    public long    getFileID(){         return 0; }
+    public String  getAuthor(){             return this.author; }
+    public String  getPost(){               return this.status; }
+    public Set<String> getHashtagSet(){     return this.hashtagSet; }
+    public String  getTimeOfCreation(){     return this.timeOfCreation; }
+    public String  getTimeOfArrival(){      return this.timeOfArrival; }
+    public Integer getHopCount(){           return this.hopCount; }
+    public Set<String> getForwarderList(){  return this.forwarderList; }
+    public Integer getScore(){              return this.score;}
+    public Integer getTTL(){                return this.ttl;}
+    public String  getFileName(){           return this.attachedFile; }
+    public long    getFileSize(){           return this.fileSize; }
+    public long    getFileID(){             return 0; }
 
     public boolean hasAttachedFile() {
         return (attachedFile != "");
+    }
+    public boolean isForwarder(String macAddress) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(macAddress.getBytes());
+            byte[] digest = md.digest();
+            macAddress = new String(digest);
+        }
+        catch (NoSuchAlgorithmException ignore) {}
+        return forwarderList.contains(macAddress);
     }
 
     public String toString() {

@@ -17,29 +17,32 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.command;
+package org.disrupted.rumble.network.protocols.Rumble;
 
-import org.disrupted.rumble.message.StatusMessage;
+import android.bluetooth.BluetoothSocket;
+
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
+
+import java.util.UUID;
 
 /**
  * @author Marlinski
  */
-public class SendStatusMessageCommand extends Command {
+public class RumbleBluetoothServer extends BluetoothServer {
 
-    public static final String COMMAND_NAME = "SEND_STATUS_MESSAGE";
 
-    private StatusMessage status;
-
-    public SendStatusMessageCommand(StatusMessage status){
-        this.status = status;
-    }
-
-    public StatusMessage getStatus() {
-        return status;
+    public RumbleBluetoothServer() {
+        super(RumbleBTConfiguration.RUMBLE_BT_UUID_128, RumbleBTConfiguration.RUMBLE_BT_STR, false);
     }
 
     @Override
-    public String getCommandName() {
-        return COMMAND_NAME;
+    public String getConnectionID() {
+        return "BluetoothRumbleServer";
+    }
+
+    @Override
+    protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket) {
+        return new RumbleBluetoothServerConnection(mmConnectedSocket);
     }
 }

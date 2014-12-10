@@ -23,7 +23,9 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.Connection;
+import org.disrupted.rumble.network.protocols.GenericProtocol;
 import org.disrupted.rumble.network.protocols.Protocol;
 
 import java.io.IOException;
@@ -33,34 +35,39 @@ import java.io.OutputStream;
 /**
  * @author Marlinski
  */
-public class BluetoothServerConnection extends Connection{
+public abstract class BluetoothServerConnection extends GenericProtocol implements Connection {
 
     private static final String TAG = "BluetoothServerConnection";
 
-    private String macAddress;
-    private BluetoothDevice mmBluetoothDevice;
-    private BluetoothSocket mmConnectedSocket;
-    private String connectionID;
-    private InputStream inputStream;
-    private OutputStream outputStream;
-    private boolean isBeingKilled;
+    protected String macAddress;
+    protected BluetoothDevice mmBluetoothDevice;
+    protected BluetoothSocket mmConnectedSocket;
+    protected String connectionID;
+    protected InputStream inputStream;
+    protected OutputStream outputStream;
+    protected boolean isBeingKilled;
 
-    public BluetoothServerConnection(BluetoothSocket socket, Protocol message, ConnectionCallback callback) {
-        super(socket.getRemoteDevice().getAddress(), message, BluetoothLinkLayerAdapter.LinkLayerIdentifier, callback);
+    public BluetoothServerConnection(BluetoothSocket socket) {
+        this.macAddress = socket.getRemoteDevice().getAddress();
         this.mmConnectedSocket = socket;
         this.mmBluetoothDevice = socket.getRemoteDevice();
         this.macAddress = mmBluetoothDevice.getAddress();
-        this.connectionID = "ConnectFROM: "+macAddress;
         this.inputStream = null;
         this.outputStream = null;
         this.isBeingKilled = false;
     }
 
     @Override
+    public String getType() {
+        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    }
+
+
+    @Override
     public void run() {
 
         if(mmConnectedSocket == null) {
-            onConnectionFailed("Client Socket is null");
+            Log.e(TAG, "[!] Client Socket is null");
             return;
         }
 
@@ -68,12 +75,16 @@ public class BluetoothServerConnection extends Connection{
             inputStream  = mmConnectedSocket.getInputStream();
             outputStream = mmConnectedSocket.getOutputStream();
         } catch (IOException e) {
-            onConnectionFailed("Cannot get In/Output stream from Bluetooth Socket");
+            Log.e(TAG, "[!] Cannot get In/Output stream from Bluetooth Socket");
             return;
         }
 
-        onConnectionEstablished(macAddress);
-        protocol.onConnected(macAddress, inputStream,outputStream);
+        Log.d(TAG, "[+] ESTABLISHED: "+getConnectionID());
+        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
+        if(networkCoordinator != null)
+            networkCoordinator.addProtocol(macAddress, this);
+
+        onConnected();
 
         if(!isBeingKilled)
             kill();
@@ -82,21 +93,14 @@ public class BluetoothServerConnection extends Connection{
     @Override
     public void kill() {
         this.isBeingKilled = true;
-        if(protocol.isRunning()) {
-            protocol.stop();
-
+        if(isRunning()) {
+            stop();
             try {
                 mmConnectedSocket.close();
             } catch( Exception ignore){
-                Log.e(TAG, "unable to close() socket ",ignore);
+                Log.e(TAG, "[!] unable to close() socket ",ignore);
             }
-            onConnectionEnded(macAddress);
+            Log.d(TAG, "[+] ENDED: "+getConnectionID());
         }
     }
-
-    @Override
-    public String getConnectionID() {
-        return connectionID;
-    }
-
 }

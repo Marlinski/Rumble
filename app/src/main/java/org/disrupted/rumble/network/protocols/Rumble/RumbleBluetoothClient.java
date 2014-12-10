@@ -19,53 +19,60 @@
 
 package org.disrupted.rumble.network.protocols.Rumble;
 
-
-import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
-import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
+import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author Marlinski
  */
-public class RumbleProtocol extends Protocol {
+public class RumbleBluetoothClient extends BluetoothClient {
 
-    private static final String TAG = "RumbleMessage";
-    public static final String ID  = "Rumble";
+    private static final String TAG = "RumbleBluetoothClient";
 
-    public RumbleProtocol() {
-        this.protocolID = ID;
-    }
-
-    public Protocol newInstance() {
-        return new RumbleProtocol();
+    public RumbleBluetoothClient(String remoteMacAddress){
+        super(remoteMacAddress, RumbleBTConfiguration.RUMBLE_BT_UUID_128, RumbleBTConfiguration.RUMBLE_BT_STR, false);
     }
 
     @Override
-    public void initializeConnection() {
-
+    public String getConnectionID() {
+        return "ConnectTO Rumble: "+this.macAddress+":"+bt_service_uuid.toString();
     }
 
     @Override
-    public void processingPacketFromNetwork() throws IOException {
-        
+    public String getProtocolID() {
+        return "Rumble";
+    }
+
+    @Override
+    protected void initializeProtocol() {
+    }
+
+    @Override
+    protected void destroyProtocol() {
     }
 
     @Override
     public boolean isCommandSupported(String commandName) {
-        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
-            return true;
         return false;
     }
 
     @Override
-    public boolean onCommandReceived(ProtocolCommand command) {
+    protected void processingPacketFromNetwork() throws IOException {
+    }
+
+    @Override
+    protected boolean onCommandReceived(Command command) {
         return false;
     }
 
     @Override
-    public void destroyConnection() {
+    public void stop() {
+    }
 
+    @Override
+    public void kill() {
     }
 }

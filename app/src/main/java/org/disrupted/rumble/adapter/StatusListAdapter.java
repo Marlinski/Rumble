@@ -91,8 +91,8 @@ public class StatusListAdapter extends BaseAdapter{
 
         String author   = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR));
         String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
+        String post     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
         long toc        = statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
-        String post = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
 
         ColorGenerator generator = ColorGenerator.DEFAULT;
         avatarView.setImageDrawable(builder.build(author.substring(0,1), generator.getColor(author)));
@@ -108,6 +108,11 @@ public class StatusListAdapter extends BaseAdapter{
                 attachedView.setImageBitmap(bitmapImage);
                 attachedView.setVisibility(View.VISIBLE);
             }
+        }
+
+        if(post.length() == 0) {
+            postView.setVisibility(View.GONE);
+            return status;
         }
 
         SpannableString ss = new SpannableString(post);

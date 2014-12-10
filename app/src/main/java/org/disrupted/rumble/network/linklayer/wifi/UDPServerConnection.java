@@ -19,25 +19,11 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
-import org.disrupted.rumble.network.linklayer.Connection;
-import org.disrupted.rumble.network.protocols.Protocol;
+
 
 /**
  * @author Marlinski
  */
-public class UDPServerConnection extends Connection {
+public class UDPServerConnection  {
 
-    public UDPServerConnection(String macAddress, Protocol protocol, String type, ConnectionCallback callback) {
-        super(macAddress, protocol, type, callback);
-    }
-
-    @Override
-    public void run() {
-
-    }
-
-    @Override
-    public void kill() {
-
-    }
 }

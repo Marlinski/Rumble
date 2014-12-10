@@ -32,19 +32,21 @@ import java.net.SocketException;
 /**
  * @author Marlinski
  */
-public class UDPServer extends Connection {
+public abstract class UDPServer implements Connection, Protocol {
 
     private static final String TAG = "UDPServer";
-    private static final String ID  = "UDPRumbleServer";
 
     protected int BUFFER_SIZE = 1024;
     protected int udpPort;
     protected DatagramSocket mServerSocket;
 
-    public UDPServer(String macAddress, int port,String linkLayerID, Protocol protocol, ConnectionCallback callback) {
-        super(macAddress, protocol, linkLayerID, callback);
+    public UDPServer(int port) {
         this.udpPort = port;
-        this.connectionID = ID;
+    }
+
+    @Override
+    public String getType() {
+        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override
@@ -55,13 +57,13 @@ public class UDPServer extends Connection {
             tmp = new DatagramSocket(udpPort);
         }
         catch(SocketException e){
-            onConnectionFailed("cannot open UDP Socket on port: "+udpPort+" ("+e.toString()+")");
+            Log.e(TAG, "[!] cannot open UDP Socket on port: "+udpPort+" ("+e.toString()+")");
             return;
         }
 
         mServerSocket = tmp;
         if(tmp == null){
-            onConnectionFailed("cannot open UDP Socket on port: "+udpPort);
+            Log.d(TAG, "[!] cannot open UDP Socket on port: "+udpPort);
             return;
         }
 
@@ -79,7 +81,13 @@ public class UDPServer extends Connection {
     }
 
     @Override
+    public void stop() {
+
+    }
+
+    @Override
     public void kill() {
         mServerSocket.close();
     }
+
 }

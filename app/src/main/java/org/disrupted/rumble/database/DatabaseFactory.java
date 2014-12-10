@@ -48,6 +48,7 @@ public class DatabaseFactory {
     private final FileDatabase         fileDatabase;
     private final SubscriptionDatabase subscriptionDatabase;
     private final ContactDatabase      contactDatabase;
+    private final ForwarderDatabase    forwarderDatabase;
     private DatabaseExecutor           databaseExecutor;
 
     public static DatabaseFactory getInstance(Context context) {
@@ -77,6 +78,9 @@ public class DatabaseFactory {
     public static ContactDatabase getContactDatabase(Context context) {
         return getInstance(context).contactDatabase;
     }
+    public static ForwarderDatabase getForwarderDatabase(Context context) {
+        return getInstance(context).forwarderDatabase;
+    }
     public static DatabaseExecutor getDatabaseExecutor(Context context) {
         return getInstance(context).databaseExecutor;
     }
@@ -90,6 +94,7 @@ public class DatabaseFactory {
         this.fileDatabase         = new FileDatabase(context, databaseHelper);
         this.contactDatabase      = new ContactDatabase(context, databaseHelper);
         this.subscriptionDatabase = new SubscriptionDatabase(context, databaseHelper);
+        this.forwarderDatabase    = new ForwarderDatabase(context, databaseHelper);
         this.databaseExecutor     = new DatabaseExecutor();
     }
 
@@ -103,6 +108,7 @@ public class DatabaseFactory {
         this.statusTagDatabase.reset(databaseHelper);
         this.fileDatabase.reset(databaseHelper);
         this.subscriptionDatabase.reset(databaseHelper);
+        this.forwarderDatabase.reset(databaseHelper);
         old.close();
     }
 
@@ -125,6 +131,7 @@ public class DatabaseFactory {
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(FileDatabase.CREATE_TABLE);
             db.execSQL(SubscriptionDatabase.CREATE_TABLE);
+            db.execSQL(ForwarderDatabase.CREATE_TABLE);
 
             executeStatements(db, StatusTagDatabase.CREATE_INDEXS);
         }

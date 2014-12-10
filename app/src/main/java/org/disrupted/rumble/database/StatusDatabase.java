@@ -151,7 +151,6 @@ public class StatusDatabase extends Database {
         contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
         contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
         contentValues.put(HOP_COUNT, status.getHopCount());
-        contentValues.put(FORWARDER_LIST, status.getForwarderList());
         contentValues.put(SCORE, status.getScore());
         contentValues.put(TTL, status.getTTL());
 
@@ -159,10 +158,13 @@ public class StatusDatabase extends Database {
 
         if(statusID >= 0) {
             for (String hashtag : status.getHashtagSet()) {
-
                 long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag.toLowerCase());
                 if(tagID >=0 )
                     DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
+            }
+
+            for (String forwarder : status.getForwarderList()) {
+                DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
             }
         }
 

@@ -19,73 +19,17 @@
 
 package org.disrupted.rumble.network.linklayer;
 
-
-import android.util.Log;
-
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.protocols.Protocol;
-
 /**
  * @author Marlinski
  */
-public abstract class Connection implements Runnable{
+public interface Connection {
 
-    private static final String TAG = "Connection";
-    private static final String ID = "Generic Connection";
+    public String getType();
 
-    protected String macAddress;
-    protected String type;
-    protected Protocol protocol;
-    protected String connectionID;
-    protected ConnectionCallback callback;
+    public String getConnectionID();
 
-    public interface ConnectionCallback{
-        public void onConnectionFailed(Connection connection, String reason);
-        public void onConnectionSucceeded(Connection connection);
-        public void onConnectionEnded(Connection connection);
-    }
+    public void run();
 
-    public Connection(String macAddress, Protocol protocol, String type, ConnectionCallback callback) {
-        this.macAddress = macAddress;
-        this.protocol = protocol;
-        this.type = type;
-        this.connectionID = ID;
-        this.callback = callback;
-    }
-
-
-    public String getType() {          return this.type;    }
-    public String getConnectionID() {  return connectionID; }
-    public String getMacAddress() {    return macAddress;   }
-    public Protocol getProtocol() {    return protocol;     }
-
-
-    protected final void onConnectionFailed(String reason) {
-        Log.d(TAG, "[!] FAILED: "+getConnectionID() + "reason: "+reason);
-        if(callback != null)
-            this.callback.onConnectionFailed(this, reason);
-    }
-
-    protected final void onConnectionEstablished(String address) {
-        Log.d(TAG, "[+] STARTED: "+getConnectionID());
-        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
-        if(networkCoordinator != null) {
-            networkCoordinator.addProtocol(address, protocol);
-        }
-        if(callback != null)
-            this.callback.onConnectionSucceeded(this);
-    }
-
-    protected final void onConnectionEnded(String address) {
-        Log.d(TAG, "[-] ENDED: "+getConnectionID());
-        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
-        if(networkCoordinator != null) {
-            networkCoordinator.delProtocol(address, protocol.getProtocolID());
-        }
-        if(callback != null)
-            this.callback.onConnectionEnded(this);
-    }
-
-    abstract public void kill();
+    public void kill();
 
 }

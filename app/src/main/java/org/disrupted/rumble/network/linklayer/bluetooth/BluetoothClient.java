@@ -104,7 +104,6 @@ public abstract class BluetoothClient extends GenericProtocol implements Connect
             return;
         }
 
-
         try {
             inputStream = mmConnectedSocket.getInputStream();
             outputStream = mmConnectedSocket.getOutputStream();

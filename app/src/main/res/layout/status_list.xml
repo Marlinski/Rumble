@@ -24,23 +24,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--
-    <GridView xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/filter_list"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:numColumns="3"
-        android:verticalSpacing="5dp"
-        android:horizontalSpacing="5dp"
-        android:stretchMode="columnWidth"
-        android:background="@color/light_grey"
-        android:paddingTop="5dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:paddingBottom="5dp"
-        android:visibility="visible"
-        />
-    -->
     <ListView android:id="@+id/filter_list"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,6 +35,10 @@
         android:clickable="false"
         android:listSelector="@android:color/transparent"/>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white" />
 
     <ProgressBar
         android:id="@+id/loadingStatusList"
@@ -82,7 +69,10 @@
         android:divider="@null"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:dividerHeight="10dp"/>
+        android:dividerHeight="10dp"
+        android:paddingBottom="5dp"
+        android:paddingTop="5dp"
+        android:clipToPadding="false"/>
 
     <LinearLayout
         android:orientation="horizontal"

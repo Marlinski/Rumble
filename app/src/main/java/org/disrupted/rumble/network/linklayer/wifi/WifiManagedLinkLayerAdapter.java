@@ -31,7 +31,7 @@ import org.disrupted.rumble.network.NeighbourDevice;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleUDPServer;
 import org.disrupted.rumble.network.protocols.Rumble.RumbleWifiConfiguration;
 
 import java.net.InetAddress;
@@ -84,13 +84,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
 
-        UDPServer udpRumbleServer = new UDPServer(
-                macAddress,
-                RumbleWifiConfiguration.SERVER_PORT,
-                LinkLayerIdentifier,
-                new RumbleProtocol(),
-                null
-        );
+        UDPServer udpRumbleServer = new RumbleUDPServer();
         ThreadPoolCoordinator.getInstance().addConnection(udpRumbleServer);
 
         registerService();
@@ -131,9 +125,6 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
 
     }
-
-
-
 
     /*
      * The following code only deals with DNS-SD registration / discovery

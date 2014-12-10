@@ -28,14 +28,12 @@ import android.util.Log;
 
 
 import org.disrupted.rumble.network.NeighbourDevice;
-import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleBTConfiguration;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.firechat.FireChatProtocol;
-import org.disrupted.rumble.network.protocols.firechat.FirechatBTConfiguration;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleBluetoothClient;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleBluetoothServer;
+import org.disrupted.rumble.network.protocols.firechat.FirechatBluetoothClient;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +43,7 @@ import java.util.List;
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Connection.ConnectionCallback{
+public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
 
     private static final String TAG = "BluetoothLinkLayerAdapter";
     public static final String LinkLayerIdentifier = "BLUETOOTH";
@@ -65,13 +63,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
     }
 
     public void onLinkStart() {
-        BluetoothServer btRumbleServer = new BluetoothServer(
-                RumbleBTConfiguration.RUMBLE_BT_UUID_128,
-                RumbleBTConfiguration.RUMBLE_BT_STR,
-                false,
-                new RumbleProtocol(),
-                null
-        );
+        BluetoothServer btRumbleServer = new RumbleBluetoothServer();
         ThreadPoolCoordinator.getInstance().addConnection(btRumbleServer);
 
         btScanner.startDiscovery();
@@ -119,28 +111,15 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
 
     public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
 
-        //todo make this portion of code protocol independant (by registering the protocol)
-        if( (neighbourDevice.isRumbler() || force) && !neighbourDevice.isConnected(RumbleProtocol.ID) ){
-            BluetoothClient rumbleConnection = new BluetoothClient(
-                    neighbourDevice.getMacAddress(),
-                    RumbleBTConfiguration.RUMBLE_BT_UUID_128,
-                    RumbleBTConfiguration.RUMBLE_BT_STR,
-                    false,
-                    new RumbleProtocol(),
-                    this
-            );
+        //todo make this portion of code protocol independant (by registering the protocol when button click)
+        //todo also make the protocol ID static somewhere
+        if( (neighbourDevice.isRumbler() || force) && !neighbourDevice.isConnected("Rumble") ){
+            BluetoothClient rumbleConnection = new RumbleBluetoothClient(neighbourDevice.getMacAddress());
             ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
         }
 
-        if( (neighbourDevice.isFirechatter() || force) && !neighbourDevice.isConnected(FireChatProtocol.ID) ) {
-            BluetoothClient firechatConnection = new BluetoothClient(
-                    neighbourDevice.getMacAddress(),
-                    FirechatBTConfiguration.FIRECHAT_BT_UUID_128,
-                    FirechatBTConfiguration.FIRECHAT_BT_STR,
-                    false,
-                    new FireChatProtocol(),
-                    this
-            );
+        if( (neighbourDevice.isFirechatter() || force) && !neighbourDevice.isConnected("Firechat") ) {
+            BluetoothClient firechatConnection = new FirechatBluetoothClient(neighbourDevice.getMacAddress());
             ThreadPoolCoordinator.getInstance().addConnection(firechatConnection);
         }
     }
@@ -169,17 +148,4 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter implements Conne
             }
         }
     };
-
-    @Override
-    public void onConnectionFailed(Connection connection, String reason) {
-    }
-
-    @Override
-    public void onConnectionSucceeded(Connection connection) {
-    }
-
-    @Override
-    public void onConnectionEnded(Connection connection) {
-
-    }
 }
