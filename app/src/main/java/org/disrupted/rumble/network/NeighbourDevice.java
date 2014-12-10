@@ -24,6 +24,8 @@ import android.util.Log;
 import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
 import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
 import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.firechat.FireChatProtocol;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -31,46 +33,39 @@ import java.util.LinkedHashSet;
 import de.greenrobot.event.EventBus;
 
 /**
+ * The NeighbourDevice class is a representation of a Neighbour's Interface and the protocols
+ * attached to it. For instance, we may be physically connected to a Neighbour through Bluetooth
+ * and communicate with both Firechat and the Rumble protocols. Both protocols would have their
+ * own Protocol instance which is being kept here.
+ *
  * @author Marlinski
  */
 public class NeighbourDevice {
+
     private static final String TAG = "NeighbourDevice";
 
     protected String deviceName;
     protected String type;
     protected String macAddress;
-    protected DeviceStatus statusFlag;
     protected HashSet<Protocol> protocolSet;
-
-    private boolean protocolRumble  = false;
-    private boolean protocolFirechat = false;
-    private boolean protocolUnknown  =  true;
 
     public NeighbourDevice(NeighbourDevice nearby){
         this.type = nearby.getType();
         this.deviceName  = nearby.deviceName;
         this.macAddress  = nearby.getMacAddress();
-        this.statusFlag  = nearby.statusFlag;
         this.protocolSet = nearby.protocolSet;
-        this.protocolFirechat = isFirechatter();
-        this.protocolRumble   = isRumbler();
-        this.protocolUnknown  = isProtocolUnknown();
-
     }
 
     public NeighbourDevice(String macAddress, String type){
         this.type = type;
         this.macAddress  = macAddress;
-        this.statusFlag = new DeviceStatus();
         this.protocolSet = new LinkedHashSet<Protocol>();
-        this.protocolFirechat = false;
-        this.protocolRumble  = false;
-        this.protocolUnknown  = true;
     }
 
     public String   getDeviceName() { return deviceName;      }
-    public String   getType() {       return type;            }
+    public String   getType()       { return type;            }
     public String   getMacAddress() { return this.macAddress; }
+
     public Protocol getProtocol(String protocolID) {
         for(Protocol protocol : protocolSet) {
             if(protocol.getProtocolID().equals(protocolID))
@@ -79,31 +74,9 @@ public class NeighbourDevice {
         return null;
     }
 
-
     public void setDeviceName(String deviceName) {  this.deviceName = deviceName;   }
-    public void setFirechatFlag() {
-        protocolFirechat = true;
-        protocolUnknown = false;
-    }
-    public void setRumbleFlag() {
-        protocolRumble = true;
-        protocolUnknown = false;
-    }
-    private void resetFlags() {
-        protocolRumble   = false;
-        protocolFirechat = false;
-        protocolUnknown  = true;
-    }
-    private void setConnected() {
-        statusFlag.flags |= DeviceStatus.CONNECTED;
-        statusFlag.flags &= ~DeviceStatus.DISCONNECTED;
-        EventBus.getDefault().post(new ConnectToNeighbourDevice());
-    }
-    private void unsetConnected() {
-        statusFlag.flags |= DeviceStatus.DISCONNECTED;
-        statusFlag.flags &= ~DeviceStatus.CONNECTED;
-        EventBus.getDefault().post(new DisconnectFromNeighbourDevice());
-    }
+
+
     public void addProtocol(Protocol newProtocol) {
         for(Protocol protocol : protocolSet) {
             if(protocol.getProtocolID().equals(protocol.getProtocolID())) {
@@ -112,15 +85,18 @@ public class NeighbourDevice {
             }
         }
         protocolSet.add(newProtocol);
-        this.setConnected();
+        //todo add more information in the event (macaddress and protocolID)
+        EventBus.getDefault().post(new ConnectToNeighbourDevice());
     }
+
     public boolean delProtocol(String protocolID) {
         for(Protocol protocol : protocolSet) {
             if(protocol.getProtocolID().equals(protocolID)) {
                 Log.d(TAG, "[-] remove protocol "+protocolID+" associated with device "+macAddress);
                 protocolSet.remove(protocol);
                 if(protocolSet.size() == 0)
-                    this.unsetConnected();
+                    //todo add more information in the event (macaddress and protocolID)
+                    EventBus.getDefault().post(new DisconnectFromNeighbourDevice());
                 return true;
             }
         }
@@ -129,15 +105,18 @@ public class NeighbourDevice {
     }
 
 
-
     public boolean isRumbler() {
-        return protocolRumble;
+        return isConnected(RumbleProtocol.ID);
     }
-    public boolean isFirechatter() {      return protocolFirechat; }
-    public boolean isProtocolUnknown() {  return protocolUnknown;  }
+
+    public boolean isFirechatter() {
+        return isConnected(FireChatProtocol.ID);
+    }
+
     public boolean isConnected() {
-        return ((statusFlag.flags & DeviceStatus.CONNECTED) > 0);
+        return protocolSet.size() > 0;
     }
+
     public boolean isConnected(String protocolID) {
         for(Protocol protocol : protocolSet) {
             if(protocol.getProtocolID().equals(protocolID))
@@ -146,11 +125,11 @@ public class NeighbourDevice {
         return false;
     }
 
-
     @Override
     public String toString() {
         return "MAC address: " + macAddress;
     }
+
     @Override
     public int hashCode() {
         return macAddress.hashCode();
@@ -165,17 +144,6 @@ public class NeighbourDevice {
 
         NeighbourDevice device = (NeighbourDevice) obj;
         return device.getMacAddress().equals(this.macAddress);
-    }
-
-    private class DeviceStatus {
-        public static final int CONNECTED    = (1 << 0);
-        public static final int DISCONNECTED = (1 << 1);
-
-        public int flags;
-
-        public DeviceStatus() {
-            flags = DISCONNECTED;
-        }
     }
 
 }

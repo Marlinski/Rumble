@@ -27,19 +27,17 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
-import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.FilterListAdapter;
@@ -74,7 +72,7 @@ public class FragmentStatusList extends Fragment {
     private View mView;
     private StatusListAdapter statusListAdapter;
     private FilterListAdapter filterListAdapter;
-    private TextView textView;
+    private TextView composeTextView;
     private ImageButton sendButton;
 
     private ListView filters;
@@ -142,7 +140,7 @@ public class FragmentStatusList extends Fragment {
         // the text and button to submit
         sendButton = (ImageButton) mView.findViewById(R.id.button_send);
         sendButton.setOnClickListener(new OnClickSend());
-        this.textView = (TextView) mView.findViewById(R.id.user_status);
+        this.composeTextView = (TextView) mView.findViewById(R.id.user_status);
 
         return mView;
     }
@@ -236,6 +234,15 @@ public class FragmentStatusList extends Fragment {
     OnFilterClick onFilterClick = new OnFilterClick() {
         @Override
         public void onClick(String filter) {
+
+            if(composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
+                composeTextView.setText(TextUtils.replace(composeTextView.getText(),
+                        new String[] {" "+filter.toLowerCase()},
+                        new CharSequence[]{""}));
+
+
+            Log.d(TAG, composeTextView.getText().toString().toLowerCase());
+
             filterListAdapter.deleteFilter(filter);
             filterListAdapter.notifyDataSetChanged();
             getStatuses();
@@ -265,6 +272,9 @@ public class FragmentStatusList extends Fragment {
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
+
+        if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
+            composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
 
         FilterListAdapter.FilterEntry entry = new FilterListAdapter.FilterEntry();
         entry.filter = filter;
@@ -347,10 +357,10 @@ public class FragmentStatusList extends Fragment {
     private class OnClickSend implements View.OnClickListener {
         @Override
         public void onClick(View view) {
-            if (textView == null)
+            if (composeTextView == null)
                 return;
 
-            String message = textView.getText().toString();
+            String message = composeTextView.getText().toString();
             if ((message == "") && (imageBitmap == null))
                 return;
 
@@ -373,10 +383,17 @@ public class FragmentStatusList extends Fragment {
     DatabaseExecutor.WritableQueryCallback onMessageSaved = new DatabaseExecutor.WritableQueryCallback() {
         @Override
         public void onWritableQueryFinished(boolean success) {
-            getActivity().runOnUiThread(new Runnable() {
+            if(getActivity() == null)
+                return;
+            if(success)
+                getActivity().runOnUiThread(new Runnable() {
                                             @Override
                                             public void run() {
-                                                textView.setText("");
+                                                composeTextView.setText("");
+                                                for(String filter : filterListAdapter.getFilterList()) {
+                                                    if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
+                                                       composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
+                                                }
                                                 sendButton.setImageResource(R.drawable.ic_send_black_36dp);
                                                 sendButton.setClickable(true);
                                             }

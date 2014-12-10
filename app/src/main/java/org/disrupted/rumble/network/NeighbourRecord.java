@@ -24,6 +24,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
+ * The NeighbourRecord is a representation of a neighbour on a logical level. We may be connected
+ * to a neighbour with multiple interface at the same time, for instance Bluetooth and Wifi. As
+ * both neighbour's interfaces have a different mac address, it is however the same mobile device.
+ * As soon as we match both interfaces as being one entity (if possible), the two NeighbourDevice
+ * instance are being kept in a table within NeighbourRecord.
+ *
  * @author Marlinski
  */
 public class NeighbourRecord {
@@ -148,20 +154,6 @@ public class NeighbourRecord {
         return false;
     }
 
-    public boolean update(NeighbourDevice device) {
-        boolean update = false;
-        NeighbourDevice entry = macToNeighbourDevice.get(device.getMacAddress());
-        if(entry == null) return update;
-        if(device.isFirechatter() && !entry.isFirechatter()) {
-            entry.setFirechatFlag();
-            update = true;
-        }
-        if(device.isRumbler() && !entry.isRumbler()){
-            entry.setRumbleFlag();
-            update = true;
-        }
-        return update;
-    }
 
     public NeighbourDevice getBestDevice() {
         return macToNeighbourDevice.get(id);

@@ -21,21 +21,15 @@ package org.disrupted.rumble.network.protocols;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.message.Message;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.NeighbourDevice;
 import org.disrupted.rumble.network.NeighbourRecord;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.command.ProtocolCommand;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -43,7 +37,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * The Protocol abstract class is a generic implementation of a message-based protocol.
  * When connection is established by the LinkLayer (for instance BluetoothConnection),
  * it calls protocol.onConnected() which in turns calls the protocol specific method
- * to be implemented initializeConneciton()
+ * to be implemented initializeConnection()
  *
  * onConnected then listens for incomming packet (processingPacketFromNetwork) from the network
  * and also creates another thread for processing incoming command (processingCommandFromQueue)
@@ -65,11 +59,10 @@ public abstract class Protocol {
 
     protected BlockingQueue<ProtocolCommand> commandQueue;
     private boolean running = false;
-    protected Thread queueThread = null;
+    protected Thread commandThread = null;
     protected String macAddress;
     protected InputStream in;
     protected OutputStream out;
-    protected NeighbourRecord record;
 
     public String getProtocolID() {
         return protocolID;
@@ -93,10 +86,6 @@ public abstract class Protocol {
 
     public final void onConnected(String macAddress, InputStream in, OutputStream out) {
         this.macAddress = macAddress;
-        record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(macAddress);
-        if(record == null) {
-            Log.e(TAG, "[!] cannot get the record of user: "+macAddress);
-        }
         commandQueue = new LinkedBlockingQueue<ProtocolCommand>();
         this.in = in;
         this.out = out;
@@ -104,17 +93,17 @@ public abstract class Protocol {
 
         initializeConnection();
 
-        queueThread = new Thread() {
+        commandThread = new Thread() {
             @Override
             public synchronized void run(){
                 processingCommandFromQueue();
             }
         };
-        queueThread.start();
+        commandThread.start();
 
         try {  processingPacketFromNetwork();  }  catch(IOException ignore) { }
 
-        queueThread.interrupt();
+        commandThread.interrupt();
         destroyConnection();
     }
 

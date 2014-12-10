@@ -78,11 +78,10 @@
         android:stackFromBottom="true"
         android:transcriptMode="alwaysScroll"
         android:layout_weight="1"
-        android:background="#dedede"
+        android:background="@color/grey_blue"
         android:divider="@null"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:paddingBottom="10dp"
         android:dividerHeight="10dp"/>
 
     <LinearLayout

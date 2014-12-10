@@ -10,9 +10,11 @@
     <color name="bluetooth_color">#33B5E5</color>
     <color name="bluetooth_color_toggled">#0099CC</color>
     <color name="white">#ffeeeeee</color>
+    <color name="pure_white">#ffffffff</color>
     <color name="blue">#ff0d84ee</color>
     <color name="green">#ff3ac356</color>
     <color name="black">#c8000000</color>
+    <color name="grey_blue">#ffd5d6dd</color>
     <color name="light_grey">#76a9a9a9</color>
     <color name="status_background">#efefef</color>
 

@@ -20,17 +20,16 @@
 package org.disrupted.rumble.adapter;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,18 +37,15 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.disrupted.rumble.HomeActivity;
+import com.amulyakhare.textdrawable.TextDrawable;
+import com.amulyakhare.textdrawable.util.ColorGenerator;
+
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.DatabaseExecutor;
-import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.StatusDatabase;
-import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -62,6 +58,7 @@ public class StatusListAdapter extends BaseAdapter{
     private Activity           activity;
     private LayoutInflater     inflater;
     private Cursor             statuses;
+    private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     public StatusListAdapter(Activity activity, FragmentStatusList fragment) {
         this.activity = activity;
@@ -82,19 +79,26 @@ public class StatusListAdapter extends BaseAdapter{
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
         View status = inflater.inflate(R.layout.status_item, null, true);
-        ImageView iconView    = (ImageView) status.findViewById(R.id.status_item_icon);
-        TextView  authorView  = (TextView) status.findViewById(R.id.status_item_author);
-        TextView  postView    = (TextView) status.findViewById(R.id.status_item_body);
-        TextView  tocView = (TextView) status.findViewById(R.id.status_item_created);
-        TextView  toaView = (TextView) status.findViewById(R.id.status_item_received);
+        ImageView avatarView   = (ImageView) status.findViewById(R.id.status_item_avatar);
+        TextView  authorView   = (TextView) status.findViewById(R.id.status_item_author);
+        TextView  postView     = (TextView) status.findViewById(R.id.status_item_body);
+        TextView  tocView      = (TextView) status.findViewById(R.id.status_item_created);
+        TextView  toaView      = (TextView) status.findViewById(R.id.status_item_received);
         ImageView attachedView = (ImageView) status.findViewById(R.id.status_item_attached_image);
 
         if(!statuses.moveToPosition(i))
             return status;
-        authorView.setText(statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR)));
-        tocView.setText(new TimeElapsed(statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION))).display());
 
+        String author   = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR));
         String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
+        long toc        = statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
+        String post = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
+
+        ColorGenerator generator = ColorGenerator.DEFAULT;
+        avatarView.setImageDrawable(builder.build(author.substring(0,1), generator.getColor(author)));
+
+        authorView.setText(author);
+        tocView.setText(new TimeElapsed(toc).display());
 
         if(!filename.equals("")) {
             File directory = FileUtil.getReadableAlbumStorageDir();
@@ -106,7 +110,6 @@ public class StatusListAdapter extends BaseAdapter{
             }
         }
 
-        String post = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
         SpannableString ss = new SpannableString(post);
         int beginCharPosition = -1;
         int j;

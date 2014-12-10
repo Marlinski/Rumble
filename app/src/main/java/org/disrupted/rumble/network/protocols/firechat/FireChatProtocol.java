@@ -194,8 +194,7 @@ public class FireChatProtocol extends Protocol {
                 while(true) {
                     StatusMessage message = messageQueue.take();
 
-                    if (message.getAuthor() == record.getName())
-                        continue;
+                    //todo replace this with a ReceivedFrom table
 
                     ProtocolCommand sendMessageCommand = new SendStatusMessageCommand(message);
                     executeCommand(sendMessageCommand);
