@@ -19,19 +19,12 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-import org.disrupted.rumble.network.events.BluetoothScanEnded;
-import org.disrupted.rumble.network.linklayer.Connection;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
-import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.events.BluetoothScanEnded;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
@@ -44,7 +37,7 @@ import de.greenrobot.event.EventBus;
  *
  * @author Marlinski
  */
-public abstract class BluetoothClient extends GenericProtocol implements Connection {
+public abstract class BluetoothClient extends BluetoothConnection {
 
     private static final String TAG = "BluetoothClient";
 
@@ -53,91 +46,58 @@ public abstract class BluetoothClient extends GenericProtocol implements Connect
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
-    protected String macAddress;
-    protected boolean secureSocket;
-    protected BluetoothDevice mmBluetoothDevice;
-    protected BluetoothSocket mmConnectedSocket;
-    protected InputStream inputStream;
-    protected OutputStream outputStream;
-    private boolean isBeingKilled;
-
     public BluetoothClient(String remoteMacAddress, UUID uuid, String name, boolean secure){
-        this.macAddress = remoteMacAddress;
+        super(remoteMacAddress);
         this.bt_service_uuid = uuid;
         this.bt_service_name = name;
         this.secureSocket = secure;
-        this.mmConnectedSocket = null;
-        this.inputStream = null;
-        this.outputStream = null;
-        this.isBeingKilled = false;
-    }
-
-    @Override
-    public String getType() {
-        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override
     public void run() {
         try {
-            NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
-            mmBluetoothDevice = BluetoothUtil.getBluetoothAdapter(networkCoordinator).getRemoteDevice(this.macAddress);
-            if(mmBluetoothDevice == null) throw new Exception("[!] no remote bluetooth device");
+            mmBluetoothDevice = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).getRemoteDevice(this.remoteMacAddress);
+            if (mmBluetoothDevice == null) throw new Exception("[!] no remote bluetooth device");
 
-            if(BluetoothUtil.getBluetoothAdapter(networkCoordinator).isDiscovering()) {
-                EventBus.getDefault().register(this);
-                latch.await();
-                EventBus.getDefault().unregister(this);
+            if (BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).isDiscovering()) {
+                    EventBus.getDefault().register(this);
+                    try {
+                        latch.await();
+                    } catch(InterruptedException e) {
+                        throw new Exception("interrupted");
+                    }
+                    EventBus.getDefault().unregister(this);
+
             }
 
-            if(secureSocket)
+            if (secureSocket)
                 mmConnectedSocket = mmBluetoothDevice.createRfcommSocketToServiceRecord(bt_service_uuid);
             else
                 mmConnectedSocket = mmBluetoothDevice.createInsecureRfcommSocketToServiceRecord(bt_service_uuid);
 
-            if(mmConnectedSocket == null) throw new Exception("[!] Unable to connect to"+macAddress+" to service "+ bt_service_uuid.toString());
+            if (mmConnectedSocket == null)
+                throw new Exception("cannot connect to " + remoteMacAddress + " to service " + bt_service_uuid.toString());
 
             mmConnectedSocket.connect();
 
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
-            return;
-        }
-
-        try {
             inputStream = mmConnectedSocket.getInputStream();
             outputStream = mmConnectedSocket.getOutputStream();
         } catch (IOException e) {
-            Log.e(TAG, " [!] Cannot get Input/Output stream from Bluetooth Socket");
+            Log.e(TAG, "[!] FAILED: "+getProtocolID()+" "+e.getMessage());
+            return;
+        } catch (Exception e) {
+            Log.e(TAG, "[!] FAILED: "+getProtocolID()+" "+e.getMessage());
             return;
         }
 
-        Log.d(TAG, "[+] ESTABLISHED: " + getConnectionID());
-        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
-        if(networkCoordinator != null)
-            networkCoordinator.addProtocol(macAddress, this);
-
-
-        onConnected();
-
-        if(!isBeingKilled)
-            kill();
+        onBluetoothConnected();
     }
 
-    @Override
-    public void kill() {
-        this.isBeingKilled = true;
-        if (isRunning()) {
-            stop();
-            try {
-                mmConnectedSocket.close();
-            } catch (Exception ignore) {
-                Log.e(TAG, "[!] unable to close() socket ", ignore);
-            }
-            Log.d(TAG, "[+] ENDED: " + getConnectionID());
-        }
-    }
-
+    /*
+     * todo: it is possible that if the user stops everything it may keep a locking state
+     * we don't want to connect while we are discovering cause it mess with the bluetooth
+     * This one unlock the latch locked when trying to connect
+     */
     public void onEvent(BluetoothScanEnded scanEnded) {
         latch.countDown();
     }

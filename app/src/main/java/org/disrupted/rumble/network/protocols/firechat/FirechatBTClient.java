@@ -21,7 +21,8 @@ package org.disrupted.rumble.network.protocols.firechat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
 import org.disrupted.rumble.network.protocols.command.Command;
@@ -34,30 +35,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class FirechatBluetoothClient extends BluetoothClient {
+public class FirechatBTClient extends BluetoothClient {
 
     private static final String TAG = "FirechatBluetoothClient";
 
     private static final FirechatMessageParser parser = new FirechatMessageParser();
     private static final int BUFFER_SIZE = 1024;
     private PushbackInputStream pbin;
-    public Thread statusThread = null;
 
-    public FirechatBluetoothClient(String remoteMacAddress){
+    public FirechatBTClient(String remoteMacAddress){
         super(remoteMacAddress, FirechatBTConfiguration.FIRECHAT_BT_UUID_128, FirechatBTConfiguration.FIRECHAT_BT_STR, false);
     }
 
     @Override
     public String getConnectionID() {
-        return "ConnectTO Firechat: "+this.macAddress+":"+bt_service_uuid.toString();
+        return "BTFirechat: "+this.remoteMacAddress;
     }
 
     @Override
@@ -68,8 +66,6 @@ public class FirechatBluetoothClient extends BluetoothClient {
 
     @Override
     protected void initializeProtocol() {
-        statusThread = new MonitorNewStatusThread();
-        statusThread.start();
     }
 
 
@@ -120,7 +116,7 @@ public class FirechatBluetoothClient extends BluetoothClient {
                     pbin.unread(buffer, i, count - i);
                     onPacketReceived(new String(buffer, 0, i - 1));
                 } catch(IOException e){
-                    Log.e(TAG, "[!] Error while unread",e);
+                    Log.e(TAG, "[!] Error while unread"+e.toString());
                 }
             }
         }
@@ -128,8 +124,9 @@ public class FirechatBluetoothClient extends BluetoothClient {
 
     public boolean onPacketReceived(String jsonString) {
         try {
-            StatusMessage status = parser.networkToStatus(jsonString, pbin, macAddress);
-            onStatusMessageReceived(status);
+            StatusMessage status = parser.networkToStatus(jsonString, pbin, remoteMacAddress);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
+            Log.d(TAG, "Status received from Network:\n" + status.toString());
         } catch (JSONException ignore) {
             Log.d(TAG, "malformed JSON");
         }
@@ -146,20 +143,25 @@ public class FirechatBluetoothClient extends BluetoothClient {
             try {
                 outputStream.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
                 Log.d(TAG, jsonStatus.toString());
-                //todo it looks like sending and scanning at the same time disconnect the socket
-                if(statusMessage.getFileName() != "") {
+                if(!statusMessage.getFileName().equals("")) {
                     File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), statusMessage.getFileName());
-                    FileInputStream fis = new FileInputStream(attachedFile);
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    int count;
-                    int total = 0;
-                    while ((count = fis.read(buffer)) > 0)
-                        outputStream.write(buffer, 0, count);
-                    fis.close();
+                    if(attachedFile.exists() && !attachedFile.isDirectory()) {
+                        FileInputStream fis = new FileInputStream(attachedFile);
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int count;
+                        while ((count = fis.read(buffer)) > 0)
+                            outputStream.write(buffer, 0, count);
+                        fis.close();
+                    } else {
+                        throw  new IOException("File: "+statusMessage.getFileName()+" does not exists");
+                    }
                 }
+
+                //todo mettre a jour la liste des forwarder et recalculer les scores chez tout le monde
+                // create event MessageSent :)
             }
             catch(IOException ignore){
-                Log.e(TAG, "[!] error while sending");
+                Log.e(TAG, "[!] error while sending"+ignore.getMessage());
             }
         }
 
@@ -168,58 +170,12 @@ public class FirechatBluetoothClient extends BluetoothClient {
 
     @Override
     public void stop() {
+        kill();
     }
 
     @Override
     protected void destroyProtocol() {
-        statusThread.interrupt();
         try { pbin.close(); } catch(IOException ignore) {}
     }
-
-    /*
-     * This thread monitors the new status received and forward them to the neighbour
-     * (unless it is one of his)
-     */
-    public class MonitorNewStatusThread extends Thread {
-
-        private BlockingQueue<StatusMessage> messageQueue;
-
-        public MonitorNewStatusThread() {
-            messageQueue = new LinkedBlockingDeque<StatusMessage>();
-        }
-
-        @Override
-        public void run() {
-            super.run();
-            try {
-                EventBus.getDefault().register(this);
-                while(true) {
-                    StatusMessage message = messageQueue.take();
-
-                    if(message.isForwarder(macAddress))
-                        continue;
-
-                    Command sendMessageCommand = new SendStatusMessageCommand(message);
-                    executeCommand(sendMessageCommand);
-                }
-            }
-            catch(InterruptedException e) {
-                EventBus.getDefault().unregister(this);
-                messageQueue.clear();
-                messageQueue = null;
-            }
-
-        }
-
-        public void onEvent(NewStatusEvent newStatus) {
-            if(newStatus.getStatus() == null)
-                return;
-            messageQueue.add(newStatus.getStatus());
-        }
-
-    }
-
-
-
 
 }

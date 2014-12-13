@@ -17,26 +17,13 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network;
+package org.disrupted.rumble.network.protocols.firechat;
 
 /**
  * @author Marlinski
  */
-public class MessageProcessor {
+public class FirechatProtocol {
 
-    private static final Object lock = new Object();
-    private static MessageProcessor instance;
-
-    public MessageProcessor getInstance() {
-        synchronized (lock) {
-            if(instance == null)
-                instance = new MessageProcessor();
-
-            return instance;
-        }
-    }
-
-    private MessageProcessor() {
-    }
+    public static final String protocolID = "Firechat";
 
 }

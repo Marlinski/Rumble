@@ -19,88 +19,53 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.linklayer.Connection;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
-import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * @author Marlinski
  */
-public abstract class BluetoothServerConnection extends GenericProtocol implements Connection {
+public abstract class BluetoothServerConnection extends BluetoothConnection {
 
     private static final String TAG = "BluetoothServerConnection";
 
-    protected String macAddress;
-    protected BluetoothDevice mmBluetoothDevice;
-    protected BluetoothSocket mmConnectedSocket;
-    protected String connectionID;
-    protected InputStream inputStream;
-    protected OutputStream outputStream;
-    protected boolean isBeingKilled;
-
     public BluetoothServerConnection(BluetoothSocket socket) {
-        this.macAddress = socket.getRemoteDevice().getAddress();
+        super(socket.getRemoteDevice().getAddress());
         this.mmConnectedSocket = socket;
-        this.mmBluetoothDevice = socket.getRemoteDevice();
-        this.macAddress = mmBluetoothDevice.getAddress();
-        this.inputStream = null;
-        this.outputStream = null;
-        this.isBeingKilled = false;
     }
-
-    @Override
-    public String getType() {
-        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
-    }
-
 
     @Override
     public void run() {
-
-        if(mmConnectedSocket == null) {
-            Log.e(TAG, "[!] Client Socket is null");
-            return;
-        }
-
         try {
-            inputStream  = mmConnectedSocket.getInputStream();
+            if (mmConnectedSocket == null)
+                throw new Exception("[!] Client Socket is null");
+
+            this.mmBluetoothDevice = mmConnectedSocket.getRemoteDevice();
+
+            if (mmBluetoothDevice == null)
+                throw new Exception("[!] no remote bluetooth device");
+
+            this.remoteMacAddress = mmBluetoothDevice.getAddress();
+
+            inputStream = mmConnectedSocket.getInputStream();
             outputStream = mmConnectedSocket.getOutputStream();
-        } catch (IOException e) {
+        }
+        catch(IOException e){
             Log.e(TAG, "[!] Cannot get In/Output stream from Bluetooth Socket");
             return;
         }
-
-        Log.d(TAG, "[+] ESTABLISHED: "+getConnectionID());
-        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
-        if(networkCoordinator != null)
-            networkCoordinator.addProtocol(macAddress, this);
-
-        onConnected();
-
-        if(!isBeingKilled)
-            kill();
-    }
-
-    @Override
-    public void kill() {
-        this.isBeingKilled = true;
-        if(isRunning()) {
-            stop();
-            try {
-                mmConnectedSocket.close();
-            } catch( Exception ignore){
-                Log.e(TAG, "[!] unable to close() socket ",ignore);
-            }
-            Log.d(TAG, "[+] ENDED: "+getConnectionID());
+        catch (Exception e) {
+            Log.e(TAG, e.toString());
+            return;
         }
+
+        onBluetoothConnected();
+
     }
+
 }

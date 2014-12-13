@@ -67,13 +67,15 @@ public class FirechatMessageParser {
             jsonStatus.put(UUID, this.generateRandomUUID());
             jsonStatus.put(USER, message.getAuthor());
 
-            if(message.getFileName() == "")
+            if(message.getFileName().equals(""))
                 jsonStatus.put(MESSAGE, message.getPost());
             else {
                 //todo use a FILE DATABASE
                 File file=new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
-                jsonStatus.put(LENGTH, file.length());
-                jsonStatus.put(URL, "image");
+                if(file.exists() && !file.isDirectory()) {
+                    jsonStatus.put(LENGTH, file.length());
+                    jsonStatus.put(URL, "image");
+                }
             }
 
             String firechat = "#Nearby";
@@ -97,29 +99,30 @@ public class FirechatMessageParser {
         long   length = 0;
 
         String author    = object.getString(NAME);
-        String timestamp = object.getString(TIMESTAMP);
         String uuid      = object.getString(UUID);
         String firechat  = object.getString(FIRECHAT);
+        long   timestamp = object.getLong(TIMESTAMP);
 
         try { post   = object.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
         try { length = object.getLong(LENGTH); } catch(JSONException ignore){ length = 0; }
 
-        retMessage = new StatusMessage(post+" #"+firechat, author);
+        retMessage = new StatusMessage(post+" #"+firechat, author, timestamp);
 
         Log.d(TAG, message);
         if(length > 0) {
             String fileName = author+"-"+timestamp+".jfif";
             String filePath = downloadFile(fileName, length, in);
-            if(filePath != "") {
+            if(!filePath.equals("")) {
                 Log.d(TAG, "[+] downloaded !");
                 retMessage.setFileName(fileName);
                 retMessage.setFileSize(length);
             }
         }
-        retMessage.setTimeOfCreation(timestamp);
-        retMessage.setTimeOfArrival(timestamp);
+
+        long now = (System.currentTimeMillis() / 1000L);
+        retMessage.setTimeOfArrival(now);
         retMessage.setHopCount(1);
-        retMessage.addForwarder(macAddress);
+        retMessage.addForwarder(macAddress, "Firechat"); //todo use global firechat configuration instead
 
         return retMessage;
 

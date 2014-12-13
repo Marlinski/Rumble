@@ -23,14 +23,13 @@ import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
-import org.disrupted.rumble.network.protocols.Protocol;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.UUID;
 
 /**
@@ -59,13 +58,12 @@ public abstract class BluetoothServer implements Connection {
 
     public void run() {
         BluetoothServerSocket tmp = null;
-        NetworkCoordinator networkCoordinator = NetworkCoordinator.getInstance();
 
         try {
             if(secureSocket)
-                tmp = BluetoothUtil.getBluetoothAdapter(networkCoordinator).listenUsingRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
+                tmp = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).listenUsingRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
             else
-                tmp = BluetoothUtil.getBluetoothAdapter(networkCoordinator).listenUsingInsecureRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
+                tmp = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).listenUsingInsecureRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
         } catch (IOException e) {
             Log.d(TAG, "cannot open Listen Socket on service record "+bt_service_uuid);
             return;
@@ -83,19 +81,20 @@ public abstract class BluetoothServer implements Connection {
                 if (mmConnectedSocket != null) {
                     Log.d(TAG, "[+] Client connected");
 
-                    NeighbourDevice neighbourDevice = new NeighbourDevice(
-                            mmConnectedSocket.getRemoteDevice().getAddress(),
-                            BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-                    neighbourDevice.setDeviceName(mmConnectedSocket.getRemoteDevice().getName());
-                    networkCoordinator.newNeighbor(neighbourDevice);
+                    Neighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
+                    NetworkCoordinator.getInstance().newNeighbour(neighbour);
 
                     BluetoothServerConnection clientThread = onClientConnected(mmConnectedSocket);
 
-                    ThreadPoolCoordinator.getInstance().addConnection(clientThread,ThreadPoolCoordinator.PRIORITY_HIGH);
+                    if(!ThreadPoolCoordinator.getInstance().addConnection(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH)) {
+                        try {
+                            mmConnectedSocket.close();
+                        } catch(IOException ignore) {}
+                    }
                 }
             }
         } catch (Exception e) {
-            Log.d(TAG, "ENDED "+bt_service_uuid);
+            Log.d(TAG, "[-] ENDED "+getConnectionID());
         }
     }
 

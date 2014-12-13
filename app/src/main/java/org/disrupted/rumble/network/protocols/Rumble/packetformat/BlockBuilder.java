@@ -17,25 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
+package org.disrupted.rumble.network.protocols.Rumble.packetformat;
 
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
+import org.disrupted.rumble.message.Message;
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.BufferMismatchBlockSize;
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
 
 /**
  * @author Marlinski
  */
-public interface Protocol {
+public interface BlockBuilder {
 
-    public String getProtocolID();
+    public void readBuffer() throws BufferMismatchBlockSize, MalformedRumblePacket;
 
-    public String getLinkLayerIdentifier();
-
-    public boolean isCommandSupported(String commandName);
-
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
+    public byte[] getBytes() throws MalformedRumblePacket;
 
 }

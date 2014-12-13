@@ -17,10 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.events;
 
 /**
  * @author Marlinski
  */
-public class BluetoothScanStarted extends NetworkEvent {
+public class BluetoothLinkLayerStopped extends NetworkEvent {
 }

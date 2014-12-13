@@ -17,22 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
-
-import org.disrupted.rumble.message.StatusMessage;
+package org.disrupted.rumble.events;
 
 /**
  * @author Marlinski
  */
-public class NewStatusEvent extends ResourceEvent {
-
-    private StatusMessage status;
-
-    public NewStatusEvent(StatusMessage status){
-        this.status = status;
-    }
-
-    public StatusMessage getStatus(){
-        return this.status;
-    }
+public class NetworkEvent {
 }

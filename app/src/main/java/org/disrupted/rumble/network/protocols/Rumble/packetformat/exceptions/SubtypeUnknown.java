@@ -17,21 +17,17 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
+package org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions;
 
 /**
  * @author Marlinski
  */
-public class NewHashtagEvent extends ResourceEvent {
+public class SubtypeUnknown extends Exception {
 
-    private String hashtag;
+    public int subtype;
 
-    public NewHashtagEvent(String hashtag) {
-        this.hashtag = hashtag;
-    }
-
-    public String getHashtag() {
-        return hashtag;
+    public SubtypeUnknown(int subtype) {
+        this.subtype = subtype;
     }
 
 }

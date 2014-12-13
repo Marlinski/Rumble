@@ -17,25 +17,28 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
+package org.disrupted.rumble.events;
 
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
+import org.disrupted.rumble.message.StatusMessage;
 
 /**
  * @author Marlinski
  */
-public interface Protocol {
+public class NewStatusEvent extends ResourceEvent {
 
-    public String getProtocolID();
+    private StatusMessage status;
+    private long statusID;
 
-    public String getLinkLayerIdentifier();
+    public NewStatusEvent(StatusMessage status, long statusID){
+        this.status = status;
+        this.statusID = statusID;
+    }
 
-    public boolean isCommandSupported(String commandName);
+    public StatusMessage getStatus(){
+        return this.status;
+    }
 
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
-
+    public long getStatusID(){
+        return this.statusID;
+    }
 }

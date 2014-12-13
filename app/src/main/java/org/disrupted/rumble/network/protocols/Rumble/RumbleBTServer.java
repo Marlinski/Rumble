@@ -22,55 +22,24 @@ package org.disrupted.rumble.network.protocols.Rumble;
 import android.bluetooth.BluetoothSocket;
 
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
 
 /**
  * @author Marlinski
  */
-public class RumbleBluetoothServerConnection extends BluetoothServerConnection {
+public class RumbleBTServer extends org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer {
 
-    private static final String TAG = "RumbleBluetoothServerConnection";
 
-    public RumbleBluetoothServerConnection(BluetoothSocket socket) {
-        super(socket);
+    public RumbleBTServer() {
+        super(RumbleBTConfiguration.RUMBLE_BT_UUID_128, RumbleBTConfiguration.RUMBLE_BT_STR, false);
     }
-
-    @Override
-    public String getProtocolID() {
-        return "Rumble";
-    }
-
 
     @Override
     public String getConnectionID() {
-        return "RumbleConnectFROM: "+macAddress;
+        return "BluetoothRumbleServer";
     }
 
     @Override
-    public void stop() {
-    }
-
-    @Override
-    protected void initializeProtocol() {
-    }
-
-    @Override
-    protected void destroyProtocol() {
-    }
-
-    @Override
-    public boolean isCommandSupported(String commandName) {
-        return false;
-    }
-
-    @Override
-    protected void processingPacketFromNetwork() throws IOException {
-    }
-
-    @Override
-    protected boolean onCommandReceived(Command command) {
-        return false;
+    protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket) {
+        return new RumbleBTServerConnection(mmConnectedSocket);
     }
 }

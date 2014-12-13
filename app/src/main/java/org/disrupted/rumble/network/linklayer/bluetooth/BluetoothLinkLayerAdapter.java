@@ -27,13 +27,17 @@ import android.content.IntentFilter;
 import android.util.Log;
 
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleBluetoothClient;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleBluetoothServer;
-import org.disrupted.rumble.network.protocols.firechat.FirechatBluetoothClient;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleBTClient;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleBTServer;
+import org.disrupted.rumble.network.protocols.Rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.firechat.FirechatBTClient;
+import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -63,7 +67,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     public void onLinkStart() {
-        BluetoothServer btRumbleServer = new RumbleBluetoothServer();
+        org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer btRumbleServer = new RumbleBTServer();
         ThreadPoolCoordinator.getInstance().addConnection(btRumbleServer);
 
         btScanner.startDiscovery();
@@ -71,7 +75,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
-        networkCoordinator.registerReceiver(mReceiver, filter);
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         register = true;
     }
 
@@ -79,15 +83,15 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
         btScanner.destroy();
         ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
         if(register)
-            networkCoordinator.unregisterReceiver(mReceiver);
+            RumbleApplication.getContext().unregisterReceiver(mReceiver);
         register = false;
-        networkCoordinator.removeNeighborsType(LinkLayerIdentifier);
+        NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
     }
 
     @Override
     public boolean isScanning() {
         if(activated)
-            return BluetoothUtil.getBluetoothAdapter(networkCoordinator).isDiscovering();
+            return BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).isDiscovering();
         else
             return false;
     }
@@ -97,30 +101,24 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             btScanner.forceDiscovery();
     }
 
-    public List<NeighbourDevice> getNeighborhood() {
-        List<NeighbourDevice> neighborhood = new LinkedList<NeighbourDevice>();
-        HashSet<NeighbourDevice> btNeighborhood = btScanner.getNeighborhood();
-        Iterator<NeighbourDevice> it = btNeighborhood.iterator();
-        while(it.hasNext()) {
-            NeighbourDevice element = it.next();
-            if(element.isRumbler() || element.isFirechatter())
-                neighborhood.add(new NeighbourDevice(element));
-        }
-        return neighborhood;
-    }
-
-    public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
-
+    public void connectTo(Neighbour neighbour, boolean force) {
         //todo make this portion of code protocol independant (by registering the protocol when button click)
-        //todo also make the protocol ID static somewhere
-        if( (neighbourDevice.isRumbler() || force) && !neighbourDevice.isConnected("Rumble") ){
-            BluetoothClient rumbleConnection = new RumbleBluetoothClient(neighbourDevice.getMacAddress());
-            ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
+        try {
+            if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
+                org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient rumbleConnection = new RumbleBTClient(neighbour.getMacAddress());
+                ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
+            }
+        } catch (RecordNotFoundException ignore){
+            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");
         }
 
-        if( (neighbourDevice.isFirechatter() || force) && !neighbourDevice.isConnected("Firechat") ) {
-            BluetoothClient firechatConnection = new FirechatBluetoothClient(neighbourDevice.getMacAddress());
-            ThreadPoolCoordinator.getInstance().addConnection(firechatConnection);
+        try {
+            if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, FirechatProtocol.protocolID)) {
+                org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient rumbleConnection = new FirechatBTClient(neighbour.getMacAddress());
+                ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
+            }
+        }catch (RecordNotFoundException ignore){
+            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");
         }
     }
 

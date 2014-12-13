@@ -26,6 +26,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Marlinski
  */
@@ -48,14 +53,29 @@ public class HashtagDatabase extends  Database{
                  + "UNIQUE( " + HASHTAG + " ) "
           + " );";
 
+
     public HashtagDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public Cursor getHashtags() {
+    public Cursor getHashtag(long statusID) {
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor           = database.query(TABLE_NAME, new String[] {HASHTAG}, ID+" = "+statusID, null, null, null, null);
+        return cursor;
+    }
+
+    private boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.ReadableQuery() {
+                    @Override
+                    public Cursor read() {
+                        return getHashtags();
+                    }
+                }, callback);
+    }
+    private Cursor getHashtags() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor           = database.query(TABLE_NAME, null, null, null, null, null, null);
-
         return cursor;
     }
 

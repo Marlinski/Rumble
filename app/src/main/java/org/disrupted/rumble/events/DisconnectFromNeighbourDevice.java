@@ -17,19 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
-
-import org.disrupted.rumble.contact.Contact;
+package org.disrupted.rumble.events;
 
 /**
  * @author Marlinski
  */
-public class NewContactEvent extends ResourceEvent {
-
-    public Contact contact;
-
-    public NewContactEvent(Contact contact){
-        this.contact = contact;
-    }
-
+public class DisconnectFromNeighbourDevice {
 }

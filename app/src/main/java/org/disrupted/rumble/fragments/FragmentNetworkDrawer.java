@@ -19,7 +19,6 @@
 
 package org.disrupted.rumble.fragments;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -37,12 +36,13 @@ import android.widget.Switch;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.BluetoothScanEnded;
-import org.disrupted.rumble.network.events.BluetoothScanStarted;
-import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
-import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
-import org.disrupted.rumble.network.events.NeighborhoodChanged;
+import org.disrupted.rumble.events.BluetoothScanEnded;
+import org.disrupted.rumble.events.BluetoothScanStarted;
+import org.disrupted.rumble.events.ConnectToNeighbourDevice;
+import org.disrupted.rumble.events.DisconnectFromNeighbourDevice;
+import org.disrupted.rumble.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 
@@ -97,27 +97,20 @@ public class FragmentNetworkDrawer extends Fragment {
 
     public void initializeInterfaces() {
         Switch bluetoothSwitch = ((Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth));
-        if (NetworkCoordinator.getInstance() != null)
-            bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+        bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
     }
 
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        if(NetworkCoordinator.getInstance() != null) {
-            List<String> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
-            listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
-        }else {
-            listAdapter = new NeighborhoodListAdapter(getActivity());
-        }
+        List<Neighbour> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
+        listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         mDrawerNeighbourList.setAdapter(listAdapter);
     }
 
     public void initializeProgressBar() {
-        if(NetworkCoordinator.getInstance() != null) {
-            if(NetworkCoordinator.getInstance().isScanning()){
-                ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
-                ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
-            }
+        if(NetworkCoordinator.getInstance().isScanning()){
+            ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
+            ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
         }
     }
 
@@ -150,13 +143,9 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(NetworkCoordinator.getInstance() != null) {
-                    List<String> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
-                    if (mDrawerNeighbourList.getAdapter() != null) {
-                        ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
-                    }
-                } else {
-                    ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).reset();
+                List<Neighbour> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
+                if (mDrawerNeighbourList.getAdapter() != null) {
+                    ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
                 }
             }
         });
@@ -193,9 +182,7 @@ public class FragmentNetworkDrawer extends Fragment {
             return;
         }
         Log.d(TAG, "[+] Sending START BLUETOOTH intent");
-        Intent startBluetooth= new Intent(getActivity(), NetworkCoordinator.class);
-        startBluetooth.setAction(NetworkCoordinator.ACTION_FORCE_START_BLUETOOTH);
-        getActivity().startService(startBluetooth);
+        NetworkCoordinator.getInstance().startBluetooth();
 
         if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
             BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -205,9 +192,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
 
     private void onBluetoothDisable() {
-        Intent stopBluetooth = new Intent(getActivity(), NetworkCoordinator.class);
-        stopBluetooth.setAction(NetworkCoordinator.ACTION_FORCE_STOP_BLUETOOTH);
-        getActivity().startService(stopBluetooth);
+        NetworkCoordinator.getInstance().stopBluetooth();
     }
 
     public void manageBTCode(int requestCode, int resultCode, Intent data) {
@@ -215,9 +200,7 @@ public class FragmentNetworkDrawer extends Fragment {
             Log.d(TAG, "-- Bluetooth Enabled");
 
             Log.d(TAG, "[+] Sending START BLUETOOTH intent");
-            Intent startDiscovery= new Intent(getActivity(), NetworkCoordinator.class);
-            startDiscovery.setAction(NetworkCoordinator.ACTION_FORCE_START_BLUETOOTH);
-            getActivity().startService(startDiscovery);
+            NetworkCoordinator.getInstance().startBluetooth();
 
             if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
                 BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -260,9 +243,7 @@ public class FragmentNetworkDrawer extends Fragment {
         }
         */
         Log.d(TAG, "[+] Sending START Wifi intent");
-        Intent startWifi= new Intent(getActivity(), NetworkCoordinator.class);
-        startWifi.setAction(NetworkCoordinator.ACTION_FORCE_START_WIFI);
-        getActivity().startService(startWifi);
+        NetworkCoordinator.getInstance().startWifi();
         /*
         if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
             BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -273,9 +254,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
 
     private void onWifiDisable() {
-        Intent stopWifi = new Intent(getActivity(), NetworkCoordinator.class);
-        stopWifi.setAction(NetworkCoordinator.ACTION_FORCE_STOP_WIFI);
-        getActivity().startService(stopWifi);
+        NetworkCoordinator.getInstance().stopWifi();
     }
 
 

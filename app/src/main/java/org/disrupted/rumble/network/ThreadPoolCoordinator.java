@@ -125,23 +125,6 @@ public class ThreadPoolCoordinator {
         return  nbKilled;
     }
 
-    public boolean addConnection(Connection connection) {
-        PriorityConnection con = new PriorityConnection(connection, PRIORITY_MIDDLE);
-        if(alreadyInThread(con)){
-            Log.d(TAG, "[-] connection already exists");
-            return false;
-        }
-        if(alreadyInQueue(con) == null) {
-            Log.d(TAG, "[+] add to ThreadQueue: "+connection.getConnectionID());
-            connectionQueue.add(con);
-            return true;
-
-        } else {
-            Log.d(TAG, "[-] connection already exists");
-            return false;
-        }
-    }
-
     public boolean addConnection(Connection connection, int priority) {
         PriorityConnection con = new PriorityConnection(connection, priority);
         if(alreadyInThread(con)) {
@@ -163,6 +146,10 @@ public class ThreadPoolCoordinator {
         Log.d(TAG, "[+] connection "+connection.getConnectionID()+" added to ThreadQueue");
         connectionQueue.add(con);
         return true;
+    }
+
+    public boolean addConnection(Connection connection) {
+        return addConnection(connection, PRIORITY_MIDDLE);
     }
 
     private class PriorityConnection implements Comparable{

@@ -17,25 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
+package org.disrupted.rumble.events;
 
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
+import org.disrupted.rumble.contact.Contact;
 
 /**
  * @author Marlinski
  */
-public interface Protocol {
+public class NewContactEvent extends ResourceEvent {
 
-    public String getProtocolID();
+    public Contact contact;
 
-    public String getLinkLayerIdentifier();
-
-    public boolean isCommandSupported(String commandName);
-
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
+    public NewContactEvent(Contact contact){
+        this.contact = contact;
+    }
 
 }

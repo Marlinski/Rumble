@@ -17,10 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions;
 
 /**
  * @author Marlinski
  */
-public class DisconnectFromNeighbourDevice {
+public class BufferMismatchBlockSize extends Exception {
 }

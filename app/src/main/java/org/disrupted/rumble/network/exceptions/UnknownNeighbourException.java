@@ -17,28 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
+package org.disrupted.rumble.network.exceptions;
 
 /**
- * A QueryEvent is published to the event bus whenever the result of a query to the
- * database is available.
- *
- * In order to match the response to a particular query (even though it should
- * not happened as query are being executed in serial), a QueryID may be use to match
- * the query.
- *
  * @author Marlinski
  */
-public class QueryEvent {
-
-    private long queryID;
-
-    public QueryEvent(long queryID) {
-        this.queryID = queryID;
-    }
-
-    public long getQueryID() {
-        return queryID;
-    }
-
+public class UnknownNeighbourException extends Exception {
 }

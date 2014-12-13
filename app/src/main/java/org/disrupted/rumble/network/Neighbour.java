@@ -17,32 +17,49 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble;
+package org.disrupted.rumble.network;
 
-import android.bluetooth.BluetoothSocket;
-
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
-
-import java.util.UUID;
 
 /**
  * @author Marlinski
  */
-public class RumbleBluetoothServer extends BluetoothServer {
+public abstract class Neighbour {
+
+    private String macAddress;
 
 
-    public RumbleBluetoothServer() {
-        super(RumbleBTConfiguration.RUMBLE_BT_UUID_128, RumbleBTConfiguration.RUMBLE_BT_STR, false);
+    abstract public String getLinkLayerName();
+
+    abstract public String getLinkLayerType();
+
+
+    public Neighbour(String macAddress) {
+        this.macAddress = macAddress;
+    }
+
+    public String getMacAddress() {
+        return this.macAddress;
     }
 
     @Override
-    public String getConnectionID() {
-        return "BluetoothRumbleServer";
+    public String toString() {
+        return "MAC address: " + macAddress;
     }
 
     @Override
-    protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket) {
-        return new RumbleBluetoothServerConnection(mmConnectedSocket);
+    public int hashCode() {
+        return macAddress.hashCode();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof Neighbour))
+            return false;
+        if (obj == this)
+            return true;
+
+        Neighbour device = (Neighbour) obj;
+        return device.getMacAddress().equals(this.macAddress);
+    }
+
 }

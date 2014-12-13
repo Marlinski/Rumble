@@ -23,9 +23,9 @@ import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.contact.Contact;
-import org.disrupted.rumble.database.events.NewContactEvent;
-import org.disrupted.rumble.database.events.NewHashtagEvent;
-import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.events.NewContactEvent;
+import org.disrupted.rumble.events.NewHashtagEvent;
+import org.disrupted.rumble.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
 
 import de.greenrobot.event.EventBus;
@@ -52,8 +52,8 @@ public abstract class Database {
         EventBus.getDefault().post(new NewContactEvent(contact));
     }
 
-    public void notifyStatusListListener(StatusMessage status) {
-        EventBus.getDefault().post(new NewStatusEvent(status));
+    public void notifyStatusListListener(StatusMessage status, long statusID) {
+        EventBus.getDefault().post(new NewStatusEvent(status, statusID));
     }
 
     public void notifyHashtagListListener(String hashtag) {

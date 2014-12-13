@@ -17,25 +17,21 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
-
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
+package org.disrupted.rumble.events;
 
 /**
  * @author Marlinski
  */
-public interface Protocol {
+public class NewHashtagEvent extends ResourceEvent {
 
-    public String getProtocolID();
+    private String hashtag;
 
-    public String getLinkLayerIdentifier();
+    public NewHashtagEvent(String hashtag) {
+        this.hashtag = hashtag;
+    }
 
-    public boolean isCommandSupported(String commandName);
-
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
+    public String getHashtag() {
+        return hashtag;
+    }
 
 }

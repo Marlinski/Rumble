@@ -17,10 +17,16 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.Rumble.packetformat;
+
+import org.disrupted.rumble.message.Message;
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedBlock;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerStarted extends NetworkEvent {
+public interface BlockMessage {
+
+    public Message getMessage() throws MalformedBlock;
+
 }

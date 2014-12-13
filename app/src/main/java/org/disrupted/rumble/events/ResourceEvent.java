@@ -17,25 +17,16 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
+package org.disrupted.rumble.events;
 
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
 
 /**
+ * A ResourceEvent is published to the event bus whenever a new resource is available.
+ * A resource is understood to be an element from the database such as a Status, a contact
+ * a picture, an attached file, etc.
+ *
  * @author Marlinski
  */
-public interface Protocol {
-
-    public String getProtocolID();
-
-    public String getLinkLayerIdentifier();
-
-    public boolean isCommandSupported(String commandName);
-
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
+public class ResourceEvent  {
 
 }

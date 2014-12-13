@@ -56,7 +56,6 @@ public class StatusTagDatabase extends Database {
     public Cursor getStatusTag() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
-
         return cursor;
     }
 

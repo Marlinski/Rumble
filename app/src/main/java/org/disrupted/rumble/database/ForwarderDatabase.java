@@ -25,7 +25,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * ForwarderDatabase keeps track of who we a received a status from.
@@ -61,16 +63,8 @@ public class ForwarderDatabase extends Database {
         super(context, databaseHelper);
     }
 
-    public boolean getForwarderList(final long statusID, DatabaseExecutor.ReadableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.ReadableQuery() {
-                    @Override
-                    public Cursor read() {
-                        return getForwarderList(statusID);
-                    }
-                }, callback);
-    }
-    private Cursor getForwarderList(long statusID) {
+
+    public Cursor getForwarderList(long statusID) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, new String[] {RECEIVEDBY}, ID+" = "+statusID, null, null, null, null);
         return cursor;

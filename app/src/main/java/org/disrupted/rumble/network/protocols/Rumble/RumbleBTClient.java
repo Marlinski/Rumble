@@ -19,26 +19,28 @@
 
 package org.disrupted.rumble.network.protocols.Rumble;
 
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
+import android.util.Log;
+
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.BlockHello;
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
 import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.io.IOException;
-import java.util.UUID;
 
 /**
  * @author Marlinski
  */
-public class RumbleBluetoothClient extends BluetoothClient {
+public class RumbleBTClient extends org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient {
 
     private static final String TAG = "RumbleBluetoothClient";
 
-    public RumbleBluetoothClient(String remoteMacAddress){
+    public RumbleBTClient(String remoteMacAddress){
         super(remoteMacAddress, RumbleBTConfiguration.RUMBLE_BT_UUID_128, RumbleBTConfiguration.RUMBLE_BT_STR, false);
     }
 
     @Override
     public String getConnectionID() {
-        return "ConnectTO Rumble: "+this.macAddress+":"+bt_service_uuid.toString();
+        return "BTRumble: "+this.remoteMacAddress;
     }
 
     @Override
@@ -48,6 +50,17 @@ public class RumbleBluetoothClient extends BluetoothClient {
 
     @Override
     protected void initializeProtocol() {
+        BlockHello hello = new BlockHello();
+        try {
+            Log.d(TAG, "[+] sending hello packet :-)");
+            outputStream.write(hello.getBytes(), 0, hello.getLength());
+        }
+        catch(IOException e) {
+            Log.e(TAG, "[!] unable to say hello");
+        }
+        catch(MalformedRumblePacket e) {
+            Log.e(TAG, "[!] malformed packet");
+        }
     }
 
     @Override
@@ -61,6 +74,8 @@ public class RumbleBluetoothClient extends BluetoothClient {
 
     @Override
     protected void processingPacketFromNetwork() throws IOException {
+        RumbleBTReceiver receiver = new RumbleBTReceiver(this);
+        receiver.run();
     }
 
     @Override
@@ -70,9 +85,6 @@ public class RumbleBluetoothClient extends BluetoothClient {
 
     @Override
     public void stop() {
-    }
-
-    @Override
-    public void kill() {
+        kill();
     }
 }

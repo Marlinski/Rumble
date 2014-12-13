@@ -27,7 +27,8 @@ import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
@@ -77,7 +78,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     @Override
     public void onLinkStart() {
-        wifiMan = (WifiManager) networkCoordinator.getSystemService(Context.WIFI_SERVICE);
+        wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         if(!wifiMan.isWifiEnabled())
             return;
 
@@ -94,7 +95,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     @Override
     public void onLinkStop() {
         ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
-        networkCoordinator.removeNeighborsType(LinkLayerIdentifier);
+        NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
         if(!registered)
             return;
         if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
@@ -117,13 +118,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public List<NeighbourDevice> getNeighborhood() {
-        return null;
-    }
-
-    @Override
-    public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
-
+    public void connectTo(Neighbour neighbour, boolean force) {
     }
 
     /*
@@ -144,7 +139,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
             serviceInfo.setServiceType(RumbleWifiConfiguration.NSD_SERVICE_TYPE);
             serviceInfo.setPort(RumbleWifiConfiguration.SERVER_PORT);
 
-            mNsdManager = (NsdManager) networkCoordinator.getSystemService(Context.NSD_SERVICE);
+            mNsdManager = (NsdManager) RumbleApplication.getContext().getSystemService(Context.NSD_SERVICE);
             mNsdManager.registerService(
                     serviceInfo,
                     NsdManager.PROTOCOL_DNS_SD,

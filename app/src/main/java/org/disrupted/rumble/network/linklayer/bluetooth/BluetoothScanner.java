@@ -30,10 +30,11 @@ import android.os.*;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.BluetoothScanEnded;
-import org.disrupted.rumble.network.events.BluetoothScanStarted;
+import org.disrupted.rumble.events.BluetoothScanEnded;
+import org.disrupted.rumble.events.BluetoothScanStarted;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 
 import java.util.HashSet;
 import java.lang.Math;
@@ -56,7 +57,7 @@ public class BluetoothScanner {
     };
     private ScanningState scanningState;
 
-    private HashSet<NeighbourDevice>  btNeighborhood;
+    private HashSet<BluetoothNeighbour>  btNeighborhood;
 
     /*
      * If another application is using the bluetooth (like Firechat) we have
@@ -83,7 +84,7 @@ public class BluetoothScanner {
     private static final double IMAX_TRICKLE_TIMER  = 16;
     private int                 consistency = 1;
     private double              trickleTimer = START_TRICKLE_TIMER;
-    private HashSet<NeighbourDevice>  lastTrickleState;
+    private HashSet<BluetoothNeighbour>  lastTrickleState;
     private Handler             handler;
 
     /*
@@ -92,23 +93,20 @@ public class BluetoothScanner {
      */
     private boolean             lastscan = false;
 
-
-    private NetworkCoordinator networkCoordinator;
     private boolean registered;
 
     public static BluetoothScanner getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)
-                return new BluetoothScanner(networkCoordinator);
+                return new BluetoothScanner();
 
             return instance;
         }
     }
 
-    private BluetoothScanner(NetworkCoordinator networkCoordinator) {
-        this.networkCoordinator = networkCoordinator;
-        btNeighborhood     = new HashSet<NeighbourDevice>();
-        lastTrickleState = new HashSet<NeighbourDevice>();
+    private BluetoothScanner() {
+        btNeighborhood     = new HashSet<BluetoothNeighbour>();
+        lastTrickleState = new HashSet<BluetoothNeighbour>();
         trickleTimer     = START_TRICKLE_TIMER;
         handler          = new Handler();
         scanningState    = ScanningState.SCANNING_OFF;
@@ -116,14 +114,10 @@ public class BluetoothScanner {
         registered = false;
     }
 
-    public HashSet<NeighbourDevice> getNeighborhood() {
-        return new HashSet<NeighbourDevice>(btNeighborhood);
-    }
-
-    public NeighbourDevice getNeighbor(String address) {
-        Iterator<NeighbourDevice> it = btNeighborhood.iterator();
+    public BluetoothNeighbour getNeighbor(String address) {
+        Iterator<BluetoothNeighbour> it = btNeighborhood.iterator();
         while(it.hasNext()) {
-            NeighbourDevice element = it.next();
+            BluetoothNeighbour element = it.next();
             if(element.getMacAddress().equals(address))
                 return element;
         }
@@ -145,12 +139,12 @@ public class BluetoothScanner {
             filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
             filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
             filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-            networkCoordinator.registerReceiver(mReceiver, filter);
+            RumbleApplication.getContext().registerReceiver(mReceiver, filter);
             registered = true;
         }
 
         try{
-            BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(networkCoordinator);
+            BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
 
             if (mBluetoothAdapter == null) {
                 Log.d(TAG, "Bluetooth is not supported on this platform");
@@ -183,9 +177,9 @@ public class BluetoothScanner {
         Log.d(TAG, "[-] stop scanning procedure");
         handler.removeCallbacksAndMessages(null);
         if(registered)
-            networkCoordinator.unregisterReceiver(mReceiver);
+            RumbleApplication.getContext().unregisterReceiver(mReceiver);
         registered = false;
-        BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(networkCoordinator);
+        BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if (mBluetoothAdapter == null)
             return;
         btNeighborhood.clear();
@@ -208,33 +202,45 @@ public class BluetoothScanner {
         trickleTimer = IMIN_TRICKLE_TIMER;
     }
 
+    /*
+     * The trickle timer increase if the neighborhood is consistent
+     * It is resetted if the neighborhood is inconsistant
+     */
     private void recomputeTrickleTimer() {
         Log.d(TAG, "[+] recompute Trickle Timer");
         int inconsistency = 0;
-        HashSet<NeighbourDevice> tmp = new HashSet<NeighbourDevice>();
-        for(NeighbourDevice neighbor : btNeighborhood) {
+        HashSet<BluetoothNeighbour> tmp = new HashSet<BluetoothNeighbour>();
+
+        /*
+         * first we detect for new neighbour inconsistency
+         */
+        for(BluetoothNeighbour neighbor : btNeighborhood) {
             tmp.add(neighbor);
-            if(!lastTrickleState.remove(neighbor)) {
-                //we now warn networkCoordinator as soon as we detect a device
-                //networkCoordinator.newNeighbor(neighbor);
+            if(!lastTrickleState.remove(neighbor))
                 inconsistency++;
-            }
         }
-        for(NeighbourDevice neighbor : lastTrickleState) {
-            networkCoordinator.delNeighbor(neighbor.getMacAddress());
+
+        /*
+         * Then we detect for neighbour that disappeared inconsistency
+         */
+        for(BluetoothNeighbour neighbor : lastTrickleState) {
+            try { NetworkCoordinator.getInstance().delNeighbor(neighbor.getMacAddress()); }
+            catch (RecordNotFoundException ignore){  }
             inconsistency++;
         }
         lastTrickleState.clear();
+
+        /*
+         * we save the state for the next trickle recomputation
+         */
         lastTrickleState = tmp;
 
-        Log.d(TAG, "-- old trickle timer = "+trickleTimer);
         if(inconsistency < consistency)
             trickleTimer = (((trickleTimer * 2) > (IMIN_TRICKLE_TIMER*(Math.pow(2,IMAX_TRICKLE_TIMER)))) ? Math.pow(2,IMAX_TRICKLE_TIMER) : (trickleTimer*2));
-        else {
+        else
             trickleTimer = IMIN_TRICKLE_TIMER;
-            //todo: should we post a neighborhoodchange event ?
-        }
-        Log.d(TAG, "-- new trickle timer = "+trickleTimer+"  (inconsistency = "+inconsistency+")");
+
+        //todo: should we post a neighborhoodchange event when trickle is reset ?
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -245,7 +251,7 @@ public class BluetoothScanner {
                 return;
 
             String action = intent.getAction();
-            Log.d(TAG, "[!] "+action);
+            //Log.d(TAG, "[*] "+action);
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 if(scanningState == ScanningState.SCANNING_OFF)
@@ -253,11 +259,10 @@ public class BluetoothScanner {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (device.getAddress() == null)
                     return;
-                NeighbourDevice btPeerDevice = new NeighbourDevice(device.getAddress(), BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-                btPeerDevice.setDeviceName(device.getName());
+                BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
                 if(btNeighborhood.add(btPeerDevice)){
                     Log.d(TAG, "[+] device "+device.getName()+" ["+device.getAddress()+"] discovered");
-                    networkCoordinator.newNeighbor(btPeerDevice);
+                    NetworkCoordinator.getInstance().newNeighbour(btPeerDevice);
                 }
             }
 
@@ -280,6 +285,11 @@ public class BluetoothScanner {
                 hasCallback = true;
             }
 
+            /*
+             * It is possible that another application (like firechat) is also sending
+             * discovery intent to bluetooth. In that case we silently use this as an
+             *
+             */
             if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
                 if(hasCallback) {
                     Log.d(TAG, "[!] started unsollicited Discovery");

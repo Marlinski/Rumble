@@ -17,25 +17,21 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
-
-import org.disrupted.rumble.network.protocols.command.Command;
-
-import java.io.IOException;
+package org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions;
 
 /**
  * @author Marlinski
  */
-public interface Protocol {
+public class MalformedRumblePacket extends Exception {
 
-    public String getProtocolID();
+    public String reason;
 
-    public String getLinkLayerIdentifier();
+    public MalformedRumblePacket() {
+        reason = "";
+    }
 
-    public boolean isCommandSupported(String commandName);
-
-    public boolean executeCommand(Command command) throws InterruptedException;
-
-    public void stop();
+    public MalformedRumblePacket(String reason) {
+        this.reason = reason;
+    }
 
 }

@@ -23,6 +23,9 @@ package org.disrupted.rumble.message;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import org.disrupted.rumble.util.HashUtil;
+
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
@@ -38,20 +41,25 @@ public class StatusMessage extends Message {
     private static final String TAG  = "StatusMessage";
     public  static final String TYPE = "STATUS";
 
+    protected String      uuid;
+    protected Integer     score;
     protected String      author;
     protected String      status;
     protected Set<String> hashtagSet;
     protected String      attachedFile;
-    protected long        fileSize;
-    protected String      timeOfCreation;
-    protected String      timeOfArrival;
+    protected long        fileSize; // move it to file database
+    protected long        timeOfCreation;
+    protected long        timeOfArrival;
     protected Integer     hopCount;
-    protected Integer     score;
-    protected Integer     ttl;
+    protected long        ttl;
+    protected Integer     like;
+    protected Integer     replication;
+    protected boolean     read;
     protected Set<String> forwarderList;
 
-    public StatusMessage(String post, String author) {
+    public StatusMessage(String post, String author, long timeOfCreation) {
         this.messageType = TYPE;
+
         this.status   = post;
         this.author = author;
         hashtagSet  = new HashSet<String>();
@@ -64,63 +72,75 @@ public class StatusMessage extends Message {
 
         attachedFile   = "";
         fileSize       = 0;
-        timeOfCreation = String.valueOf(System.currentTimeMillis() / 1000L);
-        timeOfArrival  = String.valueOf(System.currentTimeMillis() / 1000L);
+        this.timeOfCreation = timeOfCreation;
+        timeOfArrival  = (System.currentTimeMillis() / 1000L);
         hopCount       = 0;
         forwarderList  = new HashSet<String>();
         score          = 0;
         ttl            = 0;
+        like           = 0;
+        replication    = 0;
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(author.getBytes());
+            md.update(post.getBytes());
+            md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
+            byte[] digest = md.digest();
+            uuid = new String(digest).substring(0,16);
+        }
+        catch (NoSuchAlgorithmException ignore) {}
     }
 
+    public String  getUuid() {              return this.uuid; }
+    public Integer getScore(){              return this.score;}
+    public String  getAuthor(){             return this.author; }
+    public String  getPost(){               return this.status; }
+    public Set<String> getHashtagSet(){     return this.hashtagSet; }
+    public long  getTimeOfCreation(){       return this.timeOfCreation; }
+    public long  getTimeOfArrival(){        return this.timeOfArrival; }
+    public Integer getHopCount(){           return this.hopCount; }
+    public Set<String> getForwarderList(){  return this.forwarderList; }
+    public long getTTL(){                   return this.ttl;}
+    public String  getFileName(){           return this.attachedFile; }
+    public long    getFileSize(){           return this.fileSize; }
+    public long    getFileID(){             return 0; }
+    public long    getLike(){               return like; }
+    public long    getReplication(){        return replication; }
+
+    public void setUuid(String uuid) {            this.uuid = uuid;               }
     public void setFileName(String filename){     this.attachedFile   = filename; }
     public void setFileSize(long size) {          this.fileSize       = size;     }
-    public void setTimeOfCreation(String toc){    this.timeOfCreation = toc;      }
-    public void setTimeOfArrival(String toa){     this.timeOfArrival  = toa;      }
+    public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
+    public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
     public void setHopCount(Integer hopcount){    this.hopCount       = hopcount; }
     public void setScore(Integer score){          this.score          = score;    }
-    public void setTTL(Integer ttl){              this.ttl            = ttl;      }
+    public void setLike(Integer like){            this.like           = like;    }
+    public void setTTL(long ttl){              this.ttl            = ttl;      }
     public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
+    public void setHashtagSet(Set<String> hashtagSet) {
+        if(hashtagSet.size() > 0)
+            hashtagSet.clear();
+        this.hashtagSet = hashtagSet;
+    }
+    public void setReplication(Integer replication){ this.replication    = replication; }
+    public void setRead(boolean read){            this.read = read; }
     public void setForwarderList(Set<String> fl){
         if(forwarderList.size() > 0)
             forwarderList.clear();
         this.forwarderList  = fl;
     }
-    public void addForwarder(String macAddress) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(macAddress.getBytes());
-            byte[] digest = md.digest();
-            macAddress = new String(digest);
-        }
-        catch (NoSuchAlgorithmException ignore) {}
-        forwarderList.add(macAddress);
+    public void addForwarder(String macAddress, String protocolID) {
+        forwarderList.add(HashUtil.computeHash(macAddress,protocolID));
     }
 
-    public String  getAuthor(){             return this.author; }
-    public String  getPost(){               return this.status; }
-    public Set<String> getHashtagSet(){     return this.hashtagSet; }
-    public String  getTimeOfCreation(){     return this.timeOfCreation; }
-    public String  getTimeOfArrival(){      return this.timeOfArrival; }
-    public Integer getHopCount(){           return this.hopCount; }
-    public Set<String> getForwarderList(){  return this.forwarderList; }
-    public Integer getScore(){              return this.score;}
-    public Integer getTTL(){                return this.ttl;}
-    public String  getFileName(){           return this.attachedFile; }
-    public long    getFileSize(){           return this.fileSize; }
-    public long    getFileID(){             return 0; }
 
+    public boolean hasBeenReadAlready(){ return read; }
     public boolean hasAttachedFile() {
         return (attachedFile != "");
     }
-    public boolean isForwarder(String macAddress) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(macAddress.getBytes());
-            byte[] digest = md.digest();
-            macAddress = new String(digest);
-        }
-        catch (NoSuchAlgorithmException ignore) {}
-        return forwarderList.contains(macAddress);
+    public boolean isForwarder(String macAddress, String protocolID) {
+        return forwarderList.contains(HashUtil.computeHash(macAddress,protocolID));
     }
 
     public String toString() {
@@ -131,6 +151,3 @@ public class StatusMessage extends Message {
         return s;
     }
 }
-
-
-

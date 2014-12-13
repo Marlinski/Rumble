@@ -20,28 +20,37 @@
 package org.disrupted.rumble.app;
 
 import android.app.Application;
-import android.content.ContentValues;
+import android.content.Context;
 
-import org.disrupted.rumble.database.ContactDatabase;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.message.MessageQueue;
+import org.disrupted.rumble.network.NetworkCoordinator;
 
 /**
  * @author Marlinski
  */
 public class RumbleApplication extends Application{
 
-    private DatabaseFactory mDatabaseFactory;
+    private static RumbleApplication instance;
 
     // name of the Rumble Image directory as it appears on Photo Album
     public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
-
     // minimum 10 MB available for Rumble to save files
     public static long MINIMUM_FREE_SPACE_AVAILABLE = 10000000;
+
+    public RumbleApplication() {
+        instance = this;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        mDatabaseFactory.getInstance(this);
+        DatabaseFactory.getInstance(this);
+        MessageQueue.getInstance().start();
+        NetworkCoordinator.getInstance();
     }
 
+    public static Context getContext() {
+        return instance;
+    }
 }

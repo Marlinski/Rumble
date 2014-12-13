@@ -40,8 +40,6 @@ public abstract class GenericProtocol implements Connection, Protocol {
     private static final String TAG = "GenericProtocol";
 
     private BlockingQueue<Command> commandQueue;
-    private boolean running = false;
-    private Thread commandThread = null;
 
     abstract protected void processingPacketFromNetwork() throws IOException;
 
@@ -51,61 +49,60 @@ public abstract class GenericProtocol implements Connection, Protocol {
 
     abstract protected void destroyProtocol();
 
-    public boolean isRunning() {
-        return running;
+    public GenericProtocol() {
+        commandQueue = new LinkedBlockingQueue<Command>(1);
     }
 
-    public final void onConnected() {
-        commandQueue = new LinkedBlockingQueue<Command>();
-        running = true;
+    public final void onGenericProcotolConnected() throws IOException{
 
+        /*
+         * abstract method implemented by a specific protocol implementation to perform
+         * some code when we the actual work of the protocol starts.
+         */
         initializeProtocol();
 
-        commandThread = new Thread() {
-            @Override
-            public synchronized void run(){
-                processingCommandFromQueue();
-            }
-        };
-        commandThread.start();
+        processingCommandFromQueue.start();
 
-        try {  processingPacketFromNetwork();  }  catch(IOException ignore) { }
-
-        commandThread.interrupt();
-        destroyProtocol();
-        running = false;
-    }
-
-    public void processingCommandFromQueue(){
         try {
-            while (true) {
-                Command command = commandQueue.take();
-                if(!isCommandSupported(command.getCommandName()))
-                    continue;
-
-                onCommandReceived(command);
-            }
-        }
-        catch(InterruptedException e) {
-            commandQueue.clear();
+            processingPacketFromNetwork();
+        }finally {
+            processingCommandFromQueue.interrupt();
+            destroyProtocol();
         }
     }
 
-    public final boolean executeCommand(Command command) {
+    Thread processingCommandFromQueue = new Thread() {
+        @Override
+        public synchronized void run() {
+            try {
+                while (true) {
+                    Log.d(TAG, "[+] started command thread: "+getProtocolID());
+                    Command command = commandQueue.take();
+                    if(!isCommandSupported(command.getCommandName()))
+                        continue;
+
+                    onCommandReceived(command);
+                }
+            }
+            catch(InterruptedException e) {
+                Log.d(TAG, "[-] stopped command thread: "+getProtocolID());
+                commandQueue.clear();
+            }
+        }
+    };
+
+    /*
+     * Protocol Interface implementation of the executeCommand method
+     * This method add a command to the commandQueue that will be processed by the
+     * processingCommandFromQueue thread
+     */
+    public final boolean executeCommand(Command command) throws InterruptedException{
         if(isCommandSupported(command.getCommandName())) {
-            commandQueue.add(command);
+            commandQueue.put(command);
             return true;
         } else {
             Log.d(TAG, "[!] command is not supported: " + command.getCommandName());
             return false;
         }
-    }
-
-
-    protected final void onStatusMessageReceived(StatusMessage message) {
-        Log.d(TAG, "Status received from Network:\n" + message.toString());
-        DatabaseFactory
-                .getStatusDatabase(NetworkCoordinator.getInstance())
-                .insertStatus(message,null);
     }
 }

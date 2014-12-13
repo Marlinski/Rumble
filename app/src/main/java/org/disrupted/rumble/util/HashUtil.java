@@ -17,10 +17,26 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.util;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerStopped extends NetworkEvent {
+public class HashUtil {
+
+    public static final String computeHash(String macAddress, String protocol) {
+        String hash = "";
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            md.update(macAddress.getBytes());
+            md.update(protocol.getBytes());
+            byte[] digest = md.digest();
+            hash = new String(digest);
+        }
+        catch (NoSuchAlgorithmException ignore) {}
+        return hash;
+    }
 }

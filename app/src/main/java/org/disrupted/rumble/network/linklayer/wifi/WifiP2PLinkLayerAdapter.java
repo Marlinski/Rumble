@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 
@@ -62,12 +62,7 @@ public class WifiP2PLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public List<NeighbourDevice> getNeighborhood() {
-        return null;
-    }
-
-    @Override
-    public void connectTo(NeighbourDevice neighbourDevice, boolean force) {
+    public void connectTo(Neighbour neighbourDevice, boolean force) {
 
     }
 

@@ -46,7 +46,7 @@ import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.HashtagDatabase;
-import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -240,9 +240,6 @@ public class FragmentStatusList extends Fragment {
                         new String[] {" "+filter.toLowerCase()},
                         new CharSequence[]{""}));
 
-
-            Log.d(TAG, composeTextView.getText().toString().toLowerCase());
-
             filterListAdapter.deleteFilter(filter);
             filterListAdapter.notifyDataSetChanged();
             getStatuses();
@@ -365,7 +362,8 @@ public class FragmentStatusList extends Fragment {
                 return;
 
             Contact localContact = DatabaseFactory.getContactDatabase(getActivity()).getLocalContact();
-            StatusMessage statusMessage = new StatusMessage(message, localContact.getName());
+            long now = (System.currentTimeMillis() / 1000L);
+            StatusMessage statusMessage = new StatusMessage(message, localContact.getName(), now);
 
             try {
                 String filename = saveImageOnDisk();
@@ -374,36 +372,16 @@ public class FragmentStatusList extends Fragment {
             catch (IOException ignore) {
             }
 
-            sendButton.setClickable(false);
-            sendButton.setImageResource(R.drawable.ic_send_grey600_36dp);
-            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, onMessageSaved);
+            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, null);
+
+            composeTextView.setText("");
+            for(String filter : filterListAdapter.getFilterList()) {
+                if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
+                    composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
+            }
+
         }
     }
-
-    DatabaseExecutor.WritableQueryCallback onMessageSaved = new DatabaseExecutor.WritableQueryCallback() {
-        @Override
-        public void onWritableQueryFinished(boolean success) {
-            if(getActivity() == null)
-                return;
-            if(success)
-                getActivity().runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                composeTextView.setText("");
-                                                for(String filter : filterListAdapter.getFilterList()) {
-                                                    if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
-                                                       composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
-                                                }
-                                                sendButton.setImageResource(R.drawable.ic_send_black_36dp);
-                                                sendButton.setClickable(true);
-                                            }
-                                        }
-            );
-        }
-    };
-
-
-
 
     /*
      * Events that come from outside the activity (like new status for instance)

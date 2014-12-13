@@ -19,27 +19,22 @@
 
 package org.disrupted.rumble.network.protocols.Rumble;
 
-import org.disrupted.rumble.network.linklayer.wifi.UDPServer;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import android.bluetooth.BluetoothSocket;
+
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
 import org.disrupted.rumble.network.protocols.command.Command;
+
+import java.io.IOException;
 
 /**
  * @author Marlinski
  */
-public class RumbleUDPServer extends UDPServer {
+public class RumbleBTServerConnection extends BluetoothServerConnection {
 
-    public RumbleUDPServer() {
-        super(RumbleWifiConfiguration.SERVER_PORT);
-    }
+    private static final String TAG = "RumbleBluetoothServerConnection";
 
-    @Override
-    public String getLinkLayerIdentifier() {
-        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
-    }
-
-    @Override
-    public String getConnectionID() {
-        return "RumbleUDPServer";
+    public RumbleBTServerConnection(BluetoothSocket socket) {
+        super(socket);
     }
 
     @Override
@@ -48,13 +43,38 @@ public class RumbleUDPServer extends UDPServer {
     }
 
     @Override
+    public String getConnectionID() {
+        return "BTRumble: "+ remoteMacAddress;
+    }
+
+    @Override
+    protected void initializeProtocol() {
+    }
+
+    @Override
+    protected void destroyProtocol() {
+    }
+
+    @Override
     public boolean isCommandSupported(String commandName) {
         return false;
     }
 
     @Override
-    public boolean executeCommand(Command command) {
+    protected void processingPacketFromNetwork() throws IOException {
+        RumbleBTReceiver receiver = new RumbleBTReceiver(this);
+        receiver.run();
+    }
+
+    @Override
+    protected boolean onCommandReceived(Command command) {
         return false;
+    }
+
+
+    @Override
+    public void stop() {
+        kill();
     }
 
 }

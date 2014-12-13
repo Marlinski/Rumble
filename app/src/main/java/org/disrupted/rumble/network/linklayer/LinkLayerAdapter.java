@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.linklayer;
 
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 
 import java.util.List;
@@ -29,11 +29,9 @@ import java.util.List;
  */
 public abstract class LinkLayerAdapter {
 
-    protected NetworkCoordinator networkCoordinator;
     protected boolean activated;
 
     public LinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        this.networkCoordinator = networkCoordinator;
         this.activated = false;
     }
 
@@ -60,8 +58,6 @@ public abstract class LinkLayerAdapter {
 
     abstract public void forceDiscovery();
 
-    abstract public List<NeighbourDevice> getNeighborhood();
-
-    abstract public void connectTo(NeighbourDevice neighbourDevice, boolean force);
+    abstract public void connectTo(Neighbour neighbour, boolean force);
 
 }

@@ -21,6 +21,7 @@ package org.disrupted.rumble.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,14 +29,15 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.network.NeighbourDevice;
+import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NeighbourRecord;
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -45,18 +47,10 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
 
     private static final String TAG = "NeighborListAdapter";
 
-    private final Activity activity;
     private final LayoutInflater inflater;
-    private List<String> neighborhood;
+    private List<Neighbour> neighborhood;
 
-    public NeighborhoodListAdapter(Activity activity) {
-        this.activity = activity;
-        this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.neighborhood = new LinkedList<String>();
-    }
-
-    public NeighborhoodListAdapter(Activity activity, List<String> neighborhood) {
-        this.activity = activity;
+    public NeighborhoodListAdapter(Activity activity, List<Neighbour> neighborhood) {
         this.inflater     = LayoutInflater.from(activity);
         this.neighborhood = neighborhood;
     }
@@ -65,23 +59,26 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public View getView(int i, View view, ViewGroup viewGroup) {
         View neighborView = inflater.inflate(R.layout.neighbour_item, null, true);
         TextView name = (TextView) neighborView.findViewById(R.id.neighbour_item_name);
-        TextView id = (TextView) neighborView.findViewById(R.id.neighbour_item_id);
+        TextView id = (TextView) neighborView.findViewById(R.id.neighbour_item_link_layer_name);
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        if(NetworkCoordinator.getInstance() != null){
-            NeighbourRecord record = NetworkCoordinator.getInstance().
-                                     getNeighbourRecordFromID(neighborhood.get(i));
+        Neighbour neighbour = neighborhood.get(i);
+        id.setText(neighbour.getLinkLayerName());
+        try {
+            name.setText(NetworkCoordinator.getInstance().getNeighbourName(neighbour));
 
-            name.setText(record.getName());
-            id.setText(record.getID());
-            if(record.hasDeviceType(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            if (NetworkCoordinator.getInstance().isNeighbourInRange(neighbour, BluetoothLinkLayerAdapter.LinkLayerIdentifier))
                 bluetoothIcon.setVisibility(View.VISIBLE);
-            if(record.isConnectedFromLinkLayer(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            if (NetworkCoordinator.getInstance().isNeighbourConnectedLinkLayer(neighbour, BluetoothLinkLayerAdapter.LinkLayerIdentifier))
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
+            else
+                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
 
-            //todo add WiFi
+        } catch(RecordNotFoundException ignore) {
+            Log.e(TAG, "[!] record not found !");
         }
+        //todo add WiFi
 
         return neighborView;
     }
@@ -105,7 +102,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void onClick(View view) {
     }
 
-    public void updateList(List<String> newNeighborhood) {
+    public void updateList(List<Neighbour> newNeighborhood) {
         this.neighborhood.clear();
         this.neighborhood = newNeighborhood;
         notifyDataSetChanged();
