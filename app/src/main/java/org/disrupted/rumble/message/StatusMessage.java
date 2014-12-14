@@ -28,6 +28,7 @@ import org.disrupted.rumble.util.HashUtil;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -36,7 +37,7 @@ import java.util.regex.Pattern;
 /**
  * @author Marlinski
  */
-public class StatusMessage extends Message {
+public class StatusMessage extends Message{
 
     private static final String TAG  = "StatusMessage";
     public  static final String TYPE = "STATUS";
@@ -88,7 +89,7 @@ public class StatusMessage extends Message {
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
             byte[] digest = md.digest();
-            uuid = new String(digest).substring(0,16);
+            uuid = new String(digest);
         }
         catch (NoSuchAlgorithmException ignore) {}
     }
@@ -153,4 +154,5 @@ public class StatusMessage extends Message {
         s += "Time:" +this.timeOfCreation+"\n";
         return s;
     }
+
 }

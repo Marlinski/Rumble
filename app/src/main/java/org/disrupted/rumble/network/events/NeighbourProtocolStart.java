@@ -19,8 +19,18 @@
 
 package org.disrupted.rumble.network.events;
 
+import org.disrupted.rumble.network.Neighbour;
+
 /**
  * @author Marlinski
  */
-public class DisconnectFromNeighbourDevice {
+public class NeighbourProtocolStart extends NetworkEvent  {
+
+    public String neighbour;
+    public String protocolID;
+    public NeighbourProtocolStart(String neighbour, String protocolID) {
+        this.neighbour = neighbour;
+        this.protocolID = protocolID;
+    }
+
 }

@@ -26,10 +26,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 
+import org.disrupted.rumble.database.events.NewHashtagEvent;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -60,7 +64,7 @@ public class HashtagDatabase extends  Database{
 
     public Cursor getHashtag(long statusID) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor           = database.query(TABLE_NAME, new String[] {HASHTAG}, ID+" = "+statusID, null, null, null, null);
+        Cursor cursor           = database.query(TABLE_NAME, new String[]{HASHTAG}, ID + " = " + statusID, null, null, null, null);
         return cursor;
     }
 
@@ -123,7 +127,7 @@ public class HashtagDatabase extends  Database{
         }
 
         if(res >= 0)
-            this.notifyHashtagListListener(hashtag);
+            EventBus.getDefault().post(new NewHashtagEvent(hashtag));
 
         return res;
     }

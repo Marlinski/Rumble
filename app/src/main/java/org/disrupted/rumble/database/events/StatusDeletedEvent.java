@@ -19,21 +19,13 @@
 
 package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.message.StatusMessage;
-
 /**
- * NewStatusEvent is posted when a status has been added to the database
- * This must must ONLY be post by the StatusDatabase as the piggybacked message
- * should carry its database status ID.
- *
  * @author Marlinski
  */
-public class NewStatusEvent extends ResourceEvent {
+public class StatusDeletedEvent extends ResourceEvent {
+    public long statusID;
 
-    public StatusMessage status;
-
-    public NewStatusEvent(StatusMessage status){
-        this.status = status;
+    public StatusDeletedEvent(long statusID){
+        this.statusID = statusID;
     }
-
 }

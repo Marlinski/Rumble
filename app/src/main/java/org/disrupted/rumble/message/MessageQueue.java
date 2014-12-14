@@ -30,7 +30,6 @@ import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -38,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import de.greenrobot.event.EventBus;
@@ -67,22 +67,30 @@ public class MessageQueue {
         }
     }
 
+    /*
+     * The whole status database is hold into priorityStatus as a sorted set. To avoid consuming too
+     * much memory, the item only hold the Table ID, and its "score" (see computeScore below).
+     * However, as the "oldness" of a status vary every millisecond, we compute a pre-score at
+     * boot time and every comparison adds to this score the uptodate oldness.
+     */
     public class ScoredEntry {
         public long  statusID;
-        public float score;
-        public ScoredEntry(long  statusID, float score) {
+        public Prescore prescore;
+        public long  toc;
+        public ScoredEntry(long  statusID, Prescore prescore, long toc) {
             this.statusID = statusID;
-            this.score = score;
+            this.prescore = prescore;
+            this.toc = toc;
         }
-
     }
     public static Comparator<ScoredEntry> scoredEntryComparator = new Comparator<ScoredEntry>() {
         @Override
-        public int compare(ScoredEntry scoredEntry, ScoredEntry scoredEntry2) {
-            if(scoredEntry.statusID == scoredEntry2.statusID)
+        public int compare(ScoredEntry entry1, ScoredEntry entry2) {
+            if(entry1.statusID == entry2.statusID)
                 return 0;
-            int diff = (int)(scoredEntry2.score - scoredEntry.score);
-            return ((diff == 0) ? 1 : diff);
+            int score1 =  (computeScore(entry1.prescore, entry1.toc));
+            int score2 =  (computeScore(entry2.prescore, entry2.toc));
+            return ((score1 > score2) ? -1 : 1);
         }
     };
     private MessageQueue() {
@@ -129,8 +137,8 @@ public class MessageQueue {
                         long toc = cursor.getLong(cursor.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
                         long ttl = cursor.getLong(cursor.getColumnIndexOrThrow(StatusDatabase.TTL));
 
-                        float score = computeScore(hopcount, like, replication, toc, ttl);
-                        priorityStatus.add(new ScoredEntry(id, score));
+                        Prescore prescore = computePreScore(hopcount, like, replication, ttl);
+                        priorityStatus.add(new ScoredEntry(id, prescore, toc));
                     }
                 }
                 cursor.close();
@@ -167,31 +175,41 @@ public class MessageQueue {
      *
      *          c = 100 - a - b
      */
-    private static float computeScore(long hopcount, long like, long replication, long toc, long ttl){
-
-        long old = System.currentTimeMillis() - toc;
+    private static class Prescore {
+        public int a;
+        public float C;
+        public Prescore(int a, float C) {
+            this.a = a;
+            this.C = C;
+        }
+    }
+    private static Prescore computePreScore(long hopcount, long like, long replication, long ttl){
         int a = Math.min(100, 100/((int)Math.log(hopcount+replication+1)+1));
+        float C = (100*like/(1+like));
+        return new Prescore(a,C) ;
+    }
+    private static int computeScore(Prescore prescore, long toc) {
+        long old = System.currentTimeMillis() - toc;
+        int a = prescore.a;
         int b = Math.min(100 - a, (100 - a) / ((int) Math.log((old / 3600) + 1) + 1));
         int c = 100-a-b;
-
-        return (a + b*(100/((int)Math.log((old/3600)+1)+1)) + c*(100*like/(1+like))/(a+b+c)) ;
+        return (int)(a + b*(100/((int)Math.log((old/3600)+1)+1)) + c*prescore.C);
     }
 
     public void onEvent(NewStatusEvent event) {
         StatusMessage message = event.status;
-        long statusID = event.statusID;
+        long statusID = message.getdbId();
         if(message == null)
             return;
 
-        //todo WARNING it is going to be mis-sorted as this score is more recent than those in Queue
-        float score = computeScore(
+        Prescore prescore = computePreScore(
                 message.getHopCount(),
-                message.getLike(), message.getReplication(),
-                message.getTimeOfCreation(),
+                message.getLike(),
+                message.getReplication(),
                 message.getTTL());
 
         synchronized (lock) {
-            priorityStatus.add(new ScoredEntry(statusID, score));
+            priorityStatus.add(new ScoredEntry(statusID, prescore, message.getTimeOfCreation()));
 
             for (PriorityBlockingMessageQueue listener : messageListeners) {
                 listener.insertMessage(event.status);
@@ -201,24 +219,24 @@ public class MessageQueue {
 
     public void onEvent(StatusSentEvent event) {
         Iterator<String> it = event.recipients.iterator();
+
         while(it.hasNext())
             event.status.addForwarder(it.next(), event.protocolID);
         event.status.addReplication(event.recipients.size());
-        float score = computeScore(
+
+        /*
+         * we update the database and update all the messagequeue listeners
+         */
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
+
+        Prescore prescore = computePreScore(
                 event.status.getHopCount(),
                 event.status.getLike(),
                 event.status.getReplication(),
-                event.status.getTimeOfCreation(),
                 event.status.getTTL()
                 );
 
-        /*
-         * the comparator return equal if the ID are equal. so we first remove the old entry
-         * and then we insert the new one !
-         * todo: WARNING it is going to be missorted as the others hold an old score
-         *       solution: precompute a+c without b, compute total score when comparing
-         */
-        ScoredEntry entry = new ScoredEntry(event.status.getdbId(), score);
+        ScoredEntry entry = new ScoredEntry(event.status.getdbId(), prescore, event.status.getTimeOfCreation());
         synchronized (lock) {
             priorityStatus.remove(entry);
             priorityStatus.add(entry);
@@ -228,10 +246,7 @@ public class MessageQueue {
             }
         }
 
-        //todo update the database as well
     }
-
-
 
 
     /*
@@ -250,39 +265,45 @@ public class MessageQueue {
 
     public class PriorityBlockingMessageQueue {
 
-        public Comparator<StatusMessage> statusComparator = new Comparator<StatusMessage>() {
+
+        private class StatusMessageComparator implements Comparator<StatusMessage> {
             @Override
-            public int compare(StatusMessage status1, StatusMessage status2) {
-                if(status1.getdbId() == status2.getdbId())
+            public int compare(StatusMessage entry1, StatusMessage entry2) {
+                if(entry1.getdbId() == entry2.getdbId())
+                    return 0;
+                if(entry1.getUuid() == entry2.getUuid())
                     return 0;
 
-                float score1 = computeScore(
-                        status1.getHopCount(),
-                        status1.getLike(),
-                        status1.getReplication(),
-                        status1.getTimeOfCreation(),
-                        status1.getTTL());
-                float score2 = computeScore(
-                        status2.getHopCount(),
-                        status2.getLike(),
-                        status2.getReplication(),
-                        status2.getTimeOfCreation(),
-                        status2.getTTL());
-                int diff = (int)(score2 - score1);
-                return ((diff == 0) ? 1 : diff);
+                Prescore prescore1 = computePreScore(
+                        entry1.getHopCount(),
+                        entry1.getLike(),
+                        entry1.getReplication(),
+                        entry1.getTTL());
+                int score1 = computeScore(prescore1, entry1.getTimeOfCreation());
+                Prescore prescore2 = computePreScore(
+                        entry2.getHopCount(),
+                        entry2.getLike(),
+                        entry2.getReplication(),
+                        entry2.getTTL());
+                int score2 = computeScore(prescore2, entry2.getTimeOfCreation());
+
+                return (score1 > score2) ? -1 :
+                       (score2 > score1) ?  1 :
+                       (entry1.getTimeOfCreation() > entry2.getTimeOfCreation()) ? 1 : -1;
             }
-        };
+        }
 
         private PriorityBlockingQueue<StatusMessage> messageQueue;
-        private long lastStatusID;
+        private long lastStatusIDTaken;
         private int size;
         private boolean dbEmpty;
 
         public PriorityBlockingMessageQueue(int size) {
-            messageQueue = new PriorityBlockingQueue<StatusMessage>(size, statusComparator);
-            lastStatusID = -1;
+            messageQueue = new PriorityBlockingQueue<StatusMessage>(size, new StatusMessageComparator());
+            lastStatusIDTaken = -1;
             this.size = size;
             dbEmpty = false;
+
             getNewBatch();
             synchronized (lock) {
                 messageListeners.add(this);
@@ -302,14 +323,15 @@ public class MessageQueue {
                 if (messageQueue.size() == 0)
                     getNewBatch();
             }
+
             StatusMessage entry = messageQueue.take();
-            lastStatusID = entry.getdbId();
+            lastStatusIDTaken = entry.getdbId();
             return entry;
         }
 
 
         private int getNewBatch() {
-            Log.d(TAG, "[+] getting new batch: "+lastStatusID);
+            Log.d(TAG, "[+] getting new batch: "+ lastStatusIDTaken);
             List<Integer> idList = new LinkedList<Integer>();
             synchronized (lock) {
                 Iterator<ScoredEntry> it = priorityStatus.iterator();
@@ -319,13 +341,13 @@ public class MessageQueue {
                 }
 
                 /*
-                 * our new batch is filled from our lastStatusID to the maximum capacity of our
+                 * our new batch is filled from our lastStatusIDTaken to the maximum capacity of our
                  * queue, or if the entire database has been dumped already
                  */
                 while (it.hasNext() && (idList.size() <= size)) {
                     ScoredEntry entry = it.next();
-                    if ((lastStatusID < 0) || (lastStatusID > entry.statusID))
-                        idList.add(Integer.valueOf((int)entry.statusID));
+                    if ((lastStatusIDTaken < 0) || (lastStatusIDTaken > entry.statusID))
+                        idList.add(Integer.valueOf((int) entry.statusID));
                 }
                 if(!it.hasNext())
                     dbEmpty = true;
@@ -338,8 +360,7 @@ public class MessageQueue {
                 if(cursor != null) {
                     for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                         StatusMessage message = StatusDatabase.cursorToStatus(cursor);
-                        messageQueue.add(message);
-                        Log.d(TAG, ":"+message.getdbId());
+                        messageQueue.offer(message);
                     }
                     cursor.close();
                 }
@@ -348,8 +369,11 @@ public class MessageQueue {
         }
 
         public void insertMessage(StatusMessage message) {
+            if(messageQueue.size() < size) {
                 messageQueue.add(message);
                 Log.d(TAG, "[+] 1 messages added to queue");
+                return;
+            }
         }
 
 

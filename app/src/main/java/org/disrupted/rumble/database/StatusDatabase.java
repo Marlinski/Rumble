@@ -27,6 +27,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.database.events.StatusDeletedEvent;
+import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.message.StatusMessage;
 
 import java.util.HashSet;
@@ -34,6 +37,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -224,7 +229,44 @@ public class StatusDatabase extends Database {
     private long deleteStatus(long statusID) {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
-        return db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
+        int count = db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
+        if(count > 0)
+            EventBus.getDefault().post(new StatusDeletedEvent(statusID));
+        return count;
+    }
+
+    public boolean updateStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.WritableQuery() {
+                    @Override
+                    public boolean write() {
+                        return (updateStatus(status) >= 0);
+                    }
+                }, callback);
+    }
+    private int updateStatus(StatusMessage status){
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(UUID, status.getUuid());
+        contentValues.put(SCORE, status.getScore());
+        contentValues.put(AUTHOR, status.getAuthor());
+        contentValues.put(POST, status.getPost());
+        contentValues.put(FILE_NAME, status.getFileName());
+        contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
+        contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
+        contentValues.put(HOP_COUNT, status.getHopCount());
+        contentValues.put(LIKE, status.getLike());
+        contentValues.put(TTL, status.getTTL());
+        contentValues.put(REPLICATION, status.getReplication());
+        contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
+
+        int count =  databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID+" = "+status.getdbId(), null);
+        if(count > 0) {
+            for (String forwarder : status.getForwarderList()) {
+                DatabaseFactory.getForwarderDatabase(context).insertForwarder(status.getdbId(), forwarder);
+            }
+            EventBus.getDefault().post(new StatusUpdatedEvent(status));
+        }
+        return count;
     }
 
 
@@ -265,7 +307,7 @@ public class StatusDatabase extends Database {
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
             }
-            this.notifyStatusListListener(status);
+            EventBus.getDefault().post(new NewStatusEvent(status));
         }
 
         return statusID;

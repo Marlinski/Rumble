@@ -36,6 +36,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import de.greenrobot.event.EventBus;
+
 /**
  * The NeighbourRecord is a representation of a neighbour on a logical level. We may be connected
  * to a neighbour with multiple interface at the same time, for instance Bluetooth and Wifi. As
@@ -48,6 +50,8 @@ import java.util.Map;
 public class NeighbourRecord {
 
     private static final String TAG = "NeighbourRecord";
+
+    private static final Object lock = new Object();
 
     //TODO replace name and id by ContactInfo
     private String name;
@@ -136,12 +140,14 @@ public class NeighbourRecord {
             if(entry.getKey().getLinkLayerType().equals(linkLayerIdentifier))
                 entry.setValue(new Boolean(false));
         }
-        for(Map.Entry<String, HashSet<Protocol>> entry : protocolIdentifierToLinkSpecificProtocolInstance.entrySet()) {
-            Iterator<Protocol> itproto = entry.getValue().iterator();
-            while(itproto.hasNext()) {
-                Protocol protocol = itproto.next();
-                if(protocol.getLinkLayerIdentifier().equals(linkLayerIdentifier)) {
-                    itproto.remove();
+        synchronized (lock) {
+            for (Map.Entry<String, HashSet<Protocol>> entry : protocolIdentifierToLinkSpecificProtocolInstance.entrySet()) {
+                Iterator<Protocol> itproto = entry.getValue().iterator();
+                while (itproto.hasNext()) {
+                    Protocol protocol = itproto.next();
+                    if (protocol.getLinkLayerIdentifier().equals(linkLayerIdentifier)) {
+                        itproto.remove();
+                    }
                 }
             }
         }
@@ -235,27 +241,34 @@ public class NeighbourRecord {
      * return false otherwise
      */
     public boolean addProtocol(Protocol protocol) {
-        HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocol.getProtocolID());
-        if(protocols == null) {
-            protocols = new HashSet<Protocol>();
+        synchronized (lock) {
+            HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocol.getProtocolID());
+
+            if (protocols == null) {
+                protocols = new HashSet<Protocol>();
+                protocolIdentifierToLinkSpecificProtocolInstance.put(protocol.getProtocolID(), protocols);
+            }
+
+            if (protocols.size() == 0) {
+                protocols.add(protocol);
+                MessageProcessor processor = new MessageProcessor(protocol.getProtocolID());
+                protocolIdentifierToMessageProcessor.put(protocol.getProtocolID(), processor);
+                processor.start();
+                return true;
+            }
+
+            Iterator<Protocol> it = protocols.iterator();
+            while (it.hasNext()) {
+                Protocol entry = it.next();
+                if (entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
+                    Log.e(TAG, "[!] we are already connected with " + protocol.getProtocolID() + " on link layer " + protocol.getLinkLayerIdentifier());
+                    return false;
+                }
+            }
+            Log.d(TAG, "[+] protocol " + protocol.getProtocolID() + " added on link layer " + protocol.getLinkLayerIdentifier());
             protocols.add(protocol);
-            protocolIdentifierToLinkSpecificProtocolInstance.put(protocol.getProtocolID(), protocols);
-            MessageProcessor processor = new MessageProcessor(protocol.getProtocolID());
-            protocolIdentifierToMessageProcessor.put(protocol.getProtocolID(), processor);
-            processor.start();
             return true;
         }
-        Iterator<Protocol> it = protocols.iterator();
-        while(it.hasNext()) {
-            Protocol entry = it.next();
-            if(entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
-                Log.e(TAG, "[!] we are already connected with "+protocol.getProtocolID()+" on link layer "+protocol.getLinkLayerIdentifier());
-                return false;
-            }
-        }
-        Log.d(TAG, "[+] protocol "+protocol.getProtocolID()+" added on link layer "+protocol.getLinkLayerIdentifier());
-        protocols.add(protocol);
-        return true;
     }
 
 
@@ -267,21 +280,23 @@ public class NeighbourRecord {
      * throws ProtocolNotFoundException if the protocol was not found on the local instance list
      */
     public boolean delProtocol(Protocol protocol) throws ProtocolNotFoundException{
-        HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocol.getProtocolID());
-        if(protocols == null)
-            throw new ProtocolNotFoundException();
-        Iterator<Protocol> it = protocols.iterator();
-        while(it.hasNext()) {
-            Protocol entry = it.next();
-            if(entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
-                Log.d(TAG, "[+] removing protocol "+protocol.getProtocolID()+" from link layer "+protocol.getLinkLayerIdentifier());
-                it.remove();
-                if(protocols.size() == 0)
-                    protocolIdentifierToMessageProcessor.get(protocol.getProtocolID()).interrupt();
-                return true;
+        synchronized (lock) {
+            HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocol.getProtocolID());
+            if (protocols == null)
+                throw new ProtocolNotFoundException();
+            Iterator<Protocol> it = protocols.iterator();
+            while (it.hasNext()) {
+                Protocol entry = it.next();
+                if (entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
+                    Log.d(TAG, "[+] removing protocol " + protocol.getProtocolID() + " from link layer " + protocol.getLinkLayerIdentifier());
+                    it.remove();
+                    if (protocols.size() == 0)
+                        protocolIdentifierToMessageProcessor.get(protocol.getProtocolID()).interrupt();
+                    return true;
+                }
             }
+            throw new ProtocolNotFoundException();
         }
-        throw new ProtocolNotFoundException();
     }
 
     /*
@@ -297,12 +312,10 @@ public class NeighbourRecord {
 
         private MessageQueue.PriorityBlockingMessageQueue queue;
         private String protocolID;
-        private boolean started;
 
         public MessageProcessor(String protocolID) {
             this.queue = MessageQueue.getInstance().getMessageListener(100);
             this.protocolID = protocolID;
-            this.started = false;
         }
 
         @Override
@@ -312,7 +325,10 @@ public class NeighbourRecord {
                 while(true) {
                     StatusMessage message = queue.take();
                     Command command = new SendStatusMessageCommand(message);
-                    getBestProtocol(protocolID).executeCommand(command);
+                    Protocol protocol = getBestProtocol(protocolID);
+                    if(protocol == null)
+                        break;
+                    protocol.executeCommand(command);
                 }
             }
             catch(InterruptedException e) {
@@ -321,7 +337,6 @@ public class NeighbourRecord {
             }
         }
     }
-
 
 
     /*
@@ -333,17 +348,19 @@ public class NeighbourRecord {
      * It returns null if there is no available instance of this protocol
      */
     private Protocol getBestProtocol(String protocolID) {
-        HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocolID);
-        if(protocols == null)
-            return null;
-        Iterator<Protocol> it = protocols.iterator();
-        Protocol bestProtocol = null;
-        //todo compute score for each link layer
-        while(it.hasNext()) {
-            Protocol protocol = it.next();
-            bestProtocol = protocol;
+        synchronized (lock) {
+            HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocolID);
+            if (protocols == null)
+                return null;
+            Iterator<Protocol> it = protocols.iterator();
+            Protocol bestProtocol = null;
+            //todo compute score for each link layer
+            while (it.hasNext()) {
+                Protocol protocol = it.next();
+                bestProtocol = protocol;
+            }
+            return bestProtocol;
         }
-        return bestProtocol;
     }
 
 }

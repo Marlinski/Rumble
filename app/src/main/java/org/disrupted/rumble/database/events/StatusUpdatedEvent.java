@@ -17,11 +17,18 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.database.events;
+
+import org.disrupted.rumble.message.StatusMessage;
 
 /**
  * @author Marlinski
  */
-public class ConnectToNeighbourDevice {
+public class StatusUpdatedEvent extends ResourceEvent {
 
+    public StatusMessage status;
+
+    public StatusUpdatedEvent(StatusMessage status){
+        this.status = status;
+    }
 }

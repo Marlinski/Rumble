@@ -48,18 +48,6 @@ public abstract class Database {
         this.databaseHelper = databaseHelper;
     }
 
-    public void notifyContactListListener(Contact contact) {
-        EventBus.getDefault().post(new NewContactEvent(contact));
-    }
-
-    public void notifyStatusListListener(StatusMessage status) {
-        EventBus.getDefault().post(new NewStatusEvent(status));
-    }
-
-    public void notifyHashtagListListener(String hashtag) {
-        EventBus.getDefault().post(new NewHashtagEvent(hashtag));
-    }
-
     public void reset(SQLiteOpenHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }

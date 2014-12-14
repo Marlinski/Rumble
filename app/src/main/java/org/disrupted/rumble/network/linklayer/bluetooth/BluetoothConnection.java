@@ -82,9 +82,9 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
             onGenericProcotolConnected();
 
         } catch (RecordNotFoundException ignoredCauseImpossible) {
-            Log.e(TAG, "[+] FAILED: cannot find the record for " + getRemoteMacAddress());
+            Log.e(TAG, "[+] FAILED "+getConnectionID()+": cannot find the record for " + getRemoteMacAddress());
         } catch (IOException ignore) {
-            Log.d(TAG, "[+] FAILED: "+ignore.getMessage());
+            Log.d(TAG, "[+] FAILED "+getConnectionID()+": "+ignore.getMessage());
         } finally {
             try {
                 NetworkCoordinator.getInstance().delProtocol(remoteMacAddress, this);

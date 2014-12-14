@@ -26,7 +26,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.contact.Contact;
+import org.disrupted.rumble.database.events.NewContactEvent;
 import org.disrupted.rumble.message.StatusMessage;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -126,7 +129,8 @@ public class ContactDatabase extends Database  {
 
         long contactID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
 
-        this.notifyContactListListener(contact);
+        if(contactID > 0)
+            EventBus.getDefault().post(new NewContactEvent(contact));
 
         return contactID;
     }

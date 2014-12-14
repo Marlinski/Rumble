@@ -107,6 +107,8 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
                 org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient rumbleConnection = new RumbleBTClient(neighbour.getMacAddress());
                 ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
+            } else {
+                Log.d(TAG, "already connected to "+neighbour.getMacAddress()+" with Rumble");
             }
         } catch (RecordNotFoundException ignore){
             Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");
@@ -116,6 +118,8 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, FirechatProtocol.protocolID)) {
                 org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient rumbleConnection = new FirechatBTClient(neighbour.getMacAddress());
                 ThreadPoolCoordinator.getInstance().addConnection(rumbleConnection);
+            } else {
+                Log.d(TAG, "already connected "+neighbour.getMacAddress()+" with Firechat");
             }
         }catch (RecordNotFoundException ignore){
             Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");

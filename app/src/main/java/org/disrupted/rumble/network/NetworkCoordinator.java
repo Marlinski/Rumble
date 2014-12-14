@@ -23,6 +23,8 @@ package org.disrupted.rumble.network;
 import android.util.Log;
 
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
+import org.disrupted.rumble.network.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.NeighbourProtocolStart;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
@@ -219,7 +221,13 @@ public class NetworkCoordinator {
         NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
         if(record == null)
             throw new RecordNotFoundException();
-        return record.addProtocol(protocol);
+        boolean bool = record.addProtocol(protocol);
+        if(bool) {
+            //todo be more neighbour specific
+            EventBus.getDefault().post(new NeighborhoodChanged());
+            EventBus.getDefault().post(new NeighbourProtocolStart(address, protocol.getProtocolID()));
+        }
+        return bool;
     }
     /*
      * delProtocol removes a protocol instance from a NeighbourRecord based on his macAddress of
@@ -232,7 +240,13 @@ public class NetworkCoordinator {
         NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
         if(record == null)
             throw new RecordNotFoundException();
-        return record.delProtocol(protocol);
+        boolean bool = record.delProtocol(protocol);
+        if(bool) {
+            //todo be more neighbour specific
+            EventBus.getDefault().post(new NeighborhoodChanged());
+            EventBus.getDefault().post(new NeighbourProtocolStart(address, protocol.getProtocolID()));
+        }
+        return bool;
     }
 
     /*
