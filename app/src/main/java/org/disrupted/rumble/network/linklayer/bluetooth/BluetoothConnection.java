@@ -24,6 +24,7 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.protocols.GenericProtocol;
@@ -71,11 +72,11 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
     }
 
     public void onBluetoothConnected() {
-        Log.d(TAG, "[+] --- "+getProtocolID());
 
         try {
-            //todo we are stuck in addProtocol
+
             NetworkCoordinator.getInstance().addProtocol(remoteMacAddress, this);
+
             Log.d(TAG, "[+] ESTABLISHED: " + getConnectionID());
 
             onGenericProcotolConnected();
@@ -88,6 +89,7 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
             try {
                 NetworkCoordinator.getInstance().delProtocol(remoteMacAddress, this);
             } catch (RecordNotFoundException ignoredCauseImpossible) {
+            } catch (ProtocolNotFoundException ignoredCauseImpossible) {
             }
 
             if (!isBeingKilled)

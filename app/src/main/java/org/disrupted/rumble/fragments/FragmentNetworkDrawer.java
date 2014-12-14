@@ -38,11 +38,11 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.events.BluetoothScanEnded;
-import org.disrupted.rumble.events.BluetoothScanStarted;
-import org.disrupted.rumble.events.ConnectToNeighbourDevice;
-import org.disrupted.rumble.events.DisconnectFromNeighbourDevice;
-import org.disrupted.rumble.events.NeighborhoodChanged;
+import org.disrupted.rumble.network.events.BluetoothScanEnded;
+import org.disrupted.rumble.network.events.BluetoothScanStarted;
+import org.disrupted.rumble.network.events.ConnectToNeighbourDevice;
+import org.disrupted.rumble.network.events.DisconnectFromNeighbourDevice;
+import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 

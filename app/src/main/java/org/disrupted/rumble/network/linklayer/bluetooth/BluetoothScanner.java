@@ -32,8 +32,8 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.events.BluetoothScanEnded;
-import org.disrupted.rumble.events.BluetoothScanStarted;
+import org.disrupted.rumble.network.events.BluetoothScanEnded;
+import org.disrupted.rumble.network.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 
 import java.util.HashSet;

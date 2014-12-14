@@ -41,6 +41,7 @@ public class StatusMessage extends Message {
     private static final String TAG  = "StatusMessage";
     public  static final String TYPE = "STATUS";
 
+    protected long        dbid;
     protected String      uuid;
     protected Integer     score;
     protected String      author;
@@ -92,6 +93,7 @@ public class StatusMessage extends Message {
         catch (NoSuchAlgorithmException ignore) {}
     }
 
+    public long    getdbId() {              return this.dbid; }
     public String  getUuid() {              return this.uuid; }
     public Integer getScore(){              return this.score;}
     public String  getAuthor(){             return this.author; }
@@ -108,7 +110,8 @@ public class StatusMessage extends Message {
     public long    getLike(){               return like; }
     public long    getReplication(){        return replication; }
 
-    public void setUuid(String uuid) {            this.uuid = uuid;               }
+    public void setdbId(long dbid) {              this.dbid           = dbid;     }
+    public void setUuid(String uuid) {            this.uuid           = uuid;     }
     public void setFileName(String filename){     this.attachedFile   = filename; }
     public void setFileSize(long size) {          this.fileSize       = size;     }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
@@ -123,7 +126,7 @@ public class StatusMessage extends Message {
             hashtagSet.clear();
         this.hashtagSet = hashtagSet;
     }
-    public void setReplication(Integer replication){ this.replication    = replication; }
+    public void addReplication(Integer replication){ this.replication  += replication; }
     public void setRead(boolean read){            this.read = read; }
     public void setForwarderList(Set<String> fl){
         if(forwarderList.size() > 0)

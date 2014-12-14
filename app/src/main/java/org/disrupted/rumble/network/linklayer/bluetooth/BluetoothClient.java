@@ -22,7 +22,7 @@ package org.disrupted.rumble.network.linklayer.bluetooth;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.events.BluetoothScanEnded;
+import org.disrupted.rumble.network.events.BluetoothScanEnded;
 
 import java.io.IOException;
 import java.util.UUID;

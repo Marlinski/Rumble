@@ -17,28 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
-
-import org.disrupted.rumble.message.StatusMessage;
+package org.disrupted.rumble.network.events;
 
 /**
  * @author Marlinski
  */
-public class NewStatusEvent extends ResourceEvent {
-
-    private StatusMessage status;
-    private long statusID;
-
-    public NewStatusEvent(StatusMessage status, long statusID){
-        this.status = status;
-        this.statusID = statusID;
-    }
-
-    public StatusMessage getStatus(){
-        return this.status;
-    }
-
-    public long getStatusID(){
-        return this.statusID;
-    }
+public class BluetoothLinkLayerStarted extends NetworkEvent {
 }

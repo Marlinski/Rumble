@@ -17,10 +17,25 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.database.events;
+
+import org.disrupted.rumble.message.StatusMessage;
 
 /**
+ * NewStatusEvent is posted when a status has been added to the database
+ * This must must ONLY be post by the StatusDatabase as the piggybacked message
+ * should carry its database status ID.
+ *
  * @author Marlinski
  */
-public class DisconnectFromNeighbourDevice {
+public class NewStatusEvent extends ResourceEvent {
+
+    public StatusMessage status;
+    public long statusID;
+
+    public NewStatusEvent(StatusMessage status){
+        this.status = status;
+        this.statusID = status.getdbId();
+    }
+
 }

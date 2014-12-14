@@ -23,6 +23,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.message.MessageQueue;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.Command;
@@ -240,6 +241,7 @@ public class NeighbourRecord {
             protocols.add(protocol);
             protocolIdentifierToLinkSpecificProtocolInstance.put(protocol.getProtocolID(), protocols);
             MessageProcessor processor = new MessageProcessor(protocol.getProtocolID());
+            protocolIdentifierToMessageProcessor.put(protocol.getProtocolID(), processor);
             processor.start();
             return true;
         }
@@ -262,24 +264,24 @@ public class NeighbourRecord {
      * is also the last one for this neighbour, we also stop the MessageProcessor.
      *
      * returns true if the protocol has been removed from the local instance list
-     * returns false if the protocol was not found on the local instance list
+     * throws ProtocolNotFoundException if the protocol was not found on the local instance list
      */
-    public boolean delProtocol(Protocol protocol) {
+    public boolean delProtocol(Protocol protocol) throws ProtocolNotFoundException{
         HashSet<Protocol> protocols = protocolIdentifierToLinkSpecificProtocolInstance.get(protocol.getProtocolID());
         if(protocols == null)
-            return false;
+            throw new ProtocolNotFoundException();
         Iterator<Protocol> it = protocols.iterator();
         while(it.hasNext()) {
             Protocol entry = it.next();
             if(entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
                 Log.d(TAG, "[+] removing protocol "+protocol.getProtocolID()+" from link layer "+protocol.getLinkLayerIdentifier());
                 it.remove();
-                break;
+                if(protocols.size() == 0)
+                    protocolIdentifierToMessageProcessor.get(protocol.getProtocolID()).interrupt();
+                return true;
             }
         }
-        if(protocols.size() == 0)
-            protocolIdentifierToMessageProcessor.get(protocol.getProtocolID()).interrupt();
-        return true;
+        throw new ProtocolNotFoundException();
     }
 
     /*

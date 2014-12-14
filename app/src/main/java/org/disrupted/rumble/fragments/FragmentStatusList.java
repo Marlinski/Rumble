@@ -46,7 +46,7 @@ import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.HashtagDatabase;
-import org.disrupted.rumble.events.NewStatusEvent;
+import org.disrupted.rumble.database.events.NewStatusEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 

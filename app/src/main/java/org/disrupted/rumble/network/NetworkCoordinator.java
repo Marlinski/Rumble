@@ -22,7 +22,8 @@ package org.disrupted.rumble.network;
 
 import android.util.Log;
 
-import org.disrupted.rumble.events.NeighborhoodChanged;
+import org.disrupted.rumble.network.events.NeighborhoodChanged;
+import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -227,7 +228,7 @@ public class NetworkCoordinator {
      * it returns false if the record has been found but the protocol has not been removed
      * it throws an exception if the record has not been found
      */
-    public boolean delProtocol(String address, Protocol protocol) throws RecordNotFoundException {
+    public boolean delProtocol(String address, Protocol protocol) throws RecordNotFoundException, ProtocolNotFoundException {
         NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
         if(record == null)
             throw new RecordNotFoundException();

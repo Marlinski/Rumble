@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.network.events;
 
 /**
  * @author Marlinski

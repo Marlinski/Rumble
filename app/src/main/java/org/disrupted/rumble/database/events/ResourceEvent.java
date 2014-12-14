@@ -17,10 +17,16 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.database.events;
+
 
 /**
+ * A ResourceEvent is published to the event bus whenever a new resource is available.
+ * A resource is understood to be an element from the database such as a Status, a contact
+ * a picture, an attached file, etc.
+ *
  * @author Marlinski
  */
-public class BluetoothLinkLayerStopped extends NetworkEvent {
+public class ResourceEvent  {
+
 }

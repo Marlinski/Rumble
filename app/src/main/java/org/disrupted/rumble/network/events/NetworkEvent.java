@@ -17,21 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.network.events;
 
 /**
  * @author Marlinski
  */
-public class NewHashtagEvent extends ResourceEvent {
-
-    private String hashtag;
-
-    public NewHashtagEvent(String hashtag) {
-        this.hashtag = hashtag;
-    }
-
-    public String getHashtag() {
-        return hashtag;
-    }
-
+public class NetworkEvent {
 }

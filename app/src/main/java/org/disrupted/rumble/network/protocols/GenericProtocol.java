@@ -75,8 +75,8 @@ public abstract class GenericProtocol implements Connection, Protocol {
         @Override
         public synchronized void run() {
             try {
+                Log.d(TAG, "[+] started command thread: "+getProtocolID());
                 while (true) {
-                    Log.d(TAG, "[+] started command thread: "+getProtocolID());
                     Command command = commandQueue.take();
                     if(!isCommandSupported(command.getCommandName()))
                         continue;

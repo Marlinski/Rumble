@@ -23,8 +23,10 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.disrupted.rumble.util.FileUtil;
@@ -35,6 +37,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
+import java.util.LinkedList;
+import java.util.List;
 
 import de.greenrobot.event.EventBus;
 
@@ -137,10 +141,16 @@ public class FirechatBTClient extends BluetoothClient {
     protected boolean onCommandReceived(Command command) {
         if(!isCommandSupported(command.getCommandName()))
             return false;
+
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand)command).getStatus();
+            if(statusMessage.isForwarder(remoteMacAddress, FirechatProtocol.protocolID))
+                return false;
+
             String jsonStatus = parser.statusToNetwork(statusMessage);
             try {
+                long timeToTransfer = System.currentTimeMillis();
+                long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
                 outputStream.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
                 Log.d(TAG, jsonStatus.toString());
                 if(!statusMessage.getFileName().equals("")) {
@@ -149,16 +159,33 @@ public class FirechatBTClient extends BluetoothClient {
                         FileInputStream fis = new FileInputStream(attachedFile);
                         byte[] buffer = new byte[BUFFER_SIZE];
                         int count;
-                        while ((count = fis.read(buffer)) > 0)
+                        while ((count = fis.read(buffer)) > 0) {
                             outputStream.write(buffer, 0, count);
+                            bytesTransfered += count;
+                        }
                         fis.close();
                     } else {
                         throw  new IOException("File: "+statusMessage.getFileName()+" does not exists");
                     }
                 }
 
-                //todo mettre a jour la liste des forwarder et recalculer les scores chez tout le monde
-                // create event MessageSent :)
+                timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+                long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
+                List<String> recipients = new LinkedList<String>();
+                recipients.add(remoteMacAddress);
+                EventBus.getDefault().post(new StatusSentEvent(
+                        statusMessage,
+                        recipients,
+                        FirechatProtocol.protocolID,
+                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                        throughput)
+                );
+
+                //remove that
+                Log.d(TAG, "Status Sent ("+remoteMacAddress+","+(throughput/1000L)+"): " + statusMessage.toString());
+                try {
+                    Thread.sleep(1000);
+                }catch(InterruptedException e) {}
             }
             catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending"+ignore.getMessage());

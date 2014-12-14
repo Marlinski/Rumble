@@ -17,11 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.network.exceptions;
 
 /**
  * @author Marlinski
  */
-public class ConnectToNeighbourDevice {
-
+public class ProtocolNotFoundException extends Exception {
 }

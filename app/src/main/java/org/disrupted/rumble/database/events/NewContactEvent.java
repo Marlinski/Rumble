@@ -17,10 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.events;
+package org.disrupted.rumble.database.events;
+
+import org.disrupted.rumble.contact.Contact;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerStarted extends NetworkEvent {
+public class NewContactEvent extends ResourceEvent {
+
+    public Contact contact;
+
+    public NewContactEvent(Contact contact){
+        this.contact = contact;
+    }
+
 }

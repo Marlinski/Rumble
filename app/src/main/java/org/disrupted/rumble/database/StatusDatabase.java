@@ -131,6 +131,7 @@ public class StatusDatabase extends Database {
         }
 
         StatusMessage message = new StatusMessage(post, author, toc);
+        message.setdbId(statusID);
         message.setUuid(uuid);
         message.setHashtagSet(hashtagSet);
         message.setTimeOfArrival(toa);
@@ -138,7 +139,7 @@ public class StatusDatabase extends Database {
         message.setHopCount(hopCount);
         message.setTTL(ttl);
         message.setLike(like);
-        message.setReplication(replication);
+        message.addReplication(replication);
         message.setRead(read);
         message.setForwarderList(forwarders);
 
@@ -252,6 +253,7 @@ public class StatusDatabase extends Database {
         contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
 
         long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        status.setdbId(statusID);
 
         if(statusID >= 0) {
             for (String hashtag : status.getHashtagSet()) {
@@ -263,7 +265,7 @@ public class StatusDatabase extends Database {
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
             }
-            this.notifyStatusListListener(status, statusID);
+            this.notifyStatusListListener(status);
         }
 
         return statusID;
