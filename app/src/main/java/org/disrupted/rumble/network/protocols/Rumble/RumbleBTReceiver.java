@@ -75,12 +75,12 @@ public class RumbleBTReceiver {
                 switch (header.getSubtype()) {
                     case (BlockHello.SUBTYPE):
                         BlockHello blockHello = new BlockHello(header);
-                        //MessageProcessor.getInstance().newMessage(blockHello.getMessage());
                         break;
                     case (BlockStatus.SUBTYPE):
                         BlockStatus blockStatus = new BlockStatus(header,payload);
                         StatusMessage statusMessage = blockStatus.getMessage();
-                        statusMessage.addForwarder(con.getRemoteMacAddress(), "Firechat");
+                        statusMessage.addForwarder(con.getRemoteMacAddress(), "Rumble");
+                        Log.d(TAG, "Received Rumble message: "+statusMessage.toString());
                         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(statusMessage, null);
                         break;
                     default:
