@@ -22,8 +22,6 @@ package org.disrupted.rumble.network;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.Connection;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -46,8 +44,8 @@ public class ThreadPoolCoordinator {
     private static final Object lock             = new Object();
     private static ThreadPoolCoordinator instance;
 
-    private PriorityBlockingQueue<PriorityConnection> connectionQueue;
-    private LinkedList<ConnectionThread> connectionThreads;
+    private PriorityBlockingQueue<PriorityNetworkThread> networkThreadsQueue;
+    private LinkedList<PoolThread> pool;
     private static final Object lockThreadPool   = new Object();
     private static final Object lockThreadQueue  = new Object();
 
@@ -61,22 +59,23 @@ public class ThreadPoolCoordinator {
     }
 
     private ThreadPoolCoordinator(int N) {
-        connectionQueue   = new PriorityBlockingQueue<PriorityConnection>();
-        connectionThreads = new LinkedList<ConnectionThread>();
+        networkThreadsQueue = new PriorityBlockingQueue<PriorityNetworkThread>();
+        pool = new LinkedList<PoolThread>();
         for (int i = 0; i < N; i++) {
-            ConnectionThread thread = new ConnectionThread("Thread "+i);
+            PoolThread thread = new PoolThread("Thread "+i);
             thread.start();
-            connectionThreads.add(thread);
+            pool.add(thread);
         }
     }
 
-    private boolean alreadyInThread(PriorityConnection connection) {
+    private boolean alreadyInThread(PriorityNetworkThread priorityNetworkThread) {
         synchronized (lockThreadPool) {
-            Iterator<ConnectionThread> it = connectionThreads.iterator();
+            Iterator<PoolThread> it = pool.iterator();
             while (it.hasNext()) {
-                ConnectionThread element = it.next();
-                if (element.getConnection() != null) {
-                    if (element.getConnection().getConnectionID().equals(connection.getConnection().getConnectionID()))
+                PoolThread element = it.next();
+                if (element.getNetworkThread() != null) {
+                    if (element.getNetworkThread().getNetworkThreadID()
+                            .equals(priorityNetworkThread.getNetworkThread().getNetworkThreadID()))
                     return true;
                 }
             }
@@ -84,12 +83,13 @@ public class ThreadPoolCoordinator {
         return false;
     }
 
-    public PriorityConnection alreadyInQueue(PriorityConnection connection) {
+    public PriorityNetworkThread alreadyInQueue(PriorityNetworkThread priorityNetworkThread) {
         synchronized (lockThreadQueue) {
-            Iterator<PriorityConnection> it = connectionQueue.iterator();
+            Iterator<PriorityNetworkThread> it = networkThreadsQueue.iterator();
             while (it.hasNext()) {
-                PriorityConnection element = it.next();
-                if (element.getConnection().getConnectionID().equals(connection.getConnection().getConnectionID()))
+                PriorityNetworkThread element = it.next();
+                if (element.getNetworkThread().getNetworkThreadID()
+                        .equals(priorityNetworkThread.getNetworkThread().getNetworkThreadID()))
                     return element;
             }
         }
@@ -100,22 +100,22 @@ public class ThreadPoolCoordinator {
     public int killThreadType(String type) {
         int nbKilled = 0;
         synchronized (lockThreadQueue) {
-            Iterator<PriorityConnection> it = connectionQueue.iterator();
+            Iterator<PriorityNetworkThread> it = networkThreadsQueue.iterator();
             while (it.hasNext()) {
-                PriorityConnection element = it.next();
-                if (element.getConnection().getType().equals(type)) {
+                PriorityNetworkThread element = it.next();
+                if (element.getNetworkThread().getType().equals(type)) {
                     it.remove();
                     nbKilled++;
                 }
             }
         }
         synchronized (lockThreadPool) {
-            Iterator<ConnectionThread> it = connectionThreads.iterator();
+            Iterator<PoolThread> it = pool.iterator();
             while (it.hasNext()) {
-                ConnectionThread element = it.next();
-                if (element.getConnection() != null) {
-                    if (element.getConnection().getType().equals(type)) {
-                        element.killConnection();
+                PoolThread element = it.next();
+                if (element.getNetworkThread() != null) {
+                    if (element.getNetworkThread().getType().equals(type)) {
+                        element.killNetworkThread();
                         it.remove();
                         nbKilled++;
                     }
@@ -125,46 +125,44 @@ public class ThreadPoolCoordinator {
         return  nbKilled;
     }
 
-    public boolean addConnection(Connection connection, int priority) {
-        PriorityConnection con = new PriorityConnection(connection, priority);
+    public boolean addNetworkThread(NetworkThread networkThread, int priority) {
+        PriorityNetworkThread con = new PriorityNetworkThread(networkThread, priority);
         if(alreadyInThread(con)) {
-            Log.d(TAG, "[-] connection already exists in thread");
+            Log.d(TAG, "[-] same thread already exists in pool");
             return false;
         }
-        PriorityConnection exists = alreadyInQueue(con);
+        PriorityNetworkThread exists = alreadyInQueue(con);
         if(exists == null){
-            Log.d(TAG, "[+] connection "+connection.getConnectionID()+" added to ThreadQueue");
-            connectionQueue.add(con);
+            Log.d(TAG, "[+] "+networkThread.getNetworkThreadID()+" added to ThreadQueue");
+            networkThreadsQueue.add(con);
             return true;
         }
         if(exists.getPriority() < priority) {
-            Log.d(TAG, "[-] connection already exists with more priority");
+            Log.d(TAG, "[-] same thread exists in queue with more priority");
             return false;
         }
-        Log.d(TAG, "[-] connection already exists but has less priority");
-        connectionQueue.remove(exists);
-        Log.d(TAG, "[+] connection "+connection.getConnectionID()+" added to ThreadQueue");
-        connectionQueue.add(con);
+        networkThreadsQueue.remove(exists);
+        Log.d(TAG, "[+] "+networkThread.getNetworkThreadID()+" added to ThreadQueue");
+        networkThreadsQueue.add(con);
         return true;
     }
 
-    public boolean addConnection(Connection connection) {
-        return addConnection(connection, PRIORITY_MIDDLE);
+    public boolean addNetworkThread(NetworkThread networkThread) {
+        return addNetworkThread(networkThread, PRIORITY_MIDDLE);
     }
 
-    private class PriorityConnection implements Comparable{
+    private class PriorityNetworkThread implements Comparable{
 
-        private Connection connection;
+        private NetworkThread networkThread;
         private int priority;
 
-
-        PriorityConnection(Connection connection, int priority){
-            this.connection = connection;
+        PriorityNetworkThread(NetworkThread networkThread, int priority){
+            this.networkThread = networkThread;
             this.priority = priority;
         }
 
-        public Connection getConnection() {
-            return connection;
+        public NetworkThread getNetworkThread() {
+            return networkThread;
         }
 
         public int getPriority() {
@@ -178,24 +176,24 @@ public class ThreadPoolCoordinator {
             if (obj == this)
                 return 0;
 
-            if(this.priority < ((PriorityConnection)obj).getPriority())
+            if(this.priority < ((PriorityNetworkThread)obj).getPriority())
                 return -1;
-            if(this.priority == ((PriorityConnection)obj).getPriority())
+            if(this.priority == ((PriorityNetworkThread)obj).getPriority())
                 return 0;
             return 1;
         }
     }
 
-    private class ConnectionThread extends Thread {
+    private class PoolThread extends Thread {
 
-        private static final String TAG = "ConnectionThread";
+        private static final String TAG = "PoolThread";
 
-        private Connection connection;
+        private NetworkThread networkThread;
         private boolean isRunning;
 
-        ConnectionThread(String name) {
+        PoolThread(String name) {
             super(name);
-            connection = null;
+            networkThread = null;
             isRunning = false;
         }
 
@@ -205,34 +203,34 @@ public class ThreadPoolCoordinator {
 
             while (true) {
                 try {
-                    connection = null;
+                    networkThread = null;
                     isRunning = false;
-                    PriorityConnection element;
+                    PriorityNetworkThread element;
 
-                    element = connectionQueue.take();
+                    element = networkThreadsQueue.take();
 
                     if(element == null) continue;
-                    Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getConnection().getConnectionID());
-                    this.connection = element.getConnection();
+                    Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
+                    this.networkThread = element.getNetworkThread();
                     isRunning = true;
-                    connection.run();
+                    networkThread.run();
                 } catch (InterruptedException e) {
                     Log.d(TAG, this.getName()+" interrupted ", e);
                 }
             }
         }
 
-        public Connection getConnection(){
-            return connection;
+        public NetworkThread getNetworkThread(){
+            return networkThread;
         }
 
-        public void killConnection() {
+        public void killNetworkThread() {
             if(isRunning)
-                connection.kill();
+                networkThread.kill();
         }
 
         public void killThread() {
-            killConnection();
+            killNetworkThread();
             Thread.currentThread().interrupt();
         }
     }

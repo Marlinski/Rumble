@@ -36,7 +36,6 @@ import org.disrupted.rumble.network.protocols.Rumble.RumbleUDPServer;
 import org.disrupted.rumble.network.protocols.Rumble.RumbleWifiConfiguration;
 
 import java.net.InetAddress;
-import java.util.List;
 
 /**
  * @author Marlinski
@@ -72,7 +71,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public String getID() {
+    public String getLinkLayerIdentifier() {
         return LinkLayerIdentifier;
     }
 
@@ -86,7 +85,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
         macAddress = wifiInf.getMacAddress();
 
         UDPServer udpRumbleServer = new RumbleUDPServer();
-        ThreadPoolCoordinator.getInstance().addConnection(udpRumbleServer);
+        ThreadPoolCoordinator.getInstance().addNetworkThread(udpRumbleServer);
 
         registerService();
         registered = true;

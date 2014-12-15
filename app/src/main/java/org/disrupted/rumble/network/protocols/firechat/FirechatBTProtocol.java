@@ -23,10 +23,17 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClient;
+import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.protocols.GenericProtocol;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.disrupted.rumble.util.FileUtil;
@@ -45,41 +52,73 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FirechatBTClient extends BluetoothClient {
+public class FirechatBTProtocol extends GenericProtocol implements NetworkThread {
 
     private static final String TAG = "FirechatBluetoothClient";
 
     private static final FirechatMessageParser parser = new FirechatMessageParser();
     private static final int BUFFER_SIZE = 1024;
     private PushbackInputStream pbin;
+    protected boolean isBeingKilled;
+    private BluetoothConnection con;
 
-    public FirechatBTClient(String remoteMacAddress){
-        super(remoteMacAddress, FirechatBTConfiguration.FIRECHAT_BT_UUID_128, FirechatBTConfiguration.FIRECHAT_BT_STR, false);
+    public FirechatBTProtocol(BluetoothConnection con) {
+        this.con = con;
+        this.isBeingKilled = false;
     }
-
     @Override
-    public String getConnectionID() {
-        return "BTFirechat: "+this.remoteMacAddress;
+    public String getNetworkThreadID() {
+        return getProtocolID()+" "+con.getConnectionID();
     }
-
     @Override
     public String getProtocolID() {
-        return "Firechat";
+        return FirechatProtocol.protocolID;
+    }
+    @Override
+    public String getType() {
+        return con.getLinkLayerIdentifier();
+    }
+    @Override
+    public String getLinkLayerIdentifier() {
+        return con.getLinkLayerIdentifier();
     }
 
 
     @Override
-    protected void initializeProtocol() {
+    public void run() {
+
+        try {
+            con.connect();
+        } catch (LinkLayerConnectionException exception) {
+            Log.d(TAG, "[!] FAILED: "+getNetworkThreadID()+" "+exception.getMessage());
+            return;
+        }
+
+        try {
+            NetworkCoordinator.getInstance().addProtocol(con.getRemoteMacAddress(), this);
+
+            Log.d(TAG, "[+] ESTABLISHED: " + getNetworkThreadID());
+
+            /*
+             * this one automatically creates two thread, one for processing the command
+             * and one for processing the network
+             */
+            onGenericProcotolConnected();
+
+        } catch (RecordNotFoundException ignoredCauseImpossible) {
+            Log.e(TAG, "[+] FAILED: "+getNetworkThreadID()+" cannot find the record for "+con.getRemoteMacAddress());
+        }
+        finally {
+            try {
+                NetworkCoordinator.getInstance().delProtocol(con.getRemoteMacAddress(), this);
+            } catch (RecordNotFoundException ignoredCauseImpossible) {
+            } catch (ProtocolNotFoundException ignoredCauseImpossible) {
+            }
+
+            if (!isBeingKilled)
+                kill();
+        }
     }
-
-
-    @Override
-    public boolean isCommandSupported(String commandName) {
-        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
-            return true;
-        return false;
-    }
-
 
     /*
      * A Firechat message is a simple char stream representing a JSON file, ending with LF.
@@ -98,42 +137,54 @@ public class FirechatBTClient extends BluetoothClient {
      * further binary reading.
      */
     @Override
-    public void processingPacketFromNetwork() throws IOException{
-        final int CR = 13;
-        final int LF = 10;
-        pbin = new PushbackInputStream(inputStream, BUFFER_SIZE);
+    public void processingPacketFromNetwork() {
+        try {
+            final int CR = 13;
+            final int LF = 10;
+            pbin = new PushbackInputStream(con.getInputStream(), BUFFER_SIZE);
 
-        while (true) {
-            byte[] buffer=new byte[BUFFER_SIZE];
-            int count = pbin.read(buffer,0,BUFFER_SIZE);
+            while (true) {
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int count = pbin.read(buffer, 0, BUFFER_SIZE);
 
-            int i = 0;
-            char currentCharVal = (char)buffer[i++];
-            while( (currentCharVal!=CR) && (currentCharVal!=LF) && (i < count))
-                currentCharVal = (char) buffer[i++];
+                int i = 0;
+                char currentCharVal = (char) buffer[i++];
+                while ((currentCharVal != CR) && (currentCharVal != LF) && (i < count))
+                    currentCharVal = (char) buffer[i++];
 
-            if((currentCharVal != CR) && (currentCharVal != LF)) {
-                //whatever it was, it was not a Firechat message
-                buffer = null;
-            } else {
-                try {
-                    pbin.unread(buffer, i, count - i);
-                    onPacketReceived(new String(buffer, 0, i - 1));
-                } catch(IOException e){
-                    Log.e(TAG, "[!] Error while unread"+e.toString());
+                if ((currentCharVal != CR) && (currentCharVal != LF)) {
+                    //whatever it was, it was not a Firechat message
+                    buffer = null;
+                } else {
+                    try {
+                        pbin.unread(buffer, i, count - i);
+                        onPacketReceived(new String(buffer, 0, i - 1));
+                    } catch (IOException e) {
+                        Log.e(TAG, "[!] Error while unread" + e.toString());
+                    }
                 }
             }
+        } catch (IOException silentlyCloseConnection) {
+        } catch (InputOutputStreamException silentlyCloseConnection) {
         }
     }
 
     public boolean onPacketReceived(String jsonString) {
         try {
-            StatusMessage status = parser.networkToStatus(jsonString, pbin, remoteMacAddress);
+            StatusMessage status = parser.networkToStatus(jsonString, pbin, con.getRemoteMacAddress());
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
             Log.d(TAG, "Status received from Network:\n" + status.toString());
         } catch (JSONException ignore) {
             Log.d(TAG, "malformed JSON");
         }
+        return false;
+    }
+
+
+    @Override
+    public boolean isCommandSupported(String commandName) {
+        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
+            return true;
         return false;
     }
 
@@ -144,14 +195,14 @@ public class FirechatBTClient extends BluetoothClient {
 
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand)command).getStatus();
-            if(statusMessage.isForwarder(remoteMacAddress, FirechatProtocol.protocolID))
+            if(statusMessage.isForwarder(con.getRemoteMacAddress(), FirechatProtocol.protocolID))
                 return false;
 
             String jsonStatus = parser.statusToNetwork(statusMessage);
             try {
                 long timeToTransfer = System.currentTimeMillis();
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
-                outputStream.write(jsonStatus.getBytes(Charset.forName("UTF-8")));
+                con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
                 Log.d(TAG, jsonStatus.toString());
                 if(!statusMessage.getFileName().equals("")) {
                     File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), statusMessage.getFileName());
@@ -160,7 +211,7 @@ public class FirechatBTClient extends BluetoothClient {
                         byte[] buffer = new byte[BUFFER_SIZE];
                         int count;
                         while ((count = fis.read(buffer)) > 0) {
-                            outputStream.write(buffer, 0, count);
+                            con.getOutputStream().write(buffer, 0, count);
                             bytesTransfered += count;
                         }
                         fis.close();
@@ -172,7 +223,7 @@ public class FirechatBTClient extends BluetoothClient {
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
-                recipients.add(remoteMacAddress);
+                recipients.add(con.getRemoteMacAddress());
                 EventBus.getDefault().post(new StatusSentEvent(
                         statusMessage,
                         recipients,
@@ -182,13 +233,14 @@ public class FirechatBTClient extends BluetoothClient {
                 );
 
                 //remove that
-                Log.d(TAG, "Status Sent ("+remoteMacAddress+","+(throughput/1000L)+"): " + statusMessage.toString());
+                Log.d(TAG, "Status Sent ("+con.getRemoteMacAddress()+","+(throughput/1000L)+"): " + statusMessage.toString());
                 try {
                     Thread.sleep(1000);
                 }catch(InterruptedException e) {}
-            }
-            catch(IOException ignore){
+            } catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending"+ignore.getMessage());
+            } catch (InputOutputStreamException e) {
+                Log.e(TAG, e.getMessage());
             }
         }
 
@@ -201,8 +253,14 @@ public class FirechatBTClient extends BluetoothClient {
     }
 
     @Override
-    protected void destroyProtocol() {
-        try { pbin.close(); } catch(IOException ignore) {}
+    public void kill() {
+        this.isBeingKilled = true;
+        try {
+            con.disconnect();
+        } catch (LinkLayerConnectionException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        Log.d(TAG, "[-] ENDED: " + getNetworkThreadID());
     }
 
 }

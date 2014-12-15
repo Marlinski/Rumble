@@ -21,7 +21,7 @@ package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.Connection;
+import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.protocols.Protocol;
 
 import java.io.IOException;
@@ -32,7 +32,7 @@ import java.net.SocketException;
 /**
  * @author Marlinski
  */
-public abstract class UDPServer implements Connection, Protocol {
+public abstract class UDPServer implements NetworkThread, Protocol {
 
     private static final String TAG = "UDPServer";
 

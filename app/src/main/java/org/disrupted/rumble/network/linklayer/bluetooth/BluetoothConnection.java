@@ -21,13 +21,9 @@ package org.disrupted.rumble.network.linklayer.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.util.Log;
 
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
-import org.disrupted.rumble.network.linklayer.Connection;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,7 +36,7 @@ import java.io.OutputStream;
  *
  * @author Marlinski
  */
-public abstract class BluetoothConnection extends GenericProtocol implements Connection {
+public abstract class BluetoothConnection implements LinkLayerConnection {
 
     private static final String TAG = "BluetoothConnection";
 
@@ -50,7 +46,6 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
     protected BluetoothSocket mmConnectedSocket;
     protected InputStream inputStream;
     protected OutputStream outputStream;
-    protected boolean isBeingKilled;
 
     public BluetoothConnection(String remoteMacAddress) {
         this.remoteMacAddress = remoteMacAddress;
@@ -58,7 +53,6 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
         this.secureSocket = false;
         this.inputStream = null;
         this.outputStream = null;
-        this.isBeingKilled = false;
     }
 
     @Override
@@ -66,50 +60,18 @@ public abstract class BluetoothConnection extends GenericProtocol implements Con
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
-    @Override
-    public String getType() {
-        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    public InputStream getInputStream() throws IOException, InputOutputStreamException{
+        InputStream input = mmConnectedSocket.getInputStream();
+        if(input == null)
+            throw new InputOutputStreamException();
+        return input;
     }
 
-    public void onBluetoothConnected() {
-
-        try {
-
-            NetworkCoordinator.getInstance().addProtocol(remoteMacAddress, this);
-
-            Log.d(TAG, "[+] ESTABLISHED: " + getConnectionID());
-
-            onGenericProcotolConnected();
-
-        } catch (RecordNotFoundException ignoredCauseImpossible) {
-            Log.e(TAG, "[+] FAILED "+getConnectionID()+": cannot find the record for " + getRemoteMacAddress());
-        } catch (IOException ignore) {
-            Log.d(TAG, "[+] FAILED "+getConnectionID()+": "+ignore.getMessage());
-        } finally {
-            try {
-                NetworkCoordinator.getInstance().delProtocol(remoteMacAddress, this);
-            } catch (RecordNotFoundException ignoredCauseImpossible) {
-            } catch (ProtocolNotFoundException ignoredCauseImpossible) {
-            }
-
-            if (!isBeingKilled)
-                kill();
-        }
-    }
-
-    @Override
-    public void kill() {
-        this.isBeingKilled = true;
-        try {
-            mmConnectedSocket.close();
-        } catch (Exception ignore) {
-            Log.e(TAG, "[!] unable to close() socket ", ignore);
-        }
-        Log.d(TAG, "[-] ENDED: " + getConnectionID());
-    }
-
-    public InputStream getInputStream() {
-        return inputStream;
+    public OutputStream getOutputStream() throws IOException, InputOutputStreamException {
+        OutputStream output = mmConnectedSocket.getOutputStream();
+        if(output == null)
+            throw new InputOutputStreamException();
+        return output;
     }
 
     public String getRemoteMacAddress() {

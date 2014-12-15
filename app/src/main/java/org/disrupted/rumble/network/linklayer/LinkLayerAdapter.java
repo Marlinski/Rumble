@@ -21,8 +21,10 @@ package org.disrupted.rumble.network.linklayer;
 
 import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
 
-import java.util.List;
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -38,17 +40,26 @@ public abstract class LinkLayerAdapter {
     public boolean isActivated() {
         return activated;
     }
-    abstract public String getID();
 
     public void linkStart() {
+        if(activated)
+            return;
+
         activated = true;
         onLinkStart();
+        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
 
     public void linkStop() {
+        if(!activated)
+            return;
+
         onLinkStop();
         activated = false;
+        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
     }
+
+    abstract public String getLinkLayerIdentifier();
 
     abstract public void onLinkStart();
 

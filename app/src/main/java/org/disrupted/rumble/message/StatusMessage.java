@@ -44,7 +44,6 @@ public class StatusMessage extends Message{
 
     protected long        dbid;
     protected String      uuid;
-    protected Integer     score;
     protected String      author;
     protected String      status;
     protected Set<String> hashtagSet;
@@ -52,10 +51,10 @@ public class StatusMessage extends Message{
     protected long        fileSize; // move it to file database
     protected long        timeOfCreation;
     protected long        timeOfArrival;
-    protected Integer     hopCount;
+    protected long        hopCount;
     protected long        ttl;
-    protected Integer     like;
-    protected Integer     replication;
+    protected long        like;
+    protected long        replication;
     protected boolean     read;
     protected Set<String> forwarderList;
 
@@ -78,7 +77,6 @@ public class StatusMessage extends Message{
         timeOfArrival  = (System.currentTimeMillis() / 1000L);
         hopCount       = 0;
         forwarderList  = new HashSet<String>();
-        score          = 0;
         ttl            = 0;
         like           = 0;
         replication    = 0;
@@ -96,13 +94,12 @@ public class StatusMessage extends Message{
 
     public long    getdbId() {              return this.dbid; }
     public String  getUuid() {              return this.uuid; }
-    public Integer getScore(){              return this.score;}
     public String  getAuthor(){             return this.author; }
     public String  getPost(){               return this.status; }
     public Set<String> getHashtagSet(){     return this.hashtagSet; }
     public long  getTimeOfCreation(){       return this.timeOfCreation; }
     public long  getTimeOfArrival(){        return this.timeOfArrival; }
-    public Integer getHopCount(){           return this.hopCount; }
+    public long getHopCount(){              return this.hopCount; }
     public Set<String> getForwarderList(){  return this.forwarderList; }
     public long getTTL(){                   return this.ttl;}
     public String  getFileName(){           return this.attachedFile; }
@@ -117,17 +114,16 @@ public class StatusMessage extends Message{
     public void setFileSize(long size) {          this.fileSize       = size;     }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
     public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
-    public void setHopCount(Integer hopcount){    this.hopCount       = hopcount; }
-    public void setScore(Integer score){          this.score          = score;    }
-    public void setLike(Integer like){            this.like           = like;    }
-    public void setTTL(long ttl){              this.ttl            = ttl;      }
+    public void setHopCount(long hopcount){       this.hopCount       = hopcount; }
+    public void setLike(long like){               this.like           = like;    }
+    public void setTTL(long ttl){                 this.ttl            = ttl;      }
     public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
     public void setHashtagSet(Set<String> hashtagSet) {
         if(hashtagSet.size() > 0)
             hashtagSet.clear();
         this.hashtagSet = hashtagSet;
     }
-    public void addReplication(Integer replication){ this.replication  += replication; }
+    public void addReplication(long replication){ this.replication  += replication; }
     public void setRead(boolean read){            this.read = read; }
     public void setForwarderList(Set<String> fl){
         if(forwarderList.size() > 0)

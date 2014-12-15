@@ -20,7 +20,6 @@
 package org.disrupted.rumble.adapter;
 
 import android.app.Activity;
-import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,12 +30,9 @@ import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.Neighbour;
-import org.disrupted.rumble.network.NeighbourRecord;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
-import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 
 import java.util.List;
 

@@ -38,10 +38,10 @@ import java.nio.ByteBuffer;
  *          /                    \
  *     ____/                      \________________
  *    /                                            \
- *    +-----+--------------+--+--+--+--+--+--+--+--+
- *    |Type |    Subtype   | R| R| R| R| R| R| R| L|
- *    +-----+--------------+--+--+--+--+--+--+--+--+
- *    0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+ *    +-----+-----------------+--+--+--+--+--+--+--+--+
+ *    |Type |    Subtype      | R| R| R| R| R| R| R| L|
+ *    +-----+-----------------+--+--+--+--+--+--+--+--+
+ *     0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
  *
  * -- Version: it holds the higher version of the protocol the device is capable of
  * -- Block Control: it holds the following information:
@@ -73,7 +73,7 @@ public class BlockHeader implements BlockBuilder {
                                                 BLOCK_LENGTH) / 8);
 
     public enum Type {
-        UNDEFINED,
+        UNDEFINED,  /* not used */
         REQUEST,    /* requesting an information (name, publickey, forwardertable, etc.) */
         RESPONSE,   /* response to a request */
         PUSH;       /* sending information without being asked to */
@@ -90,7 +90,7 @@ public class BlockHeader implements BlockBuilder {
     private boolean reserved5;
     private boolean reserved6;
     private boolean lastBlockFlag;
-    private int     block_length;
+    private int payload_length;
 
     private byte[] headerBuffer;
 
@@ -107,7 +107,7 @@ public class BlockHeader implements BlockBuilder {
         reserved5 = false;
         reserved6 = false;
         lastBlockFlag = true;
-        block_length = 0;
+        payload_length = 0;
     }
 
     public BlockHeader(byte[] blockBuffer) {
@@ -119,36 +119,41 @@ public class BlockHeader implements BlockBuilder {
         if(headerBuffer.length < HEADER_LENGTH)
             throw new BufferMismatchBlockSize();
 
-        version = headerBuffer[0];
-        switch (headerBuffer[1] >>> 6){
+        ByteBuffer byteBuffer = ByteBuffer.wrap(headerBuffer);
+
+        version            = ((int) byteBuffer.get() & 0xff);
+        int block_control  = ((int) byteBuffer.get() & 0xff);
+        int flags          = ((int) byteBuffer.get() & 0xff);
+        payload_length     = ((int) byteBuffer.getShort() & 0xffff);
+
+        switch (block_control >>> 6){
             case 0: type = Type.UNDEFINED; break;
             case 1: type = Type.REQUEST; break;
             case 2: type = Type.RESPONSE; break;
             case 3: type = Type.PUSH; break;
-            default: throw  new MalformedRumblePacket("Type "+(headerBuffer[1] >>> 6)+" is unknown");
+            default: throw  new MalformedRumblePacket("Type "+(block_control >>> 6)+" is unknown");
         }
-        subtype = headerBuffer[1] & 0x3F;
-        reserved0 = ((headerBuffer[2] & 0x80) == 0x80);
-        reserved1 = ((headerBuffer[2] & 0x40) == 0x40);
-        reserved2 = ((headerBuffer[2] & 0x20) == 0x20);
-        reserved3 = ((headerBuffer[2] & 0x10) == 0x10);
-        reserved4 = ((headerBuffer[2] & 0x08) == 0x08);
-        reserved5 = ((headerBuffer[2] & 0x04) == 0x04);
-        reserved6 = ((headerBuffer[2] & 0x02) == 0x02);
-        lastBlockFlag = ((headerBuffer[2] & 0x01) == 0x01);
-        block_length = ((int)headerBuffer[3] << 8) | ((int)headerBuffer[4] & 0xFF);
+        subtype = (block_control & 0x3F);
+        reserved0 = ((flags & 0x80) == 0x80);
+        reserved1 = ((flags & 0x40) == 0x40);
+        reserved2 = ((flags & 0x20) == 0x20);
+        reserved3 = ((flags & 0x10) == 0x10);
+        reserved4 = ((flags & 0x08) == 0x08);
+        reserved5 = ((flags & 0x04) == 0x04);
+        reserved6 = ((flags & 0x02) == 0x02);
+        lastBlockFlag = ((flags & 0x01) == 0x01);
     }
 
     @Override
     public byte[] getBytes() throws MalformedRumblePacket{
         try {
             ByteBuffer bufferBlockHeader = ByteBuffer.allocate(HEADER_LENGTH);
-            bufferBlockHeader.put((byte) version);
+            bufferBlockHeader.put((byte) (version & 0xff));
             switch (type) {
-                case UNDEFINED: bufferBlockHeader.put((byte) (0x00 | subtype)); break;
-                case REQUEST:   bufferBlockHeader.put((byte) (0x01 | subtype)); break;
-                case RESPONSE:  bufferBlockHeader.put((byte) (0x02 | subtype)); break;
-                case PUSH:      bufferBlockHeader.put((byte) (0x03 | subtype)); break;
+                case UNDEFINED: bufferBlockHeader.put((byte) ((0x00 << 6) | (0xff & subtype))); break;
+                case REQUEST:   bufferBlockHeader.put((byte) ((0x01 << 6) | (0xff & subtype))); break;
+                case RESPONSE:  bufferBlockHeader.put((byte) ((0x02 << 6) | (0xff & subtype))); break;
+                case PUSH:      bufferBlockHeader.put((byte) ((0x03 << 6) | (0xff & subtype))); break;
             }
             bufferBlockHeader.put((byte) ((reserved0 ? 1 : 0) << 7 |
                     (reserved1 ? 1 : 0) << 6 |
@@ -158,7 +163,7 @@ public class BlockHeader implements BlockBuilder {
                     (reserved5 ? 1 : 0) << 2 |
                     (reserved6 ? 1 : 0) << 1 |
                     (lastBlockFlag ? 1 : 0)));
-            bufferBlockHeader.putShort((short) block_length);
+            bufferBlockHeader.putShort((short) payload_length);
             return bufferBlockHeader.array();
         }
         catch(BufferOverflowException e) {
@@ -179,13 +184,13 @@ public class BlockHeader implements BlockBuilder {
     public boolean isReserved5() {   return reserved5; }
     public boolean isReserved6() {   return reserved6; }
     public boolean isLastBlock() {   return lastBlockFlag; }
-    public int getBlockLength()  {   return block_length; }
+    public int getPayloadLength(){   return payload_length; }
 
 
     public void setVersion(int version)         {  this.version = version;  }
     public void setType(Type type)              {  this.type = type;   }
     public void setSubtype(int subtype)         {  this.subtype = subtype; }
-    public void setBlockLength(int length)      {  this.block_length = length; }
+    public void setPayloadLength(int length)    {  this.payload_length = length; }
     public void setReserved0(boolean reserved0) {  this.reserved0 = reserved0; }
     public void setReserved1(boolean reserved1) {  this.reserved1 = reserved1; }
     public void setReserved2(boolean reserved2) {  this.reserved2 = reserved2; }

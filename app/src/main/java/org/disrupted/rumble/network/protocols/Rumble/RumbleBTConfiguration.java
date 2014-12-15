@@ -30,17 +30,4 @@ public class RumbleBTConfiguration {
     public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
     public static final String RUMBLE_BT_STR        = "org.disrupted.rumble";
 
-
-    public static boolean isBTUUIDRumble(UUID uuid){
-        return ( (RumbleBTConfiguration.RUMBLE_BT_UUID_128.compareTo(uuid) == 0) );
-    }
-
-    public static boolean isBTUUIDRumble(String uuid){
-        return (   (RumbleBTConfiguration.RUMBLE_BT_UUID_128.toString().equals(uuid)) );
-    }
-
-    public static boolean isBTUUIDStr(String str){
-        return RUMBLE_BT_STR.equals(str);
-    }
-
 }

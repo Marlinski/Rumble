@@ -17,11 +17,16 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi;
+package org.disrupted.rumble.network.events;
 
 /**
  * @author Marlinski
  */
-public class UDPClient  {
+public class LinkLayerStopped extends NetworkEvent {
+
+    public String linkLayerIdentifier;
+    public LinkLayerStopped(String linkLayerIdentifier) {
+        this.linkLayerIdentifier = linkLayerIdentifier;
+    }
 
 }

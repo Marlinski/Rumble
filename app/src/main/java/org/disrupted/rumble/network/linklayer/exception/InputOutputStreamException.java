@@ -17,11 +17,15 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi;
+package org.disrupted.rumble.network.linklayer.exception;
 
 /**
  * @author Marlinski
  */
-public class UDPClient  {
+public class InputOutputStreamException extends LinkLayerConnectionException {
+
+    public InputOutputStreamException() {
+        super("Cannot get In/Output stream");
+    }
 
 }

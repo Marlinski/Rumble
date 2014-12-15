@@ -17,19 +17,15 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer;
+package org.disrupted.rumble.network.linklayer.exception;
 
 /**
  * @author Marlinski
  */
-public interface Connection {
+public class InterruptedLinkLayerConnection extends LinkLayerConnectionException {
 
-    public String getType();
-
-    public String getConnectionID();
-
-    public void run();
-
-    public void kill();
+    public InterruptedLinkLayerConnection() {
+        super("interrupted");
+    }
 
 }

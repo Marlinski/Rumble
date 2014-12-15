@@ -52,6 +52,16 @@ public class BluetoothConfigureInteraction {
         }
     }
 
+    public static void disableBT(Activity activity) {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(activity);
+        if ( adapter == null) {
+            Log.d(TAG, "mBluetoothAdapter is null");
+            return;
+        }
+        if (isEnabled(activity))
+            adapter.disable();
+    }
+
     public static boolean isDiscoverable(Activity activity) {
         if(BluetoothUtil.getBluetoothAdapter(activity) == null)
             return false;

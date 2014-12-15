@@ -41,31 +41,4 @@ public abstract class Block implements BlockBuilder, BlockMessage {
         this.payload = payload;
     }
 
-    @Override
-    public byte[] getBytes() throws MalformedRumblePacket {
-        try {
-            ByteArrayOutputStream output;
-            if (payload == null)
-                output = new ByteArrayOutputStream(header.HEADER_LENGTH);
-            else
-                output = new ByteArrayOutputStream(header.HEADER_LENGTH + payload.length);
-
-            byte[] headerBuffer = header.getBytes();
-            if (headerBuffer == null)
-                return null;
-            output.write(headerBuffer);
-
-            if (payload != null)
-                output.write(payload);
-            return output.toByteArray();
-        } catch (IOException ignore) {
-            throw new MalformedRumblePacket();
-        }
-    }
-
-    public int getLength() {
-        if(payload == null)
-            return 0;
-        return payload.length;
-    }
 }

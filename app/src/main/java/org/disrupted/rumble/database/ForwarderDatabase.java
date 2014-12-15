@@ -22,6 +22,7 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -74,7 +75,6 @@ public class ForwarderDatabase extends Database {
         ContentValues contentValues = new ContentValues();
         contentValues.put(ID, statusID);
         contentValues.put(RECEIVEDBY, receivedBy);
-        return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
     }
-
 }

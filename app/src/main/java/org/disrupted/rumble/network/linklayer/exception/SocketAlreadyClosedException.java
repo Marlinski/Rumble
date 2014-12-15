@@ -17,10 +17,14 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.linklayer.exception;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerStarted extends NetworkEvent {
+public class SocketAlreadyClosedException extends LinkLayerConnectionException {
+
+    public SocketAlreadyClosedException() {
+        super("socket already closed");
+    }
 }

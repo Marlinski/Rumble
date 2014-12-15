@@ -25,7 +25,7 @@ import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.Mal
 import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.nio.charset.Charset;
 
 /**
  * A BlockStatus holds all the information necessary to retrieve a Status
@@ -62,21 +62,26 @@ public class BlockStatus extends Block {
 
     private static final String TAG = "BlockStatus";
 
-    private static final int UID = 16;
-    private static final int AUTHOR_LENGTH_FIELD = 1;
+    /*
+     * Byte size
+     */
+    private static final int UID                 = 16;
+    private static final int AUTHOR_LENGTH_FIELD = 2;
     private static final int STATUS_LENGTH_FIELD = 2;
     private static final int TIME_OF_CREATION    = 8;
-    private static final int SCORE               = 2;
-    private static final int HOPS = 1;
-    private static final int TTL = 1;
+    private static final int TTL                 = 8;
+    private static final int HOPS                = 2;
+    private static final int REPLICATION         = 2;
+    private static final int LIKE                = 2;
 
-    public  static final int MIN_HEADER_LENGTH = ( UID +
+    public  static final int MIN_PAYLOAD_SIZE = ( UID +
             AUTHOR_LENGTH_FIELD +
             STATUS_LENGTH_FIELD +
             TIME_OF_CREATION +
-            SCORE +
+            TTL +
             HOPS +
-            TTL);
+            REPLICATION +
+            LIKE);
 
     public static final int SUBTYPE = 0x02;
 
@@ -84,16 +89,20 @@ public class BlockStatus extends Block {
 
     public BlockStatus(BlockHeader header, StatusMessage status) {
         super(header, null);
+        this.header.setType(BlockHeader.Type.PUSH);
+        this.header.setSubtype(SUBTYPE);
+        this.header.setLastBlock(true);
+        this.status = status;
     }
 
     public BlockStatus(BlockHeader header, byte[] payload) {
         super(header, payload);
+        status = null;
     }
 
     @Override
     public void readBuffer() throws BufferMismatchBlockSize, MalformedRumblePacket {
-
-        if(payload.length < MIN_HEADER_LENGTH)
+        if(payload.length < MIN_PAYLOAD_SIZE)
             throw new BufferMismatchBlockSize();
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(payload);
@@ -102,24 +111,35 @@ public class BlockStatus extends Block {
         byteBuffer.get(uid,0,UID);
 
         short authorLength = byteBuffer.getShort();
-        byte[] author = new byte[authorLength];
-        byteBuffer.get(author,byteBuffer.position(),authorLength);
+        byte[] author;
+        if((authorLength > 0) && (authorLength < (payload.length-UID)))
+            author = new byte[authorLength];
+        else
+            throw new MalformedRumblePacket("wrong author length parameter: "+authorLength);
+        byteBuffer.get(author);
 
         short postLength = byteBuffer.getShort();
-        byte[] post = new byte[authorLength];
-        byteBuffer.get(post,byteBuffer.position(),postLength);
+        byte[] post;
+        if((postLength > 0) && (postLength < (payload.length - UID - authorLength)))
+            post = new byte[postLength];
+        else
+            throw new MalformedRumblePacket("wrong post length parameter: "+postLength);
+
+        byteBuffer.get(post);
 
         long  toc   = byteBuffer.getLong();
-        short score = byteBuffer.getShort();
-        byte  hop   = byteBuffer.get();
-        byte  ttl   = byteBuffer.get();
+        long  ttl   = byteBuffer.getLong();
+        short hops  = byteBuffer.getShort();
+        short replication = byteBuffer.getShort();
+        short like  = byteBuffer.getShort();
 
-        status = new StatusMessage(new String(author), new String(post), toc);
+        status = new StatusMessage(new String(post), new String(author), toc);
         status.setUuid(new String(uid));
         status.setTimeOfCreation(toc);
-        status.setHopCount((int)hop);
-        status.setTTL((int)ttl);
-        status.setScore((int)score);
+        status.setHopCount((int) hops);
+        status.setTTL((int) ttl);
+        status.addReplication((int) replication);
+        status.setLike((int) like);
         status.setTimeOfArrival(System.currentTimeMillis()/1000L);
     }
 
@@ -130,23 +150,39 @@ public class BlockStatus extends Block {
 
     @Override
     public byte[] getBytes() throws MalformedRumblePacket {
-        int length = MIN_HEADER_LENGTH+status.getAuthor().length()+status.getPost().length();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(length);
+        byte[] post   = status.getPost().getBytes(Charset.forName("UTF-8"));
+        byte[] author = status.getAuthor().getBytes(Charset.forName("UTF-8"));
 
+        int length = MIN_PAYLOAD_SIZE +
+                author.length +
+                post.length;
+
+        header.setPayloadLength(length);
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(length+header.HEADER_LENGTH);
+
+        /*
+         * we first add the header
+         */
+        byteBuffer.put(header.getBytes());
+
+        /*
+         * and then the payload
+         */
         byteBuffer.put(status.getUuid().getBytes(),0,UID);
 
-        byteBuffer.put((byte)status.getAuthor().length());
-        byteBuffer.put(status.getAuthor().getBytes());
+        byteBuffer.putShort((short) author.length);
+        byteBuffer.put(author);
 
-        byteBuffer.putShort((short)status.getPost().length());
-        byteBuffer.put(status.getPost().getBytes());
+        byteBuffer.putShort((short) post.length);
+        byteBuffer.put(post);
 
         byteBuffer.putLong(status.getTimeOfCreation());
+        byteBuffer.putLong(status.getTTL());
 
-        byteBuffer.putShort(status.getScore().shortValue());
-
-        byteBuffer.put(status.getHopCount().byteValue());
-        byteBuffer.put(status.getHopCount().byteValue());
+        byteBuffer.putShort((short)status.getHopCount());
+        byteBuffer.putShort((short)status.getReplication());
+        byteBuffer.putShort((short)status.getLike());
 
         return byteBuffer.array();
     }

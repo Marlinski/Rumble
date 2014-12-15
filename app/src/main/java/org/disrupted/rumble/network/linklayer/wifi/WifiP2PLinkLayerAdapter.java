@@ -37,7 +37,7 @@ public class WifiP2PLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public String getID() {
+    public String getLinkLayerIdentifier() {
         return null;
     }
 

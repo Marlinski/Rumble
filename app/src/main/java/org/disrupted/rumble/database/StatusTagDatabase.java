@@ -22,6 +22,7 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
@@ -73,6 +74,7 @@ public class StatusTagDatabase extends Database {
         ContentValues contentValues = new ContentValues();
         contentValues.put(HID, tagID);
         contentValues.put(SID, statusID);
+
         return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
     }
 

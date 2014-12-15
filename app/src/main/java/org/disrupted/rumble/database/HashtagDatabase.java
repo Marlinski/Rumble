@@ -22,6 +22,7 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
@@ -116,12 +117,13 @@ public class HashtagDatabase extends  Database{
         contentValues.put(HASHTAG, hashtag);
         contentValues.put(COUNT, hashtagCount+1);
         contentValues.put(LAST_SEEN, SystemClock.currentThreadTimeMillis());
+
         long res = -1;
-        if(hashtagCount == 0) {
+        if (hashtagCount == 0) {
             res = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-        }else{
+        } else {
             databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
-            Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '"+hashtag+"'", null, null, null, null, null);
+            Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '" + hashtag + "'", null, null, null, null, null);
             if (cursor != null && cursor.moveToFirst())
                 res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
         }

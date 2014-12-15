@@ -17,10 +17,23 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.linklayer;
+
+import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+
+import java.io.IOException;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerStopped extends NetworkEvent {
+public interface LinkLayerConnection {
+
+    public String getLinkLayerIdentifier();
+
+    public String getConnectionID();
+
+    public void connect() throws LinkLayerConnectionException;
+
+    public void disconnect() throws LinkLayerConnectionException;
+
 }

@@ -17,11 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi;
+package org.disrupted.rumble.network;
 
 /**
  * @author Marlinski
  */
-public class UDPClient  {
+public interface NetworkThread {
+
+    public String getType();
+
+    public String getNetworkThreadID();
+
+    public void run();
+
+    public void kill();
 
 }

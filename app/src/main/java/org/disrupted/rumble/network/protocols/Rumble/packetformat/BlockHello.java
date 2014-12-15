@@ -19,12 +19,10 @@
 
 package org.disrupted.rumble.network.protocols.Rumble.packetformat;
 
-import android.util.Log;
-
-import org.disrupted.rumble.message.Message;
 import org.disrupted.rumble.message.MessageHello;
 import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.BufferMismatchBlockSize;
 import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
 
 /**
  * @author Marlinski
@@ -40,7 +38,7 @@ public class BlockHello extends Block {
         header.setType(BlockHeader.Type.PUSH);
         header.setSubtype(SUBTYPE);
         header.setLastBlock(true);
-        header.setBlockLength(0);
+        header.setPayloadLength(0);
         payload = null;
     }
 
@@ -53,8 +51,9 @@ public class BlockHello extends Block {
     }
 
     @Override
-    public int getLength() {
-        return header.HEADER_LENGTH;
+    public byte[] getBytes() throws MalformedRumblePacket {
+        header.getBytes();
+        return new byte[0];
     }
 
     @Override

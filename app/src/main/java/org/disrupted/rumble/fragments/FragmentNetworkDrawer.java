@@ -20,6 +20,8 @@
 package org.disrupted.rumble.fragments;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -40,6 +42,8 @@ import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.events.BluetoothScanStarted;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
@@ -114,32 +118,43 @@ public class FragmentNetworkDrawer extends Fragment {
         }
     }
 
+    public void onEvent(LinkLayerStarted event) {
+        refreshInterfaces();
+    }
+    public void onEvent(LinkLayerStopped event) {
+        refreshInterfaces();
+    }
     public void onEvent(BluetoothScanStarted event) {
-        // style="?android:attr/progressBarStyleHorizontal"
         ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
         ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
     }
-
     public void onEvent(BluetoothScanEnded event) {
         ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.VISIBLE);
         ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.GONE);
     }
-
     public void onEvent(NeighborhoodChanged event) {
-        refresh();
+        refreshNeighborhood();
     }
-
     public void onEvent(NeighbourDisconnected event) {
-        //todo: refresh only the neighbour being affected
-        refresh();
+        //todo: refreshNeighborhood only the neighbour being affected
+        refreshNeighborhood();
     }
-
     public void onEvent(NeighbourConnected event) {
-        //todo: refresh only the neighbour being affected
-        refresh();
+        //todo: refreshNeighborhood only the neighbour being affected
+        refreshNeighborhood();
     }
 
-    private void refresh() {
+
+    private void refreshInterfaces() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Switch bluetoothSwitch = ((Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth));
+                bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+            }
+        });
+    }
+    private void refreshNeighborhood() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -150,6 +165,7 @@ public class FragmentNetworkDrawer extends Fragment {
             }
         });
     }
+
 
     public void onForceScanClicked(View view) {
         NetworkCoordinator.getInstance().forceScan();
@@ -174,13 +190,21 @@ public class FragmentNetworkDrawer extends Fragment {
         }
     }
 
+    /*
+     * when starting the bluetooth link layer, we save the current state of the bluetooth interface
+     * in order to put it back to the same state once the application will terminate
+     */
     private void onBluetoothEnable() {
         Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
-
         if(!BluetoothConfigureInteraction.isEnabled(getActivity())) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning), true).commit();
             BluetoothConfigureInteraction.enableBT(getActivity());
             return;
         }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning), false).commit();
+
         Log.d(TAG, "[+] Sending START BLUETOOTH intent");
         NetworkCoordinator.getInstance().startBluetooth();
 
@@ -190,9 +214,16 @@ public class FragmentNetworkDrawer extends Fragment {
         }
     }
 
-
+    /*
+     * When the user switches off the bluetooth link layer interface we shutdown the Bluetooth
+     * interface if it was shutdown before starting our app
+     */
     private void onBluetoothDisable() {
         NetworkCoordinator.getInstance().stopBluetooth();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        if(prefs.getBoolean(getString(R.string.bluetooth_state_on_openning), false)) {
+            BluetoothConfigureInteraction.disableBT(getActivity());
+        }
     }
 
     public void manageBTCode(int requestCode, int resultCode, Intent data) {

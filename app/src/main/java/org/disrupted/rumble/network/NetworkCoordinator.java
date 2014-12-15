@@ -23,7 +23,6 @@ package org.disrupted.rumble.network;
 import android.util.Log;
 
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
-import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourProtocolStart;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
@@ -53,7 +52,7 @@ public class NetworkCoordinator {
     private static final Object lock = new Object();
 
 
-    private HashSet<NeighbourRecord> neighborhoodHistory;
+    private HashSet<NeighbourManager> neighborhoodHistory;
     private Map<String, LinkLayerAdapter> adapters;
 
     public static NetworkCoordinator getInstance() {
@@ -67,12 +66,12 @@ public class NetworkCoordinator {
 
     private NetworkCoordinator() {
         Log.d(TAG, "[+] Starting NetworkCoordinator");
-        neighborhoodHistory = new HashSet<NeighbourRecord>();
+        neighborhoodHistory = new HashSet<NeighbourManager>();
         adapters = new HashMap<String, LinkLayerAdapter>();
         LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
         LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
-        adapters.put(bluetoothAdapter.getID(), bluetoothAdapter);
-        adapters.put(wifiAdapter.getID(), wifiAdapter);
+        adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
+        adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
     }
 
     public void clean() {
@@ -129,11 +128,11 @@ public class NetworkCoordinator {
      * getNeighbourRecordFromDeviceAddress returns the local record from a specific Neighbour
      * macAddress. It is a private utility function for NetworkCoordinator
      */
-    private NeighbourRecord getNeighbourRecordFromDeviceAddress(String address) {
+    private NeighbourManager getNeighbourRecordFromDeviceAddress(String address) {
         synchronized (lock) {
-            Iterator<NeighbourRecord> it = neighborhoodHistory.iterator();
+            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
             while (it.hasNext()) {
-                NeighbourRecord record = it.next();
+                NeighbourManager record = it.next();
                 if (record.is(address))
                     return record;
             }
@@ -149,9 +148,9 @@ public class NetworkCoordinator {
     public List<Neighbour>  getNeighborList() {
         List<Neighbour> neighborhoodList = new LinkedList<Neighbour>();
         synchronized (lock) {
-            Iterator<NeighbourRecord> it = neighborhoodHistory.iterator();
+            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
             while (it.hasNext()) {
-                NeighbourRecord record = it.next();
+                NeighbourManager record = it.next();
                 if (record.isInRange()) {
                     List<Neighbour> list = record.getPresences();
                     if(list != null)
@@ -167,7 +166,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourConnectedLinkLayer(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.isConnectedLinkLayer(linkLayerIdentifier);
@@ -179,7 +178,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourConnectedWithProtocol(Neighbour neighbour, String protocolID) throws RecordNotFoundException{
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.isConnectedWithProtocol(protocolID);
@@ -190,7 +189,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourInRange(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException {
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
         if(record == null)
             throw new RecordNotFoundException();
         try {
@@ -204,7 +203,7 @@ public class NetworkCoordinator {
      * note: it may be undefinied if no message has been exchanged
      */
     public String getNeighbourName(Neighbour neighbour) throws RecordNotFoundException{
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.getName();
@@ -218,7 +217,7 @@ public class NetworkCoordinator {
      * it throws an exception if the record has not been found
      */
     public boolean addProtocol(String address, Protocol protocol) throws RecordNotFoundException {
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
         if(record == null)
             throw new RecordNotFoundException();
         boolean bool = record.addProtocol(protocol);
@@ -237,7 +236,7 @@ public class NetworkCoordinator {
      * it throws an exception if the record has not been found
      */
     public boolean delProtocol(String address, Protocol protocol) throws RecordNotFoundException, ProtocolNotFoundException {
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
         if(record == null)
             throw new RecordNotFoundException();
         boolean bool = record.delProtocol(protocol);
@@ -255,11 +254,11 @@ public class NetworkCoordinator {
      * Anyway, it will try to connect to it with every protocol available (see connector).
      */
     public void newNeighbour(Neighbour newNeighbour) {
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(newNeighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(newNeighbour.getMacAddress());
         synchronized (lock) {
             if (record == null) {
                 Log.d(TAG, "[+] new neighbour record");
-                record = new NeighbourRecord(newNeighbour);
+                record = new NeighbourManager(newNeighbour);
                 neighborhoodHistory.add(record);
                 EventBus.getDefault().post(new NeighborhoodChanged());
             } else {
@@ -284,7 +283,7 @@ public class NetworkCoordinator {
      * It throws a RecordNotFoundException if the record was not found
      */
     public boolean delNeighbor(String address) throws RecordNotFoundException {
-        NeighbourRecord record = getNeighbourRecordFromDeviceAddress(address);
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
         if (record == null)
             throw new RecordNotFoundException();
         synchronized (lock) {
@@ -308,9 +307,9 @@ public class NetworkCoordinator {
      */
     public void removeNeighborsType(String linkLayerIdentifier) {
         synchronized (lock) {
-            Iterator<NeighbourRecord> it = neighborhoodHistory.iterator();
+            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
             while (it.hasNext()) {
-                NeighbourRecord record = it.next();
+                NeighbourManager record = it.next();
                 record.delDeviceType(linkLayerIdentifier);
             }
             EventBus.getDefault().post(new NeighborhoodChanged());

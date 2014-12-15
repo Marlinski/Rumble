@@ -47,7 +47,7 @@ import de.greenrobot.event.EventBus;
  */
 public class MessageQueue {
 
-    private static final String TAG = "MessageProcessor";
+    private static final String TAG = "MessageQueue";
 
     private static final Object lock           = new Object();
     private static MessageQueue instance;
@@ -267,7 +267,6 @@ public class MessageQueue {
 
     public class PriorityBlockingMessageQueue {
 
-
         private class StatusMessageComparator implements Comparator<StatusMessage> {
             @Override
             public int compare(StatusMessage entry1, StatusMessage entry2) {
@@ -373,7 +372,6 @@ public class MessageQueue {
         public void insertMessage(StatusMessage message) {
             if(messageQueue.size() < size) {
                 messageQueue.add(message);
-                Log.d(TAG, "[+] 1 messages added to queue");
                 return;
             }
         }
@@ -382,7 +380,6 @@ public class MessageQueue {
         public void updateMessage(StatusMessage message) {
                 if(messageQueue.remove(message)) {
                     messageQueue.add(message);
-                    Log.d(TAG, "[+] 1 message updated");
                 }
         }
 

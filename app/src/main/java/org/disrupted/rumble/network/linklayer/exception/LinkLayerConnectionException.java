@@ -17,11 +17,17 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi;
+package org.disrupted.rumble.network.linklayer.exception;
+
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 
 /**
  * @author Marlinski
  */
-public class UDPClient  {
+public class LinkLayerConnectionException extends Exception {
+
+    public LinkLayerConnectionException(String message) {
+        super("[!] Connection FAILED: "+message);
+    }
 
 }

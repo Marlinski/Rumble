@@ -24,13 +24,18 @@ import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.linklayer.exception.NoRemoteBluetoothDevice;
+import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
+import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 
 import java.io.IOException;
 
 /**
  * @author Marlinski
  */
-public abstract class BluetoothServerConnection extends BluetoothConnection {
+public class BluetoothServerConnection extends BluetoothConnection {
 
     private static final String TAG = "BluetoothServerConnection";
 
@@ -40,32 +45,37 @@ public abstract class BluetoothServerConnection extends BluetoothConnection {
     }
 
     @Override
-    public void run() {
-        try {
-            if (mmConnectedSocket == null)
-                throw new Exception("[!] Client Socket is null");
-
-            this.mmBluetoothDevice = mmConnectedSocket.getRemoteDevice();
-
-            if (mmBluetoothDevice == null)
-                throw new Exception("[!] no remote bluetooth device");
-
-            this.remoteMacAddress = mmBluetoothDevice.getAddress();
-
-            inputStream = mmConnectedSocket.getInputStream();
-            outputStream = mmConnectedSocket.getOutputStream();
-        }
-        catch(IOException e){
-            Log.e(TAG, "[!] Cannot get In/Output stream from Bluetooth Socket");
-            return;
-        }
-        catch (Exception e) {
-            Log.e(TAG, e.toString());
-            return;
-        }
-
-        onBluetoothConnected();
-
+    public String getConnectionID() {
+        return "Bluetooth ServerConnection: " + remoteMacAddress;
     }
 
+    @Override
+    public void connect() throws LinkLayerConnectionException {
+
+        if (mmConnectedSocket == null)
+            throw new NullSocketException();
+
+        this.mmBluetoothDevice = mmConnectedSocket.getRemoteDevice();
+
+        if (mmBluetoothDevice == null)
+            throw new NoRemoteBluetoothDevice();
+
+        this.remoteMacAddress = mmBluetoothDevice.getAddress();
+
+        try {
+            inputStream = mmConnectedSocket.getInputStream();
+            outputStream = mmConnectedSocket.getOutputStream();
+        } catch (IOException e) {
+            throw new InputOutputStreamException();
+        }
+    }
+
+    @Override
+    public void disconnect() throws LinkLayerConnectionException {
+        try {
+            this.mmConnectedSocket.close();
+        } catch(IOException e) {
+            throw new SocketAlreadyClosedException();
+        }
+    }
 }

@@ -47,7 +47,7 @@ import de.greenrobot.event.EventBus;
  *
  * @author Marlinski
  */
-public class NeighbourRecord {
+public class NeighbourManager {
 
     private static final String TAG = "NeighbourRecord";
 
@@ -59,7 +59,7 @@ public class NeighbourRecord {
     private Map<String, HashSet<Protocol>> protocolIdentifierToLinkSpecificProtocolInstance;
     private Map<String, MessageProcessor>  protocolIdentifierToMessageProcessor;
 
-    public NeighbourRecord(Neighbour neighbour){
+    public NeighbourManager(Neighbour neighbour){
         this.name = "undefinied";
 
         linkLayerPresences = new HashMap<Neighbour, Boolean>();
@@ -288,10 +288,12 @@ public class NeighbourRecord {
             while (it.hasNext()) {
                 Protocol entry = it.next();
                 if (entry.getLinkLayerIdentifier().equals(protocol.getLinkLayerIdentifier())) {
-                    Log.d(TAG, "[+] removing protocol " + protocol.getProtocolID() + " from link layer " + protocol.getLinkLayerIdentifier());
+                    Log.d(TAG, "[-] removing protocol " + protocol.getProtocolID() + " from link layer " + protocol.getLinkLayerIdentifier());
                     it.remove();
-                    if (protocols.size() == 0)
+                    if (protocols.size() == 0) {
                         protocolIdentifierToMessageProcessor.get(protocol.getProtocolID()).interrupt();
+                        protocolIdentifierToLinkSpecificProtocolInstance.remove(protocol.getProtocolID());
+                    }
                     return true;
                 }
             }
@@ -310,10 +312,13 @@ public class NeighbourRecord {
      */
     private class MessageProcessor extends Thread {
 
+        private final String TAG;
+
         private MessageQueue.PriorityBlockingMessageQueue queue;
         private String protocolID;
 
         public MessageProcessor(String protocolID) {
+            this.TAG = "MessageProcessor";
             this.queue = MessageQueue.getInstance().getMessageListener(100);
             this.protocolID = protocolID;
         }
@@ -321,18 +326,19 @@ public class NeighbourRecord {
         @Override
         public synchronized void run() {
             try {
-                Log.d(TAG, "[+] Starting Message Processor");
+                Log.d(TAG, "[+] Starting ("+protocolID+")");
                 while(true) {
                     StatusMessage message = queue.take();
                     Command command = new SendStatusMessageCommand(message);
                     Protocol protocol = getBestProtocol(protocolID);
                     if(protocol == null)
                         break;
+                    Log.d(TAG, "[+] new command ("+protocolID+")");
                     protocol.executeCommand(command);
                 }
             }
             catch(InterruptedException e) {
-                Log.d(TAG, "[-] Stopping Message Processor");
+                Log.d(TAG, "[+] Stopping ("+protocolID+")");
                 queue.clear();
             }
         }

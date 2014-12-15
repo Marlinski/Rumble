@@ -21,53 +21,36 @@ package org.disrupted.rumble.network.protocols;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.linklayer.Connection;
 import org.disrupted.rumble.network.protocols.command.Command;
 
-import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Marlinski
  */
-public abstract class GenericProtocol implements Connection, Protocol {
+public abstract class GenericProtocol implements Protocol {
 
 
     private static final String TAG = "GenericProtocol";
 
     private BlockingQueue<Command> commandQueue;
 
-    abstract protected void processingPacketFromNetwork() throws IOException;
+    abstract protected void processingPacketFromNetwork();
 
     abstract protected boolean onCommandReceived(Command command);
-
-    abstract protected void initializeProtocol();
-
-    abstract protected void destroyProtocol();
 
     public GenericProtocol() {
         commandQueue = new LinkedBlockingQueue<Command>(1);
     }
 
-    public final void onGenericProcotolConnected() throws IOException{
-
-        /*
-         * abstract method implemented by a specific protocol implementation to perform
-         * some code when we the actual work of the protocol starts.
-         */
-        initializeProtocol();
-
+    public final void onGenericProcotolConnected() {
         processingCommandFromQueue.start();
 
         try {
             processingPacketFromNetwork();
         }finally {
             processingCommandFromQueue.interrupt();
-            destroyProtocol();
         }
     }
 

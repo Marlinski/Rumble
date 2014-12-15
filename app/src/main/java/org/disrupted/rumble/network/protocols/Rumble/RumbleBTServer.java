@@ -21,12 +21,18 @@ package org.disrupted.rumble.network.protocols.Rumble;
 
 import android.bluetooth.BluetoothSocket;
 
+import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.NetworkThread;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
 
 /**
  * @author Marlinski
  */
-public class RumbleBTServer extends org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer {
+public class RumbleBTServer extends BluetoothServer {
 
 
     public RumbleBTServer() {
@@ -34,12 +40,29 @@ public class RumbleBTServer extends org.disrupted.rumble.network.linklayer.bluet
     }
 
     @Override
-    public String getConnectionID() {
-        return "BluetoothRumbleServer";
+    public String getNetworkThreadID() {
+        return RumbleProtocol.protocolID + super.getNetworkThreadID();
     }
 
+
     @Override
-    protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket) {
-        return new RumbleBTServerConnection(mmConnectedSocket);
+    protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket) {
+        Neighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
+        try {
+            if (NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
+                /*
+                 * We are receiving a connection from someone we are already connected to.
+                 * This case happen only if both device discover at the same time.
+                 * we cannot simply drop the connection because the other end would do the same
+                 * and that would result in both side closing the connection
+                 * To solve this issue, we drop only the lower mac address side of the connection.
+                 */
+                if(neighbour.getMacAddress().compareTo(localMacAddress) < 0)
+                    return null;
+            }
+            return new RumbleBTProtocol(new BluetoothServerConnection(mmConnectedSocket));
+        }catch(RecordNotFoundException first) {
+            return null;
+        }
     }
 }

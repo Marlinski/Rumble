@@ -19,13 +19,14 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.Neighbour;
-import org.disrupted.rumble.network.linklayer.Connection;
+import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 
@@ -35,10 +36,11 @@ import java.util.UUID;
 /**
  * @author Marlinski
  */
-public abstract class BluetoothServer implements Connection {
+public abstract class BluetoothServer implements NetworkThread {
 
     private static final String TAG = "BluetoothServer";
 
+    protected String localMacAddress;
     protected BluetoothServerSocket mmServerSocket;
     protected UUID bt_service_uuid;
     protected String bt_service_name;
@@ -55,8 +57,19 @@ public abstract class BluetoothServer implements Connection {
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
+    @Override
+    public String getNetworkThreadID() {
+        return "Bluetooth Server";
+    }
+
 
     public void run() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if(adapter == null)
+            return;
+
+        localMacAddress = adapter.getAddress();
+
         BluetoothServerSocket tmp = null;
 
         try {
@@ -84,21 +97,24 @@ public abstract class BluetoothServer implements Connection {
                     Neighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
                     NetworkCoordinator.getInstance().newNeighbour(neighbour);
 
-                    BluetoothServerConnection clientThread = onClientConnected(mmConnectedSocket);
+                    NetworkThread clientThread = onClientConnected(mmConnectedSocket);
 
-                    if(!ThreadPoolCoordinator.getInstance().addConnection(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH)) {
-                        try {
-                            mmConnectedSocket.close();
-                        } catch(IOException ignore) {}
+                    if(clientThread != null) {
+                        if (!ThreadPoolCoordinator.getInstance().addNetworkThread(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH)) {
+                            try {
+                                mmConnectedSocket.close();
+                            } catch (IOException ignore) {
+                            }
+                        }
                     }
                 }
             }
         } catch (Exception e) {
-            Log.d(TAG, "[-] ENDED "+getConnectionID());
+            Log.d(TAG, "[-] ENDED "+getNetworkThreadID());
         }
     }
 
-    abstract protected BluetoothServerConnection onClientConnected(BluetoothSocket mmConnectedSocket);
+    abstract protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket);
 
     @Override
     public void kill() {

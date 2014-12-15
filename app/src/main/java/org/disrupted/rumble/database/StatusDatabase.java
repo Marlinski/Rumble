@@ -22,6 +22,7 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -50,7 +51,6 @@ public class StatusDatabase extends Database {
     public static final String TABLE_NAME       = "status";
     public static final String ID               = "_id";
     public static final String UUID             = "uuid";        // unique ID 128 bits
-    public static final String SCORE            = "score";       // reserved
     public static final String AUTHOR           = "author";      // original author of the post
     public static final String POST             = "post";        // the post
     public static final String FILE_NAME        = "filename";    // the name of the attached file
@@ -66,7 +66,6 @@ public class StatusDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
                  + UUID        + " TEXT, "
-                 + SCORE       + " INTEGER, "
                  + AUTHOR      + " TEXT, "
                  + POST        + " TEXT, "
                  + FILE_NAME   + " TEXT, "
@@ -247,7 +246,6 @@ public class StatusDatabase extends Database {
     private int updateStatus(StatusMessage status){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UUID, status.getUuid());
-        contentValues.put(SCORE, status.getScore());
         contentValues.put(AUTHOR, status.getAuthor());
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_NAME, status.getFileName());
@@ -259,7 +257,8 @@ public class StatusDatabase extends Database {
         contentValues.put(REPLICATION, status.getReplication());
         contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
 
-        int count =  databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID+" = "+status.getdbId(), null);
+        int count = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = " + status.getdbId(), null);
+
         if(count > 0) {
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(status.getdbId(), forwarder);
@@ -282,7 +281,6 @@ public class StatusDatabase extends Database {
     private long insertStatus(StatusMessage status){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UUID, status.getUuid());
-        contentValues.put(SCORE, status.getScore());
         contentValues.put(AUTHOR, status.getAuthor());
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_NAME, status.getFileName());

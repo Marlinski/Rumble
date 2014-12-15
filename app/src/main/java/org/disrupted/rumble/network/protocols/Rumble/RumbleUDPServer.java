@@ -38,7 +38,7 @@ public class RumbleUDPServer extends UDPServer {
     }
 
     @Override
-    public String getConnectionID() {
+    public String getNetworkThreadID() {
         return "RumbleUDPServer";
     }
 
