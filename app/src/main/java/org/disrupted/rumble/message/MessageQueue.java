@@ -111,7 +111,9 @@ public class MessageQueue {
         if(started) {
             Log.d(TAG, "[-] Stopping Message Queue");
             started = false;
-            EventBus.getDefault().unregister(this);
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
+
             synchronized (lock) {
                 for (ScoredEntry entry : priorityStatus) {
                     entry = null;
@@ -385,6 +387,9 @@ public class MessageQueue {
         }
 
         public void clear() {
+            synchronized (lock) {
+                messageListeners.remove(this);
+            }
             messageQueue.clear();
         }
     }
