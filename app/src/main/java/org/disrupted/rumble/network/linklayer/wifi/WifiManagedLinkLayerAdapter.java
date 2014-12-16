@@ -19,16 +19,28 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.preference.PreferenceManager;
+import android.support.v4.net.ConnectivityManagerCompat;
+import android.util.Log;
 
+import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.firechat.FirechatOverUDPMulticast;
+
+import de.greenrobot.event.EventBus;
 
 
 /**
@@ -40,9 +52,11 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     public static final String LinkLayerIdentifier = "WIFI-Managed";
 
-    String macAddress;
-    WifiManager wifiMan;
-    WifiInfo wifiInf;
+    private String macAddress;
+    private WifiManager wifiMan;
+    private WifiInfo wifiInf;
+    WifiManager.MulticastLock multicastLock;
+    private boolean register;
 
 
     public WifiManagedLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
@@ -59,27 +73,38 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     @Override
     public void onLinkStart() {
+        Log.d(TAG, "[+] Starting Wifi");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
-        if(!wifiMan.isWifiEnabled())
-            return;
+        wifiInf = wifiMan.getConnectionInfo();
+        macAddress = wifiInf.getMacAddress();
+        multicastLock = wifiMan.createMulticastLock("rumble");
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+        filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+        register = true;
 
         /*
          * we enable multicast packet over WiFi, it is usually disabled to save battery but we
          * need it to send/receive message
          */
-        WifiManager.MulticastLock multicastLock = wifiMan.createMulticastLock("rumble");
         multicastLock.acquire();
-
         ThreadPoolCoordinator.getInstance().addNetworkThread( new FirechatOverUDPMulticast() );
 
-        wifiInf = wifiMan.getConnectionInfo();
-        macAddress = wifiInf.getMacAddress();
     }
 
     @Override
     public void onLinkStop() {
+        Log.d(TAG, "[-] Stopping Wifi");
+        if(register)
+            RumbleApplication.getContext().unregisterReceiver(mReceiver);
+
         ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
         NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
+        multicastLock.release();
 
         wifiInf = null;
         wifiMan = null;
@@ -93,10 +118,30 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
 
     @Override
     public void forceDiscovery() {
-
     }
 
     @Override
     public void connectTo(Neighbour neighbour, boolean force) {
     }
+
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                Log.d(TAG, intent.toString());
+                NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                if(info != null) {
+                    if(info.isConnected()) {
+                        Log.d(TAG, "[+] connected to the network");
+                        ThreadPoolCoordinator.getInstance().addNetworkThread(new FirechatOverUDPMulticast());
+                    }
+                }
+            }
+        }
+    };
+
+
 }
