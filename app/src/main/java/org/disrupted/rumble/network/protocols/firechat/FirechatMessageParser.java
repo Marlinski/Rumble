@@ -87,7 +87,7 @@ public class FirechatMessageParser {
         return jsonStatus.toString()+"\n";
     }
 
-    public StatusMessage networkToStatus(String message, PushbackInputStream in, String macAddress) throws JSONException{
+    public StatusMessage networkToStatus(String message) throws JSONException{
         StatusMessage retMessage = null;
         JSONObject object = new JSONObject(message);
 
@@ -109,55 +109,12 @@ public class FirechatMessageParser {
          */
         retMessage = new StatusMessage(post+" #"+firechat, author, now);
         retMessage.setTimeOfArrival(now);
-        Log.d(TAG, message);
-        if(length > 0) {
-            String fileName = author+"-"+timestamp+".jfif";
-            String filePath = downloadFile(fileName, length, in);
-            if(!filePath.equals("")) {
-                Log.d(TAG, "[+] downloaded !");
-                retMessage.setFileName(fileName);
-                retMessage.setFileSize(length);
-            }
-        }
-
+        retMessage.setFileSize(length);
         retMessage.setUuid(uuid);
         retMessage.setHopCount(1);
-        retMessage.addForwarder(macAddress, FirechatProtocol.protocolID);
 
         return retMessage;
 
-    }
-
-    public String downloadFile(String fileName, long length, PushbackInputStream in) {
-        File directory = FileUtil.getWritableAlbumStorageDir(length);
-        Log.d(TAG, "[+] Downloading file to: "+directory);
-        if(directory != null) {
-            File attachedFile = new File(directory + File.separator + fileName);
-            FileOutputStream fos;
-            try {
-                if (!attachedFile.createNewFile())
-                    throw new FileNotFoundException("Cannot create file "+attachedFile.toString());
-
-                fos = new FileOutputStream(attachedFile);
-
-                final int BUFFER_SIZE = 1024;
-                while (length > 0) {
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    int count;
-                    count = in.read(buffer, 0, BUFFER_SIZE);
-                    if (count < 0)
-                        throw new IOException("End of stream reached");
-                    length -= count;
-                    fos.write(buffer, 0, count);
-                }
-                fos.close();
-                return fileName;
-            }
-            catch (IOException e) {
-                Log.e(TAG, "[-] file has not been downloaded ",e);
-            }
-        }
-        return "";
     }
 
 
