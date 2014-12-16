@@ -20,22 +20,16 @@
 package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.content.Context;
-import android.net.nsd.NsdManager;
-import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
-import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
-import org.disrupted.rumble.network.protocols.rumble.RumbleUDPServer;
-import org.disrupted.rumble.network.protocols.rumble.RumbleWifiConfiguration;
+import org.disrupted.rumble.network.protocols.firechat.FirechatOverUDPMulticast;
 
-import java.net.InetAddress;
 
 /**
  * @author Marlinski
@@ -50,24 +44,12 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     WifiManager wifiMan;
     WifiInfo wifiInf;
 
-    /*
-     * only compatible with API 16 !
-     */
-    private NsdServiceInfo serviceInfo;
-    private NsdManager     mNsdManager;
-    private NsdManager.RegistrationListener mRegistrationListener;
-    private NsdManager.DiscoveryListener mDiscoveryListener;
-    private NsdManager.ResolveListener mResolveListener;
-    private String mServiceName;
-    private boolean registered;
-
 
     public WifiManagedLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         super(networkCoordinator);
         macAddress = null;
         wifiMan = null;
         wifiInf = null;
-        registered = false;
     }
 
     @Override
@@ -81,26 +63,24 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
         if(!wifiMan.isWifiEnabled())
             return;
 
+        /*
+         * we enable multicast packet over WiFi, it is usually disabled to save battery but we
+         * need it to send/receive message
+         */
+        WifiManager.MulticastLock multicastLock = wifiMan.createMulticastLock("rumble");
+        multicastLock.acquire();
+
+        ThreadPoolCoordinator.getInstance().addNetworkThread( new FirechatOverUDPMulticast() );
+
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
-
-        UDPServer udpRumbleServer = new RumbleUDPServer();
-        ThreadPoolCoordinator.getInstance().addNetworkThread(udpRumbleServer);
-
-        registerService();
-        registered = true;
     }
 
     @Override
     public void onLinkStop() {
         ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
         NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
-        if(!registered)
-            return;
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mNsdManager.unregisterService(mRegistrationListener);
-            mNsdManager.stopServiceDiscovery(mDiscoveryListener);
-        }
+
         wifiInf = null;
         wifiMan = null;
 
@@ -119,146 +99,4 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     @Override
     public void connectTo(Neighbour neighbour, boolean force) {
     }
-
-    /*
-     * The following code only deals with DNS-SD registration / discovery
-     * and requires API level 16 to works.
-     *
-     * Since service discovery is a heavy tasks (and thus drain the battery),
-     * we may consider using our own strategy instead.
-     * todo: do testings
-     */
-
-    public void registerService() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            initializeRegistrationListener();
-
-            serviceInfo  = new NsdServiceInfo();
-            serviceInfo.setServiceName(RumbleWifiConfiguration.NSD_SERVICE_NAME);
-            serviceInfo.setServiceType(RumbleWifiConfiguration.NSD_SERVICE_TYPE);
-            serviceInfo.setPort(RumbleWifiConfiguration.SERVER_PORT);
-
-            mNsdManager = (NsdManager) RumbleApplication.getContext().getSystemService(Context.NSD_SERVICE);
-            mNsdManager.registerService(
-                    serviceInfo,
-                    NsdManager.PROTOCOL_DNS_SD,
-                    mRegistrationListener);
-
-            initializeDiscoveryListener();
-            initializeResolveListener();
-            mNsdManager.discoverServices(
-                    RumbleWifiConfiguration.NSD_SERVICE_TYPE,
-                    NsdManager.PROTOCOL_DNS_SD,
-                    mDiscoveryListener);
-
-        }
-    }
-
-    public void initializeRegistrationListener() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mRegistrationListener = new NsdManager.RegistrationListener() {
-
-                @Override
-                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-                        mServiceName = NsdServiceInfo.getServiceName();
-                    }
-                }
-
-                @Override
-                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                }
-
-                @Override
-                public void onServiceUnregistered(NsdServiceInfo arg0) {
-                    Log.d(TAG, "[-] Service unregistered");
-                }
-
-                @Override
-                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                }
-            };
-        }
-    }
-
-    public void initializeDiscoveryListener() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mDiscoveryListener = new NsdManager.DiscoveryListener() {
-
-                @Override
-                public void onDiscoveryStarted(String regType) {
-                    Log.d(TAG, "Service discovery started");
-                }
-
-                @Override
-                public void onServiceFound(NsdServiceInfo service) {
-                    if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-                        Log.d(TAG, "[+] Service discovery success" + service);
-                        if (!service.getServiceType().equals(RumbleWifiConfiguration.NSD_SERVICE_TYPE)) {
-                            Log.d(TAG, "[-] unknown Service Type: " + service.getServiceType());
-                        } else if (service.getServiceName().equals(mServiceName)) {
-                            Log.d(TAG, "[-] Same machine: " + mServiceName);
-                        } else if (service.getServiceName().contains(RumbleWifiConfiguration.NSD_SERVICE_NAME)) {
-                            Log.d(TAG, "[+] found rumble neighbour: " + mServiceName);
-                            mNsdManager.resolveService(service, mResolveListener);
-                        }
-                    }
-                }
-
-                @Override
-                public void onServiceLost(NsdServiceInfo service) {
-                    Log.e(TAG, "[-] service lost" + service);
-                }
-
-                @Override
-                public void onDiscoveryStopped(String serviceType) {
-                    Log.d(TAG, "[-] Discovery stopped: " + serviceType);
-                }
-
-                @Override
-                public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                    if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-                        Log.e(TAG, "[!] Start Discovery failed: " + errorCode);
-                        mNsdManager.stopServiceDiscovery(this);
-                    }
-                }
-
-                @Override
-                public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                    if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-                        Log.e(TAG, "[!] Stop Discovery failed: Error code:" + errorCode);
-                        mNsdManager.stopServiceDiscovery(this);
-                    }
-                }
-            };
-        }
-    }
-
-    public void initializeResolveListener() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mResolveListener = new NsdManager.ResolveListener() {
-
-                @Override
-                public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                    Log.e(TAG, "[!] Resolve failed" + errorCode);
-                }
-
-                @Override
-                public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                    if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-                        Log.e(TAG, "[+] Resolve Succeeded. " + serviceInfo);
-
-                        if (serviceInfo.getServiceName().equals(mServiceName)) {
-                            Log.d(TAG, "Same IP.");
-                            return;
-                        }
-
-                        int port = serviceInfo.getPort();
-                        InetAddress host = serviceInfo.getHost();
-                    }
-                }
-            };
-        }
-    }
-
 }

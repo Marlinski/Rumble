@@ -19,11 +19,36 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
+import org.disrupted.rumble.network.Neighbour;
 
+import java.net.InetAddress;
 
 /**
  * @author Marlinski
  */
-public class UDPServerConnection  {
+public class UDPMulticastNeighbour extends Neighbour {
 
+    int port;
+    InetAddress address;
+
+    public UDPMulticastNeighbour(int port, InetAddress address) {
+        super(address.getHostAddress());
+        this.port = port;
+        this.address = address;
+    }
+
+    @Override
+    public String getLinkLayerType() {
+        return null;
+    }
+
+    @Override
+    public String getLinkLayerName() {
+        return null;
+    }
+
+    @Override
+    public String getLinkLayerAddress() {
+        return super.getLinkLayerAddress();
+    }
 }
