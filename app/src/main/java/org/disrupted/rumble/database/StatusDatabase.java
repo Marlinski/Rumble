@@ -292,7 +292,7 @@ public class StatusDatabase extends Database {
         contentValues.put(REPLICATION, status.getReplication());
         contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
 
-        long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        long statusID = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
         status.setdbId(statusID);
 
         if(statusID >= 0) {
