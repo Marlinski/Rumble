@@ -54,14 +54,14 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleBTProtocol extends GenericProtocol implements NetworkThread {
+public class RumbleOverBluetooth extends GenericProtocol implements NetworkThread {
 
     private static final String TAG = "RumbleBTProtocol";
 
     private BluetoothConnection con;
     protected boolean isBeingKilled;
 
-    public RumbleBTProtocol(BluetoothConnection con) {
+    public RumbleOverBluetooth(BluetoothConnection con) {
         this.con = con;
         this.isBeingKilled = false;
     }

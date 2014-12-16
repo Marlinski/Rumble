@@ -57,10 +57,10 @@ public class RumbleBTServer extends BluetoothServer {
                  * and that would result in both side closing the connection
                  * To solve this issue, we drop only the lower mac address side of the connection.
                  */
-                if(neighbour.getMacAddress().compareTo(localMacAddress) < 0)
+                if(neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0)
                     return null;
             }
-            return new RumbleBTProtocol(new BluetoothServerConnection(mmConnectedSocket));
+            return new RumbleOverBluetooth(new BluetoothServerConnection(mmConnectedSocket));
         }catch(RecordNotFoundException first) {
             return null;
         }
