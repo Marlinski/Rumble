@@ -25,7 +25,7 @@ package org.disrupted.rumble.network;
  */
 public abstract class Neighbour {
 
-    private String macAddress;
+    private String linkLayerAddress;
 
 
     abstract public String getLinkLayerName();
@@ -33,22 +33,22 @@ public abstract class Neighbour {
     abstract public String getLinkLayerType();
 
 
-    public Neighbour(String macAddress) {
-        this.macAddress = macAddress;
+    public Neighbour(String linkLayerAddress) {
+        this.linkLayerAddress = linkLayerAddress;
     }
 
-    public String getMacAddress() {
-        return this.macAddress;
+    public String getLinkLayerAddress() {
+        return this.linkLayerAddress;
     }
 
     @Override
     public String toString() {
-        return "MAC address: " + macAddress;
+        return "MAC address: " + linkLayerAddress;
     }
 
     @Override
     public int hashCode() {
-        return macAddress.hashCode();
+        return linkLayerAddress.hashCode();
     }
 
     @Override
@@ -59,7 +59,7 @@ public abstract class Neighbour {
             return true;
 
         Neighbour device = (Neighbour) obj;
-        return device.getMacAddress().equals(this.macAddress);
+        return device.getLinkLayerAddress().equals(this.linkLayerAddress);
     }
 
 }

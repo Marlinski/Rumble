@@ -36,8 +36,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import de.greenrobot.event.EventBus;
-
 /**
  * The NeighbourRecord is a representation of a neighbour on a logical level. We may be connected
  * to a neighbour with multiple interface at the same time, for instance Bluetooth and Wifi. As
@@ -91,7 +89,7 @@ public class NeighbourManager {
      */
     public boolean addPresence(Neighbour presence) {
         for(Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
-            if(entry.getKey().getMacAddress().equals(presence.getMacAddress())) {
+            if(entry.getKey().getLinkLayerAddress().equals(presence.getLinkLayerAddress())) {
                 if(entry.getValue().booleanValue())
                     return false;
 
@@ -111,7 +109,7 @@ public class NeighbourManager {
      */
     public boolean delPresence(String mac) throws UnknownNeighbourException{
         for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
-            if (entry.getKey().getMacAddress().equals(mac)) {
+            if (entry.getKey().getLinkLayerAddress().equals(mac)) {
                 if (!entry.getValue().booleanValue()) {
                     Log.e(TAG, "[!] presence was already false");
                     return false;
@@ -224,7 +222,7 @@ public class NeighbourManager {
      */
     public boolean is(String macAddress) {
         for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
-            if(entry.getKey().getMacAddress().equals(macAddress))
+            if(entry.getKey().getLinkLayerAddress().equals(macAddress))
                 return true;
         }
         return false;

@@ -170,7 +170,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourConnectedLinkLayer(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.isConnectedLinkLayer(linkLayerIdentifier);
@@ -182,7 +182,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourConnectedWithProtocol(Neighbour neighbour, String protocolID) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.isConnectedWithProtocol(protocolID);
@@ -193,7 +193,7 @@ public class NetworkCoordinator {
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourInRange(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
         try {
@@ -207,7 +207,7 @@ public class NetworkCoordinator {
      * note: it may be undefinied if no message has been exchanged
      */
     public String getNeighbourName(Neighbour neighbour) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
         return record.getName();
@@ -258,7 +258,7 @@ public class NetworkCoordinator {
      * Anyway, it will try to connect to it with every protocol available (see connector).
      */
     public void newNeighbour(Neighbour newNeighbour) {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(newNeighbour.getMacAddress());
+        NeighbourManager record = getNeighbourRecordFromDeviceAddress(newNeighbour.getLinkLayerAddress());
         synchronized (lock) {
             if (record == null) {
                 Log.d(TAG, "[+] new neighbour record");

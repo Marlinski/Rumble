@@ -27,11 +27,11 @@ import java.security.NoSuchAlgorithmException;
  */
 public class HashUtil {
 
-    public static final String computeHash(String macAddress, String protocol) {
+    public static final String computeHash(String linkLayerAddress, String protocol) {
         String hash = "";
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(macAddress.getBytes());
+            md.update(linkLayerAddress.getBytes());
             md.update(protocol.getBytes());
             byte[] digest = md.digest();
             hash = new String(digest);
