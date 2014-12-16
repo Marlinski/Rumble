@@ -41,6 +41,8 @@ import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
@@ -52,7 +54,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FirechatBTProtocol extends GenericProtocol implements NetworkThread {
+public class FirechatOverBluetooth extends GenericProtocol implements NetworkThread {
 
     private static final String TAG = "FirechatBluetoothClient";
 
@@ -62,7 +64,7 @@ public class FirechatBTProtocol extends GenericProtocol implements NetworkThread
     protected boolean isBeingKilled;
     private BluetoothConnection con;
 
-    public FirechatBTProtocol(BluetoothConnection con) {
+    public FirechatOverBluetooth(BluetoothConnection con) {
         this.con = con;
         this.isBeingKilled = false;
     }
@@ -171,13 +173,55 @@ public class FirechatBTProtocol extends GenericProtocol implements NetworkThread
 
     public boolean onPacketReceived(String jsonString) {
         try {
-            StatusMessage status = parser.networkToStatus(jsonString, pbin, con.getRemoteMacAddress());
+            StatusMessage status = parser.networkToStatus(jsonString);
+            if(status.getFileSize() > 0) {
+                String fileName = status.getAuthor()+"-"+status.getTimeOfCreation()+".jfif";
+                status.setFileName(fileName);
+                String filePath = downloadFile(status.getFileName(), status.getFileSize());
+                if (!filePath.equals("")) {
+                    Log.d(TAG, "[+] downloaded !");
+                }
+            }
+            status.addForwarder(con.getRemoteMacAddress(), FirechatProtocol.protocolID);
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
             Log.d(TAG, "Status received from Network:\n" + status.toString());
         } catch (JSONException ignore) {
             Log.d(TAG, "malformed JSON");
         }
         return false;
+    }
+
+
+    public String downloadFile(String fileName, long length) {
+        File directory = FileUtil.getWritableAlbumStorageDir(length);
+        Log.d(TAG, "[+] Downloading file to: "+directory);
+        if(directory != null) {
+            File attachedFile = new File(directory + File.separator + fileName);
+            FileOutputStream fos;
+            try {
+                if (!attachedFile.createNewFile())
+                    throw new FileNotFoundException("Cannot create file "+attachedFile.toString());
+
+                fos = new FileOutputStream(attachedFile);
+
+                final int BUFFER_SIZE = 1024;
+                while (length > 0) {
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int count;
+                    count = pbin.read(buffer, 0, BUFFER_SIZE);
+                    if (count < 0)
+                        throw new IOException("End of stream reached");
+                    length -= count;
+                    fos.write(buffer, 0, count);
+                }
+                fos.close();
+                return fileName;
+            }
+            catch (IOException e) {
+                Log.e(TAG, "[-] file has not been downloaded ",e);
+            }
+        }
+        return "";
     }
 
 
