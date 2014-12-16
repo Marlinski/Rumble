@@ -130,8 +130,8 @@ public class StatusMessage extends Message{
             forwarderList.clear();
         this.forwarderList  = fl;
     }
-    public void addForwarder(String macAddress, String protocolID) {
-        forwarderList.add(HashUtil.computeHash(macAddress,protocolID));
+    public void addForwarder(String linkLayerAddress, String protocolID) {
+        forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
 
 
@@ -139,8 +139,8 @@ public class StatusMessage extends Message{
     public boolean hasAttachedFile() {
         return (attachedFile != "");
     }
-    public boolean isForwarder(String macAddress, String protocolID) {
-        return forwarderList.contains(HashUtil.computeHash(macAddress,protocolID));
+    public boolean isForwarder(String linkLayerAddress, String protocolID) {
+        return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
 
     public String toString() {
