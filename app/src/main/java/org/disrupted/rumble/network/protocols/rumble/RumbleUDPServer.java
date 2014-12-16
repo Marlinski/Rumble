@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble;
+package org.disrupted.rumble.network.protocols.rumble;
 
 import org.disrupted.rumble.network.linklayer.wifi.UDPServer;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;

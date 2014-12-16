@@ -22,5 +22,5 @@ package org.disrupted.rumble.network.events;
 /**
  * @author Marlinski
  */
-public class NetworkEvent {
+public abstract class NetworkEvent {
 }

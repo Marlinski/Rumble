@@ -17,12 +17,12 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat;
+package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import org.disrupted.rumble.message.MessageHello;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.BufferMismatchBlockSize;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedBlock;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
 
 /**
  * @author Marlinski

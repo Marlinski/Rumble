@@ -32,8 +32,8 @@ import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleUDPServer;
-import org.disrupted.rumble.network.protocols.Rumble.RumbleWifiConfiguration;
+import org.disrupted.rumble.network.protocols.rumble.RumbleUDPServer;
+import org.disrupted.rumble.network.protocols.rumble.RumbleWifiConfiguration;
 
 import java.net.InetAddress;
 

@@ -17,16 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat;
-
-import org.disrupted.rumble.message.Message;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedBlock;
+package org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions;
 
 /**
  * @author Marlinski
  */
-public interface BlockMessage {
-
-    public Message getMessage() throws MalformedBlock;
-
+public class BufferMismatchBlockSize extends Exception {
 }

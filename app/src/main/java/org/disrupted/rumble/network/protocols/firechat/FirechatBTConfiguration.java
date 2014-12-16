@@ -30,7 +30,7 @@ public class FirechatBTConfiguration {
     //public static final UUID FIRECHAT_BT_UUID_128 = UUID.fromString("249916a5-4173-46e9-9320-36a8c1e8c487");
     public static final UUID FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
 
-    public static final String FIRECHAT_BT_STR      = "FireChat";
+    public static final String FIRECHAT_BT_STR    = "FireChat";
 
     public static boolean isBTUUIDFirechat(UUID uuid){
         if(uuid == null) return false;

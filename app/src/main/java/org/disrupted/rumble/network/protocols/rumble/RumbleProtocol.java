@@ -17,10 +17,13 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions;
+package org.disrupted.rumble.network.protocols.rumble;
 
 /**
  * @author Marlinski
  */
-public class MalformedBlock extends Exception {
+public class RumbleProtocol {
+
+    public static final String protocolID = "Rumble";
+
 }

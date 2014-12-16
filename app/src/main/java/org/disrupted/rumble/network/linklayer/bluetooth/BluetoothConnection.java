@@ -32,7 +32,7 @@ import java.io.OutputStream;
 /**
  * BluetoothConnection is a generic implementation of a Bluetooth Connection wether it is to manage
  * a client or to connect to a server. It is abstract as the connection part is specific and should
- * call onBluetoothConnected when done.
+ * implements connect() and disconnect() as requested per LinkLayerConnection interface.
  *
  * @author Marlinski
  */

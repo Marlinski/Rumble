@@ -21,9 +21,10 @@ package org.disrupted.rumble.network.linklayer;
 
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 
-import java.io.IOException;
-
 /**
+ * LinkLayerConnection is an interface for a class to implement connect() and disconnect()
+ * method that are link-layer specifics.
+ *
  * @author Marlinski
  */
 public interface LinkLayerConnection {

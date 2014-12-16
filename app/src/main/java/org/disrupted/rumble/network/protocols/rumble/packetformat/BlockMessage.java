@@ -17,17 +17,16 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble;
+package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import java.util.UUID;
+import org.disrupted.rumble.message.Message;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 
 /**
  * @author Marlinski
  */
-public class RumbleBTConfiguration {
+public interface BlockMessage {
 
-    /* Bluetooth Identifier */
-    public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
-    public static final String RUMBLE_BT_STR        = "org.disrupted.rumble";
+    public Message getMessage() throws MalformedBlock;
 
 }

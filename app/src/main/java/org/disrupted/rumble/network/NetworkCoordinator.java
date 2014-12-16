@@ -42,6 +42,12 @@ import java.util.Map;
 import de.greenrobot.event.EventBus;
 
 /**
+ * NetworkCoordinator coordinate every network related events. It maintain an up-to-date
+ * view of the neighbour history (past and present). It works closely with the NeighbourManager
+ * which is responsible of a specific neighbour.
+ *
+ * This class is running in its own thread from boot-time of the application.
+ *
  * @author Marlinski
  */
 public class NetworkCoordinator {
@@ -50,7 +56,6 @@ public class NetworkCoordinator {
 
     private static NetworkCoordinator instance;
     private static final Object lock = new Object();
-
 
     private HashSet<NeighbourManager> neighborhoodHistory;
     private Map<String, LinkLayerAdapter> adapters;
@@ -81,11 +86,10 @@ public class NetworkCoordinator {
             for (Map.Entry<String, LinkLayerAdapter> entry : adapters.entrySet()) {
                 entry.getValue().linkStop();
             }
-            instance = null;
             adapters.clear();
+            instance = null;
         }
     }
-
 
     public void    startBluetooth() {
         adapters.get(BluetoothLinkLayerAdapter.LinkLayerIdentifier).linkStart();
@@ -280,7 +284,7 @@ public class NetworkCoordinator {
      * It returns true if we successfully removed the neighbour
      * Sometime the linklayerscanner can be wrong (it misses some neighbours) and so we
      * return false If we are still actively connected to the neighbour (with any protocol)
-     * It throws a RecordNotFoundException if the record was not found
+     * It throws a RecordNotFoundException if the neighbour was not found
      */
     public boolean delNeighbor(String address) throws RecordNotFoundException {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
@@ -301,9 +305,9 @@ public class NetworkCoordinator {
     /*
      * This function is called when the user shut down an interface
      * In that case we must remove every entry related to a specific LinkLayerIdentifier
-     * The eventual associated protocols will normally be removed by themselves but the neighbours
-     * must be removed manually
-     * todo maybe think of something more gracefull
+     * The eventual associated protocols will normally be removed by themselves when the socket
+     * close but the neighbour view must be removed manually
+     * todo maybe think of something more graceful
      */
     public void removeNeighborsType(String linkLayerIdentifier) {
         synchronized (lock) {
@@ -315,5 +319,4 @@ public class NetworkCoordinator {
             EventBus.getDefault().post(new NeighborhoodChanged());
         }
     }
-
 }

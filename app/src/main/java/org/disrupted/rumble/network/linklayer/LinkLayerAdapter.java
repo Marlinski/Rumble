@@ -27,6 +27,10 @@ import org.disrupted.rumble.network.events.LinkLayerStopped;
 import de.greenrobot.event.EventBus;
 
 /**
+ * LinkLayerAdapter is a class that is responsible of managing a LinkLayer interface such
+ * as Bluetooth or Wifi. It is directly under the responsibility of NetworkCoordinator and
+ * all the LinkLayerAdapter methods are called from it.
+ *
  * @author Marlinski
  */
 public abstract class LinkLayerAdapter {

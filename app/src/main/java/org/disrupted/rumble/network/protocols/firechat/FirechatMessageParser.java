@@ -32,11 +32,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PushbackInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.LinkedHashSet;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * @author Marlinski
@@ -98,16 +94,21 @@ public class FirechatMessageParser {
         String post = "";
         long   length = 0;
 
-        String author    = object.getString(NAME);
         String uuid      = object.getString(UUID);
+        String author    = object.getString(NAME);
         String firechat  = object.getString(FIRECHAT);
         long   timestamp = object.getLong(TIMESTAMP);
+        long now = (System.currentTimeMillis() / 1000L);
 
         try { post   = object.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
-        try { length = object.getLong(LENGTH); } catch(JSONException ignore){ length = 0; }
+        try { length = object.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }
 
-        retMessage = new StatusMessage(post+" #"+firechat, author, timestamp);
-
+        /*
+         * todo: I don't really get how firechat computes its timestamp, it doesn't seem
+         * to be seconds since EPOCH so we keep the time of arrival instead
+         */
+        retMessage = new StatusMessage(post+" #"+firechat, author, now);
+        retMessage.setTimeOfArrival(now);
         Log.d(TAG, message);
         if(length > 0) {
             String fileName = author+"-"+timestamp+".jfif";
@@ -119,10 +120,9 @@ public class FirechatMessageParser {
             }
         }
 
-        long now = (System.currentTimeMillis() / 1000L);
-        retMessage.setTimeOfArrival(now);
+        retMessage.setUuid(uuid);
         retMessage.setHopCount(1);
-        retMessage.addForwarder(macAddress, "Firechat"); //todo use global firechat configuration instead
+        retMessage.addForwarder(macAddress, FirechatProtocol.protocolID);
 
         return retMessage;
 

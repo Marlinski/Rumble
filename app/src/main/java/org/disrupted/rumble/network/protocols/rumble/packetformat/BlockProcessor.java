@@ -17,19 +17,13 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat;
-
-import org.disrupted.rumble.message.Message;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.BufferMismatchBlockSize;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
+package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 /**
  * @author Marlinski
  */
-public interface BlockBuilder {
+public class BlockProcessor {
 
-    public void readBuffer() throws BufferMismatchBlockSize, MalformedRumblePacket;
 
-    public byte[] getBytes() throws MalformedRumblePacket;
 
 }

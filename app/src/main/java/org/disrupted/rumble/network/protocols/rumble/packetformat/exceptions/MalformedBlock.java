@@ -17,17 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions;
+package org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions;
 
 /**
  * @author Marlinski
  */
-public class SubtypeUnknown extends Exception {
-
-    public int subtype;
-
-    public SubtypeUnknown(int subtype) {
-        this.subtype = subtype;
-    }
-
+public class MalformedBlock extends Exception {
 }

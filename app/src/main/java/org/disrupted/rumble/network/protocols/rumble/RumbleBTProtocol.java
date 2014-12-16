@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble;
+package org.disrupted.rumble.network.protocols.rumble;
 
 import android.util.Log;
 
@@ -34,14 +34,14 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.GenericProtocol;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.Block;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.BlockHeader;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.BlockHello;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.BlockStatus;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.BufferMismatchBlockSize;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedBlock;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.SubtypeUnknown;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHello;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockStatus;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.SubtypeUnknown;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 

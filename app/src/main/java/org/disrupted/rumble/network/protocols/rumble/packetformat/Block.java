@@ -17,13 +17,21 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat;
+package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 /**
  * @author Marlinski
  */
-public class BlockProcessor {
+public abstract class Block implements BlockBuilder, BlockMessage {
 
+    private static final String TAG = "Block";
 
+    protected BlockHeader header;
+    protected byte[] payload;
+
+    public Block(BlockHeader header, byte[] payload) {
+        this.header = header;
+        this.payload = payload;
+    }
 
 }

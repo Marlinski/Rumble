@@ -17,28 +17,18 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.Rumble.packetformat;
+package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.util.Log;
-
-import org.disrupted.rumble.network.protocols.Rumble.packetformat.exceptions.MalformedRumblePacket;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
 
 /**
  * @author Marlinski
  */
-public abstract class Block implements BlockBuilder, BlockMessage {
+public interface BlockBuilder {
 
-    private static final String TAG = "Block";
+    public void readBuffer() throws BufferMismatchBlockSize, MalformedRumblePacket;
 
-    protected BlockHeader header;
-    protected byte[] payload;
-
-    public Block(BlockHeader header, byte[] payload) {
-        this.header = header;
-        this.payload = payload;
-    }
+    public byte[] getBytes() throws MalformedRumblePacket;
 
 }
