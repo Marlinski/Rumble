@@ -118,7 +118,7 @@ public class BluetoothScanner {
         Iterator<BluetoothNeighbour> it = btNeighborhood.iterator();
         while(it.hasNext()) {
             BluetoothNeighbour element = it.next();
-            if(element.getMacAddress().equals(address))
+            if(element.getLinkLayerAddress().equals(address))
                 return element;
         }
         return null;
@@ -224,7 +224,7 @@ public class BluetoothScanner {
          * Then we detect for neighbour that disappeared inconsistency
          */
         for(BluetoothNeighbour neighbor : lastTrickleState) {
-            try { NetworkCoordinator.getInstance().delNeighbor(neighbor.getMacAddress()); }
+            try { NetworkCoordinator.getInstance().delNeighbor(neighbor.getLinkLayerAddress()); }
             catch (RecordNotFoundException ignore){  }
             inconsistency++;
         }

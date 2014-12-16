@@ -33,7 +33,7 @@ public class BluetoothNeighbour extends Neighbour {
     private String bluetoothDeviceName;
 
     public BluetoothNeighbour(BluetoothNeighbour neighbour){
-        super(neighbour.getMacAddress());
+        super(neighbour.getLinkLayerAddress());
         this.bluetoothDeviceName = neighbour.bluetoothDeviceName;
     }
 

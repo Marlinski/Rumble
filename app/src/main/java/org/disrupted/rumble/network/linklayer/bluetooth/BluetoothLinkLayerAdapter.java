@@ -33,12 +33,12 @@ import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
+import org.disrupted.rumble.network.protocols.firechat.FirechatOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTConfiguration;
-import org.disrupted.rumble.network.protocols.rumble.RumbleBTProtocol;
+import org.disrupted.rumble.network.protocols.rumble.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.firechat.FirechatBTConfiguration;
-import org.disrupted.rumble.network.protocols.firechat.FirechatBTProtocol;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 
 /**
@@ -105,33 +105,33 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
         try {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
                 BluetoothConnection con = new BluetoothClientConnection(
-                        neighbour.getMacAddress(),
+                        neighbour.getLinkLayerAddress(),
                         RumbleBTConfiguration.RUMBLE_BT_UUID_128,
                         RumbleBTConfiguration.RUMBLE_BT_STR,
                         false);
-                RumbleBTProtocol rumble = new RumbleBTProtocol(con);
+                RumbleOverBluetooth rumble = new RumbleOverBluetooth(con);
                 ThreadPoolCoordinator.getInstance().addNetworkThread(rumble);
             } else {
-                Log.d(TAG, "already connected to "+neighbour.getMacAddress()+" with Rumble");
+                Log.d(TAG, "already connected to "+neighbour.getLinkLayerAddress()+" with Rumble");
             }
         } catch (RecordNotFoundException ignore){
-            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");
+            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getLinkLayerAddress()+" record not found !");
         }
 
         try {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, FirechatProtocol.protocolID)) {
                 BluetoothConnection con = new BluetoothClientConnection(
-                        neighbour.getMacAddress(),
+                        neighbour.getLinkLayerAddress(),
                         FirechatBTConfiguration.FIRECHAT_BT_UUID_128,
                         FirechatBTConfiguration.FIRECHAT_BT_STR,
                         false);
-                FirechatBTProtocol firechat = new FirechatBTProtocol(con);
+                FirechatOverBluetooth firechat = new FirechatOverBluetooth(con);
                 ThreadPoolCoordinator.getInstance().addNetworkThread(firechat);
             } else {
-                Log.d(TAG, "already connected "+neighbour.getMacAddress()+" with Firechat");
+                Log.d(TAG, "already connected "+neighbour.getLinkLayerAddress()+" with Firechat");
             }
         }catch (RecordNotFoundException ignore){
-            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getMacAddress()+" record not found !");
+            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getLinkLayerAddress()+" record not found !");
         }
     }
 
