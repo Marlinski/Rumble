@@ -26,6 +26,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.*;
 
 import android.util.Log;
@@ -45,7 +49,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class BluetoothScanner {
+public class BluetoothScanner implements SensorEventListener {
 
     private static final String TAG = "BluetoothScanner";
 
@@ -65,7 +69,6 @@ public class BluetoothScanner {
      * waitingForDiscovery is used to trigger unsollicited DISCOVERY and in that case
      * will also listen for the result of this procedure.
      * todo: they might be race condition issues whenever a DISCOVERY starts at the same
-     *
      */
     private boolean hasCallback = false;
 
@@ -78,14 +81,32 @@ public class BluetoothScanner {
      *
      * The idea is to increase the non-scanning period if the
      * neighborhood stay consistent between two scan.
+     *
+     * The trickle is increased first in a linear way, then in an exponential fashion
+     *    - Slow Start  mode: in which we increase linearly the trickle timer
+     *    - Exponential mode: in which we increase the timer exponentially
      */
-    private static final double START_TRICKLE_TIMER = 10000;
-    private static final double IMIN_TRICKLE_TIMER  = 5000;
-    private static final double IMAX_TRICKLE_TIMER  = 16;
+    private static final double START_TRICKLE_TIMER   = 10000; // 10 seconds
+    private static final double LINEAR_STEP           = 5000;  // 5 seconds
+    private static final double EXPONENTIAL_THRESHOLD = 60000; // 1 minute
+    private static final double IMAX_TRICKLE_TIMER    = 4;     // 2^4 = 16 minutes
     private int                 consistency = 1;
     private double              trickleTimer = START_TRICKLE_TIMER;
     private HashSet<BluetoothNeighbour>  lastTrickleState;
     private Handler             handler;
+
+
+    /*
+     * reset the trickle timer when phone is moving only if the timer is already short enough
+     */
+    private static final double RESET_TRICKLE_THRESHOLD = 30000;
+    private SensorManager       mSensorManager;
+    private Sensor              mAccelerometer;
+    private long                lastUpdate;
+    final float alpha = 0.8f;
+    float[] gravity = new float[3];
+    float[] linear_acceleration = new float[3];
+
 
     /*
      * little hack to prevent multiple unsollicited DISCOVERY_FINISH out of nowhere to
@@ -112,16 +133,17 @@ public class BluetoothScanner {
         scanningState    = ScanningState.SCANNING_OFF;
         hasCallback = false;
         registered = false;
-    }
 
-    public BluetoothNeighbour getNeighbor(String address) {
-        Iterator<BluetoothNeighbour> it = btNeighborhood.iterator();
-        while(it.hasNext()) {
-            BluetoothNeighbour element = it.next();
-            if(element.getLinkLayerAddress().equals(address))
-                return element;
+        mSensorManager = (SensorManager) RumbleApplication.getContext().getSystemService(Context.SENSOR_SERVICE);
+        if (mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
+            mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        } else {
+            mAccelerometer = null;
         }
-        return null;
+        for(int i = 0; i < 3; i++) {
+            gravity[i] = 0;
+            linear_acceleration[i] = 0;
+        }
     }
 
     public void startDiscovery () {
@@ -140,6 +162,11 @@ public class BluetoothScanner {
             filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
             filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
             RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+
+            if(mAccelerometer != null)
+                mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+
             registered = true;
         }
 
@@ -174,23 +201,30 @@ public class BluetoothScanner {
     public void stopDiscovery () {
         if(scanningState == ScanningState.SCANNING_OFF)
             return;
+
         Log.d(TAG, "[-] stop scanning procedure");
         handler.removeCallbacksAndMessages(null);
-        if(registered)
+        if(registered) {
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
+            if(mAccelerometer != null)
+                mSensorManager.unregisterListener(this);
+        }
         registered = false;
-        BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
-        if (mBluetoothAdapter == null)
-            return;
         btNeighborhood.clear();
-        resetTrickleTimer();
+        lastTrickleState.clear();
+        trickleTimer = START_TRICKLE_TIMER;
         scanningState    = ScanningState.SCANNING_OFF;
         EventBus.getDefault().post(new BluetoothScanEnded());
     }
 
+    /*
+     * when discovery is forced we reset the trickle timer and call for a new
+     * scan (unless there is already one going on)
+     */
     public void forceDiscovery() {
         resetTrickleTimer();
-        startDiscovery();
+        if(hasCallback)
+            startDiscovery();
     }
 
     public void destroy() {
@@ -199,7 +233,7 @@ public class BluetoothScanner {
 
     private void resetTrickleTimer() {
         lastTrickleState.clear();
-        trickleTimer = IMIN_TRICKLE_TIMER;
+        trickleTimer = START_TRICKLE_TIMER;
     }
 
     /*
@@ -235,10 +269,14 @@ public class BluetoothScanner {
          */
         lastTrickleState = tmp;
 
-        if(inconsistency < consistency)
-            trickleTimer = (((trickleTimer * 2) > (IMIN_TRICKLE_TIMER*(Math.pow(2,IMAX_TRICKLE_TIMER)))) ? Math.pow(2,IMAX_TRICKLE_TIMER) : (trickleTimer*2));
-        else
-            trickleTimer = IMIN_TRICKLE_TIMER;
+        if(inconsistency < consistency) {
+            if(trickleTimer > EXPONENTIAL_THRESHOLD)
+                trickleTimer = (((trickleTimer * 2) > (START_TRICKLE_TIMER * (Math.pow(2, IMAX_TRICKLE_TIMER)))) ? Math.pow(2, IMAX_TRICKLE_TIMER) : (trickleTimer * 2));
+            else
+                trickleTimer += LINEAR_STEP;
+        } else {
+            trickleTimer = START_TRICKLE_TIMER;
+        }
 
         //todo: should we post a neighborhoodchange event when trickle is reset ?
     }
@@ -301,6 +339,7 @@ public class BluetoothScanner {
                 btNeighborhood.clear();
                 handler.removeCallbacksAndMessages(null);
                 lastscan = true;
+                hasCallback = false;
 
                 EventBus.getDefault().post(new BluetoothScanStarted());
             }
@@ -314,4 +353,39 @@ public class BluetoothScanner {
         }
     };
 
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        long curTime = System.currentTimeMillis();
+        if ((curTime - lastUpdate) > 100) {
+            lastUpdate = curTime;
+
+            gravity[0] = alpha * gravity[0] + (1 - alpha) * event.values[0];
+            gravity[1] = alpha * gravity[1] + (1 - alpha) * event.values[1];
+            gravity[2] = alpha * gravity[2] + (1 - alpha) * event.values[2];
+
+            float x =  event.values[0] - gravity[0];
+            float y = event.values[1] - gravity[1];
+            float z = event.values[2] - gravity[2];
+
+            float speed = Math.abs(x+y+z-linear_acceleration[0]-linear_acceleration[1]-linear_acceleration[2]);
+
+            if(speed > 2) {
+                if(trickleTimer > RESET_TRICKLE_THRESHOLD) {
+                    Log.d(TAG, "[!] phone moved, reset trickle timer");
+                    forceDiscovery();
+                }
+            }
+
+            linear_acceleration[0] = x;
+            linear_acceleration[1] = y;
+            linear_acceleration[2] = z;
+
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
 }
