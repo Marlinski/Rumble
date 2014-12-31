@@ -29,10 +29,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 
 import java.util.List;
 
@@ -44,9 +45,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     private static final String TAG = "NeighborListAdapter";
 
     private final LayoutInflater inflater;
-    private List<Neighbour> neighborhood;
+    private List<LinkLayerNeighbour> neighborhood;
 
-    public NeighborhoodListAdapter(Activity activity, List<Neighbour> neighborhood) {
+    public NeighborhoodListAdapter(Activity activity, List<LinkLayerNeighbour> neighborhood) {
         this.inflater     = LayoutInflater.from(activity);
         this.neighborhood = neighborhood;
     }
@@ -59,23 +60,18 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        Neighbour neighbour = neighborhood.get(i);
-        id.setText(neighbour.getLinkLayerName());
-        try {
-            name.setText(NetworkCoordinator.getInstance().getNeighbourName(neighbour));
+        LinkLayerNeighbour neighbour = neighborhood.get(i);
+        id.setText(neighbour.getLinkLayerAddress());
+        name.setText(neighbour.getLinkLayerName());
 
-            if (NetworkCoordinator.getInstance().isNeighbourInRange(neighbour, BluetoothLinkLayerAdapter.LinkLayerIdentifier))
-                bluetoothIcon.setVisibility(View.VISIBLE);
-            if (NetworkCoordinator.getInstance().isNeighbourConnectedLinkLayer(neighbour, BluetoothLinkLayerAdapter.LinkLayerIdentifier))
-                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
-            else
-                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
+        if(neighbour.getLinkLayerType().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            bluetoothIcon.setVisibility(View.VISIBLE);
+        if(neighbour.getLinkLayerType().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+            bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
+        else
+            bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
 
-        } catch(RecordNotFoundException ignore) {
-            Log.e(TAG, "[!] record not found !");
-        }
-        //todo add WiFi
-
+        //todo display only one neighbour if multiple device
         return neighborView;
     }
 
@@ -98,7 +94,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void onClick(View view) {
     }
 
-    public void updateList(List<Neighbour> newNeighborhood) {
+    public void updateList(List<LinkLayerNeighbour> newNeighborhood) {
         this.neighborhood.clear();
         this.neighborhood = newNeighborhood;
         notifyDataSetChanged();

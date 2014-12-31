@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols.firechat;
 
+import java.util.UUID;
+
 /**
  * @author Marlinski
  */
@@ -26,4 +28,15 @@ public class FirechatProtocol {
 
     public static final String protocolID = "Firechat";
 
+    /*
+     * Firechat Bluetooth Configuration
+     */
+    public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    public static final String FIRECHAT_BT_STR      = "FireChat";
+
+    /*
+     * Firechat Wifi Configuration
+     */
+    public static final String MULTICAST_ADDRESS  = "239.192.0.0";
+    public static final int    MULTICAST_UDP_PORT = 7576;
 }

@@ -139,7 +139,6 @@ public class HomeActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Intent intent = new Intent(this, NetworkCoordinator.class);
     }
 
     @Override

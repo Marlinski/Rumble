@@ -19,8 +19,13 @@
 
 package org.disrupted.rumble.fragments;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -38,7 +43,8 @@ import android.widget.Switch;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.events.BluetoothScanStarted;
@@ -64,6 +70,8 @@ public class FragmentNetworkDrawer extends Fragment {
     private LinearLayout mDrawerFragmentLayout;
     private ListView mDrawerNeighbourList;
     private NeighborhoodListAdapter listAdapter;
+    NetworkCoordinator mNetworkCoordinator;
+    boolean mBound = false;
 
     private boolean registered;
 
@@ -77,23 +85,26 @@ public class FragmentNetworkDrawer extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        Log.d(TAG, "onDestroyView");
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
+        if(mBound)
+            getActivity().unbindService(mConnection);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView");
         mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.network_drawer, container, false);
-        initializeInterfaces();
-        initializeNeighbourview();
-        initializeProgressBar();
+        Intent intent = new Intent(getActivity(), NetworkCoordinator.class);
+        getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         return mDrawerFragmentLayout;
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, " onResume");
+        Log.d(TAG, "onResume");
         if(listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
@@ -101,20 +112,20 @@ public class FragmentNetworkDrawer extends Fragment {
 
     public void initializeInterfaces() {
         Switch bluetoothSwitch = ((Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth));
-        bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+        bluetoothSwitch.setChecked(mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
     }
 
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        List<Neighbour> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
+        List<LinkLayerNeighbour> neighborhood = mNetworkCoordinator.getNeighborList();
         listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         mDrawerNeighbourList.setAdapter(listAdapter);
     }
 
     public void initializeProgressBar() {
-        if(NetworkCoordinator.getInstance().isScanning()){
-            ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
-            ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
+        if (mNetworkCoordinator.isScanning()) {
+            ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
+            ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
         }
     }
 
@@ -150,7 +161,7 @@ public class FragmentNetworkDrawer extends Fragment {
             @Override
             public void run() {
                 Switch bluetoothSwitch = ((Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth));
-                bluetoothSwitch.setChecked(NetworkCoordinator.getInstance().isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+                bluetoothSwitch.setChecked(mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
             }
         });
     }
@@ -158,7 +169,7 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                List<Neighbour> neighborhood = NetworkCoordinator.getInstance().getNeighborList();
+                List<LinkLayerNeighbour> neighborhood = mNetworkCoordinator.getNeighborList();
                 if (mDrawerNeighbourList.getAdapter() != null) {
                     ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
                 }
@@ -168,7 +179,8 @@ public class FragmentNetworkDrawer extends Fragment {
 
 
     public void onForceScanClicked(View view) {
-        NetworkCoordinator.getInstance().forceScan();
+        if(mBound)
+            mNetworkCoordinator.forceScan();
     }
 
 
@@ -195,18 +207,20 @@ public class FragmentNetworkDrawer extends Fragment {
      * in order to put it back to the same state once the application will terminate
      */
     private void onBluetoothEnable() {
+        if(!mBound)
+            return;
         Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning),
+                BluetoothConfigureInteraction.isEnabled(getActivity())).commit();
+
         if(!BluetoothConfigureInteraction.isEnabled(getActivity())) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning), true).commit();
             BluetoothConfigureInteraction.enableBT(getActivity());
             return;
         }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning), false).commit();
 
-        Log.d(TAG, "[+] Sending START BLUETOOTH intent");
-        NetworkCoordinator.getInstance().startBluetooth();
+        mNetworkCoordinator.startBluetooth();
 
         if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
             BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -219,7 +233,9 @@ public class FragmentNetworkDrawer extends Fragment {
      * interface if it was shutdown before starting our app
      */
     private void onBluetoothDisable() {
-        NetworkCoordinator.getInstance().stopBluetooth();
+        if(!mBound)
+            return;
+        mNetworkCoordinator.stopBluetooth();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         if(prefs.getBoolean(getString(R.string.bluetooth_state_on_openning), false)) {
             BluetoothConfigureInteraction.disableBT(getActivity());
@@ -227,11 +243,12 @@ public class FragmentNetworkDrawer extends Fragment {
     }
 
     public void manageBTCode(int requestCode, int resultCode, Intent data) {
+        if(!mBound)
+            return;
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
-            Log.d(TAG, "-- Bluetooth Enabled");
+            Log.d(TAG, "[+] Bluetooth Enabled");
 
-            Log.d(TAG, "[+] Sending START BLUETOOTH intent");
-            NetworkCoordinator.getInstance().startBluetooth();
+            mNetworkCoordinator.startBluetooth();
 
             if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
                 BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -245,7 +262,7 @@ public class FragmentNetworkDrawer extends Fragment {
         }
 
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == getActivity().RESULT_OK)) {
-            Log.d(TAG, "Device Discoverable");
+            Log.d(TAG, "[+] Device Discoverable");
             return;
         }
     }
@@ -266,27 +283,53 @@ public class FragmentNetworkDrawer extends Fragment {
     }
 
     private void onWifiEnable() {
-        Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
-        /*
-        if(!BluetoothConfigureInteraction.isEnabled(getActivity())) {
-            BluetoothConfigureInteraction.enableBT(getActivity());
+        if(!mBound)
             return;
-        }
-        */
-        Log.d(TAG, "[+] Sending START Wifi intent");
-        NetworkCoordinator.getInstance().startWifi();
-        /*
-        if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
-            BluetoothConfigureInteraction.discoverableBT(getActivity());
-            return;
-        }
-        */
+        WifiManager wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(RumbleApplication.getContext());
+        prefs.edit().putBoolean(
+                RumbleApplication.getContext().getString(R.string.wifi_state_on_openning),
+                wifiMan.isWifiEnabled()).commit();
+        if (!wifiMan.isWifiEnabled())
+            wifiMan.setWifiEnabled(true);
+
+        mNetworkCoordinator.startWifi();
     }
 
 
     private void onWifiDisable() {
-        NetworkCoordinator.getInstance().stopWifi();
+        if(!mBound)
+            return;
+        WifiManager wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(RumbleApplication.getContext());
+        if(!prefs.getBoolean(
+                RumbleApplication.getContext().getString(R.string.bluetooth_state_on_openning),
+                false)) {
+            wifiMan.setWifiEnabled(false);
+        }
+
+        mNetworkCoordinator.stopWifi();
     }
+
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            NetworkCoordinator.LocalBinder binder = (NetworkCoordinator.LocalBinder) service;
+            mNetworkCoordinator = binder.getService();
+            mBound = true;
+            initializeInterfaces();
+            initializeNeighbourview();
+            initializeProgressBar();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
 
 }

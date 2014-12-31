@@ -19,7 +19,6 @@
 
 package org.disrupted.rumble.network.linklayer;
 
-import org.disrupted.rumble.network.Neighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.LinkLayerStarted;
 import org.disrupted.rumble.network.events.LinkLayerStopped;
@@ -73,6 +72,6 @@ public abstract class LinkLayerAdapter {
 
     abstract public void forceDiscovery();
 
-    abstract public void connectTo(Neighbour neighbour, boolean force);
+    abstract public void connectTo(LinkLayerNeighbour neighbour, boolean force);
 
 }

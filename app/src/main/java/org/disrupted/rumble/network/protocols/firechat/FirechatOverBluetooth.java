@@ -48,6 +48,7 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
 

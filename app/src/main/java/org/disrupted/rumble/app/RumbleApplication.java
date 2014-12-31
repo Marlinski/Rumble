@@ -21,6 +21,7 @@ package org.disrupted.rumble.app;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.MessageQueue;
@@ -47,7 +48,9 @@ public class RumbleApplication extends Application{
         super.onCreate();
         DatabaseFactory.getInstance(this);
         MessageQueue.getInstance().start();
-        NetworkCoordinator.getInstance();
+        Intent startIntent = new Intent(this, NetworkCoordinator.class);
+        startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
+        startService(startIntent);
     }
 
     public static Context getContext() {

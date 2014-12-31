@@ -28,17 +28,15 @@ import android.util.Log;
 
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.protocols.firechat.FirechatOverBluetooth;
-import org.disrupted.rumble.network.protocols.rumble.RumbleBTConfiguration;
 import org.disrupted.rumble.network.protocols.rumble.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.firechat.FirechatBTConfiguration;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 
 /**
@@ -64,6 +62,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     public void onLinkStart() {
+        Log.d(TAG, "[+] Starting Bluetooth");
         RumbleBTServer btRumbleServer = new RumbleBTServer();
         ThreadPoolCoordinator.getInstance().addNetworkThread(btRumbleServer);
 
@@ -77,6 +76,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     public void onLinkStop() {
+        Log.d(TAG, "[+] Stopping Bluetooth");
         btScanner.destroy();
         ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
         if(register)
@@ -99,15 +99,15 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             btScanner.forceDiscovery();
     }
 
-    public void connectTo(Neighbour neighbour, boolean force) {
+    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
 
         //todo make this portion of code protocol independant (by registering the protocol when button click)
         try {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
-                        RumbleBTConfiguration.RUMBLE_BT_UUID_128,
-                        RumbleBTConfiguration.RUMBLE_BT_STR,
+                        RumbleProtocol.RUMBLE_BT_UUID_128,
+                        RumbleProtocol.RUMBLE_BT_STR,
                         false);
                 RumbleOverBluetooth rumble = new RumbleOverBluetooth(con);
                 ThreadPoolCoordinator.getInstance().addNetworkThread(rumble);
@@ -122,8 +122,8 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, FirechatProtocol.protocolID)) {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
-                        FirechatBTConfiguration.FIRECHAT_BT_UUID_128,
-                        FirechatBTConfiguration.FIRECHAT_BT_STR,
+                        FirechatProtocol.FIRECHAT_BT_UUID_128,
+                        FirechatProtocol.FIRECHAT_BT_STR,
                         false);
                 FirechatOverBluetooth firechat = new FirechatOverBluetooth(con);
                 ThreadPoolCoordinator.getInstance().addNetworkThread(firechat);

@@ -25,6 +25,7 @@ import org.disrupted.rumble.message.MessageQueue;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
@@ -53,14 +54,14 @@ public class NeighbourManager {
 
     //TODO replace name and id by ContactInfo
     private String name;
-    private Map<Neighbour, Boolean>        linkLayerPresences;
+    private Map<LinkLayerNeighbour, Boolean>        linkLayerPresences;
     private Map<String, HashSet<Protocol>> protocolIdentifierToLinkSpecificProtocolInstance;
     private Map<String, MessageProcessor>  protocolIdentifierToMessageProcessor;
 
-    public NeighbourManager(Neighbour neighbour){
+    public NeighbourManager(LinkLayerNeighbour neighbour){
         this.name = "undefinied";
 
-        linkLayerPresences = new HashMap<Neighbour, Boolean>();
+        linkLayerPresences = new HashMap<LinkLayerNeighbour, Boolean>();
         linkLayerPresences.put(neighbour, new Boolean(true));
 
         protocolIdentifierToLinkSpecificProtocolInstance = new HashMap<String, HashSet<Protocol>>();
@@ -74,9 +75,9 @@ public class NeighbourManager {
     /*
      * getPresences return the list of Neighbour
      */
-    public List<Neighbour> getPresences() {
-        List<Neighbour> list = new LinkedList<Neighbour>();
-        for(Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+    public List<LinkLayerNeighbour> getPresences() {
+        List<LinkLayerNeighbour> list = new LinkedList<LinkLayerNeighbour>();
+        for(Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             list.add(entry.getKey());
         }
         return list;
@@ -87,8 +88,8 @@ public class NeighbourManager {
      * it returns true if the neighbour has been added or updated
      * false if the neighbour presence was already known
      */
-    public boolean addPresence(Neighbour presence) {
-        for(Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+    public boolean addPresence(LinkLayerNeighbour presence) {
+        for(Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if(entry.getKey().getLinkLayerAddress().equals(presence.getLinkLayerAddress())) {
                 if(entry.getValue().booleanValue())
                     return false;
@@ -108,7 +109,7 @@ public class NeighbourManager {
      * throws UnknownNeighbourException else
      */
     public boolean delPresence(String mac) throws UnknownNeighbourException{
-        for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+        for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if (entry.getKey().getLinkLayerAddress().equals(mac)) {
                 if (!entry.getValue().booleanValue()) {
                     Log.e(TAG, "[!] presence was already false");
@@ -134,7 +135,7 @@ public class NeighbourManager {
      * We also remove the related protocols entry (they should have or will stop by themselves)
      */
     public void delDeviceType(String linkLayerIdentifier) {
-        for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+        for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if(entry.getKey().getLinkLayerType().equals(linkLayerIdentifier))
                 entry.setValue(new Boolean(false));
         }
@@ -157,7 +158,7 @@ public class NeighbourManager {
      * it returns false otherwise
      */
     public boolean isInRange() {
-        for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+        for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if(entry.getValue())
                 return true;
         }
@@ -169,7 +170,7 @@ public class NeighbourManager {
      * it returns false otherwise
      */
     public boolean isInRange(String linkLayerIdentifier) throws UnknownNeighbourException{
-        for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+        for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if(entry.getKey().getLinkLayerType().equals(linkLayerIdentifier))
                 return entry.getValue().booleanValue();
         }
@@ -221,7 +222,7 @@ public class NeighbourManager {
      * it returns false otherwise
      */
     public boolean is(String macAddress) {
-        for (Map.Entry<Neighbour, Boolean> entry : linkLayerPresences.entrySet()) {
+        for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
             if(entry.getKey().getLinkLayerAddress().equals(macAddress))
                 return true;
         }

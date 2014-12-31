@@ -17,23 +17,21 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network;
+package org.disrupted.rumble.network.linklayer;
 
 
 /**
  * @author Marlinski
  */
-public abstract class Neighbour {
+public abstract class LinkLayerNeighbour {
 
     private String linkLayerAddress;
-
 
     abstract public String getLinkLayerName();
 
     abstract public String getLinkLayerType();
 
-
-    public Neighbour(String linkLayerAddress) {
+    public LinkLayerNeighbour(String linkLayerAddress) {
         this.linkLayerAddress = linkLayerAddress;
     }
 
@@ -53,12 +51,12 @@ public abstract class Neighbour {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Neighbour))
+        if (!(obj instanceof LinkLayerNeighbour))
             return false;
         if (obj == this)
             return true;
 
-        Neighbour device = (Neighbour) obj;
+        LinkLayerNeighbour device = (LinkLayerNeighbour) obj;
         return device.getLinkLayerAddress().equals(this.linkLayerAddress);
     }
 

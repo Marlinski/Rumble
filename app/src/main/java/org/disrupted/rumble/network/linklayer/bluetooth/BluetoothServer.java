@@ -25,7 +25,7 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
@@ -94,7 +94,7 @@ public abstract class BluetoothServer implements NetworkThread {
                 if (mmConnectedSocket != null) {
                     Log.d(TAG, "[+] Client connected");
 
-                    Neighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
+                    LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
                     NetworkCoordinator.getInstance().newNeighbour(neighbour);
 
                     NetworkThread clientThread = onClientConnected(mmConnectedSocket);

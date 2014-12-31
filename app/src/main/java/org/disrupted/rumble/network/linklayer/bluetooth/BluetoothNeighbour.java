@@ -23,12 +23,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
  * @author Marlinski
  */
-public class BluetoothNeighbour extends Neighbour {
+public class BluetoothNeighbour extends LinkLayerNeighbour {
 
     private String bluetoothDeviceName;
 

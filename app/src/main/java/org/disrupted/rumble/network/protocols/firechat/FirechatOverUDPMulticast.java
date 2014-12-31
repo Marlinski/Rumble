@@ -33,7 +33,6 @@ import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
 
 /**
  * @author Marlinski
@@ -51,7 +50,7 @@ public class FirechatOverUDPMulticast extends GenericProtocol implements Network
     private static final FirechatMessageParser parser = new FirechatMessageParser();
 
     public FirechatOverUDPMulticast() {
-        this.con = new UDPMulticastConnection(7576, "239.192.0.0", false, null, null);
+        this.con = new UDPMulticastConnection(FirechatProtocol.MULTICAST_UDP_PORT, FirechatProtocol.MULTICAST_ADDRESS, false, null, null);
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         isBeingKilled = false;

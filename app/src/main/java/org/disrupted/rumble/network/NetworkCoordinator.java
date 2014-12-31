@@ -20,13 +20,23 @@
 package org.disrupted.rumble.network;
 
 
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Intent;
+import android.os.Binder;
+import android.os.IBinder;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import org.disrupted.rumble.R;
+import org.disrupted.rumble.RoutingActivity;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.events.NeighbourProtocolStart;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
@@ -50,7 +60,13 @@ import de.greenrobot.event.EventBus;
  *
  * @author Marlinski
  */
-public class NetworkCoordinator {
+public class NetworkCoordinator extends Service {
+
+    public static final String ACTION_START_FOREGROUND = "org.disruptedsystems.rumble.action.startforeground";
+    public static final String ACTION_START_NETWORKING = "org.disruptedsystems.rumble.action.startnetworking";
+    public static final String ACTION_STOP_NETWORKING  = "org.disruptedsystems.rumble.action.stopnetworking";
+    public static final String ACTION_MAIN_ACTION      = "org.disruptedsystems.rumble.action.mainaction";
+    public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
     private static final String TAG = "NetworkCoordinator";
 
@@ -60,16 +76,24 @@ public class NetworkCoordinator {
     private HashSet<NeighbourManager> neighborhoodHistory;
     private Map<String, LinkLayerAdapter> adapters;
 
-    public static NetworkCoordinator getInstance() {
-        synchronized (lock) {
-            if (instance == null)
-                instance = new NetworkCoordinator();
-
-            return instance;
+    private final IBinder mBinder = new LocalBinder();
+    public class LocalBinder extends Binder {
+        public NetworkCoordinator getService() {
+            return NetworkCoordinator.this;
         }
     }
 
-    private NetworkCoordinator() {
+    // little hack to avoid binding to NetworkCoordinator which seems too bulky for certain usage
+    // this must only be called by the networking thread and classes it is safe because
+    // if NetworkCoordinator is destroy, so are all the related networking thread and classes
+    // todo: hmm maybe think of a better design ?
+    public static NetworkCoordinator getInstance() {
+        return instance;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
         Log.d(TAG, "[+] Starting NetworkCoordinator");
         neighborhoodHistory = new HashSet<NeighbourManager>();
         adapters = new HashMap<String, LinkLayerAdapter>();
@@ -77,9 +101,17 @@ public class NetworkCoordinator {
         LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
         adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
         adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
+        instance = this;
     }
 
-    public void clean() {
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         Log.d(TAG, "[-] Destroy NetworkCoordinator");
         synchronized (lock) {
             neighborhoodHistory.clear();
@@ -87,8 +119,46 @@ public class NetworkCoordinator {
                 entry.getValue().linkStop();
             }
             adapters.clear();
-            instance = null;
         }
+        instance = null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
+            Log.d(TAG, "Received Start Foreground Intent ");
+
+            Intent notificationIntent = new Intent(this, RoutingActivity.class);
+            notificationIntent.setAction(ACTION_MAIN_ACTION);
+            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                    notificationIntent, 0);
+
+            /*
+            Intent startNetwork = new Intent(this, NetworkCoordinator.class);
+            startNetwork.setAction(ACTION_START_NETWORKING);
+            PendingIntent pstartNetwork = PendingIntent.getService(this, 0, startNetwork, 0);
+            */
+
+            Notification notification = new NotificationCompat.Builder(this)
+                    .setContentTitle("Rumble")
+                    .setTicker("Rumble started")
+                    .setContentText("Rumble started")
+                    .setSmallIcon(R.drawable.ic_launcher)
+                    .setContentIntent(pendingIntent)
+                    .setOngoing(true).build();
+                    //.addAction(android.R.drawable.ic_media_play,
+                    //        "Start", pstartNetwork).build();
+
+            startForeground(FOREGROUND_SERVICE_ID, notification);
+
+        } else if (intent.getAction().equals(ACTION_START_NETWORKING)) {
+            Log.i(TAG, "Clicked Start");
+        } else if (intent.getAction().equals(ACTION_STOP_NETWORKING)) {
+            Log.i(TAG, "Clicked Stop");
+        }
+
+        return START_STICKY;
     }
 
     public void    startBluetooth() {
@@ -128,6 +198,7 @@ public class NetworkCoordinator {
         }
     }
 
+
     /*
      * getNeighbourRecordFromDeviceAddress returns the local record from a specific Neighbour
      * macAddress. It is a private utility function for NetworkCoordinator
@@ -149,14 +220,14 @@ public class NetworkCoordinator {
      * getNeighborList returns the list of neighbour for every activated interface
      * and every activated protocol.
      */
-    public List<Neighbour>  getNeighborList() {
-        List<Neighbour> neighborhoodList = new LinkedList<Neighbour>();
+    public List<LinkLayerNeighbour>  getNeighborList() {
+        List<LinkLayerNeighbour> neighborhoodList = new LinkedList<LinkLayerNeighbour>();
         synchronized (lock) {
             Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
             while (it.hasNext()) {
                 NeighbourManager record = it.next();
                 if (record.isInRange()) {
-                    List<Neighbour> list = record.getPresences();
+                    List<LinkLayerNeighbour> list = record.getPresences();
                     if(list != null)
                         neighborhoodList.addAll(list);
                 }
@@ -169,7 +240,7 @@ public class NetworkCoordinator {
      * isNeighbourConnected returns true if we are connected to the neighbour with any protocol
      * it throws the RecordNotFoundException if the record has not been found
      */
-    public boolean isNeighbourConnectedLinkLayer(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
+    public boolean isNeighbourConnectedLinkLayer(LinkLayerNeighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
@@ -181,7 +252,7 @@ public class NetworkCoordinator {
      * using the protocolID
      * it throws the RecordNotFoundException if the record has not been found
      */
-    public boolean isNeighbourConnectedWithProtocol(Neighbour neighbour, String protocolID) throws RecordNotFoundException{
+    public boolean isNeighbourConnectedWithProtocol(LinkLayerNeighbour neighbour, String protocolID) throws RecordNotFoundException{
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
@@ -192,7 +263,7 @@ public class NetworkCoordinator {
      * isNeighbourInRange return true if the neighbour is in range false otherwise
      * it throws the RecordNotFoundException if the record has not been found
      */
-    public boolean isNeighbourInRange(Neighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException {
+    public boolean isNeighbourInRange(LinkLayerNeighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
@@ -206,7 +277,7 @@ public class NetworkCoordinator {
      * getNeighbourName returns the name of the neighbour.
      * note: it may be undefinied if no message has been exchanged
      */
-    public String getNeighbourName(Neighbour neighbour) throws RecordNotFoundException{
+    public String getNeighbourName(LinkLayerNeighbour neighbour) throws RecordNotFoundException{
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
         if(record == null)
             throw new RecordNotFoundException();
@@ -257,7 +328,7 @@ public class NetworkCoordinator {
      * If the neighbour is discovered for the first time, a NeighbourRecord is created
      * Anyway, it will try to connect to it with every protocol available (see connector).
      */
-    public void newNeighbour(Neighbour newNeighbour) {
+    public void newNeighbour(LinkLayerNeighbour newNeighbour) {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(newNeighbour.getLinkLayerAddress());
         synchronized (lock) {
             if (record == null) {
