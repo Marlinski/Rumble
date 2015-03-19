@@ -21,9 +21,16 @@ package org.disrupted.rumble.network.linklayer.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +39,7 @@ import java.io.OutputStream;
 /**
  * BluetoothConnection is a generic implementation of a Bluetooth Connection wether it is to manage
  * a client or to connect to a server. It is abstract as the connection part is specific and should
- * implements connect() and disconnect() as requested per LinkLayerConnection interface.
+ * implements connect()  as requested per LinkLayerConnection interface.
  *
  * @author Marlinski
  */
@@ -46,6 +53,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     protected BluetoothSocket mmConnectedSocket;
     protected InputStream inputStream;
     protected OutputStream outputStream;
+    protected boolean registered;
 
     public BluetoothConnection(String remoteMacAddress) {
         this.remoteMacAddress = remoteMacAddress;
@@ -53,6 +61,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         this.secureSocket = false;
         this.inputStream = null;
         this.outputStream = null;
+        this.registered = false;
     }
 
     @Override
@@ -77,4 +86,36 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     public String getRemoteMacAddress() {
         return remoteMacAddress;
     }
+
+
+    @Override
+    public void disconnect() throws LinkLayerConnectionException {
+        try {
+            mmConnectedSocket.close();
+        } catch (IOException e) {
+            throw new SocketAlreadyClosedException();
+        } finally {
+            if(registered)
+                RumbleApplication.getContext().unregisterReceiver(mReceiver);
+            registered = false;
+        }
+    }
+
+    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+
+            if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                if(device.getAddress().equals(mmBluetoothDevice.getAddress())) {
+                    try {
+                        Log.d(TAG, "[+] ACTION_ACL_DISCONNECTED");
+                        disconnect();
+                    } catch(LinkLayerConnectionException ignore) {
+                    }
+                }
+            }
+        }
+    };
 }

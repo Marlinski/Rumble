@@ -19,6 +19,11 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -58,6 +63,7 @@ public class BluetoothClientConnection extends BluetoothConnection {
         this.bt_service_uuid = uuid;
         this.bt_service_name = name;
         this.secureSocket = secure;
+        this.registered = false;
     }
 
     @Override
@@ -79,7 +85,6 @@ public class BluetoothClientConnection extends BluetoothConnection {
                     throw new InterruptedLinkLayerConnection();
                 }
                 EventBus.getDefault().unregister(this);
-
         }
 
         try {
@@ -104,16 +109,12 @@ public class BluetoothClientConnection extends BluetoothConnection {
             throw new InputOutputStreamException();
         }
 
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+        registered = true;
+
     }
 
-    @Override
-    public void disconnect() throws LinkLayerConnectionException {
-        try {
-            mmConnectedSocket.close();
-        } catch (IOException e) {
-            throw new SocketAlreadyClosedException();
-        }
-    }
 
     /*
          * todo: it is possible that if the user stops everything it may keep a locking state
@@ -123,5 +124,6 @@ public class BluetoothClientConnection extends BluetoothConnection {
     public void onEvent(BluetoothScanEnded scanEnded) {
         latch.countDown();
     }
+
 
 }

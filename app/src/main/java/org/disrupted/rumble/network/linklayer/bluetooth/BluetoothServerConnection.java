@@ -19,9 +19,16 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -68,14 +75,10 @@ public class BluetoothServerConnection extends BluetoothConnection {
         } catch (IOException e) {
             throw new InputOutputStreamException();
         }
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+        registered = true;
     }
 
-    @Override
-    public void disconnect() throws LinkLayerConnectionException {
-        try {
-            this.mmConnectedSocket.close();
-        } catch(IOException e) {
-            throw new SocketAlreadyClosedException();
-        }
-    }
 }
