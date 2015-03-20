@@ -20,18 +20,12 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
-import android.util.Log;
-
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PushbackInputStream;
 import java.util.Random;
 
 /**

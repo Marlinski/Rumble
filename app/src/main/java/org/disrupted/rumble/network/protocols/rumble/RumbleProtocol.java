@@ -19,11 +19,31 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
+import java.util.UUID;
+
 /**
  * @author Marlinski
  */
 public class RumbleProtocol {
 
     public static final String protocolID = "Rumble";
+
+
+    /*
+     * Bluetooth Configuration
+     */
+    public static final UUID RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
+    public static final String RUMBLE_BT_STR        = "org.disrupted.rumble";
+
+
+    /*
+     * Wifi Configuration
+     */
+    public static final String NSD_SERVICE_NAME = "Rumble";
+    public static final String NSD_SERVICE_TYPE = "_rumble._udp.";
+    public static final String MULTICAST_ADDRESS = "239.192.0.0";
+    public static final int    MULTICAST_PORT = 9715;
+    public static final int    SERVER_PORT = 9716;
+
 
 }

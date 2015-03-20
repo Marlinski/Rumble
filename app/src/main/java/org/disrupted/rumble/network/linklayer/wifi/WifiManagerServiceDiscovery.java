@@ -27,9 +27,8 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.wifi.events.NewServiceDetected;
-import org.disrupted.rumble.network.protocols.rumble.RumbleWifiConfiguration;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
-import java.net.InetAddress;
 
 import de.greenrobot.event.EventBus;
 
@@ -55,7 +54,7 @@ public class WifiManagerServiceDiscovery {
 
         if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
             mNsdManager.discoverServices(
-                    RumbleWifiConfiguration.NSD_SERVICE_TYPE,
+                    RumbleProtocol.NSD_SERVICE_TYPE,
                     NsdManager.PROTOCOL_DNS_SD,
                     mDiscoveryListener);
         }
@@ -81,11 +80,11 @@ public class WifiManagerServiceDiscovery {
                 @Override
                 public void onServiceFound(NsdServiceInfo service) {
                     if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-                        if (!service.getServiceType().equals(RumbleWifiConfiguration.NSD_SERVICE_TYPE)) {
+                        if (!service.getServiceType().equals(RumbleProtocol.NSD_SERVICE_TYPE)) {
                             Log.d(TAG, "[-] unknown Service Type: " + service.getServiceType());
-                        } else if (service.getServiceName().equals(RumbleWifiConfiguration.NSD_SERVICE_NAME)) {
+                        } else if (service.getServiceName().equals(RumbleProtocol.NSD_SERVICE_NAME)) {
                             Log.d(TAG, "[-] Same machine: ");
-                        } else if (service.getServiceName().contains(RumbleWifiConfiguration.NSD_SERVICE_NAME)) {
+                        } else if (service.getServiceName().contains(RumbleProtocol.NSD_SERVICE_NAME)) {
                             Log.d(TAG, "[+] found rumble neighbour: ");
                             mNsdManager.resolveService(service, mResolveListener);
                         }

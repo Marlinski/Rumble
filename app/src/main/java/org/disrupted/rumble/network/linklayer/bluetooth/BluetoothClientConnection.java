@@ -20,11 +20,7 @@
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
@@ -34,7 +30,6 @@ import org.disrupted.rumble.network.linklayer.exception.InterruptedLinkLayerConn
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NoRemoteBluetoothDevice;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
-import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 
 import java.io.IOException;
 import java.util.UUID;

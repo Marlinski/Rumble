@@ -19,14 +19,14 @@
 
 package org.disrupted.rumble.network.linklayer.wifi;
 
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 import java.net.InetAddress;
 
 /**
  * @author Marlinski
  */
-public class UDPMulticastNeighbour extends Neighbour {
+public class UDPMulticastNeighbour extends LinkLayerNeighbour {
 
     int port;
     InetAddress address;

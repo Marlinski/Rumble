@@ -27,6 +27,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
+ * The GenericProtocol implements a generic protocol where one thread take care
+ * of receiving and processing packet from the network while another one take
+ * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
 public abstract class GenericProtocol implements Protocol {
@@ -58,7 +61,7 @@ public abstract class GenericProtocol implements Protocol {
         @Override
         public synchronized void run() {
             try {
-                Log.d(TAG, "[+] started command thread: "+getProtocolID());
+                //Log.d(TAG, "[+] started command thread: "+getProtocolID());
                 while (true) {
                     Command command = commandQueue.take();
                     if(!isCommandSupported(command.getCommandName()))
@@ -68,7 +71,7 @@ public abstract class GenericProtocol implements Protocol {
                 }
             }
             catch(InterruptedException e) {
-                Log.d(TAG, "[-] stopped command thread: "+getProtocolID());
+                //Log.d(TAG, "[-] stopped command thread: "+getProtocolID());
                 commandQueue.clear();
             }
         }

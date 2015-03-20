@@ -48,7 +48,6 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
 
@@ -69,6 +68,7 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
         this.con = con;
         this.isBeingKilled = false;
     }
+
     @Override
     public String getNetworkThreadID() {
         return getProtocolID()+" "+con.getConnectionID();
@@ -88,7 +88,7 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
 
 
     @Override
-    public void run() {
+    public void runNetworkThread() {
 
         try {
             con.connect();
@@ -104,7 +104,7 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
 
             /*
              * this one automatically creates two thread, one for processing the command
-             * and one for processing the network
+             * and one for processing the messages from the network
              */
             onGenericProcotolConnected();
 
@@ -119,7 +119,7 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
             }
 
             if (!isBeingKilled)
-                kill();
+                killNetworkThread();
         }
     }
 
@@ -128,12 +128,12 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
      * however, if a file is attached to the message (like a picture), the message is
      * followed by a binary stream representing the file.
      *
-     *    I cannot use InputStream to read byte by byte with InputStream.read() trying to detect
-     * the CRLF cause it would be way too long
+     *    We cannot use InputStream to read byte by byte with InputStream.read() trying to detect
+     * the CRLF cause it would be way too inefficient
      *
-     *    On the other hand, I cannot use a BufferedInputStream either because it is char only
+     *    On the other hand, We cannot use a BufferedInputStream either because it is char only
      * and it will be unable to read the following binary stream. plus, it will also mess with
-     * the original InputStream as it reads ahead
+     * the original InputStream as BufferedInputStream reads ahead (more than necessary)
      *
      *    Solution is thus to use a PushedBackInputStream that will read a whole buffer (1024)
      * and then it will search into it for a CRLF and pushback (unread) whatever follows for
@@ -293,12 +293,12 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
     }
 
     @Override
-    public void stop() {
-        kill();
+    public void stopProtocol() {
+        killNetworkThread();
     }
 
     @Override
-    public void kill() {
+    public void killNetworkThread() {
         this.isBeingKilled = true;
         try {
             con.disconnect();

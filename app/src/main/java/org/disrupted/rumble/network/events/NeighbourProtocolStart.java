@@ -19,8 +19,6 @@
 
 package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.network.Neighbour;
-
 /**
  * @author Marlinski
  */

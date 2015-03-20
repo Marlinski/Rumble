@@ -23,24 +23,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.preference.PreferenceManager;
-import android.support.v4.net.ConnectivityManagerCompat;
 import android.util.Log;
 
-import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.Neighbour;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.firechat.FirechatOverUDPMulticast;
-
-import de.greenrobot.event.EventBus;
 
 
 /**
@@ -121,7 +115,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public void connectTo(Neighbour neighbour, boolean force) {
+    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
     }
 
 
@@ -142,6 +136,5 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
             }
         }
     };
-
 
 }

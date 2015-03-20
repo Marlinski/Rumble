@@ -22,14 +22,6 @@ package org.disrupted.rumble.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import org.disrupted.rumble.contact.Contact;
-import org.disrupted.rumble.database.events.NewContactEvent;
-import org.disrupted.rumble.database.events.NewHashtagEvent;
-import org.disrupted.rumble.database.events.NewStatusEvent;
-import org.disrupted.rumble.message.StatusMessage;
-
-import de.greenrobot.event.EventBus;
-
 /**
  * @author Marlinski
  */

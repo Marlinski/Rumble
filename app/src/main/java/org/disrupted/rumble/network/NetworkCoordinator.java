@@ -50,10 +50,11 @@ import java.util.List;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
+import de.greenrobot.event.NoSubscriberEvent;
 
 /**
  * NetworkCoordinator coordinate every network related events. It maintain an up-to-date
- * view of the neighbour history (past and present). It works closely with the NeighbourManager
+ * view of the neighbourhood history (past and present). It works closely with the NeighbourManager
  * which is responsible of a specific neighbour.
  *
  * This class is running in its own thread from boot-time of the application.
@@ -84,7 +85,7 @@ public class NetworkCoordinator extends Service {
     }
 
     // little hack to avoid binding to NetworkCoordinator which seems too bulky for certain usage
-    // this must only be called by the networking thread and classes it is safe because
+    // this MUST only be called by the networking thread and classes it is safe because
     // if NetworkCoordinator is destroy, so are all the related networking thread and classes
     // todo: hmm maybe think of a better design ?
     public static NetworkCoordinator getInstance() {
@@ -101,6 +102,7 @@ public class NetworkCoordinator extends Service {
         LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
         adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
         adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
+        EventBus.getDefault().register(this);
         instance = this;
     }
 
@@ -121,10 +123,15 @@ public class NetworkCoordinator extends Service {
             adapters.clear();
         }
         instance = null;
+        if(EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent == null)
+            return START_STICKY;
+
         if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
             Log.d(TAG, "Received Start Foreground Intent ");
 
@@ -134,28 +141,16 @@ public class NetworkCoordinator extends Service {
             PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                     notificationIntent, 0);
 
-            /*
-            Intent startNetwork = new Intent(this, NetworkCoordinator.class);
-            startNetwork.setAction(ACTION_START_NETWORKING);
-            PendingIntent pstartNetwork = PendingIntent.getService(this, 0, startNetwork, 0);
-            */
-
             Notification notification = new NotificationCompat.Builder(this)
                     .setContentTitle("Rumble")
                     .setTicker("Rumble started")
                     .setContentText("Rumble started")
-                    .setSmallIcon(R.drawable.ic_launcher)
+                    .setSmallIcon(R.drawable.small_icon)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true).build();
-                    //.addAction(android.R.drawable.ic_media_play,
-                    //        "Start", pstartNetwork).build();
 
             startForeground(FOREGROUND_SERVICE_ID, notification);
 
-        } else if (intent.getAction().equals(ACTION_START_NETWORKING)) {
-            Log.i(TAG, "Clicked Start");
-        } else if (intent.getAction().equals(ACTION_STOP_NETWORKING)) {
-            Log.i(TAG, "Clicked Stop");
         }
 
         return START_STICKY;
@@ -237,7 +232,7 @@ public class NetworkCoordinator extends Service {
     }
 
     /*
-     * isNeighbourConnected returns true if we are connected to the neighbour with any protocol
+     * isNeighbourConnectedLinkLayer returns true if we are connected to the neighbour with any protocol
      * it throws the RecordNotFoundException if the record has not been found
      */
     public boolean isNeighbourConnectedLinkLayer(LinkLayerNeighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
@@ -285,8 +280,7 @@ public class NetworkCoordinator extends Service {
     }
 
     /*
-     * addProtocol adds a protocol instance to a NeighbourRecord from a macAddress of one of
-     * its presence.
+     * addProtocol adds a protocol instance to a NeighbourRecord (using macAddress as key)
      * it returns true if the record has been found and protocol has been added
      * it returns false if the record has been found but the protocol has not been added
      * it throws an exception if the record has not been found
@@ -389,5 +383,14 @@ public class NetworkCoordinator extends Service {
             }
             EventBus.getDefault().post(new NeighborhoodChanged());
         }
+    }
+
+
+    /*
+     * Just to avoid warning in logcat
+     */
+    public void onEvent(NeighbourProtocolStart event) {
+    }
+    public void onEvent(NoSubscriberEvent event) {
     }
 }

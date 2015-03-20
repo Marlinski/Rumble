@@ -42,7 +42,6 @@ import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 
 import java.util.HashSet;
 import java.lang.Math;
-import java.util.Iterator;
 
 import de.greenrobot.event.EventBus;
 
@@ -68,13 +67,13 @@ public class BluetoothScanner implements SensorEventListener {
      * to take extra care not to conflict with our discovery procedures.
      * waitingForDiscovery is used to trigger unsollicited DISCOVERY and in that case
      * will also listen for the result of this procedure.
-     * todo: they might be race condition issues whenever a DISCOVERY starts at the same
+     * todo: they might be race condition issues whenever a DISCOVERY starts at the same time
      */
     private boolean hasCallback = false;
 
     /*
      * Scanning consumes a lot of  resources, especially  battery.
-     * in order  to save battery, period  between two  successive
+     * in order  to save battery, the period  between two  successive
      * scan follow the trickle algorithm defined in the RFC 6206:
      *
      *         http://tools.ietf.org/html/rfc6206
@@ -95,9 +94,8 @@ public class BluetoothScanner implements SensorEventListener {
     private HashSet<BluetoothNeighbour>  lastTrickleState;
     private Handler             handler;
 
-
     /*
-     * reset the trickle timer when phone is moving only if the timer is already short enough
+     * reset the trickle timer when phone is moving only if the timer is already long enough
      */
     private static final double RESET_TRICKLE_THRESHOLD = 30000;
     private SensorManager       mSensorManager;
@@ -265,7 +263,7 @@ public class BluetoothScanner implements SensorEventListener {
         lastTrickleState.clear();
 
         /*
-         * we save the state for the next trickle recomputation
+         * then we save the state for the next trickle recomputation
          */
         lastTrickleState = tmp;
 
@@ -325,8 +323,8 @@ public class BluetoothScanner implements SensorEventListener {
 
             /*
              * It is possible that another application (like firechat) is also sending
-             * discovery intent to bluetooth. In that case we silently use this as an
-             *
+             * discovery intent to bluetooth. In that case we silently use the response
+             * of these one
              */
             if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
                 if(hasCallback) {

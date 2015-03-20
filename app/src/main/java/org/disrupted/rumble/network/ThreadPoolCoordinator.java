@@ -210,10 +210,10 @@ public class ThreadPoolCoordinator {
                     element = networkThreadsQueue.take();
 
                     if(element == null) continue;
-                    Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
+                    //Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
                     this.networkThread = element.getNetworkThread();
                     isRunning = true;
-                    networkThread.run();
+                    networkThread.runNetworkThread();
                 } catch (InterruptedException e) {
                     Log.d(TAG, this.getName()+" interrupted ", e);
                 }
@@ -226,12 +226,7 @@ public class ThreadPoolCoordinator {
 
         public void killNetworkThread() {
             if(isRunning)
-                networkThread.kill();
-        }
-
-        public void killThread() {
-            killNetworkThread();
-            Thread.currentThread().interrupt();
+                networkThread.killNetworkThread();
         }
     }
 }

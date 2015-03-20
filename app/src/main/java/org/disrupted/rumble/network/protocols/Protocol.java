@@ -21,8 +21,6 @@ package org.disrupted.rumble.network.protocols;
 
 import org.disrupted.rumble.network.protocols.command.Command;
 
-import java.io.IOException;
-
 /**
  * @author Marlinski
  */
@@ -36,6 +34,6 @@ public interface Protocol {
 
     public boolean executeCommand(Command command) throws InterruptedException;
 
-    public void stop();
+    public void stopProtocol();
 
 }

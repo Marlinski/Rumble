@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The NeighbourRecord is a representation of a neighbour on a logical level. We may be connected
+ * The NeighbourManager is a representation of a neighbour on a logical level. We may be connected
  * to a neighbour with multiple interface at the same time, for instance Bluetooth and Wifi. As
  * both neighbour's interfaces have a different mac address, it is however the same mobile device.
  * As soon as we match both interfaces as being one entity (if possible), the two NeighbourDevice
@@ -48,15 +48,15 @@ import java.util.Map;
  */
 public class NeighbourManager {
 
-    private static final String TAG = "NeighbourRecord";
+    private static final String TAG = "NeighbourManager";
 
     private static final Object lock = new Object();
 
     //TODO replace name and id by ContactInfo
     private String name;
-    private Map<LinkLayerNeighbour, Boolean>        linkLayerPresences;
-    private Map<String, HashSet<Protocol>> protocolIdentifierToLinkSpecificProtocolInstance;
-    private Map<String, MessageProcessor>  protocolIdentifierToMessageProcessor;
+    private Map<LinkLayerNeighbour, Boolean>  linkLayerPresences;
+    private Map<String, HashSet<Protocol>>    protocolIdentifierToLinkSpecificProtocolInstance;
+    private Map<String, MessageProcessor>     protocolIdentifierToMessageProcessor;
 
     public NeighbourManager(LinkLayerNeighbour neighbour){
         this.name = "undefinied";
@@ -101,12 +101,13 @@ public class NeighbourManager {
         linkLayerPresences.put(presence, new Boolean(true));
         return true;
     }
+
     /*
      * delPresence removes a neighbour's presence from the local presence list unless
      * we are being connected to it.
      * returns true if the neighbour's presence was successfully removed
      * returns false if the neighbour's presence was not removed (because we are connected)
-     * throws UnknownNeighbourException else
+     * throws UnknownNeighbourException otherwise
      */
     public boolean delPresence(String mac) throws UnknownNeighbourException{
         for (Map.Entry<LinkLayerNeighbour, Boolean> entry : linkLayerPresences.entrySet()) {
@@ -164,7 +165,6 @@ public class NeighbourManager {
         }
         return false;
     }
-
     /*
      * isInRange returns true if this neighbour is within range of a specific interface
      * it returns false otherwise
@@ -232,9 +232,9 @@ public class NeighbourManager {
     /*
      * addProtocol adds a link layer specific instance of a protocol to the local protocol instance
      * list unless such an instance already exists. If this is the first instance of this protocol,
-     * we also starts the MessageProcessor.
+     * we also start the MessageProcessor.
      *
-     * Warning: the protocol must be ready to accept executeCommand() !
+     * Warning: the protocol instance must be ready to accept executeCommand() !
      *
      * return true if the protocol has been successfully added
      * return false otherwise
@@ -325,19 +325,18 @@ public class NeighbourManager {
         @Override
         public synchronized void run() {
             try {
-                Log.d(TAG, "[+] Starting ("+protocolID+")");
+                //Log.d(TAG, "[+] Starting ("+protocolID+")");
                 while(true) {
                     StatusMessage message = queue.take();
                     Command command = new SendStatusMessageCommand(message);
                     Protocol protocol = getBestProtocol(protocolID);
                     if(protocol == null)
                         break;
-                    Log.d(TAG, "[+] new command ("+protocolID+")");
                     protocol.executeCommand(command);
                 }
             }
             catch(InterruptedException e) {
-                Log.d(TAG, "[+] Stopping ("+protocolID+")");
+                //Log.d(TAG, "[+] Stopping ("+protocolID+")");
                 queue.clear();
             }
         }

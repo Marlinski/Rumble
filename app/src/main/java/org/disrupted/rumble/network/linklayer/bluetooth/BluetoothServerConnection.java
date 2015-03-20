@@ -19,23 +19,15 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
-import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
 import android.content.IntentFilter;
-import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NoRemoteBluetoothDevice;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
-import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 
 import java.io.IOException;
 

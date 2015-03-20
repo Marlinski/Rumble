@@ -20,7 +20,6 @@
 package org.disrupted.rumble.util;
 
 import android.os.Environment;
-import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 

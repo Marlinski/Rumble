@@ -20,15 +20,11 @@
 package org.disrupted.rumble.message;
 
 
-import android.util.Log;
-import android.webkit.MimeTypeMap;
-
 import org.disrupted.rumble.util.HashUtil;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;

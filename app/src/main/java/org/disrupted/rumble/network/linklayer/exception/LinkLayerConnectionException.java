@@ -19,8 +19,6 @@
 
 package org.disrupted.rumble.network.linklayer.exception;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
-
 /**
  * @author Marlinski
  */

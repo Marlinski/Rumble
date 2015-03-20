@@ -82,6 +82,7 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
         if(register)
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
         register = false;
+        // TODO: this should be useless, should check
         NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
 
     }
@@ -99,9 +100,11 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
             btScanner.forceDiscovery();
     }
 
-    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
 
-        //todo make this portion of code protocol independant (by registering the protocol when button click)
+    /*
+     * todo make this portion of code protocol independant (by registering the protocol when button click)
+     */
+    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
         try {
             if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
                 BluetoothConnection con = new BluetoothClientConnection(

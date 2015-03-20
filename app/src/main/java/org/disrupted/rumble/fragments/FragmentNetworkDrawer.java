@@ -73,13 +73,10 @@ public class FragmentNetworkDrawer extends Fragment {
     NetworkCoordinator mNetworkCoordinator;
     boolean mBound = false;
 
-    private boolean registered;
-
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         EventBus.getDefault().register(this);
-        registered = true;
     }
 
     @Override

@@ -37,12 +37,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
 import de.greenrobot.event.EventBus;
 
 /**
+ * MessageQueue is a singleton class which maintain a sorted queue of every statuses from
+ * the database.
+ *
+ *   When a new neighbour is within reach, a copy of this queue is pass to the NeighbourManager
+ * (PriorityBlockingMessageQueue) so that status can be shared (from more priority to less).
+ *
+ *   Whever a new status is received by one of the neighbour, it is added to
+ * the sorted queue as well as to every copy of the queue.
+ *
  * @author Marlinski
  */
 public class MessageQueue {
@@ -258,7 +266,7 @@ public class MessageQueue {
      *
      * it implements the blocking take() operation which block until there is at least
      * one element in the queue. Its size is limited so as not to holds too many StatusMessage
-     * in memory as the database grows. However, it automatically grows gets a new batch of
+     * in memory as the database grows. However, it automatically grows and gets the next batch of
      * StatusMessage if needed.
      */
     public PriorityBlockingMessageQueue getMessageListener(int size) {
@@ -315,7 +323,7 @@ public class MessageQueue {
             /*
              * dbEmpty is true whenever we have already forwarded (or discarded) every message
              * from our database. In that case messageQueue.take() will block until
-             * MessageQueue.onEvent() calls this.insertNewMessage;
+             * MessageQueue.onEvent() calls insertNewMessage (ie: a new status has been received)
              *
              * if dbEmpty is false, we automatically increase our buffer by getting a new batch
              * of message.
@@ -332,7 +340,7 @@ public class MessageQueue {
 
 
         private int getNewBatch() {
-            Log.d(TAG, "[+] getting new batch: "+ lastStatusIDTaken);
+            //Log.d(TAG, "[+] getting new batch: "+ lastStatusIDTaken);
             List<Integer> idList = new LinkedList<Integer>();
             synchronized (lock) {
                 Iterator<ScoredEntry> it = priorityStatus.iterator();

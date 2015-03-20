@@ -27,7 +27,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.events.NewContactEvent;
-import org.disrupted.rumble.message.StatusMessage;
 
 import de.greenrobot.event.EventBus;
 

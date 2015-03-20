@@ -22,12 +22,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.disrupted.rumble" >
 
+    <!--
+      ~ Permission for networking related operation
+      -->
     <uses-permission
         android:required="true"
         android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission
         android:required="true"
         android:name="android.permission.BLUETOOTH"/>
+    <uses-permission
+        android:required="true"
+        android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission
         android:required="true"
         android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -37,13 +43,6 @@
     <uses-permission
         android:required="true"
         android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
-    <uses-permission
-        android:required="true"
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-feature
-        android:required="true"
-        android:name="android.hardware.camera" />
-
     <!--
       ~ Actually we don't need to access the Internet but this permission is required
       ~ to play with the WiFi !
@@ -51,6 +50,27 @@
     <uses-permission
         android:required="true"
         android:name="android.permission.INTERNET"/>
+    <!--
+      ~ Permission to store file attached to status sent by neighborhing devices
+      -->
+    <uses-permission
+        android:required="true"
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!--
+      ~ Permission obviously to take picture :)
+      -->
+    <uses-feature
+        android:required="false"
+        android:name="android.hardware.camera" />
+    <!--
+      ~ Permission related to the bluetooth scanning strategy
+      ~ The accelerometer is used to detect wether the phone is moving or not
+      ~ this is to avoid draining battery on scanning when phone is standing still
+      -->
+    <uses-feature
+        android:required="false"
+        android:name="android.hardware.sensor.accelerometer"/>
+
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -75,9 +95,8 @@
             android:name=".LoginScreen">
         </activity>
 
-        <service
-                android:enabled="true"
-                android:name=".network.NetworkCoordinator"/>
+        <service android:name=".network.NetworkCoordinator">
+        </service>
     </application>
 
 

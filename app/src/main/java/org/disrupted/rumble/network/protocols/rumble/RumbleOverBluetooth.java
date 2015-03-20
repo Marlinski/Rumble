@@ -83,9 +83,8 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
         return con.getLinkLayerIdentifier();
     }
 
-
     @Override
-    public void run() {
+    public void runNetworkThread() {
 
         try {
             con.connect();
@@ -116,7 +115,7 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             }
 
             if (!isBeingKilled)
-                kill();
+                killNetworkThread();
         }
     }
 
@@ -202,6 +201,8 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             if (statusMessage.isForwarder(con.getRemoteMacAddress(), RumbleProtocol.protocolID))
                 return false;
 
+            Log.d(TAG, "[+] sending status "+statusMessage.toString());
+
             Block block = new BlockStatus(new BlockHeader(), statusMessage);
             try {
                 long timeToTransfer = System.currentTimeMillis();
@@ -241,11 +242,11 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
     }
 
     @Override
-    public void stop() {
+    public void stopProtocol() {
     }
 
     @Override
-    public void kill() {
+    public void killNetworkThread() {
         this.isBeingKilled = true;
         try {
             con.disconnect();

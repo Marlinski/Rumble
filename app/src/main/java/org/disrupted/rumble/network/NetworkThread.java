@@ -28,8 +28,8 @@ public interface NetworkThread {
 
     public String getNetworkThreadID();
 
-    public void run();
+    public void runNetworkThread();
 
-    public void kill();
+    public void killNetworkThread();
 
 }

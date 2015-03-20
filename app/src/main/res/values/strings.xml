@@ -4,6 +4,7 @@
     <string name="app_name">Rumble</string>
     <string name="pref_previously_started">previously_started</string>
     <string name="bluetooth_state_on_openning">bluetooth_state_on_openning</string>
+    <string name="wifi_state_on_openning">wifi_state_on_openning</string>
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="home_tab">Home</string>

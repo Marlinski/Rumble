@@ -92,6 +92,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     public void disconnect() throws LinkLayerConnectionException {
         try {
             mmConnectedSocket.close();
+            Log.d(TAG, "[-] Socket Closed Manually");
         } catch (IOException e) {
             throw new SocketAlreadyClosedException();
         } finally {

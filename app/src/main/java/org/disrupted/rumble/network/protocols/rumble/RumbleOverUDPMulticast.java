@@ -60,7 +60,7 @@ public class RumbleOverUDPMulticast extends GenericProtocol implements NetworkTh
 
 
     @Override
-    public void run() {
+    public void runNetworkThread() {
         try {
             con.connect();
         } catch (LinkLayerConnectionException exception) {
@@ -80,7 +80,7 @@ public class RumbleOverUDPMulticast extends GenericProtocol implements NetworkTh
 
         } finally {
             if (!isBeingKilled)
-                kill();
+                killNetworkThread();
         }
     }
 
@@ -99,11 +99,12 @@ public class RumbleOverUDPMulticast extends GenericProtocol implements NetworkTh
     }
 
     @Override
-    public void stop() {
+    public void stopProtocol() {
 
     }
+
     @Override
-    public void kill() {
+    public void killNetworkThread() {
         this.isBeingKilled = true;
         try {
             con.disconnect();

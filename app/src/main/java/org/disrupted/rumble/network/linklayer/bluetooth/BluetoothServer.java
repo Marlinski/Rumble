@@ -63,7 +63,7 @@ public abstract class BluetoothServer implements NetworkThread {
     }
 
 
-    public void run() {
+    public void runNetworkThread() {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if(adapter == null)
             return;
@@ -106,6 +106,11 @@ public abstract class BluetoothServer implements NetworkThread {
                             } catch (IOException ignore) {
                             }
                         }
+                    } else {
+                        try {
+                            mmConnectedSocket.close();
+                        } catch (IOException ignore) {
+                        }
                     }
                 }
             }
@@ -117,7 +122,7 @@ public abstract class BluetoothServer implements NetworkThread {
     abstract protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket);
 
     @Override
-    public void kill() {
+    public void killNetworkThread() {
         try {
             mmServerSocket.close();
         } catch (Exception e) {

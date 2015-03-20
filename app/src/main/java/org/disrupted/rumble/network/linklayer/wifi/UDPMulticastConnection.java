@@ -29,7 +29,6 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
-import org.disrupted.rumble.network.protocols.rumble.RumbleWifiConfiguration;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -150,14 +149,13 @@ public class UDPMulticastConnection implements LinkLayerConnection {
             serviceInfo  = new NsdServiceInfo();
             serviceInfo.setServiceName(nsdServiceName);
             serviceInfo.setServiceType(nsdServiceType);
-            serviceInfo.setPort(RumbleWifiConfiguration.SERVER_PORT);
+            serviceInfo.setPort(udpPort);
 
             mNsdManager = (NsdManager) RumbleApplication.getContext().getSystemService(Context.NSD_SERVICE);
             mNsdManager.registerService(
                     serviceInfo,
                     NsdManager.PROTOCOL_DNS_SD,
                     mRegistrationListener);
-
         }
     }
 
