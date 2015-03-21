@@ -33,6 +33,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.RoutingActivity;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.events.NeighbourProtocolStart;
+import org.disrupted.rumble.network.events.NewNeighbour;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
@@ -41,6 +42,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -198,7 +200,7 @@ public class NetworkCoordinator extends Service {
      * getNeighbourRecordFromDeviceAddress returns the local record from a specific Neighbour
      * macAddress. It is a private utility function for NetworkCoordinator
      */
-    private NeighbourManager getNeighbourRecordFromDeviceAddress(String address) {
+    public NeighbourManager getNeighbourRecordFromDeviceAddress(String address) throws RecordNotFoundException{
         synchronized (lock) {
             Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
             while (it.hasNext()) {
@@ -206,7 +208,7 @@ public class NetworkCoordinator extends Service {
                 if (record.is(address))
                     return record;
             }
-            return null;
+            throw new RecordNotFoundException();
         }
     }
 
@@ -231,53 +233,6 @@ public class NetworkCoordinator extends Service {
         return neighborhoodList;
     }
 
-    /*
-     * isNeighbourConnectedLinkLayer returns true if we are connected to the neighbour with any protocol
-     * it throws the RecordNotFoundException if the record has not been found
-     */
-    public boolean isNeighbourConnectedLinkLayer(LinkLayerNeighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        if(record == null)
-            throw new RecordNotFoundException();
-        return record.isConnectedLinkLayer(linkLayerIdentifier);
-    }
-
-    /*
-     * isNeighbourConnectedWithProtocol return true if we are connected to the neighbour
-     * using the protocolID
-     * it throws the RecordNotFoundException if the record has not been found
-     */
-    public boolean isNeighbourConnectedWithProtocol(LinkLayerNeighbour neighbour, String protocolID) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        if(record == null)
-            throw new RecordNotFoundException();
-        return record.isConnectedWithProtocol(protocolID);
-    }
-
-    /*
-     * isNeighbourInRange return true if the neighbour is in range false otherwise
-     * it throws the RecordNotFoundException if the record has not been found
-     */
-    public boolean isNeighbourInRange(LinkLayerNeighbour neighbour, String linkLayerIdentifier) throws RecordNotFoundException {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        if(record == null)
-            throw new RecordNotFoundException();
-        try {
-            return record.isInRange(linkLayerIdentifier);
-        } catch (UnknownNeighbourException impossibleCauseRecordFound) { }
-        return false;
-    }
-
-    /*
-     * getNeighbourName returns the name of the neighbour.
-     * note: it may be undefinied if no message has been exchanged
-     */
-    public String getNeighbourName(LinkLayerNeighbour neighbour) throws RecordNotFoundException{
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        if(record == null)
-            throw new RecordNotFoundException();
-        return record.getName();
-    }
 
     /*
      * addProtocol adds a protocol instance to a NeighbourRecord (using macAddress as key)
@@ -287,8 +242,6 @@ public class NetworkCoordinator extends Service {
      */
     public boolean addProtocol(String address, Protocol protocol) throws RecordNotFoundException {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        if(record == null)
-            throw new RecordNotFoundException();
         boolean bool = record.addProtocol(protocol);
         if(bool) {
             //todo be more neighbour specific
@@ -306,8 +259,6 @@ public class NetworkCoordinator extends Service {
      */
     public boolean delProtocol(String address, Protocol protocol) throws RecordNotFoundException, ProtocolNotFoundException {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        if(record == null)
-            throw new RecordNotFoundException();
         boolean bool = record.delProtocol(protocol);
         if(bool) {
             //todo be more neighbour specific
@@ -318,30 +269,41 @@ public class NetworkCoordinator extends Service {
     }
 
     /*
-     * newNeighbor is called whenever a new Neighbour is found by one of the linkLayerScanner
+     * newNeighbor is called whenever a new Neighbour is found by one of the linkLayerScanner or
+     * by other means (overhearing UDP packet, receiving a connection etc.)
+     * The connect flag enables or not the autoconnect mechanism
      * If the neighbour is discovered for the first time, a NeighbourRecord is created
-     * Anyway, it will try to connect to it with every protocol available (see connector).
+     * It return the NeighbourManager associated with the Neighbour
      */
-    public void newNeighbour(LinkLayerNeighbour newNeighbour) {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(newNeighbour.getLinkLayerAddress());
+    public NeighbourManager newNeighbour(LinkLayerNeighbour newNeighbour, boolean autoconnect) {
+        NeighbourManager record;
+        try {
+            record = getNeighbourRecordFromDeviceAddress(newNeighbour.getLinkLayerAddress());
+        } catch (RecordNotFoundException ignore) {
+            record = null;
+        }
+
         synchronized (lock) {
             if (record == null) {
                 Log.d(TAG, "[+] new neighbour record");
                 record = new NeighbourManager(newNeighbour);
                 neighborhoodHistory.add(record);
-                EventBus.getDefault().post(new NeighborhoodChanged());
+                EventBus.getDefault().post(new NewNeighbour(newNeighbour));
+                if(autoconnect)
+                    adapters.get(newNeighbour.getLinkLayerType()).connectTo(newNeighbour, true);
             } else {
-                if(record.addPresence(newNeighbour))
-                    EventBus.getDefault().post(new NeighborhoodChanged());
+                if(record.addPresence(newNeighbour)) {
+                    EventBus.getDefault().post(new NewNeighbour(newNeighbour));
+                    if(autoconnect)
+                        adapters.get(newNeighbour.getLinkLayerType()).connectTo(newNeighbour, true);
+                }
             }
         }
-        /*
-         * whatever happens, we try to connect, the link layer specific connectTo will
-         * decide what to do
-         */
-        LinkLayerAdapter adapter = adapters.get(newNeighbour.getLinkLayerType());
-        adapter.connectTo(newNeighbour, true);
+
+
+        return record;
     }
+
 
     /*
      * delNeighbour is called whenever the linkLayerScanner believes this neighbour has
@@ -353,8 +315,6 @@ public class NetworkCoordinator extends Service {
      */
     public boolean delNeighbor(String address) throws RecordNotFoundException {
         NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        if (record == null)
-            throw new RecordNotFoundException();
         synchronized (lock) {
             try {
                 if (record.delPresence(address)) {
@@ -384,7 +344,6 @@ public class NetworkCoordinator extends Service {
             EventBus.getDefault().post(new NeighborhoodChanged());
         }
     }
-
 
     /*
      * Just to avoid warning in logcat

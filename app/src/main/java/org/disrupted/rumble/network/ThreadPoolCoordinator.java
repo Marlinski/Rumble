@@ -96,7 +96,33 @@ public class ThreadPoolCoordinator {
         return null;
     }
 
-
+    public int killThreadID(String threadID) {
+        int nbKilled = 0;
+        synchronized (lockThreadQueue) {
+            Iterator<PriorityNetworkThread> it = networkThreadsQueue.iterator();
+            while (it.hasNext()) {
+                PriorityNetworkThread element = it.next();
+                if (element.getNetworkThread().getNetworkThreadID().equals(threadID)) {
+                    it.remove();
+                    nbKilled++;
+                }
+            }
+        }
+        synchronized (lockThreadPool) {
+            Iterator<PoolThread> it = pool.iterator();
+            while (it.hasNext()) {
+                PoolThread element = it.next();
+                if (element.getNetworkThread() != null) {
+                    if (element.getNetworkThread().getNetworkThreadID().equals(threadID)) {
+                        element.killNetworkThread();
+                        it.remove();
+                        nbKilled++;
+                    }
+                }
+            }
+        }
+        return  nbKilled;
+    }
     public int killThreadType(String type) {
         int nbKilled = 0;
         synchronized (lockThreadQueue) {

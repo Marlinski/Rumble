@@ -28,7 +28,6 @@ public class RumbleProtocol {
 
     public static final String protocolID = "Rumble";
 
-
     /*
      * Bluetooth Configuration
      */

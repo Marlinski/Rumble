@@ -24,6 +24,7 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.events.StatusSentEvent;
@@ -56,7 +57,7 @@ import de.greenrobot.event.EventBus;
  */
 public class RumbleOverBluetooth extends GenericProtocol implements NetworkThread {
 
-    private static final String TAG = "RumbleBTProtocol";
+    private static final String TAG = "RumbleOverBluetooth";
 
     private BluetoothConnection con;
     protected boolean isBeingKilled;
@@ -94,6 +95,10 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
         }
 
         try {
+            NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(con.getRemoteMacAddress())
+                    .getRumbleBTState()
+                    .connected(this.getNetworkThreadID());
+
             NetworkCoordinator.getInstance().addProtocol(con.getRemoteMacAddress(), this);
 
             Log.d(TAG, "[+] ESTABLISHED: " + getNetworkThreadID());
@@ -105,17 +110,23 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             onGenericProcotolConnected();
 
         } catch (RecordNotFoundException ignoredCauseImpossible) {
-            Log.e(TAG, "[+] FAILED: "+getNetworkThreadID()+" cannot find the record for "+con.getRemoteMacAddress());
-        }
-        finally {
+            Log.e(TAG, "[!] FAILED: "+getNetworkThreadID()+" cannot find the record for "+con.getRemoteMacAddress());
+        } catch (RumbleBTState.StateException e) {
+            Log.e(TAG, "[!] FAILED: "+getNetworkThreadID()+" RumbleBTState mismatch");
+        } finally {
             try {
                 NetworkCoordinator.getInstance().delProtocol(con.getRemoteMacAddress(), this);
+
+                if (!isBeingKilled)
+                    killNetworkThread();
+
+                NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(con.getRemoteMacAddress())
+                        .getRumbleBTState()
+                        .notConnected();
+
             } catch (RecordNotFoundException ignoredCauseImpossible) {
             } catch (ProtocolNotFoundException ignoredCauseImpossible) {
             }
-
-            if (!isBeingKilled)
-                killNetworkThread();
         }
     }
 

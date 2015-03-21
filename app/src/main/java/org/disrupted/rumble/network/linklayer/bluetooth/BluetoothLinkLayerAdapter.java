@@ -28,12 +28,15 @@ import android.util.Log;
 
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.NeighbourManager;
+import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.ThreadPoolCoordinator;
 import org.disrupted.rumble.network.protocols.firechat.FirechatOverBluetooth;
+import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
 import org.disrupted.rumble.network.protocols.rumble.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
@@ -105,37 +108,43 @@ public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
      * todo make this portion of code protocol independant (by registering the protocol when button click)
      */
     public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
+        NeighbourManager record;
         try {
-            if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
-                BluetoothConnection con = new BluetoothClientConnection(
-                        neighbour.getLinkLayerAddress(),
-                        RumbleProtocol.RUMBLE_BT_UUID_128,
-                        RumbleProtocol.RUMBLE_BT_STR,
-                        false);
-                RumbleOverBluetooth rumble = new RumbleOverBluetooth(con);
-                ThreadPoolCoordinator.getInstance().addNetworkThread(rumble);
-            } else {
-                Log.d(TAG, "already connected to "+neighbour.getLinkLayerAddress()+" with Rumble");
-            }
-        } catch (RecordNotFoundException ignore){
-            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getLinkLayerAddress()+" record not found !");
+            record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
+        } catch (RecordNotFoundException e) {
+            Log.e(TAG, "[!] record not found ! cannot connectTo "+neighbour.getLinkLayerAddress());
+            return;
         }
 
-        try {
-            if (!NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, FirechatProtocol.protocolID)) {
-                BluetoothConnection con = new BluetoothClientConnection(
-                        neighbour.getLinkLayerAddress(),
-                        FirechatProtocol.FIRECHAT_BT_UUID_128,
-                        FirechatProtocol.FIRECHAT_BT_STR,
-                        false);
-                FirechatOverBluetooth firechat = new FirechatOverBluetooth(con);
-                ThreadPoolCoordinator.getInstance().addNetworkThread(firechat);
-            } else {
-                Log.d(TAG, "already connected "+neighbour.getLinkLayerAddress()+" with Firechat");
+        if (record.getRumbleBTState().getState() == RumbleBTState.RumbleBluetoothState.NOT_CONNECTED) {
+            BluetoothConnection con = new BluetoothClientConnection(
+                    neighbour.getLinkLayerAddress(),
+                    RumbleProtocol.RUMBLE_BT_UUID_128,
+                    RumbleProtocol.RUMBLE_BT_STR,
+                    false);
+            NetworkThread rumble = new RumbleOverBluetooth(con);
+            try {
+                record.getRumbleBTState().connectionInitiated(rumble.getNetworkThreadID());
+                ThreadPoolCoordinator.getInstance().addNetworkThread(rumble);
+            } catch (RumbleBTState.StateException e) {
+                /*
+                 * Should be quiet rare but it is possible that the BluetoothServer thread has
+                 * Accepted() a connection before we initiate this one. In that case, we silently
+                 * cancel this connection request
+                 */
             }
-        }catch (RecordNotFoundException ignore){
-            Log.e(TAG, "[!] cannot connect to neighbour "+neighbour.getLinkLayerAddress()+" record not found !");
         }
+
+        if (!record.isConnectedWithProtocol(FirechatProtocol.protocolID)) {
+            BluetoothConnection con = new BluetoothClientConnection(
+                    neighbour.getLinkLayerAddress(),
+                    FirechatProtocol.FIRECHAT_BT_UUID_128,
+                    FirechatProtocol.FIRECHAT_BT_STR,
+                    false);
+            FirechatOverBluetooth firechat = new FirechatOverBluetooth(con);
+            ThreadPoolCoordinator.getInstance().addNetworkThread(firechat);
+        }
+
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

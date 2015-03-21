@@ -22,8 +22,13 @@ package org.disrupted.rumble.network.protocols.rumble;
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
+import org.disrupted.rumble.network.NeighbourManager;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.ThreadPoolCoordinator;
+import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkThread;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
@@ -45,40 +50,39 @@ public class RumbleBTServer extends BluetoothServer {
     }
 
     /*
-     * we don't allow two connection with the same client
-     * When a client connect to the server, we will accept the connection based on its mac address
-     * If ourmacaddress < remotemacaddress we accept the connection
-     * else we refuse the connection and will connect to it instead
+     * onClientConnected may accept or not the connection depending on RumbleBTState
      */
     @Override
     protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-        Log.d(TAG, neighbour.getLinkLayerAddress()+" "+localMacAddress+" : "+neighbour.getLinkLayerAddress().compareTo(localMacAddress) );
-        if(neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0)
-            return null;
-        return new RumbleOverBluetooth(new BluetoothServerConnection(mmConnectedSocket));
-    }
-
-    /*
-    @Override
-    protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket) {
-        LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
+        NeighbourManager record;
         try {
-            if (NetworkCoordinator.getInstance().isNeighbourConnectedWithProtocol(neighbour, RumbleProtocol.protocolID)) {
+            record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
 
-                 * We are receiving a connection from someone we are already connected to.
-                 * This case happen only if both device discover at the same time.
-                 * we cannot simply drop the connection because the other end would do the same
-                 * and that would result in both side closing the connection
-                 * To solve this issue, only the lower mac address drop the connection.
-
-                if(neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0)
-                    return null;
+            switch (record.getRumbleBTState().getState()) {
+                case CONNECTION_INITIATED:
+                    if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
+                        Log.d(TAG, "[-] refusing connection");
+                        return null;
+                    } else {
+                        Log.d(TAG, "[-] cancelling network thread "+record.getRumbleBTState().getConnectionInitiatedThreadID());
+                        ThreadPoolCoordinator.getInstance()
+                                .killThreadID(record.getRumbleBTState().getConnectionInitiatedThreadID());
+                    }
+                case NOT_CONNECTED:
+                    NetworkThread thread = new RumbleOverBluetooth(new BluetoothServerConnection(mmConnectedSocket));
+                    record.getRumbleBTState().connectionAccepted(thread.getNetworkThreadID());
+                    return thread;
+                default: return null;
             }
-            return new RumbleOverBluetooth(new BluetoothServerConnection(mmConnectedSocket));
-        }catch(RecordNotFoundException first) {
+
+        } catch(RecordNotFoundException e) {
+            Log.e(TAG,"[!] record not found for neighbour "+neighbour.getLinkLayerAddress());
+            return null;
+        } catch (RumbleBTState.StateException e) {
+            Log.e(TAG,"[!] Rumble Bluetooth State Exception");
             return null;
         }
     }
-    */
+
 }

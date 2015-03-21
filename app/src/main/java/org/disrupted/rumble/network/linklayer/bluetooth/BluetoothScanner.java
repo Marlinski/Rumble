@@ -298,7 +298,7 @@ public class BluetoothScanner implements SensorEventListener {
                 BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
                 if(btNeighborhood.add(btPeerDevice)){
                     Log.d(TAG, "[+] device "+device.getName()+" ["+device.getAddress()+"] discovered");
-                    NetworkCoordinator.getInstance().newNeighbour(btPeerDevice);
+                    NetworkCoordinator.getInstance().newNeighbour(btPeerDevice, true);
                 }
             }
 

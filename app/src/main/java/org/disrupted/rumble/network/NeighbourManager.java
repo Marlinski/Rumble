@@ -29,6 +29,8 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +60,17 @@ public class NeighbourManager {
     private Map<String, HashSet<Protocol>>    protocolIdentifierToLinkSpecificProtocolInstance;
     private Map<String, MessageProcessor>     protocolIdentifierToMessageProcessor;
 
+    /*
+     * Because bluetooth has a limited bandwidth, we only authorise one connection
+     * between two neighbours. Since the bluetooth server and the bluetooth client
+     * are in two different thread, we have to maintain a state in order to avoid
+     * being connected 2-way.
+     */
+    private RumbleBTState rumbleBTState;
+    public RumbleBTState getRumbleBTState() {
+        return rumbleBTState;
+    }
+
     public NeighbourManager(LinkLayerNeighbour neighbour){
         this.name = "undefinied";
 
@@ -66,6 +79,7 @@ public class NeighbourManager {
 
         protocolIdentifierToLinkSpecificProtocolInstance = new HashMap<String, HashSet<Protocol>>();
         protocolIdentifierToMessageProcessor = new HashMap<String, MessageProcessor>();
+        rumbleBTState = new RumbleBTState();
     }
 
     public String getName() {

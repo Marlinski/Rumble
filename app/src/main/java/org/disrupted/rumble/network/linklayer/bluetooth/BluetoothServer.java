@@ -95,21 +95,16 @@ public abstract class BluetoothServer implements NetworkThread {
                     Log.d(TAG, "[+] Client connected");
 
                     LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-                    NetworkCoordinator.getInstance().newNeighbour(neighbour);
+                    NetworkCoordinator.getInstance().newNeighbour(neighbour, false);
 
                     NetworkThread clientThread = onClientConnected(mmConnectedSocket);
 
-                    if(clientThread != null) {
-                        if (!ThreadPoolCoordinator.getInstance().addNetworkThread(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH)) {
-                            try {
-                                mmConnectedSocket.close();
-                            } catch (IOException ignore) {
-                            }
-                        }
+                    if((clientThread != null) && (ThreadPoolCoordinator.getInstance().addNetworkThread(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH))) {
+                        continue;
                     } else {
                         try {
                             mmConnectedSocket.close();
-                        } catch (IOException ignore) {
+                        } catch (IOException silentlyIgnore) {
                         }
                     }
                 }
