@@ -7,7 +7,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
  */
 public class NewNeighbour extends NetworkEvent {
 
-    public LinkLayerNeighbour neighbour;
+    public final LinkLayerNeighbour neighbour;
 
     public NewNeighbour(LinkLayerNeighbour neighbour) {
         this.neighbour = neighbour;

@@ -27,11 +27,14 @@ import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.NetworkThread;
+import org.disrupted.rumble.network.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
 import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.GenericProtocol;
@@ -102,10 +105,12 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             NetworkCoordinator.getInstance().addProtocol(con.getRemoteMacAddress(), this);
 
             Log.d(TAG, "[+] ESTABLISHED: " + getNetworkThreadID());
+            EventBus.getDefault().post(new NeighbourConnected(new BluetoothNeighbour(con.getRemoteMacAddress())));
 
             /*
-             * this one automatically creates two thread, one for processing the command
-             * and one for processing the network
+             * this method automatically creates two threads that runs in a while(true) loop,
+             *   - one for processing the command from the upper layer
+             *   - one for processing the packet received by the link layer layer
              */
             onGenericProcotolConnected();
 
@@ -123,6 +128,8 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
                 NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(con.getRemoteMacAddress())
                         .getRumbleBTState()
                         .notConnected();
+
+                EventBus.getDefault().post(new NeighbourDisconnected(new BluetoothNeighbour(con.getRemoteMacAddress())));
 
             } catch (RecordNotFoundException ignoredCauseImpossible) {
             } catch (ProtocolNotFoundException ignoredCauseImpossible) {

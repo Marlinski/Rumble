@@ -192,7 +192,7 @@ public class NeighbourManager {
     }
     /*
      * isConnected return true if we are connected to the neighbour
-     * on a specific link layer.
+     * on a specific link layer with at least one protocol (Rumble, Firechat)
      * it returns false otherwise
      */
     public boolean isConnectedLinkLayer(String linkLayerIdentifier) {
@@ -209,7 +209,7 @@ public class NeighbourManager {
     }
     /*
      * isConnectedWithprotocol return true if we are connected to the neighbour with a specific
-     * protocol
+     * protocol (whatever on which link layer)
      * it returns false otherwise
      */
     public boolean isConnectedWithProtocol(String protocolIdentifier) {
@@ -244,8 +244,8 @@ public class NeighbourManager {
     }
 
     /*
-     * addProtocol adds a link layer specific instance of a protocol to the local protocol instance
-     * list unless such an instance already exists. If this is the first instance of this protocol,
+     * addProtocol adds a linklayer specific instance of a protocol to the local protocol list
+     * unless such an instance already exists. If this is the first instance of this protocol,
      * we also start the MessageProcessor.
      *
      * Warning: the protocol instance must be ready to accept executeCommand() !
@@ -331,7 +331,7 @@ public class NeighbourManager {
         private String protocolID;
 
         public MessageProcessor(String protocolID) {
-            this.TAG = "MessageProcessor";
+            this.TAG = "MessageProcessor " + name;
             this.queue = MessageQueue.getInstance().getMessageListener(100);
             this.protocolID = protocolID;
         }
