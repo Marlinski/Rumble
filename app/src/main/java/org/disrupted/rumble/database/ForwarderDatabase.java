@@ -26,7 +26,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
- * ForwarderDatabase keeps track of who we a received a status from.
+ * ForwarderDatabase keeps track of those who already received or sent a status.
  * Because we may receive status from a neighbour before he actually gives us
  * his name, we keep track of a hashed ID of his mac address.
  *
@@ -58,7 +58,6 @@ public class ForwarderDatabase extends Database {
     public ForwarderDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
-
 
     public Cursor getForwarderList(long statusID) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();

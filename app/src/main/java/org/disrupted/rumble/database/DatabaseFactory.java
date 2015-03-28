@@ -24,6 +24,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.security.acl.Group;
+
 /**
  * @author Marlinski
  */
@@ -41,6 +43,7 @@ public class DatabaseFactory {
     private final StatusDatabase       statusDatabase;
     private final HashtagDatabase      hashtagDatabase;
     private final StatusTagDatabase    statusTagDatabase;
+    private final GroupDatabase        groupDatabase;
     private final FileDatabase         fileDatabase;
     private final SubscriptionDatabase subscriptionDatabase;
     private final ContactDatabase      contactDatabase;
@@ -65,6 +68,9 @@ public class DatabaseFactory {
     public static StatusTagDatabase getStatusTagDatabase(Context context) {
         return getInstance(context).statusTagDatabase;
     }
+    public static GroupDatabase getGroupDatabase(Context context) {
+        return getInstance(context).groupDatabase;
+    }
     public static FileDatabase getDocumentDatabase(Context context) {
         return getInstance(context).fileDatabase;
     }
@@ -87,6 +93,7 @@ public class DatabaseFactory {
         this.statusDatabase       = new StatusDatabase(context, databaseHelper);
         this.hashtagDatabase      = new HashtagDatabase(context, databaseHelper);
         this.statusTagDatabase    = new StatusTagDatabase(context, databaseHelper);
+        this.groupDatabase        = new GroupDatabase(context, databaseHelper);
         this.fileDatabase         = new FileDatabase(context, databaseHelper);
         this.contactDatabase      = new ContactDatabase(context, databaseHelper);
         this.subscriptionDatabase = new SubscriptionDatabase(context, databaseHelper);
@@ -102,6 +109,7 @@ public class DatabaseFactory {
         this.statusDatabase.reset(databaseHelper);
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
+        this.groupDatabase.reset(databaseHelper);
         this.fileDatabase.reset(databaseHelper);
         this.subscriptionDatabase.reset(databaseHelper);
         this.forwarderDatabase.reset(databaseHelper);
@@ -125,6 +133,7 @@ public class DatabaseFactory {
             db.execSQL(StatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
+            db.execSQL(GroupDatabase.CREATE_TABLE);
             db.execSQL(FileDatabase.CREATE_TABLE);
             db.execSQL(SubscriptionDatabase.CREATE_TABLE);
             db.execSQL(ForwarderDatabase.CREATE_TABLE);

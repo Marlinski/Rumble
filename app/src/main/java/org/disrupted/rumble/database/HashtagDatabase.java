@@ -57,12 +57,6 @@ public class HashtagDatabase extends  Database{
         super(context, databaseHelper);
     }
 
-    public Cursor getHashtag(long statusID) {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor           = database.query(TABLE_NAME, new String[]{HASHTAG}, ID + " = " + statusID, null, null, null, null);
-        return cursor;
-    }
-
     private boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
@@ -116,10 +110,16 @@ public class HashtagDatabase extends  Database{
         if (hashtagCount == 0) {
             res = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
         } else {
-            databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
-            Cursor cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '" + hashtag + "'", null, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst())
-                res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            Cursor cursor = null;
+            try {
+                databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
+                cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '" + hashtag + "'", null, null, null, null, null);
+                if (cursor != null && cursor.moveToFirst())
+                    res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            } finally {
+                if(cursor != null)
+                    cursor.close();
+            }
         }
 
         if(res >= 0)
