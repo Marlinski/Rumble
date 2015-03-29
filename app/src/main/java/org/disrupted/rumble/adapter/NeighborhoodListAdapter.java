@@ -20,7 +20,6 @@
 package org.disrupted.rumble.adapter;
 
 import android.app.Activity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,13 +28,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.network.NeighbourManager;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -46,24 +45,16 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     private static final String TAG = "NeighborListAdapter";
 
     private final LayoutInflater inflater;
-    private List<LinkLayerNeighbour> neighborhood;
+    private List<NeighbourInfo> neighborhood;
 
-    public NeighborhoodListAdapter(Activity activity, List<LinkLayerNeighbour> neighborhood) {
+    public NeighborhoodListAdapter(Activity activity, List<NeighbourInfo> neighborhood) {
         this.inflater     = LayoutInflater.from(activity);
         this.neighborhood = neighborhood;
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        LinkLayerNeighbour neighbour = neighborhood.get(i);
-        NeighbourManager record;
-
-        try {
-            record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        } catch (RecordNotFoundException e) {
-            Log.e(TAG, "[!] cannot display the neighbour on the list, record not found");
-            return null;
-        }
+        NeighbourInfo neighbour = neighborhood.get(i);
 
         View neighborView = inflater.inflate(R.layout.neighbour_item, null, true);
         TextView name = (TextView) neighborView.findViewById(R.id.neighbour_item_name);
@@ -71,20 +62,25 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        id.setText(neighbour.getLinkLayerAddress());
-        name.setText(neighbour.getLinkLayerName());
-
-        if(neighbour.getLinkLayerType().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+        if(neighbour.isReachable(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
             bluetoothIcon.setVisibility(View.VISIBLE);
-        if(neighbour.getLinkLayerType().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+            if(neighbour.isConnected(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
+            else
+                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
+            BluetoothNeighbour btneighbour = (BluetoothNeighbour)(neighbour.first);
+            name.setText(btneighbour.getBluetoothDeviceName());
+            id.setText(btneighbour.getLinkLayerAddress());
+        } else {
+            bluetoothIcon.setVisibility(View.INVISIBLE);
+        }
+
+        if(neighbour.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
+        } else {
+            wifiIcon.setVisibility(View.INVISIBLE);
+        }
 
-        if(record.isConnectedLinkLayer(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
-            bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
-        else
-            bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
-
-        //todo display only one neighbour if multiple device
         return neighborView;
     }
 
@@ -107,7 +103,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void onClick(View view) {
     }
 
-    public void updateList(List<LinkLayerNeighbour> newNeighborhood) {
+    public void updateList(List<NeighbourInfo> newNeighborhood) {
         this.neighborhood.clear();
         this.neighborhood = newNeighborhood;
         notifyDataSetChanged();

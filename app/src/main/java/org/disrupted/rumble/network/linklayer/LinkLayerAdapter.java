@@ -26,52 +26,20 @@ import org.disrupted.rumble.network.events.LinkLayerStopped;
 import de.greenrobot.event.EventBus;
 
 /**
- * LinkLayerAdapter is a class that is responsible of managing a LinkLayer interface such
+ * LinkLayerAdapter is an Interface that is responsible of managing a LinkLayer interface such
  * as Bluetooth or Wifi. It is directly under the responsibility of NetworkCoordinator and
  * all the LinkLayerAdapter methods are called from it.
  *
  * @author Marlinski
  */
-public abstract class LinkLayerAdapter {
+public interface LinkLayerAdapter {
 
-    protected boolean activated;
+    public boolean isActivated();
 
-    public LinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        this.activated = false;
-    }
+    public String getLinkLayerIdentifier();
 
-    public boolean isActivated() {
-        return activated;
-    }
+    public void linkStart();
 
-    public void linkStart() {
-        if(activated)
-            return;
-
-        activated = true;
-        onLinkStart();
-        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
-    }
-
-    public void linkStop() {
-        if(!activated)
-            return;
-
-        onLinkStop();
-        activated = false;
-        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
-    }
-
-    abstract public String getLinkLayerIdentifier();
-
-    abstract public void onLinkStart();
-
-    abstract public void onLinkStop();
-
-    abstract public boolean isScanning();
-
-    abstract public void forceDiscovery();
-
-    abstract public void connectTo(LinkLayerNeighbour neighbour, boolean force);
+    public void linkStop();
 
 }

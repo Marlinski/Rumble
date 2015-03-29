@@ -130,10 +130,10 @@ public class DatabaseFactory {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(ContactDatabase.CREATE_TABLE);
+            db.execSQL(GroupDatabase.CREATE_TABLE);
             db.execSQL(StatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
-            db.execSQL(GroupDatabase.CREATE_TABLE);
             db.execSQL(FileDatabase.CREATE_TABLE);
             db.execSQL(SubscriptionDatabase.CREATE_TABLE);
             db.execSQL(ForwarderDatabase.CREATE_TABLE);

@@ -17,21 +17,22 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.rumble;
+package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.ThreadPoolCoordinator;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.NetworkThread;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
+import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+
+import java.io.IOException;
 
 /**
  * @author Marlinski
@@ -39,49 +40,54 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnectio
 public class RumbleBTServer extends BluetoothServer {
 
     private static final String TAG = "RumbleBluetoothServer";
+    private final RumbleProtocol protocol;
+    private final NetworkCoordinator networkCoordinator;
 
-    public RumbleBTServer() {
+    public RumbleBTServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator) {
         super(RumbleProtocol.RUMBLE_BT_UUID_128, RumbleProtocol.RUMBLE_BT_STR, false);
+        this.protocol = protocol;
+        this.networkCoordinator = networkCoordinator;
     }
 
     @Override
-    public String getNetworkThreadID() {
-        return RumbleProtocol.protocolID + super.getNetworkThreadID();
+    public String getWorkerIdentifier() {
+        return "Rumble"+super.getWorkerIdentifier();
+    }
+
+    @Override
+    public String getProtocolIdentifier() {
+        return RumbleProtocol.protocolID;
     }
 
     /*
      * onClientConnected may accept or not the connection depending on RumbleBTState
      */
     @Override
-    protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket) {
+    protected void onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-        NeighbourManager record;
         try {
-            record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-
-            switch (record.getRumbleBTState().getState()) {
+            RumbleBTState connectionState = protocol.getBTState(neighbour.getLinkLayerAddress());
+            switch (connectionState.getState()) {
                 case CONNECTION_INITIATED:
                     if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
                         Log.d(TAG, "[-] refusing connection");
-                        return null;
+                        mmConnectedSocket.close();
                     } else {
-                        Log.d(TAG, "[-] cancelling network thread "+record.getRumbleBTState().getConnectionInitiatedThreadID());
-                        ThreadPoolCoordinator.getInstance()
-                                .killThreadID(record.getRumbleBTState().getConnectionInitiatedThreadID());
+                        Log.d(TAG, "[-] cancelling network thread " + connectionState.getConnectionInitiatedWorkerID());
+                        networkCoordinator.stopWorker(
+                                BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                connectionState.getConnectionInitiatedWorkerID());
                     }
                 case NOT_CONNECTED:
-                    NetworkThread thread = new RumbleOverBluetooth(new BluetoothServerConnection(mmConnectedSocket));
-                    record.getRumbleBTState().connectionAccepted(thread.getNetworkThreadID());
-                    return thread;
-                default: return null;
+                    Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
+                    connectionState.connectionAccepted(worker.getWorkerIdentifier());
+                    networkCoordinator.addWorker(worker);
+                default: return;
             }
 
-        } catch(RecordNotFoundException e) {
-            Log.e(TAG,"[!] record not found for neighbour "+neighbour.getLinkLayerAddress());
-            return null;
+        } catch(IOException ignore) {
         } catch (RumbleBTState.StateException e) {
             Log.e(TAG,"[!] Rumble Bluetooth State Exception");
-            return null;
         }
     }
 

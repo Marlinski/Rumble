@@ -17,84 +17,105 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.firechat;
+package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.NetworkThread;
+import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
+import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
+import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
+import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.json.JSONException;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.LinkedList;
+import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class FirechatOverUDPMulticast extends GenericProtocol implements NetworkThread {
+public class FirechatOverUDPMulticast extends ProtocolWorker {
 
 
-    private static final String TAG = "RumbleOverUDP";
+    private static final String TAG = "FirechatOverUDPMulticast";
 
-    private static final int PACKET_SIZE = 2048;
+    private static final String MULTICAST_ADDRESS  = "239.192.0.0";
+    private static final int    MULTICAST_UDP_PORT = 7576;
+    private static final int    PACKET_SIZE = 2048;
 
     private UDPMulticastConnection con;
     private DatagramPacket         packet;
-    private boolean                isBeingKilled;
+    private boolean                working;
     private static final FirechatMessageParser parser = new FirechatMessageParser();
 
     public FirechatOverUDPMulticast() {
-        this.con = new UDPMulticastConnection(FirechatProtocol.MULTICAST_UDP_PORT, FirechatProtocol.MULTICAST_ADDRESS, false, null, null);
+        this.con = new UDPMulticastConnection(MULTICAST_UDP_PORT, MULTICAST_ADDRESS, false, null, null);
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
-        isBeingKilled = false;
+        working = false;
+    }
+
+    // todo: a implementer
+    public List<ProtocolNeighbour> getUDPNeighbourList() {
+        List<ProtocolNeighbour> ret = new LinkedList<ProtocolNeighbour>();
+        return ret;
     }
 
     @Override
-    public String getProtocolID() {
-        return FirechatProtocol.protocolID;
+    public boolean isWorking() {
+        return working;
     }
-    @Override
-    public String getNetworkThreadID() {
-        return FirechatProtocol.protocolID+" "+getLinkLayerIdentifier();
-    }
-    @Override
-    public String getType() {
-        return con.getLinkLayerIdentifier();
-    }
+
     @Override
     public String getLinkLayerIdentifier() {
         return con.getLinkLayerIdentifier();
     }
 
     @Override
-    public void runNetworkThread() {
+    public String getProtocolIdentifier() {
+        return FirechatProtocol.protocolID;
+    }
+
+    @Override
+    public String getWorkerIdentifier() {
+        return getProtocolIdentifier()+" "+con.getConnectionID();
+    }
+
+    @Override
+    public void startWorking() {
+        if(working)
+            return;
+        working = true;
+
         try {
             con.connect();
         } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: " + getNetworkThreadID() + " " + exception.getMessage());
+            Log.d(TAG, "[!] FAILED: " + getWorkerIdentifier() + " " + exception.getMessage());
             return;
         }
 
         try {
-
-            Log.d(TAG, "[+] CONNECTED: " + getNetworkThreadID());
+            Log.d(TAG, "[+] CONNECTED: " + getWorkerIdentifier());
 
             /*
              * this one automatically creates two thread, one for processing the command
              * and one for processing the network
              */
-            onGenericProcotolConnected();
+            onWorkerConnected();
 
         } finally {
-            if (!isBeingKilled)
-                killNetworkThread();
+            stopWorking();
         }
     }
 
@@ -138,18 +159,16 @@ public class FirechatOverUDPMulticast extends GenericProtocol implements Network
     }
 
     @Override
-    public void stopProtocol() {
+    public void stopWorking() {
+        if(!working)
+            return;
 
-    }
-
-    @Override
-    public void killNetworkThread() {
-        this.isBeingKilled = true;
+        this.working = false;
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException ignore) {
         }
-        Log.d(TAG, "[-] ENDED: " + getNetworkThreadID());
+        Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
     }
 
 }

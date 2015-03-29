@@ -30,34 +30,43 @@ import android.net.wifi.WifiManager;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.ThreadPoolCoordinator;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
-import org.disrupted.rumble.network.protocols.firechat.FirechatOverUDPMulticast;
+
+import de.greenrobot.event.EventBus;
 
 
 /**
  * @author Marlinski
  */
-public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
+public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
     private static final String TAG = "WifiManagedLinkLayerAdapter";
 
-    public static final String LinkLayerIdentifier = "WIFI-Managed";
+    public static final String LinkLayerIdentifier = "WIFIManagedMode";
 
+    private NetworkCoordinator networkCoordinator;
     private String macAddress;
     private WifiManager wifiMan;
     private WifiInfo wifiInf;
     WifiManager.MulticastLock multicastLock;
     private boolean register;
+    private boolean activated;
 
 
     public WifiManagedLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        super(networkCoordinator);
+        this.networkCoordinator = networkCoordinator;
         macAddress = null;
         wifiMan = null;
         wifiInf = null;
+        activated = false;
+    }
+
+    @Override
+    public boolean isActivated() {
+        return activated;
     }
 
     @Override
@@ -66,8 +75,10 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public void onLinkStart() {
-        Log.d(TAG, "[+] Starting Wifi");
+    public void linkStart() {
+        if(activated)
+            return;
+        Log.d(TAG, "[+] Starting Wifi Managed");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
@@ -86,38 +97,27 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
          * need it to send/receive message
          */
         multicastLock.acquire();
-        ThreadPoolCoordinator.getInstance().addNetworkThread( new FirechatOverUDPMulticast() );
 
+        activated = true;
+        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
 
     @Override
-    public void onLinkStop() {
-        Log.d(TAG, "[-] Stopping Wifi");
+    public void linkStop() {
+        if(!activated)
+            return;
+
+        Log.d(TAG, "[-] Stopping Wifi Managed");
         if(register)
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
 
-        ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
-        NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
+        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
         multicastLock.release();
 
         wifiInf = null;
         wifiMan = null;
 
     }
-
-    @Override
-    public boolean isScanning() {
-        return false;
-    }
-
-    @Override
-    public void forceDiscovery() {
-    }
-
-    @Override
-    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
-    }
-
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -130,7 +130,7 @@ public class WifiManagedLinkLayerAdapter extends LinkLayerAdapter {
                 if(info != null) {
                     if(info.isConnected()) {
                         Log.d(TAG, "[+] connected to the network");
-                        ThreadPoolCoordinator.getInstance().addNetworkThread(new FirechatOverUDPMulticast());
+                        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
                     }
                 }
             }

@@ -19,21 +19,34 @@
 
 package org.disrupted.rumble.network.protocols;
 
-import org.disrupted.rumble.network.protocols.command.Command;
+
+import org.disrupted.rumble.network.NeighbourInfo;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
+
+import java.util.List;
 
 /**
  * @author Marlinski
  */
 public interface Protocol {
 
-    public String getProtocolID();
+    public String getProtocolIdentifier();
 
-    public String getLinkLayerIdentifier();
+    public void protocolStart();
 
-    public boolean isCommandSupported(String commandName);
+    public void protocolStop();
 
-    public boolean executeCommand(Command command) throws InterruptedException;
+    public void onEvent(LinkLayerStarted event);
 
-    public void stopProtocol();
+    public void onEvent(LinkLayerStopped event);
+
+    public void onEvent(NeighbourReachable event);
+
+    public void onEvent(NeighbourUnreachable event);
+
+    public List<ProtocolNeighbour> getNeighbourList();
 
 }

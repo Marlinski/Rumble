@@ -28,37 +28,38 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 /**
  * @author Marlinski
  */
-public class BluetoothNeighbour extends LinkLayerNeighbour {
+public class BluetoothNeighbour implements LinkLayerNeighbour {
 
-    private String bluetoothDeviceName;
+    private String bluetoothMacAddress;
 
     public BluetoothNeighbour(BluetoothNeighbour neighbour){
-        super(neighbour.getLinkLayerAddress());
-        this.bluetoothDeviceName = neighbour.bluetoothDeviceName;
+        this.bluetoothMacAddress = neighbour.getLinkLayerAddress();
     }
 
     public BluetoothNeighbour(String macAddress){
-        super(macAddress);
-        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
-        if(adapter != null) {
-            BluetoothDevice remote = adapter.getRemoteDevice(macAddress);
-            if(remote != null)
-                bluetoothDeviceName = remote.getName();
-            else
-                bluetoothDeviceName = "#no name#";
-        } else {
-            bluetoothDeviceName = "#no name#";
-        }
+        this.bluetoothMacAddress = macAddress;
     }
 
     @Override
-    public String getLinkLayerName() {
-        return bluetoothDeviceName;
+    public String getLinkLayerAddress() {
+        return bluetoothMacAddress;
     }
 
     @Override
-    public String getLinkLayerType() {
+    public String getLinkLayerIdentifier() {
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
+    public String getBluetoothDeviceName() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if(adapter != null) {
+            BluetoothDevice remote = adapter.getRemoteDevice(this.bluetoothMacAddress);
+            if(remote != null)
+                return remote.getName();
+            else
+                return "#no name#";
+        } else {
+            return "#no name#";
+        }
+    }
 }

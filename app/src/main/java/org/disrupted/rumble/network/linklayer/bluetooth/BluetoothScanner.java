@@ -35,10 +35,12 @@ import android.os.*;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.events.BluetoothScanStarted;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.Scanner;
 
 import java.util.HashSet;
 import java.lang.Math;
@@ -48,7 +50,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class BluetoothScanner implements SensorEventListener {
+public class BluetoothScanner implements SensorEventListener, Scanner {
 
     private static final String TAG = "BluetoothScanner";
 
@@ -114,7 +116,7 @@ public class BluetoothScanner implements SensorEventListener {
 
     private boolean registered;
 
-    public static BluetoothScanner getInstance(NetworkCoordinator networkCoordinator) {
+    public static BluetoothScanner getInstance() {
         synchronized (lock) {
             if(instance == null)
                 return new BluetoothScanner();
@@ -208,17 +210,16 @@ public class BluetoothScanner implements SensorEventListener {
                 mSensorManager.unregisterListener(this);
         }
         registered = false;
-        btNeighborhood.clear();
+        synchronized (lock) {
+            btNeighborhood.clear();
+        }
         lastTrickleState.clear();
         trickleTimer = START_TRICKLE_TIMER;
         scanningState    = ScanningState.SCANNING_OFF;
         EventBus.getDefault().post(new BluetoothScanEnded());
     }
 
-    /*
-     * when discovery is forced we reset the trickle timer and call for a new
-     * scan (unless there is already one going on)
-     */
+    @Override
     public void forceDiscovery() {
         resetTrickleTimer();
         if(hasCallback)
@@ -239,43 +240,43 @@ public class BluetoothScanner implements SensorEventListener {
      * It is resetted if the neighborhood is inconsistant
      */
     private void recomputeTrickleTimer() {
-        Log.d(TAG, "[+] recompute Trickle Timer");
-        int inconsistency = 0;
-        HashSet<BluetoothNeighbour> tmp = new HashSet<BluetoothNeighbour>();
+        synchronized (lock) {
+            Log.d(TAG, "[+] recompute Trickle Timer");
+            int inconsistency = 0;
+            HashSet<BluetoothNeighbour> tmp = new HashSet<BluetoothNeighbour>();
 
-        /*
-         * first we detect for new neighbour inconsistency
-         */
-        for(BluetoothNeighbour neighbor : btNeighborhood) {
-            tmp.add(neighbor);
-            if(!lastTrickleState.remove(neighbor))
+            /*
+             * first we detect for new neighbour inconsistency
+             */
+            for (BluetoothNeighbour neighbor : btNeighborhood) {
+                tmp.add(neighbor);
+                if (!lastTrickleState.remove(neighbor))
+                    inconsistency++;
+            }
+
+            /*
+             * Then we detect for neighbour that disappeared inconsistency
+             */
+            for (BluetoothNeighbour neighbor : lastTrickleState) {
+                EventBus.getDefault().post(new NeighbourUnreachable(neighbor));
                 inconsistency++;
+            }
+            lastTrickleState.clear();
+
+            /*
+             * then we save the state for the next trickle recomputation
+             */
+            lastTrickleState = tmp;
+
+            if (inconsistency < consistency) {
+                if (trickleTimer > EXPONENTIAL_THRESHOLD)
+                    trickleTimer = (((trickleTimer * 2) > (START_TRICKLE_TIMER * (Math.pow(2, IMAX_TRICKLE_TIMER)))) ? Math.pow(2, IMAX_TRICKLE_TIMER) : (trickleTimer * 2));
+                else
+                    trickleTimer += LINEAR_STEP;
+            } else {
+                trickleTimer = START_TRICKLE_TIMER;
+            }
         }
-
-        /*
-         * Then we detect for neighbour that disappeared inconsistency
-         */
-        for(BluetoothNeighbour neighbor : lastTrickleState) {
-            try { NetworkCoordinator.getInstance().delNeighbor(neighbor.getLinkLayerAddress()); }
-            catch (RecordNotFoundException ignore){  }
-            inconsistency++;
-        }
-        lastTrickleState.clear();
-
-        /*
-         * then we save the state for the next trickle recomputation
-         */
-        lastTrickleState = tmp;
-
-        if(inconsistency < consistency) {
-            if(trickleTimer > EXPONENTIAL_THRESHOLD)
-                trickleTimer = (((trickleTimer * 2) > (START_TRICKLE_TIMER * (Math.pow(2, IMAX_TRICKLE_TIMER)))) ? Math.pow(2, IMAX_TRICKLE_TIMER) : (trickleTimer * 2));
-            else
-                trickleTimer += LINEAR_STEP;
-        } else {
-            trickleTimer = START_TRICKLE_TIMER;
-        }
-
         //todo: should we post a neighborhoodchange event when trickle is reset ?
     }
 
@@ -296,9 +297,13 @@ public class BluetoothScanner implements SensorEventListener {
                 if (device.getAddress() == null)
                     return;
                 BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
-                if(btNeighborhood.add(btPeerDevice)){
-                    Log.d(TAG, "[+] device "+device.getName()+" ["+device.getAddress()+"] discovered");
-                    NetworkCoordinator.getInstance().newNeighbour(btPeerDevice, true);
+                boolean add;
+                synchronized (lock) {
+                    add = btNeighborhood.add(btPeerDevice);
+                }
+                if (add) {
+                    Log.d(TAG, "[+] device " + device.getName() + " [" + device.getAddress() + "] discovered");
+                    EventBus.getDefault().post(new NeighbourReachable(btPeerDevice));
                 }
             }
 
@@ -334,7 +339,9 @@ public class BluetoothScanner implements SensorEventListener {
                 }
 
                 scanningState    = ScanningState.SCANNING_ON;
-                btNeighborhood.clear();
+                synchronized (lock) {
+                    btNeighborhood.clear();
+                }
                 handler.removeCallbacksAndMessages(null);
                 lastscan = true;
                 hasCallback = false;
@@ -384,6 +391,25 @@ public class BluetoothScanner implements SensorEventListener {
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
+    }
 
+    @Override
+    public boolean isScanning() {
+        BluetoothAdapter adapter =  BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if(adapter != null)
+            return adapter.isDiscovering();
+
+        return false;
+    }
+
+    @Override
+    public HashSet<LinkLayerNeighbour> getNeighbourList() {
+        HashSet<LinkLayerNeighbour> set = new HashSet<LinkLayerNeighbour>();
+        synchronized (lock) {
+            for (BluetoothNeighbour bn : btNeighborhood) {
+                set.add(bn);
+            }
+        }
+        return set;
     }
 }

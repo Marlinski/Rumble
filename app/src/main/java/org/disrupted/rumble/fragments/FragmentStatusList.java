@@ -372,6 +372,7 @@ public class FragmentStatusList extends Fragment {
             catch (IOException ignore) {
             }
 
+            //todo: replace by an Event !!
             DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, null);
 
             composeTextView.setText("");

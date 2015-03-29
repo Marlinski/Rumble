@@ -25,18 +25,21 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.WorkerPool;
+import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.ThreadPoolCoordinator;
+import org.disrupted.rumble.network.protocols.Worker;
 
 import java.io.IOException;
 import java.util.UUID;
 
+import de.greenrobot.event.EventBus;
+
 /**
  * @author Marlinski
  */
-public abstract class BluetoothServer implements NetworkThread {
+public abstract class BluetoothServer implements Worker {
 
     private static final String TAG = "BluetoothServer";
 
@@ -45,31 +48,41 @@ public abstract class BluetoothServer implements NetworkThread {
     protected UUID bt_service_uuid;
     protected String bt_service_name;
     protected boolean secureSocket;
+    private boolean working;
 
     public BluetoothServer(UUID uuid, String name, boolean secure) {
         this.bt_service_uuid = uuid;
         this.bt_service_name = name;
         this.secureSocket = secure;
+        this.working = false;
     }
 
     @Override
-    public String getType() {
+    public final String getLinkLayerIdentifier() {
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override
-    public String getNetworkThreadID() {
-        return "Bluetooth Server";
+    public String getWorkerIdentifier() {
+        return "BluetoothServer";
     }
 
+    @Override
+    public boolean isWorking() {
+        return working;
+    }
 
-    public void runNetworkThread() {
+    @Override
+    public void startWorking() {
+        if(working)
+            return;
+        working = true;
+
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if(adapter == null)
             return;
 
         localMacAddress = adapter.getAddress();
-
         BluetoothServerSocket tmp = null;
 
         try {
@@ -95,32 +108,29 @@ public abstract class BluetoothServer implements NetworkThread {
                     Log.d(TAG, "[+] Client connected");
 
                     LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-                    NetworkCoordinator.getInstance().newNeighbour(neighbour, false);
+                    EventBus.getDefault().post(new NeighbourReachable(neighbour));
 
-                    NetworkThread clientThread = onClientConnected(mmConnectedSocket);
-
-                    if((clientThread != null) && (ThreadPoolCoordinator.getInstance().addNetworkThread(clientThread, ThreadPoolCoordinator.PRIORITY_HIGH))) {
-                        continue;
-                    } else {
-                        try {
-                            mmConnectedSocket.close();
-                        } catch (IOException silentlyIgnore) {
-                        }
-                    }
+                    onClientConnected(mmConnectedSocket);
                 }
             }
-        } catch (Exception e) {
-            Log.d(TAG, "[-] ENDED "+getNetworkThreadID());
+        } catch (IOException e) {
+            Log.d(TAG, "[-] ENDED "+getWorkerIdentifier());
+        } finally {
+            stopWorking();
         }
     }
 
-    abstract protected NetworkThread onClientConnected(BluetoothSocket mmConnectedSocket);
+    abstract protected void onClientConnected(BluetoothSocket mmConnectedSocket);
 
     @Override
-    public void killNetworkThread() {
+    public void stopWorking() {
+        if(!working)
+            return;
+        working = false;
+
         try {
             mmServerSocket.close();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
     }
 }

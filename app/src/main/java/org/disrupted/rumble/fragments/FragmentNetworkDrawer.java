@@ -44,6 +44,7 @@ import android.widget.Switch;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
@@ -55,6 +56,7 @@ import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 
 import java.util.List;
 
@@ -114,7 +116,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        List<LinkLayerNeighbour> neighborhood = mNetworkCoordinator.getNeighborList();
+        List<NeighbourInfo> neighborhood = mNetworkCoordinator.getNeighborList();
         listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         mDrawerNeighbourList.setAdapter(listAdapter);
     }
@@ -143,14 +145,6 @@ public class FragmentNetworkDrawer extends Fragment {
     public void onEvent(NeighborhoodChanged event) {
         refreshNeighborhood();
     }
-    public void onEvent(NeighbourDisconnected event) {
-        //todo: refreshNeighborhood only the neighbour being affected
-        refreshNeighborhood();
-    }
-    public void onEvent(NeighbourConnected event) {
-        //todo: refreshNeighborhood only the neighbour being affected
-        refreshNeighborhood();
-    }
 
 
     private void refreshInterfaces() {
@@ -166,7 +160,7 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                List<LinkLayerNeighbour> neighborhood = mNetworkCoordinator.getNeighborList();
+                List<NeighbourInfo> neighborhood = mNetworkCoordinator.getNeighborList();
                 if (mDrawerNeighbourList.getAdapter() != null) {
                     ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
                 }
@@ -209,15 +203,16 @@ public class FragmentNetworkDrawer extends Fragment {
         Log.d(TAG, "[+] Enabling Bluetooth and making it Discoverable");
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        prefs.edit().putBoolean(getString(R.string.bluetooth_state_on_openning),
-                BluetoothConfigureInteraction.isEnabled(getActivity())).commit();
+        prefs.edit().putBoolean(
+                getString(R.string.bluetooth_state_on_openning),
+                BluetoothConfigureInteraction.isEnabled(getActivity())).apply();
 
         if(!BluetoothConfigureInteraction.isEnabled(getActivity())) {
             BluetoothConfigureInteraction.enableBT(getActivity());
             return;
         }
 
-        mNetworkCoordinator.startBluetooth();
+        mNetworkCoordinator.startLinkLayer(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
 
         if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
             BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -232,7 +227,7 @@ public class FragmentNetworkDrawer extends Fragment {
     private void onBluetoothDisable() {
         if(!mBound)
             return;
-        mNetworkCoordinator.stopBluetooth();
+        mNetworkCoordinator.stopLinkLayer(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         if(prefs.getBoolean(getString(R.string.bluetooth_state_on_openning), false)) {
             BluetoothConfigureInteraction.disableBT(getActivity());
@@ -245,7 +240,7 @@ public class FragmentNetworkDrawer extends Fragment {
         if((requestCode == BluetoothConfigureInteraction.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
             Log.d(TAG, "[+] Bluetooth Enabled");
 
-            mNetworkCoordinator.startBluetooth();
+            mNetworkCoordinator.startLinkLayer(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
 
             if(!BluetoothConfigureInteraction.isDiscoverable(getActivity())) {
                 BluetoothConfigureInteraction.discoverableBT(getActivity());
@@ -290,7 +285,7 @@ public class FragmentNetworkDrawer extends Fragment {
         if (!wifiMan.isWifiEnabled())
             wifiMan.setWifiEnabled(true);
 
-        mNetworkCoordinator.startWifi();
+        mNetworkCoordinator.startLinkLayer(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
     }
 
 
@@ -305,7 +300,7 @@ public class FragmentNetworkDrawer extends Fragment {
             wifiMan.setWifiEnabled(false);
         }
 
-        mNetworkCoordinator.stopWifi();
+        mNetworkCoordinator.stopLinkLayer(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
     }
 
 

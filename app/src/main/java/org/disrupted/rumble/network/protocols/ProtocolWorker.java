@@ -32,22 +32,23 @@ import java.util.concurrent.LinkedBlockingQueue;
  * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
-public abstract class GenericProtocol implements Protocol {
+public abstract class ProtocolWorker implements Worker {
 
-
-    private static final String TAG = "GenericProtocol";
+    private static final String TAG = "ProtocolWorker";
 
     private BlockingQueue<Command> commandQueue;
+
+    public ProtocolWorker() {
+        commandQueue = new LinkedBlockingQueue<Command>(1);
+    }
 
     abstract protected void processingPacketFromNetwork();
 
     abstract protected boolean onCommandReceived(Command command);
 
-    public GenericProtocol() {
-        commandQueue = new LinkedBlockingQueue<Command>(1);
-    }
+    abstract protected boolean isCommandSupported(String commandName);
 
-    public final void onGenericProcotolConnected() {
+    public final void onWorkerConnected() {
         processingCommandFromQueue.start();
 
         try {
@@ -61,17 +62,12 @@ public abstract class GenericProtocol implements Protocol {
         @Override
         public synchronized void run() {
             try {
-                //Log.d(TAG, "[+] started command thread: "+getProtocolID());
                 while (true) {
                     Command command = commandQueue.take();
-                    if(!isCommandSupported(command.getCommandName()))
-                        continue;
-
                     onCommandReceived(command);
                 }
             }
             catch(InterruptedException e) {
-                //Log.d(TAG, "[-] stopped command thread: "+getProtocolID());
                 commandQueue.clear();
             }
         }

@@ -17,27 +17,23 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.rumble;
+package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.NeighbourManager;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.NetworkThread;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.StatusSentEvent;
-import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
+import org.disrupted.rumble.network.protocols.rumble.RumbleNeighbour;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHello;
@@ -58,82 +54,90 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleOverBluetooth extends GenericProtocol implements NetworkThread {
+public class RumbleOverBluetooth extends ProtocolWorker {
 
     private static final String TAG = "RumbleOverBluetooth";
 
-    private BluetoothConnection con;
-    protected boolean isBeingKilled;
+    private final BluetoothConnection con;
+    private final RumbleProtocol protocol;
+    protected boolean working;
 
-    public RumbleOverBluetooth(BluetoothConnection con) {
+    private BluetoothNeighbour bluetoothNeighbour;
+
+    public RumbleOverBluetooth(RumbleProtocol protocol, BluetoothConnection con) {
+        this.protocol = protocol;
         this.con = con;
-        this.isBeingKilled = false;
+        this.working = false;
+        this.bluetoothNeighbour = new BluetoothNeighbour(con.getRemoteMacAddress());
+    }
+
+    public BluetoothNeighbour getBluetoothNeighbour() {
+        return bluetoothNeighbour;
     }
 
     @Override
-    public String getNetworkThreadID() {
-        return getProtocolID()+" "+con.getConnectionID();
+    public boolean isWorking() {
+        return working;
     }
+
     @Override
-    public String getProtocolID() {
+    public String getProtocolIdentifier() {
         return RumbleProtocol.protocolID;
     }
-    @Override
-    public String getType() {
-        return con.getLinkLayerIdentifier();
-    }
+
     @Override
     public String getLinkLayerIdentifier() {
         return con.getLinkLayerIdentifier();
     }
 
     @Override
-    public void runNetworkThread() {
+    public String getWorkerIdentifier() {
+        return getProtocolIdentifier()+" "+con.getConnectionID();
+    }
+
+    @Override
+    public void startWorking() {
+        if(working)
+            return;
+        working = true;
 
         try {
             con.connect();
         } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getNetworkThreadID()+" "+exception.getMessage());
+            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
             return;
         }
 
+        RumbleBTState connectionState = null;
         try {
-            NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(con.getRemoteMacAddress())
-                    .getRumbleBTState()
-                    .connected(this.getNetworkThreadID());
+            connectionState = protocol.getBTState(con.getRemoteMacAddress());
+            connectionState.connected(this.getWorkerIdentifier());
 
-            NetworkCoordinator.getInstance().addProtocol(con.getRemoteMacAddress(), this);
-
-            Log.d(TAG, "[+] ESTABLISHED: " + getNetworkThreadID());
-            EventBus.getDefault().post(new NeighbourConnected(new BluetoothNeighbour(con.getRemoteMacAddress())));
+            Log.d(TAG, "[+] ESTABLISHED: " + getWorkerIdentifier());
+            EventBus.getDefault().post(new NeighbourConnected(
+                    new BluetoothNeighbour(con.getRemoteMacAddress()),
+                    getProtocolIdentifier() )
+            );
 
             /*
              * this method automatically creates two threads that runs in a while(true) loop,
              *   - one for processing the command from the upper layer
              *   - one for processing the packet received by the link layer layer
              */
-            onGenericProcotolConnected();
+            onWorkerConnected();
 
-        } catch (RecordNotFoundException ignoredCauseImpossible) {
-            Log.e(TAG, "[!] FAILED: "+getNetworkThreadID()+" cannot find the record for "+con.getRemoteMacAddress());
         } catch (RumbleBTState.StateException e) {
-            Log.e(TAG, "[!] FAILED: "+getNetworkThreadID()+" RumbleBTState mismatch");
+            Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" RumbleBTState mismatch");
         } finally {
-            try {
-                NetworkCoordinator.getInstance().delProtocol(con.getRemoteMacAddress(), this);
+            stopWorking();
 
-                if (!isBeingKilled)
-                    killNetworkThread();
+            if(connectionState != null)
+                connectionState.notConnected();
 
-                NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(con.getRemoteMacAddress())
-                        .getRumbleBTState()
-                        .notConnected();
-
-                EventBus.getDefault().post(new NeighbourDisconnected(new BluetoothNeighbour(con.getRemoteMacAddress())));
-
-            } catch (RecordNotFoundException ignoredCauseImpossible) {
-            } catch (ProtocolNotFoundException ignoredCauseImpossible) {
-            }
+            EventBus.getDefault().post(new NeighbourDisconnected(
+                    new BluetoothNeighbour(con.getRemoteMacAddress()),
+                    getProtocolIdentifier() )
+            );
         }
     }
 
@@ -144,6 +148,8 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             byte[] payload = null;
             while (true) {
                 try {
+                    long timeToTransfer = System.currentTimeMillis();
+
                 /* receiving header */
                     int count = con.getInputStream().read(buffer, 0, BlockHeader.HEADER_LENGTH);
                     if (count < BlockHeader.HEADER_LENGTH)
@@ -177,9 +183,24 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
                             BlockStatus blockStatus = new BlockStatus(header, payload);
                             blockStatus.readBuffer();
                             StatusMessage statusMessage = blockStatus.getMessage();
-                            statusMessage.addForwarder(con.getRemoteMacAddress(), "Rumble");
+
+                            /*
+                             * It is very important to post an event as it will be catch by the
+                             * CacheManager and will update the database accordingly
+                             */
+                            timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+                            List<String> sender = new LinkedList<String>();
+                            sender.add(con.getRemoteMacAddress());
+                            EventBus.getDefault().post(new StatusSentEvent(
+                                            statusMessage,
+                                            sender,
+                                            RumbleProtocol.protocolID,
+                                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                            blockStatus.getBytes().length,
+                                            timeToTransfer)
+                            );
+
                             Log.d(TAG, "Received Rumble message: " + statusMessage.toString());
-                            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(statusMessage, null);
                             break;
                         default:
                             throw new SubtypeUnknown(header.getSubtype());
@@ -216,6 +237,7 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
 
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand) command).getStatus();
+            //todo ce n'est pas ici de prendre cette decision
             if (statusMessage.isForwarder(con.getRemoteMacAddress(), RumbleProtocol.protocolID))
                 return false;
 
@@ -224,12 +246,14 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
             Block block = new BlockStatus(new BlockHeader(), statusMessage);
             try {
                 long timeToTransfer = System.currentTimeMillis();
-                long bytesTransfered = block.getBytes().length;
 
                 con.getOutputStream().write(block.getBytes());
 
+                /*
+                 * It is very important to post an event as it will be catch by the
+                 * CacheManager and will update the database accordingly
+                 */
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-                long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
                 recipients.add(con.getRemoteMacAddress());
                 EventBus.getDefault().post(new StatusSentEvent(
@@ -237,10 +261,12 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
                                 recipients,
                                 RumbleProtocol.protocolID,
                                 BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                                throughput)
+                                block.getBytes().length,
+                                timeToTransfer)
                 );
 
-                //remove that
+                // /!\ remove that
+                long throughput = (block.getBytes().length / (timeToTransfer == 0 ? 1: timeToTransfer));
                 Log.d(TAG, "Status Sent ("+con.getRemoteMacAddress()+","+(throughput/1000L)+"): " + statusMessage.toString());
                 try {
                     Thread.sleep(1000);
@@ -260,17 +286,16 @@ public class RumbleOverBluetooth extends GenericProtocol implements NetworkThrea
     }
 
     @Override
-    public void stopProtocol() {
-    }
-
-    @Override
-    public void killNetworkThread() {
-        this.isBeingKilled = true;
+    public void stopWorking() {
+        if(!working)
+            return;
+        working = false;
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException e) {
             Log.e(TAG, e.getMessage());
         }
-        Log.d(TAG, "[-] ENDED: " + getNetworkThreadID());
+        Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
     }
+
 }

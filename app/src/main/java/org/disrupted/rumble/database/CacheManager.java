@@ -38,8 +38,8 @@ public class CacheManager {
     public void start() {
         if(!started) {
             Log.d(TAG, "[+] Starting Cache Manager");
-            EventBus.getDefault().register(this);
             started = true;
+            EventBus.getDefault().register(this);
         }
     }
 
@@ -54,6 +54,9 @@ public class CacheManager {
     }
 
     public void onEvent(StatusSentEvent event) {
+        if(!started)
+            return;
+
         Iterator<String> it = event.recipients.iterator();
         while(it.hasNext())
             event.status.addForwarder(it.next(), event.protocolID);
@@ -63,8 +66,10 @@ public class CacheManager {
     }
 
     public void onEvent(StatusReceivedEvent event) {
-        StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
+        if(!started)
+            return;
 
+        StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
             event.status.addForwarder(event.sender, event.protocolID);
             event.status.addDuplicate(1);

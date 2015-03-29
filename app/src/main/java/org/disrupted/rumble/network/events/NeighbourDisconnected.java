@@ -26,8 +26,10 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
  */
 public class NeighbourDisconnected {
     public final LinkLayerNeighbour neighbour;
+    public final String protocolIdentifier;
 
-    public NeighbourDisconnected(LinkLayerNeighbour neighbour) {
+    public NeighbourDisconnected(LinkLayerNeighbour neighbour, String protocolIdentifier) {
         this.neighbour = neighbour;
+        this.protocolIdentifier = protocolIdentifier;
     }
 }

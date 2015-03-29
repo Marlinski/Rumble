@@ -28,123 +28,74 @@ import android.util.Log;
 
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.NeighbourManager;
-import org.disrupted.rumble.network.NetworkThread;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
-import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.ThreadPoolCoordinator;
-import org.disrupted.rumble.network.protocols.firechat.FirechatOverBluetooth;
-import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
-import org.disrupted.rumble.network.protocols.rumble.RumbleOverBluetooth;
-import org.disrupted.rumble.network.protocols.rumble.RumbleBTServer;
-import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
+import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerAdapter extends LinkLayerAdapter {
+public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
 
     private static final String TAG = "BluetoothLinkLayerAdapter";
     public static final String LinkLayerIdentifier = "BLUETOOTH";
 
+    private NetworkCoordinator networkCoordinator;
     private BluetoothScanner btScanner;
     private boolean register;
+    private boolean activated;
 
 
     public BluetoothLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        super(networkCoordinator);
-        this.btScanner = BluetoothScanner.getInstance(networkCoordinator);
+        this.networkCoordinator = networkCoordinator;
+        this.btScanner = BluetoothScanner.getInstance();
         register = false;
+        activated = false;
     }
 
     public String getLinkLayerIdentifier() {
         return LinkLayerIdentifier;
     }
 
-    public void onLinkStart() {
-        Log.d(TAG, "[+] Starting Bluetooth");
-        RumbleBTServer btRumbleServer = new RumbleBTServer();
-        ThreadPoolCoordinator.getInstance().addNetworkThread(btRumbleServer);
+    @Override
+    public boolean isActivated() {
+        return activated;
+    }
 
+    public void linkStart() {
+        if(activated)
+            return;
+
+        Log.d(TAG, "[+] Starting Bluetooth");
         btScanner.startDiscovery();
+        networkCoordinator.addScanner(btScanner);
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         register = true;
+        activated = true;
+
+        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
 
-    public void onLinkStop() {
+    public void linkStop() {
+        if(!activated)
+            return;
+
         Log.d(TAG, "[+] Stopping Bluetooth");
+        networkCoordinator.delScanner(btScanner);
         btScanner.destroy();
-        ThreadPoolCoordinator.getInstance().killThreadType(LinkLayerIdentifier);
+
+        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
         if(register)
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
         register = false;
-        // TODO: this should be useless, should check
-        NetworkCoordinator.getInstance().removeNeighborsType(LinkLayerIdentifier);
-
-    }
-
-    @Override
-    public boolean isScanning() {
-        if(activated)
-            return BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).isDiscovering();
-        else
-            return false;
-    }
-
-    public void forceDiscovery() {
-        if(activated)
-            btScanner.forceDiscovery();
-    }
-
-
-    /*
-     * todo make this portion of code protocol independant (by registering the protocol when button click)
-     */
-    public void connectTo(LinkLayerNeighbour neighbour, boolean force) {
-        NeighbourManager record;
-        try {
-            record = NetworkCoordinator.getInstance().getNeighbourRecordFromDeviceAddress(neighbour.getLinkLayerAddress());
-        } catch (RecordNotFoundException e) {
-            Log.e(TAG, "[!] record not found ! cannot connectTo "+neighbour.getLinkLayerAddress());
-            return;
-        }
-
-        if (record.getRumbleBTState().getState() == RumbleBTState.RumbleBluetoothState.NOT_CONNECTED) {
-            BluetoothConnection con = new BluetoothClientConnection(
-                    neighbour.getLinkLayerAddress(),
-                    RumbleProtocol.RUMBLE_BT_UUID_128,
-                    RumbleProtocol.RUMBLE_BT_STR,
-                    false);
-            NetworkThread rumble = new RumbleOverBluetooth(con);
-            try {
-                record.getRumbleBTState().connectionInitiated(rumble.getNetworkThreadID());
-                ThreadPoolCoordinator.getInstance().addNetworkThread(rumble);
-            } catch (RumbleBTState.StateException e) {
-                /*
-                 * Should be quiet rare but it is possible that the BluetoothServer thread has
-                 * Accepted() a connection before we initiate this one. In that case, we silently
-                 * cancel this connection request
-                 */
-            }
-        }
-
-        if (!record.isConnectedWithProtocol(FirechatProtocol.protocolID)) {
-            BluetoothConnection con = new BluetoothClientConnection(
-                    neighbour.getLinkLayerAddress(),
-                    FirechatProtocol.FIRECHAT_BT_UUID_128,
-                    FirechatProtocol.FIRECHAT_BT_STR,
-                    false);
-            FirechatOverBluetooth firechat = new FirechatOverBluetooth(con);
-            ThreadPoolCoordinator.getInstance().addNetworkThread(firechat);
-        }
-
+        activated = false;
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

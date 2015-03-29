@@ -27,14 +27,15 @@ import java.util.List;
  * This event holds every information known on a transmission that happened successfully. These
  * information includes:
  *
- * - which status was sent
- * - who received it (or an estimation of it in the case of Multicast IP)
- * - which protocol was used to transmit this status (rumble, firechat)
- * - which link layer was used (bluetooth, wifi)
- * - mean throughput (bytes/ms)
+ * - The sent status (as it was sent)
+ * - The receiver(s) (or an estimation of it in the case of Multicast IP)
+ * - The protocol used to transmit this status (rumble, firechat)
+ * - The link layer used (bluetooth, wifi)
+ * - The size of the data transmitted (bytes)
+ * - The duration of the transmission (ms)
  *
  * These information will be used by different component to update some informations :
- *  - The MessageQueue to update its list and the neighbour's queue as well
+ *  - The CacheManager to update its list and the neighbour's queue as well
  *  - The LinkLayerAdapte to update its internal metric that is used by getBestInterface
  *  - The FragmentStatusList to provide a visual feedback to the user
  *
@@ -46,14 +47,16 @@ public class StatusSentEvent extends NetworkEvent {
     public List<String> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
-    public long meanThroughput;
+    public long size;
+    public long duration;
 
-    public StatusSentEvent(StatusMessage status, List<String> recipients, String protocolID, String linkLayerIdentifier, long meanThroughput) {
+    public StatusSentEvent(StatusMessage status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
-        this.meanThroughput = meanThroughput;
+        this.size = size;
+        this.duration = duration;
     }
 
 }

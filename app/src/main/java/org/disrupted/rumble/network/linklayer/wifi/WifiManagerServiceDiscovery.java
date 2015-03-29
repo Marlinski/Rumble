@@ -36,7 +36,7 @@ import de.greenrobot.event.EventBus;
  * @author Marlinski
  */
 public class WifiManagerServiceDiscovery {
-
+    /*
     private static final String TAG = "WifiManagerServiceDiscovery";
 
     private NsdManager mNsdManager;
@@ -139,6 +139,6 @@ public class WifiManagerServiceDiscovery {
         }
     }
 
-
+    */
 
 }

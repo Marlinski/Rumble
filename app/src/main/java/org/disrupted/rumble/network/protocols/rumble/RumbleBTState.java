@@ -15,20 +15,20 @@ public class RumbleBTState {
 
     private final Object lockRumbleBTState = new Object();
     private RumbleBluetoothState state;
-    private String threadID;
+    private String workerID;
 
     public RumbleBTState() {
         this.state = RumbleBluetoothState.NOT_CONNECTED;
-        this.threadID = null;
+        this.workerID = null;
     }
 
     /*
      * goTo the CONNECTION INITIATED state which happens when we initiate a connection
      * (most probably from the BluetoothLinkLayer.connectTo method).
-     * The threadID is then stored as it may be cancelled under certain circumstances.
+     * The workerID is then stored as it may be cancelled under certain circumstances.
      * It throws a StateException if previous state is different than NOT_CONNECTED
      */
-    public void connectionInitiated(String threadID) throws StateException {
+    public void connectionInitiated(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
             switch (state) {
                 case CONNECTED:
@@ -37,7 +37,7 @@ public class RumbleBTState {
                     throw new StateException();
                 case NOT_CONNECTED:
                 default:
-                    this.threadID = threadID;
+                    this.workerID = workerID;
                     state = RumbleBluetoothState.CONNECTION_INITIATED;
             }
         }
@@ -45,12 +45,12 @@ public class RumbleBTState {
 
     /*
      * goTo the CONNECTION ACCEPTED state which happens when RumbleBTServer receive
-     * a connection (accept() returns). The threadID is then stored as it may be
+     * a connection (accept() returns). The workerID is then stored as it may be
      * cancelled under certain circumstances.
      * It can only happen from the NOT_CONNECTED or CONNECTION_INITIATED state.
      * It throws a StateException otherwise
      */
-    public void connectionAccepted(String threadID) throws StateException {
+    public void connectionAccepted(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
             switch (state) {
                 case CONNECTED:
@@ -59,7 +59,7 @@ public class RumbleBTState {
                 case CONNECTION_INITIATED:
                 case NOT_CONNECTED:
                 default:
-                    this.threadID = threadID;
+                    this.workerID = workerID;
                     state = RumbleBluetoothState.CONNECTION_ACCEPTED;
             }
         }
@@ -71,7 +71,7 @@ public class RumbleBTState {
      * It can only happen from an intermediary state like CONNECTION_INITIATED or
      * CONNECTED_ACCEPTED. It throws a StateException otherwise
      */
-    public void connected(String threadID) throws StateException {
+    public void connected(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
             switch (state) {
                 case NOT_CONNECTED:
@@ -81,7 +81,7 @@ public class RumbleBTState {
                 case CONNECTION_ACCEPTED:
                 default:
                     state = RumbleBluetoothState.CONNECTED;
-                    this.threadID = threadID;
+                    this.workerID = workerID;
             }
         }
     }
@@ -96,7 +96,7 @@ public class RumbleBTState {
             switch (state) {
                 default:
                     state = RumbleBluetoothState.NOT_CONNECTED;
-                    this.threadID = null;
+                    this.workerID = null;
             }
         }
     }
@@ -104,14 +104,14 @@ public class RumbleBTState {
     public RumbleBluetoothState getState() {
         return state;
     }
-    public String getConnectionInitiatedThreadID()  throws StateException{
+    public String getConnectionInitiatedWorkerID()  throws StateException{
         if(state == RumbleBluetoothState.CONNECTION_INITIATED)
-            return this.threadID;
+            return this.workerID;
         throw new StateException();
     }
-    public String getConnectionAcceptedThreadID() throws StateException{
+    public String getConnectionAcceptedWorkerID() throws StateException{
         if(state == RumbleBluetoothState.CONNECTION_ACCEPTED)
-            return this.threadID;
+            return this.workerID;
         throw new StateException();
     }
 

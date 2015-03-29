@@ -1,0 +1,272 @@
+/*
+ * Copyright (C) 2014 Disrupted Systems
+ *
+ * This file is part of Rumble.
+ *
+ * Rumble is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Rumble is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.disrupted.rumble.network;
+
+
+import android.renderscript.Element;
+import android.util.Log;
+
+import org.disrupted.rumble.network.protocols.Worker;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.PriorityBlockingQueue;
+
+/**
+ * @author Marlinski
+ */
+public class WorkerPool {
+
+    private static final String TAG = "WorkerPool";
+
+    public static final int PRIORITY_HIGH        =  5;
+    public static final int PRIORITY_MIDDLE_HIGH =  10;
+    public static final int PRIORITY_MIDDLE      =  15;
+    public static final int PRIORITY_MIDDLE_LOW  =  20;
+    public static final int PRIORITY_LOW         =  25;
+
+    private PriorityBlockingQueue<QueueElement> queue;
+    private LinkedList<WorkerThread> pool;
+
+    private static final Object lock = new Object();
+
+    public WorkerPool(int N) {
+        queue = new PriorityBlockingQueue<QueueElement>();
+        pool = new LinkedList<WorkerThread>();
+        for (int i = 0; i < N; i++) {
+            WorkerThread thread = new WorkerThread("Thread "+i);
+            thread.start();
+            pool.add(thread);
+        }
+    }
+
+    private boolean alreadyInPool(QueueElement qe) {
+        Iterator<WorkerThread> it = pool.iterator();
+        while (it.hasNext()) {
+            WorkerThread element = it.next();
+            Worker worker = element.getWorker();
+            if (worker != null) {
+                if (worker.getWorkerIdentifier().equals(qe.getWorker().getWorkerIdentifier()))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    public QueueElement alreadyInQueue(QueueElement qe) {
+        Iterator<QueueElement> it = queue.iterator();
+        while (it.hasNext()) {
+            QueueElement element = it.next();
+            if (element.getWorker().getWorkerIdentifier()
+                    .equals(qe.getWorker().getWorkerIdentifier()))
+                return element;
+        }
+        return null;
+    }
+
+    public boolean addWorker(Worker worker, int priority) {
+        synchronized (lock) {
+            QueueElement qe = new QueueElement(worker, priority);
+            if (alreadyInPool(qe)) {
+                Log.d(TAG, "[-] same worker already exists in pool");
+                return false;
+            }
+            QueueElement exists = alreadyInQueue(qe);
+            if (exists == null) {
+                Log.d(TAG, "[+] " + worker.getWorkerIdentifier() + " added to ThreadQueue");
+                queue.add(qe);
+                return true;
+            }
+            if (exists.getPriority() < priority) {
+                Log.d(TAG, "[-] same thread exists in queue with more priority");
+                return false;
+            }
+            queue.remove(exists);
+            Log.d(TAG, "[+] " + worker.getWorkerIdentifier() + " added to ThreadQueue");
+            queue.add(qe);
+            return true;
+        }
+    }
+
+    public boolean addWorker(Worker worker) {
+        return addWorker(worker, PRIORITY_MIDDLE);
+    }
+
+    public final List<Worker> getWorkers(String protocolIdentifier, boolean active) {
+        synchronized (lock) {
+            final List<Worker> ret = new LinkedList<Worker>();
+            if(!active) {
+                Iterator<QueueElement> itq = queue.iterator();
+                while(itq.hasNext()) {
+                    QueueElement element = itq.next();
+                    if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
+                        ret.add(element.getWorker());
+                }
+            }
+
+            Iterator<WorkerThread> itp = pool.iterator();
+            while(itp.hasNext()) {
+                WorkerThread element = itp.next();
+                if(element.getWorker() != null)
+                    if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
+                        ret.add(element.getWorker());
+            }
+            return ret;
+        }
+    }
+
+    public void stopWorkers(String protocolIdentifier) {
+        synchronized (lock) {
+            final List<Worker> ret = new LinkedList<Worker>();
+            Iterator<QueueElement> itq = queue.iterator();
+            while(itq.hasNext()) {
+                QueueElement element = itq.next();
+                if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
+                    itq.remove();
+            }
+
+            Iterator<WorkerThread> itp = pool.iterator();
+            while(itq.hasNext()) {
+                WorkerThread element = itp.next();
+                if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
+                    element.getWorker().stopWorking();
+            }
+        }
+    }
+
+    public void stopWorker(String workerID) {
+        synchronized (lock) {
+            final List<Worker> ret = new LinkedList<Worker>();
+            Iterator<QueueElement> itq = queue.iterator();
+            while(itq.hasNext()) {
+                QueueElement element = itq.next();
+                if(element.getWorker().getWorkerIdentifier().equals(workerID))
+                    itq.remove();
+            }
+
+            Iterator<WorkerThread> itp = pool.iterator();
+            while(itq.hasNext()) {
+                WorkerThread element = itp.next();
+                if(element.getWorker().getWorkerIdentifier().equals(workerID))
+                    element.getWorker().stopWorking();
+            }
+        }
+    }
+
+    public void killPool() {
+        synchronized (lock) {
+            Iterator<QueueElement> itq = queue.iterator();
+            while(itq.hasNext()) {
+                QueueElement el = itq.next();
+                if(el != null)
+                    itq.remove();
+            }
+            queue = null;
+
+            Iterator<WorkerThread> itp = pool.iterator();
+            while(itp.hasNext()) {
+                WorkerThread wt = itp.next();
+                if(wt != null) {
+                    wt.killWorker();
+                    wt.interrupt();
+                }
+                itp.remove();
+            }
+            pool = null;
+        }
+    }
+
+    private class QueueElement implements Comparable{
+
+        private Worker worker;
+        private int priority;
+
+        QueueElement(Worker worker, int priority){
+            this.worker = worker;
+            this.priority = priority;
+        }
+
+        public Worker getWorker() {
+            return worker;
+        }
+        public int getPriority() {
+            return priority;
+        }
+
+        @Override
+        public int compareTo(Object obj) {
+            if (obj == this)
+                return 0;
+
+            if(this.priority < ((QueueElement)obj).getPriority())
+                return -1;
+            if(this.priority == ((QueueElement)obj).getPriority())
+                return 0;
+            return 1;
+        }
+    }
+
+    private class WorkerThread extends Thread {
+
+        private static final String TAG = "WorkerThread";
+
+        private Worker worker;
+        private boolean isRunning;
+
+        WorkerThread(String name) {
+            super(name);
+            worker = null;
+            isRunning = false;
+        }
+
+        @Override
+        public void run() {
+            Log.d(TAG, "[+] "+this.getName()+" Started");
+
+            try {
+                while (true) {
+                        worker = null;
+                        isRunning = false;
+                        QueueElement element;
+
+                        element = queue.take();
+
+                        if(element == null) continue;
+                        //Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
+                        this.worker = element.getWorker();
+                        isRunning = true;
+                        worker.startWorking();
+                }
+            } catch (InterruptedException e) {
+                Log.d(TAG, "worker interrupted ", e);
+            }
+        }
+
+        public Worker getWorker(){
+            return worker;
+        }
+
+        public void killWorker() {
+            if(isRunning)
+                worker.stopWorking();
+        }
+    }
+}

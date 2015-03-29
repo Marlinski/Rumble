@@ -23,41 +23,10 @@ package org.disrupted.rumble.network.linklayer;
 /**
  * @author Marlinski
  */
-public abstract class LinkLayerNeighbour {
+public interface LinkLayerNeighbour {
 
-    private String linkLayerAddress;
+    public String getLinkLayerIdentifier();
 
-    abstract public String getLinkLayerName();
-
-    abstract public String getLinkLayerType();
-
-    public LinkLayerNeighbour(String linkLayerAddress) {
-        this.linkLayerAddress = linkLayerAddress;
-    }
-
-    public String getLinkLayerAddress() {
-        return this.linkLayerAddress;
-    }
-
-    @Override
-    public String toString() {
-        return "MAC address: " + linkLayerAddress;
-    }
-
-    @Override
-    public int hashCode() {
-        return linkLayerAddress.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof LinkLayerNeighbour))
-            return false;
-        if (obj == this)
-            return true;
-
-        LinkLayerNeighbour device = (LinkLayerNeighbour) obj;
-        return device.getLinkLayerAddress().equals(this.linkLayerAddress);
-    }
+    public String getLinkLayerAddress();
 
 }

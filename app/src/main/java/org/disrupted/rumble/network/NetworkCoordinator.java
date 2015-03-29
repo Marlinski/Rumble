@@ -31,17 +31,15 @@ import android.util.Log;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.RoutingActivity;
-import org.disrupted.rumble.network.events.NeighborhoodChanged;
-import org.disrupted.rumble.network.events.NeighbourProtocolStart;
-import org.disrupted.rumble.network.events.NewNeighbour;
-import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
-import org.disrupted.rumble.network.exceptions.UnknownNeighbourException;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.Scanner;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
+import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.util.HashMap;
@@ -66,18 +64,17 @@ import de.greenrobot.event.NoSubscriberEvent;
 public class NetworkCoordinator extends Service {
 
     public static final String ACTION_START_FOREGROUND = "org.disruptedsystems.rumble.action.startforeground";
-    public static final String ACTION_START_NETWORKING = "org.disruptedsystems.rumble.action.startnetworking";
-    public static final String ACTION_STOP_NETWORKING  = "org.disruptedsystems.rumble.action.stopnetworking";
     public static final String ACTION_MAIN_ACTION      = "org.disruptedsystems.rumble.action.mainaction";
     public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
     private static final String TAG = "NetworkCoordinator";
 
-    private static NetworkCoordinator instance;
     private static final Object lock = new Object();
 
-    private HashSet<NeighbourManager> neighborhoodHistory;
     private Map<String, LinkLayerAdapter> adapters;
+    private Map<String, WorkerPool> workerPools;
+    private Map<String, Protocol> protocols;
+    private List<Scanner> scannerList;
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
@@ -86,26 +83,37 @@ public class NetworkCoordinator extends Service {
         }
     }
 
-    // little hack to avoid binding to NetworkCoordinator which seems too bulky for certain usage
-    // this MUST only be called by the networking thread and classes it is safe because
-    // if NetworkCoordinator is destroy, so are all the related networking thread and classes
-    // todo: hmm maybe think of a better design ?
-    public static NetworkCoordinator getInstance() {
-        return instance;
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "[+] Starting NetworkCoordinator");
-        neighborhoodHistory = new HashSet<NeighbourManager>();
-        adapters = new HashMap<String, LinkLayerAdapter>();
-        LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
-        LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
-        adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
-        adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
-        EventBus.getDefault().register(this);
-        instance = this;
+        synchronized (lock) {
+            Log.d(TAG, "[+] Starting NetworkCoordinator");
+
+            scannerList = new LinkedList<Scanner>();
+
+            // register link layers
+            adapters = new HashMap<String, LinkLayerAdapter>();
+            LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
+            LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
+            adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
+            adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
+
+            // create worker pools
+            workerPools = new HashMap<String, WorkerPool>();
+            WorkerPool bluetoothWorkers = new WorkerPool(5);
+            WorkerPool wifiManagedWorkers = new WorkerPool(5);
+            workerPools.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothWorkers);
+            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), wifiManagedWorkers);
+
+            // register protocols
+            protocols = new HashMap<String, Protocol>();
+            Protocol rumbleProtocol = new RumbleProtocol(this);
+            Protocol firechatProtocol = new FirechatProtocol(this);
+            protocols.put(rumbleProtocol.getProtocolIdentifier(), rumbleProtocol);
+            protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
+
+            EventBus.getDefault().register(this);
+        }
     }
 
     @Override
@@ -116,240 +124,216 @@ public class NetworkCoordinator extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.d(TAG, "[-] Destroy NetworkCoordinator");
         synchronized (lock) {
-            neighborhoodHistory.clear();
+            Log.d(TAG, "[-] Destroy NetworkCoordinator");
+
+            // destroy protocols
+            for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {
+                entry.getValue().protocolStop();
+                entry.setValue(null);
+            }
+            protocols.clear();
+            protocols = null;
+
+            // destroy worker pools
+            for (Map.Entry<String, WorkerPool> entry : workerPools.entrySet()) {
+                entry.getValue().killPool();
+                entry.setValue(null);
+            }
+            workerPools.clear();
+            workerPools = null;
+
+            // stop link layers
             for (Map.Entry<String, LinkLayerAdapter> entry : adapters.entrySet()) {
                 entry.getValue().linkStop();
+                entry.setValue(null);
             }
             adapters.clear();
+            adapters = null;
+
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
         }
-        instance = null;
-        if(EventBus.getDefault().isRegistered(this))
-            EventBus.getDefault().unregister(this);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if(intent == null)
-            return START_STICKY;
+        synchronized (lock) {
+            if (intent == null)
+                return START_STICKY;
 
-        if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
-            Log.d(TAG, "Received Start Foreground Intent ");
+            if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
+                Log.d(TAG, "Received Start Foreground Intent ");
 
-            Intent notificationIntent = new Intent(this, RoutingActivity.class);
-            notificationIntent.setAction(ACTION_MAIN_ACTION);
-            notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                    notificationIntent, 0);
+                for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {
+                    entry.getValue().protocolStart();
+                }
 
-            Notification notification = new NotificationCompat.Builder(this)
-                    .setContentTitle("Rumble")
-                    .setTicker("Rumble started")
-                    .setContentText("Rumble started")
-                    .setSmallIcon(R.drawable.small_icon)
-                    .setContentIntent(pendingIntent)
-                    .setOngoing(true).build();
+                Intent notificationIntent = new Intent(this, RoutingActivity.class);
+                notificationIntent.setAction(ACTION_MAIN_ACTION);
+                notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
+                        notificationIntent, 0);
 
-            startForeground(FOREGROUND_SERVICE_ID, notification);
+                Notification notification = new NotificationCompat.Builder(this)
+                        .setContentTitle("Rumble")
+                        .setTicker("Rumble started")
+                        .setContentText("Rumble started")
+                        .setSmallIcon(R.drawable.small_icon)
+                        .setContentIntent(pendingIntent)
+                        .setOngoing(true).build();
 
+                startForeground(FOREGROUND_SERVICE_ID, notification);
+
+            }
         }
 
         return START_STICKY;
     }
 
-    public void    startBluetooth() {
-        adapters.get(BluetoothLinkLayerAdapter.LinkLayerIdentifier).linkStart();
+    public void    startLinkLayer(String linkLayerIdentifier) {
+        synchronized (lock) {
+            if (adapters == null)
+                return;
+            LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
+            if (adapter == null)
+                return;
+            adapter.linkStart();
+        }
     }
-    public void    stopBluetooth()  {
-        adapters.get(BluetoothLinkLayerAdapter.LinkLayerIdentifier).linkStop();
-    }
-    public void    startWifi()      {
-        adapters.get(WifiManagedLinkLayerAdapter.LinkLayerIdentifier).linkStart();
-    }
-    public void    stopWifi()       {
-        adapters.get(WifiManagedLinkLayerAdapter.LinkLayerIdentifier).linkStop();
+    public void    stopLinkLayer(String linkLayerIdentifier)  {
+        synchronized (lock) {
+            if (adapters == null)
+                return;
+            LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
+            if (adapter == null)
+                return;
+            adapter.linkStop();
+        }
     }
     public boolean isLinkLayerEnabled(String linkLayerIdentifier) {
-        LinkLayerAdapter linkLayer = adapters.get(linkLayerIdentifier);
-        if(linkLayer == null)
-            return false;
-        else
-            return linkLayer.isActivated();
+        synchronized (lock) {
+            if (adapters == null)
+                return false;
+            LinkLayerAdapter linkLayer = adapters.get(linkLayerIdentifier);
+            if (linkLayer == null)
+                return false;
+            else
+                return linkLayer.isActivated();
+        }
     }
     public boolean isScanning() {
-        Iterator<Map.Entry<String, LinkLayerAdapter>> it = adapters.entrySet().iterator();
-        while(it.hasNext()) {
-            LinkLayerAdapter adapter = it.next().getValue();
-            if(adapter.isScanning())
-                return true;
+        synchronized (lock) {
+            for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
+                Scanner scanner = it.next();
+                if(scanner.isScanning())
+                    return true;
+            }
+            return false;
         }
-        return false;
     }
     public void    forceScan() {
-        Iterator<Map.Entry<String, LinkLayerAdapter>> it = adapters.entrySet().iterator();
-        while(it.hasNext()) {
-            LinkLayerAdapter adapter = it.next().getValue();
-            if(adapter.isActivated())
-                adapter.forceDiscovery();
-        }
-    }
-
-
-    /*
-     * getNeighbourRecordFromDeviceAddress returns the local record from a specific Neighbour
-     * macAddress. It is a private utility function for NetworkCoordinator
-     */
-    public NeighbourManager getNeighbourRecordFromDeviceAddress(String address) throws RecordNotFoundException{
         synchronized (lock) {
-            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
-            while (it.hasNext()) {
-                NeighbourManager record = it.next();
-                if (record.is(address))
-                    return record;
-            }
-            throw new RecordNotFoundException();
-        }
-    }
-
-
-    /*
-     * getNeighborList returns the list of neighbour for every activated interface
-     * and every activated protocol.
-     */
-    public List<LinkLayerNeighbour>  getNeighborList() {
-        List<LinkLayerNeighbour> neighborhoodList = new LinkedList<LinkLayerNeighbour>();
-        synchronized (lock) {
-            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
-            while (it.hasNext()) {
-                NeighbourManager record = it.next();
-                if (record.isInRange()) {
-                    List<LinkLayerNeighbour> list = record.getPresences();
-                    if(list != null)
-                        neighborhoodList.addAll(list);
-                }
+            for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
+                Scanner scanner = it.next();
+                scanner.forceDiscovery();
             }
         }
-        return neighborhoodList;
     }
 
-
-    /*
-     * addProtocol adds a protocol instance to a NeighbourRecord (using macAddress as key)
-     * it returns true if the record has been found and protocol has been added
-     * it returns false if the record has been found but the protocol has not been added
-     * it throws an exception if the record has not been found
-     */
-    public boolean addProtocol(String address, Protocol protocol) throws RecordNotFoundException {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        boolean bool = record.addProtocol(protocol);
-        if(bool) {
-            //todo be more neighbour specific
-            EventBus.getDefault().post(new NeighborhoodChanged());
-            EventBus.getDefault().post(new NeighbourProtocolStart(address, protocol.getProtocolID()));
+    public void addScanner(Scanner scanner) {
+        for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
+            Scanner element = it.next();
+            if(element == scanner)
+                return;
         }
-        return bool;
-    }
-    /*
-     * delProtocol removes a protocol instance from a NeighbourRecord based on his macAddress of
-     * one of its presence.
-     * it returns true if the record has been found and protocol has been removed
-     * it returns false if the record has been found but the protocol has not been removed
-     * it throws an exception if the record has not been found
-     */
-    public boolean delProtocol(String address, Protocol protocol) throws RecordNotFoundException, ProtocolNotFoundException {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        boolean bool = record.delProtocol(protocol);
-        if(bool) {
-            //todo be more neighbour specific
-            EventBus.getDefault().post(new NeighborhoodChanged());
-            EventBus.getDefault().post(new NeighbourProtocolStart(address, protocol.getProtocolID()));
-        }
-        return bool;
+        scannerList.add(scanner);
     }
 
-    /*
-     * newNeighbor is called whenever a new Neighbour is found by one of the linkLayerScanner or
-     * by other means (overhearing UDP packet, receiving a connection etc.)
-     * The connect flag enables or not the autoconnect mechanism
-     * If the neighbour is discovered for the first time, a NeighbourRecord is created
-     * It return the NeighbourManager associated with the Neighbour
-     */
-    public NeighbourManager newNeighbour(LinkLayerNeighbour newNeighbour, boolean autoconnect) {
-        NeighbourManager record;
-        try {
-            record = getNeighbourRecordFromDeviceAddress(newNeighbour.getLinkLayerAddress());
-        } catch (RecordNotFoundException ignore) {
-            record = null;
+    public void delScanner(Scanner scanner) {
+        for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
+            Scanner element = it.next();
+            if(element == scanner) {
+                it.remove();
+                return;
+            }
         }
+    }
 
-        synchronized (lock) {
-            if (record == null) {
-                Log.d(TAG, "[+] new neighbour record");
-                record = new NeighbourManager(newNeighbour);
-                neighborhoodHistory.add(record);
-                EventBus.getDefault().post(new NewNeighbour(newNeighbour));
-                if(autoconnect)
-                    adapters.get(newNeighbour.getLinkLayerType()).connectTo(newNeighbour, true);
-            } else {
-                if(record.addPresence(newNeighbour)) {
-                    EventBus.getDefault().post(new NewNeighbour(newNeighbour));
-                    if(autoconnect)
-                        adapters.get(newNeighbour.getLinkLayerType()).connectTo(newNeighbour, true);
-                }
+    public final List<NeighbourInfo>  getNeighborList() {
+        List<NeighbourInfo> ret = new LinkedList<NeighbourInfo>();
+
+        // first we search through every scanner we know
+        for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
+            Scanner element = it.next();
+            HashSet<LinkLayerNeighbour> set = element.getNeighbourList();
+            for (LinkLayerNeighbour n : set) {
+                ret.add(new NeighbourInfo(n));
             }
         }
 
-
-        return record;
-    }
-
-
-    /*
-     * delNeighbour is called whenever the linkLayerScanner believes this neighbour has
-     * disappeared.
-     * It returns true if we successfully removed the neighbour
-     * Sometime the linklayerscanner can be wrong (it misses some neighbours) and so we
-     * return false If we are still actively connected to the neighbour (with any protocol)
-     * It throws a RecordNotFoundException if the neighbour was not found
-     */
-    public boolean delNeighbor(String address) throws RecordNotFoundException {
-        NeighbourManager record = getNeighbourRecordFromDeviceAddress(address);
-        synchronized (lock) {
-            try {
-                if (record.delPresence(address)) {
-                    Log.d(TAG, "[+] neighbour disappeared: " + address);
-                    EventBus.getDefault().post(new NeighborhoodChanged());
-                    return true;
-                }
-            } catch(UnknownNeighbourException impossibleCauseRecordFound) {}
-        }
-        return false;
-    }
-
-    /*
-     * This function is called when the user shut down an interface
-     * In that case we must remove every entry related to a specific LinkLayerIdentifier
-     * The eventual associated protocols will normally be removed by themselves when the socket
-     * close but the neighbour view must be removed manually
-     * todo maybe think of something more graceful
-     */
-    public void removeNeighborsType(String linkLayerIdentifier) {
-        synchronized (lock) {
-            Iterator<NeighbourManager> it = neighborhoodHistory.iterator();
-            while (it.hasNext()) {
-                NeighbourManager record = it.next();
-                record.delDeviceType(linkLayerIdentifier);
+        // then we ask the protocols
+        // todo : merge
+        for (Map.Entry<String, Protocol> entry : protocols.entrySet())
+        {
+            Protocol protocol = entry.getValue();
+            List<ProtocolNeighbour> list = protocol.getNeighbourList();
+            Iterator<ProtocolNeighbour> it = list.iterator();
+            while(it.hasNext()) {
+                ProtocolNeighbour protocolNeighbour = it.next();
+                NeighbourInfo info = new NeighbourInfo(protocolNeighbour);
+                ret.add(info);
             }
-            EventBus.getDefault().post(new NeighborhoodChanged());
+            list.clear();
+        }
+        return ret;
+    }
+
+    public boolean addWorker(Worker worker) {
+        synchronized (lock) {
+            if(workerPools == null)
+                return false;
+            String linkLayerIdentifier = worker.getLinkLayerIdentifier();
+            if(workerPools.get(linkLayerIdentifier) == null)
+                return false;
+            workerPools.get(linkLayerIdentifier).addWorker(worker);
+                return true;
+        }
+    }
+
+    public final List<Worker> getWorkers(String linkLayerIdentifier, String protocolIdentifier, boolean active) {
+        synchronized (lock) {
+            if(workerPools == null)
+                return null;
+
+            WorkerPool pool = workerPools.get(linkLayerIdentifier);
+            return pool.getWorkers(protocolIdentifier, active);
+        }
+    }
+
+    public void stopWorkers(String linkLayerIdentifier, String protocolIdentifier) {
+        synchronized (lock) {
+            if(workerPools == null)
+                return;
+
+            WorkerPool pool = workerPools.get(linkLayerIdentifier);
+            pool.stopWorkers(protocolIdentifier);
+        }
+    }
+
+    public void stopWorker(String linkLayerIdentifier, String workerID) {
+        synchronized (lock) {
+            if(workerPools == null)
+                return;
+
+            WorkerPool pool = workerPools.get(linkLayerIdentifier);
+            pool.stopWorker(workerID);
         }
     }
 
     /*
      * Just to avoid warning in logcat
      */
-    public void onEvent(NeighbourProtocolStart event) {
-    }
     public void onEvent(NoSubscriberEvent event) {
     }
 }

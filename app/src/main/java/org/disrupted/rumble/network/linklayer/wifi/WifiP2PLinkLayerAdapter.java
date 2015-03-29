@@ -26,12 +26,20 @@ import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 /**
  * @author Marlinski
  */
-public class WifiP2PLinkLayerAdapter extends LinkLayerAdapter {
+public class WifiP2PLinkLayerAdapter implements LinkLayerAdapter {
 
     private static final String ID = "Wifi-P2P";
 
+    private NetworkCoordinator networkCoordinator;
+    private boolean activated;
+
     public WifiP2PLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        super(networkCoordinator);
+        this.networkCoordinator = networkCoordinator;
+    }
+
+    @Override
+    public boolean isActivated() {
+        return activated;
     }
 
     @Override
@@ -40,30 +48,18 @@ public class WifiP2PLinkLayerAdapter extends LinkLayerAdapter {
     }
 
     @Override
-    public void onLinkStart() {
-
+    public void linkStart() {
+        if(activated)
+            return;
+        activated = true;
     }
 
     @Override
-    public void onLinkStop() {
-
+    public void linkStop() {
+        if(!activated)
+            return;
+        activated = false;
     }
-
-    @Override
-    public boolean isScanning() {
-        return false;
-    }
-
-    @Override
-    public void forceDiscovery() {
-
-    }
-
-    @Override
-    public void connectTo(LinkLayerNeighbour neighbourDevice, boolean force) {
-
-    }
-
 
 }
 

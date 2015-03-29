@@ -19,12 +19,36 @@
 
 package org.disrupted.rumble.network.protocols.firechat;
 
+import org.disrupted.rumble.network.NeighbourInfo;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.events.LinkLayerStarted;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.protocols.Protocol;
+import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
+import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverBluetooth;
+import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverUDPMulticast;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class FirechatProtocol {
+public class FirechatProtocol implements Protocol {
 
     public static final String protocolID = "Firechat";
 
@@ -34,9 +58,149 @@ public class FirechatProtocol {
     public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     public static final String FIRECHAT_BT_STR      = "FireChat";
 
-    /*
-     * Firechat Wifi Configuration
-     */
-    public static final String MULTICAST_ADDRESS  = "239.192.0.0";
-    public static final int    MULTICAST_UDP_PORT = 7576;
+    private final NetworkCoordinator networkCoordinator;
+    private boolean started;
+
+    public FirechatProtocol(NetworkCoordinator networkCoordinator) {
+        this.networkCoordinator = networkCoordinator;
+        started = false;
+    }
+
+    @Override
+    public String getProtocolIdentifier() {
+        return protocolID;
+    }
+
+    @Override
+    public void protocolStart() {
+        if(started)
+            return;
+
+        started = true;
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void protocolStop() {
+        if(!started)
+            return;
+
+        EventBus.getDefault().unregister(this);
+        networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
+        networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
+        started = false;
+    }
+
+    @Override
+    public void onEvent(LinkLayerStarted event) {
+        if(!started)
+            return;
+
+        if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+            Worker firechatOverUDP = new FirechatOverUDPMulticast();
+            networkCoordinator.addWorker(firechatOverUDP);
+        }
+    }
+
+    @Override
+    public void onEvent(LinkLayerStopped event) {
+        if(!started)
+            return;
+
+        networkCoordinator.stopWorkers(event.linkLayerIdentifier, protocolID);
+    }
+
+    @Override
+    public void onEvent(NeighbourReachable event) {
+        if(!started)
+            return;
+
+        LinkLayerNeighbour neighbour = event.neighbour;
+        if(neighbour instanceof BluetoothNeighbour) {
+            BluetoothConnection con = new BluetoothClientConnection(
+                    neighbour.getLinkLayerAddress(),
+                    FIRECHAT_BT_UUID_128,
+                    FIRECHAT_BT_STR,
+                    false);
+            FirechatOverBluetooth firechatOverBluetooth = new FirechatOverBluetooth(con);
+            networkCoordinator.addWorker(firechatOverBluetooth);
+        }
+
+        if(neighbour instanceof UDPNeighbour) {
+          /**
+           * We don't need a worker to manage this specific neighbour
+           * because in Multicast operation, every neighbour are being managed
+           * by the same worker.
+           */
+        }
+    }
+
+    @Override
+    public void onEvent(NeighbourUnreachable event) {
+        if(!started)
+            return;
+
+        LinkLayerNeighbour neighbour = event.neighbour;
+
+        if(neighbour instanceof BluetoothNeighbour) {
+            /**
+             * ignore because sometimes the BluetoothScanner may not detect the neighbour
+             * while still being connected to it.
+             * If the neighbour is indeed disconnected, the connection will drop by itself.
+             * todo maybe add a timeout just in case ?
+             */
+        }
+
+        if(neighbour instanceof UDPNeighbour) {
+            /**
+             * Ignore because only one worker anyway
+             */
+        }
+    }
+
+
+    public List<ProtocolNeighbour> getNeighbourList() {
+        List<ProtocolNeighbour> ret = new LinkedList<ProtocolNeighbour>();
+
+        List<Worker> workers = networkCoordinator.getWorkers(
+                BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                protocolID,
+                true);
+        Iterator<Worker> it = workers.iterator();
+        while(it.hasNext()) {
+            Worker worker = it.next();
+
+            if(worker instanceof FirechatOverBluetooth) {
+                FirechatOverBluetooth cast = (FirechatOverBluetooth)(worker);
+                ProtocolNeighbour protocolNeighbour = new FirechatNeighbour(
+                        cast.getBluetoothNeighbour().getLinkLayerAddress(),
+                        cast.getBluetoothNeighbour().getBluetoothDeviceName(),
+                        cast.getBluetoothNeighbour());
+                ret.add(protocolNeighbour);
+            }
+        }
+
+        workers = networkCoordinator.getWorkers(
+                WifiManagedLinkLayerAdapter.LinkLayerIdentifier,
+                protocolID,
+                true);
+        it = workers.iterator();
+        while(it.hasNext()) {
+            Worker worker = it.next();
+
+            if(worker instanceof FirechatOverUDPMulticast) {
+                FirechatOverUDPMulticast cast = (FirechatOverUDPMulticast)(worker);
+                List<ProtocolNeighbour> udpNeighbours = cast.getUDPNeighbourList();
+                Iterator<ProtocolNeighbour> itUdp = udpNeighbours.iterator();
+                while(itUdp.hasNext()) {
+                    ProtocolNeighbour protocolNeighbour = itUdp.next();
+                    ret.add(protocolNeighbour);
+                }
+                udpNeighbours.clear();
+            }
+        }
+
+        return ret;
+    }
+
 }

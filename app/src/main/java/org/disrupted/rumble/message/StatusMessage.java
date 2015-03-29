@@ -20,6 +20,7 @@
 package org.disrupted.rumble.message;
 
 
+import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.util.HashUtil;
 
 import java.nio.ByteBuffer;
@@ -41,24 +42,27 @@ public class StatusMessage extends Message{
     protected long        dbid;
     protected String      uuid;
     protected String      author;
+    protected String      group;
     protected String      status;
     protected Set<String> hashtagSet;
     protected String      attachedFile;
-    protected long        fileSize; // move it to file database
+    protected long        fileSize; //todo: move it to file database
     protected long        timeOfCreation;
     protected long        timeOfArrival;
-    protected long        hopCount;
     protected long        ttl;
+    protected long        hopCount;
     protected long        like;
     protected long        replication;
+    protected long        duplicate;
     protected boolean     read;
     protected Set<String> forwarderList;
 
     public StatusMessage(String post, String author, long timeOfCreation) {
         this.messageType = TYPE;
 
-        this.status   = post;
+        this.status = post;
         this.author = author;
+        this.group  = GroupDatabase.DEFAULT_GROUP;
         hashtagSet  = new HashSet<String>();
         Pattern hashtagPattern = Pattern.compile("#(\\w+|\\W+)");
         Matcher hashtagMatcher = hashtagPattern.matcher(post);
@@ -76,6 +80,7 @@ public class StatusMessage extends Message{
         ttl            = 0;
         like           = 0;
         replication    = 0;
+        duplicate      = 0;
 
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
@@ -91,21 +96,24 @@ public class StatusMessage extends Message{
     public long    getdbId() {              return this.dbid; }
     public String  getUuid() {              return this.uuid; }
     public String  getAuthor(){             return this.author; }
+    public String  getGroup() {             return this.group; }
     public String  getPost(){               return this.status; }
     public Set<String> getHashtagSet(){     return this.hashtagSet; }
-    public long  getTimeOfCreation(){       return this.timeOfCreation; }
-    public long  getTimeOfArrival(){        return this.timeOfArrival; }
-    public long getHopCount(){              return this.hopCount; }
+    public long    getTimeOfCreation(){     return this.timeOfCreation; }
+    public long    getTimeOfArrival(){      return this.timeOfArrival; }
+    public long    getHopCount(){           return this.hopCount; }
     public Set<String> getForwarderList(){  return this.forwarderList; }
-    public long getTTL(){                   return this.ttl;}
+    public long    getTTL(){                return this.ttl;}
     public String  getFileName(){           return this.attachedFile; }
     public long    getFileSize(){           return this.fileSize; }
     public long    getFileID(){             return 0; }
     public long    getLike(){               return like; }
     public long    getReplication(){        return replication; }
+    public long    getDuplicate(){          return duplicate; }
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
     public void setUuid(String uuid) {            this.uuid           = uuid;     }
+    public void setGroup(String group) {          this.group           = group;   }
     public void setFileName(String filename){     this.attachedFile   = filename; }
     public void setFileSize(long size) {          this.fileSize       = size;     }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
@@ -120,6 +128,7 @@ public class StatusMessage extends Message{
         this.hashtagSet = hashtagSet;
     }
     public void addReplication(long replication){ this.replication  += replication; }
+    public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
     public void setRead(boolean read){            this.read = read; }
     public void setForwarderList(Set<String> fl){
         if(forwarderList.size() > 0)

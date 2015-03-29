@@ -24,8 +24,8 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.message.MessageQueue;
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.database.CacheManager;
 
 /**
  * @author Marlinski
@@ -47,7 +47,7 @@ public class RumbleApplication extends Application{
     public void onCreate() {
         super.onCreate();
         DatabaseFactory.getInstance(this);
-        MessageQueue.getInstance().start();
+        CacheManager.getInstance().start();
         Intent startIntent = new Intent(this, NetworkCoordinator.class);
         startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
         startService(startIntent);

@@ -17,25 +17,28 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.firechat;
+package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.NetworkThread;
+import org.disrupted.rumble.network.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.exceptions.ProtocolNotFoundException;
-import org.disrupted.rumble.network.exceptions.RecordNotFoundException;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
-import org.disrupted.rumble.network.protocols.GenericProtocol;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
+import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
+import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 
@@ -54,72 +57,90 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FirechatOverBluetooth extends GenericProtocol implements NetworkThread {
+public class FirechatOverBluetooth extends ProtocolWorker {
 
     private static final String TAG = "FirechatBluetoothClient";
 
     private static final FirechatMessageParser parser = new FirechatMessageParser();
     private static final int BUFFER_SIZE = 1024;
     private PushbackInputStream pbin;
-    protected boolean isBeingKilled;
     private BluetoothConnection con;
+    private boolean working;
+
+    private BluetoothNeighbour bluetoothNeighbour;
+    private FirechatNeighbour firechatNeighbour;
 
     public FirechatOverBluetooth(BluetoothConnection con) {
         this.con = con;
-        this.isBeingKilled = false;
+        this.working = false;
+        bluetoothNeighbour = new BluetoothNeighbour(con.getRemoteMacAddress());
+        firechatNeighbour  = new FirechatNeighbour(
+                bluetoothNeighbour.getLinkLayerAddress(),
+                bluetoothNeighbour.getBluetoothDeviceName(),
+                bluetoothNeighbour);
+    }
+
+    public BluetoothNeighbour getBluetoothNeighbour() {
+        return bluetoothNeighbour;
+    }
+
+    public FirechatNeighbour getFirechatNeighbour() {
+        return firechatNeighbour;
     }
 
     @Override
-    public String getNetworkThreadID() {
-        return getProtocolID()+" "+con.getConnectionID();
+    public boolean isWorking() {
+        return working;
     }
+
     @Override
-    public String getProtocolID() {
+    public String getProtocolIdentifier() {
         return FirechatProtocol.protocolID;
     }
+
     @Override
-    public String getType() {
-        return con.getLinkLayerIdentifier();
+    public String getWorkerIdentifier() {
+        return getProtocolIdentifier()+" "+con.getConnectionID();
     }
+
     @Override
     public String getLinkLayerIdentifier() {
         return con.getLinkLayerIdentifier();
     }
 
-
     @Override
-    public void runNetworkThread() {
+    public void startWorking() {
+        if(working)
+            return;
+        working = true;
 
         try {
             con.connect();
         } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getNetworkThreadID()+" "+exception.getMessage());
+            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
             return;
         }
 
         try {
-            NetworkCoordinator.getInstance().addProtocol(con.getRemoteMacAddress(), this);
-
-            Log.d(TAG, "[+] ESTABLISHED: " + getNetworkThreadID());
+            Log.d(TAG, "[+] ESTABLISHED: " + getWorkerIdentifier());
+            EventBus.getDefault().post(new NeighbourConnected(
+                            new BluetoothNeighbour(con.getRemoteMacAddress()),
+                            getProtocolIdentifier() )
+            );
 
             /*
              * this one automatically creates two thread, one for processing the command
              * and one for processing the messages from the network
              */
-            onGenericProcotolConnected();
+            onWorkerConnected();
 
-        } catch (RecordNotFoundException ignoredCauseImpossible) {
-            Log.e(TAG, "[+] FAILED: "+getNetworkThreadID()+" cannot find the record for "+con.getRemoteMacAddress());
-        }
-        finally {
-            try {
-                NetworkCoordinator.getInstance().delProtocol(con.getRemoteMacAddress(), this);
-            } catch (RecordNotFoundException ignoredCauseImpossible) {
-            } catch (ProtocolNotFoundException ignoredCauseImpossible) {
-            }
+        } finally {
+            stopWorking();
 
-            if (!isBeingKilled)
-                killNetworkThread();
+            EventBus.getDefault().post(new NeighbourDisconnected(
+                            new BluetoothNeighbour(con.getRemoteMacAddress()),
+                            getProtocolIdentifier() )
+            );
         }
     }
 
@@ -274,7 +295,8 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
                         recipients,
                         FirechatProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        throughput)
+                        bytesTransfered,
+                        timeToTransfer)
                 );
 
                 //remove that
@@ -293,19 +315,17 @@ public class FirechatOverBluetooth extends GenericProtocol implements NetworkThr
     }
 
     @Override
-    public void stopProtocol() {
-        killNetworkThread();
-    }
+    public void stopWorking() {
+        if(!working)
+            return;
 
-    @Override
-    public void killNetworkThread() {
-        this.isBeingKilled = true;
+        this.working = false;
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException e) {
             Log.e(TAG, e.getMessage());
         }
-        Log.d(TAG, "[-] ENDED: " + getNetworkThreadID());
+        Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
     }
 
 }
