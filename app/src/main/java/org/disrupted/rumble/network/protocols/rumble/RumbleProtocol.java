@@ -138,14 +138,16 @@ public class RumbleProtocol implements Protocol {
             return;
 
         LinkLayerNeighbour neighbour = event.neighbour;
-        if(neighbour instanceof BluetoothNeighbour) {
-            BluetoothConnection con = new BluetoothClientConnection(
-                    neighbour.getLinkLayerAddress(),
-                    RUMBLE_BT_UUID_128,
-                    RUMBLE_BT_STR,
-                    false);
-            Worker rumbleOverBluetooth = new RumbleOverBluetooth(this, con);
-            networkCoordinator.addWorker(rumbleOverBluetooth);
+        if(getBTState(neighbour.getLinkLayerAddress()).getState() == RumbleBTState.RumbleBluetoothState.NOT_CONNECTED) {
+            if (neighbour instanceof BluetoothNeighbour) {
+                BluetoothConnection con = new BluetoothClientConnection(
+                        neighbour.getLinkLayerAddress(),
+                        RUMBLE_BT_UUID_128,
+                        RUMBLE_BT_STR,
+                        false);
+                Worker rumbleOverBluetooth = new RumbleOverBluetooth(this, con);
+                networkCoordinator.addWorker(rumbleOverBluetooth);
+            }
         }
 
         if(neighbour instanceof UDPNeighbour) {
