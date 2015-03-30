@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -34,6 +35,7 @@ import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.adapter.NavigationItem;
 import org.disrupted.rumble.adapter.NavigationItemListAdapter;
+import org.disrupted.rumble.network.NetworkCoordinator;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -66,9 +68,9 @@ public class FragmentNavigationDrawer extends Fragment {
 
         mFirstListView   = (ListView) mDrawerFragmentLayout.findViewById(R.id.navigation_first_item_list);
         firstList = new LinkedList<NavigationItem>();
-        //firstList.add(new NavigationItem(R.drawable.ic_blur_on_white_24dp, "Public Messages", 1));
         firstList.add(new NavigationItem(R.drawable.ic_world, "Public Messages", 1));
         firstList.add(new NavigationItem(R.drawable.ic_favorite_outline_white_24dp, "Favorites", 2));
+        firstList.add(new NavigationItem(R.drawable.ic_cancel_white_24dp, "Exit", 3));
 
         mFirstListAdapter = new NavigationItemListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);
@@ -113,6 +115,13 @@ public class FragmentNavigationDrawer extends Fragment {
                     break;
                 case 2:
                     fragment = new FragmentFavoriteList();
+                    break;
+                case 3:
+                    Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
+                    stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
+                    getActivity().stopService(stopIntent);
+                    getActivity().finish();
+                    System.exit(0);
                 default:
             }
 

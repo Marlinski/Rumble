@@ -52,6 +52,7 @@ import java.util.Map;
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.NoSubscriberEvent;
 
+
 /**
  * NetworkCoordinator coordinate every network related events. It maintain an up-to-date
  * view of the neighbourhood history (past and present). It works closely with the NeighbourManager
@@ -64,6 +65,7 @@ import de.greenrobot.event.NoSubscriberEvent;
 public class NetworkCoordinator extends Service {
 
     public static final String ACTION_START_FOREGROUND = "org.disruptedsystems.rumble.action.startforeground";
+    public static final String ACTION_STOP_NETWORKING  = "org.disruptedsystems.rumble.action.stopnetworking";
     public static final String ACTION_MAIN_ACTION      = "org.disruptedsystems.rumble.action.mainaction";
     public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
