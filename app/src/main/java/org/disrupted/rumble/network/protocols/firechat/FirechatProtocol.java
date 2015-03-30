@@ -38,9 +38,11 @@ import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverBluetooth;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverUDPMulticast;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
@@ -58,12 +60,27 @@ public class FirechatProtocol implements Protocol {
     public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     public static final String FIRECHAT_BT_STR      = "FireChat";
 
+    private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
 
+    private Map<String, FirechatBTState> bluetoothState;
+
     public FirechatProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
+        bluetoothState = new HashMap<String, FirechatBTState>();
         started = false;
+    }
+
+    public FirechatBTState getBTState(String macAddress) {
+        synchronized (lock) {
+            FirechatBTState state = bluetoothState.get(macAddress);
+            if (state == null) {
+                state = new FirechatBTState();
+                bluetoothState.put(macAddress, state);
+            }
+            return state;
+        }
     }
 
     @Override
@@ -117,13 +134,17 @@ public class FirechatProtocol implements Protocol {
 
         LinkLayerNeighbour neighbour = event.neighbour;
         if(neighbour instanceof BluetoothNeighbour) {
-            BluetoothConnection con = new BluetoothClientConnection(
-                    neighbour.getLinkLayerAddress(),
-                    FIRECHAT_BT_UUID_128,
-                    FIRECHAT_BT_STR,
-                    false);
-            FirechatOverBluetooth firechatOverBluetooth = new FirechatOverBluetooth(con);
-            networkCoordinator.addWorker(firechatOverBluetooth);
+            try {
+                getBTState(neighbour.getLinkLayerAddress()).connectionInitiated();
+                BluetoothConnection con = new BluetoothClientConnection(
+                        neighbour.getLinkLayerAddress(),
+                        FIRECHAT_BT_UUID_128,
+                        FIRECHAT_BT_STR,
+                        false);
+                FirechatOverBluetooth firechatOverBluetooth = new FirechatOverBluetooth(this, con);
+                networkCoordinator.addWorker(firechatOverBluetooth);
+            } catch (FirechatBTState.StateException ignore) {
+            }
         }
 
         if(neighbour instanceof UDPNeighbour) {

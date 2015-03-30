@@ -61,6 +61,7 @@ public class RumbleProtocol implements Protocol {
     public static final UUID RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
     public static final String RUMBLE_BT_STR    = "org.disrupted.rumble";
 
+    private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
 
@@ -73,12 +74,14 @@ public class RumbleProtocol implements Protocol {
     }
 
     public RumbleBTState getBTState(String macAddress) {
-        RumbleBTState state = bluetoothState.get(macAddress);
-        if(state == null) {
-            state = new RumbleBTState();
-            bluetoothState.put(macAddress, state);
+        synchronized (lock) {
+            RumbleBTState state = bluetoothState.get(macAddress);
+            if (state == null) {
+                state = new RumbleBTState();
+                bluetoothState.put(macAddress, state);
+            }
+            return state;
         }
-        return state;
     }
 
     @Override
@@ -138,15 +141,18 @@ public class RumbleProtocol implements Protocol {
             return;
 
         LinkLayerNeighbour neighbour = event.neighbour;
-        if(getBTState(neighbour.getLinkLayerAddress()).getState() == RumbleBTState.RumbleBluetoothState.NOT_CONNECTED) {
-            if (neighbour instanceof BluetoothNeighbour) {
+        if (neighbour instanceof BluetoothNeighbour) {
+            try {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
                         RUMBLE_BT_UUID_128,
                         RUMBLE_BT_STR,
                         false);
                 Worker rumbleOverBluetooth = new RumbleOverBluetooth(this, con);
+                getBTState(neighbour.getLinkLayerAddress()).connectionInitiated(rumbleOverBluetooth.getWorkerIdentifier());
                 networkCoordinator.addWorker(rumbleOverBluetooth);
+            } catch(RumbleBTState.StateException ignore) {
+                // this means that we are already connected or trying to connect to
             }
         }
 

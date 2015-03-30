@@ -127,7 +127,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             onWorkerConnected();
 
         } catch (RumbleBTState.StateException e) {
-            Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" RumbleBTState mismatch");
+            Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" impossible connection state: "+connectionState.printState());
         } finally {
             stopWorking();
 

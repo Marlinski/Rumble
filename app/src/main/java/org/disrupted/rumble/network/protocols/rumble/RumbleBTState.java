@@ -22,6 +22,16 @@ public class RumbleBTState {
         this.workerID = null;
     }
 
+    public String printState() {
+        switch (state) {
+            case NOT_CONNECTED: return "NOT CONNECTED";
+            case CONNECTION_INITIATED: return "CONNECTION INITIATED";
+            case CONNECTION_ACCEPTED: return "CONNECTION ACCEPTED";
+            case CONNECTED: return "CONNECTED";
+            default: return "####";
+        }
+    }
+
     /*
      * goTo the CONNECTION INITIATED state which happens when we initiate a connection
      * (most probably from the BluetoothLinkLayer.connectTo method).

@@ -27,7 +27,6 @@ import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
@@ -36,6 +35,7 @@ import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionExcep
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.firechat.FirechatBTState;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
@@ -61,6 +61,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
 
     private static final String TAG = "FirechatBluetoothClient";
 
+    private FirechatProtocol protocol;
     private static final FirechatMessageParser parser = new FirechatMessageParser();
     private static final int BUFFER_SIZE = 1024;
     private PushbackInputStream pbin;
@@ -70,7 +71,8 @@ public class FirechatOverBluetooth extends ProtocolWorker {
     private BluetoothNeighbour bluetoothNeighbour;
     private FirechatNeighbour firechatNeighbour;
 
-    public FirechatOverBluetooth(BluetoothConnection con) {
+    public FirechatOverBluetooth(FirechatProtocol protocol, BluetoothConnection con) {
+        this.protocol = protocol;
         this.con = con;
         this.working = false;
         bluetoothNeighbour = new BluetoothNeighbour(con.getRemoteMacAddress());
@@ -121,11 +123,15 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             return;
         }
 
+        FirechatBTState connectionState = null;
         try {
+            connectionState = protocol.getBTState(con.getRemoteMacAddress());
+            connectionState.connected(this.getWorkerIdentifier());
+
             Log.d(TAG, "[+] ESTABLISHED: " + getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
                             new BluetoothNeighbour(con.getRemoteMacAddress()),
-                            getProtocolIdentifier() )
+                            getProtocolIdentifier())
             );
 
             /*
@@ -133,9 +139,13 @@ public class FirechatOverBluetooth extends ProtocolWorker {
              * and one for processing the messages from the network
              */
             onWorkerConnected();
-
+        } catch (FirechatBTState.StateException ignore) {
+            Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" connection state mismatch");
         } finally {
             stopWorking();
+
+            if(connectionState != null)
+                connectionState.notConnected();
 
             EventBus.getDefault().post(new NeighbourDisconnected(
                             new BluetoothNeighbour(con.getRemoteMacAddress()),
