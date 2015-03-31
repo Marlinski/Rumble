@@ -27,4 +27,5 @@ public class SocketAlreadyClosedException extends LinkLayerConnectionException {
     public SocketAlreadyClosedException() {
         super("socket already closed");
     }
+
 }

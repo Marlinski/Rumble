@@ -116,7 +116,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        List<NeighbourInfo> neighborhood = mNetworkCoordinator.getNeighborList();
+        List<NeighbourInfo> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
         listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         mDrawerNeighbourList.setAdapter(listAdapter);
     }
@@ -160,7 +160,7 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                List<NeighbourInfo> neighborhood = mNetworkCoordinator.getNeighborList();
+                List<NeighbourInfo> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
                 if (mDrawerNeighbourList.getAdapter() != null) {
                     ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
                 }

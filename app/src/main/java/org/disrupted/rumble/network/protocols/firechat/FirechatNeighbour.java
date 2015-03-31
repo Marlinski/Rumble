@@ -3,24 +3,22 @@ package org.disrupted.rumble.network.protocols.firechat;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class FirechatNeighbour implements ProtocolNeighbour {
+public class FirechatNeighbour extends ProtocolNeighbour {
 
     private String firechatName;
     private String firechatID;
 
-    private List<LinkLayerNeighbour> linkLayerPresence;
-
-    public FirechatNeighbour(String firechatID, String firechatName, LinkLayerNeighbour presence) {
+    public FirechatNeighbour(String firechatID, String firechatName, LinkLayerNeighbour linkLayerNeighbour) {
+        super(linkLayerNeighbour);
         this.firechatID = firechatID;
         this.firechatName = firechatName;
-        this.linkLayerPresence = new LinkedList<LinkLayerNeighbour>();
-        linkLayerPresence.add(presence);
     }
 
     @Override
@@ -32,19 +30,5 @@ public class FirechatNeighbour implements ProtocolNeighbour {
     public String getNeighbourIdentifier() {
         return firechatID;
     }
-
-    @Override
-    public List<LinkLayerNeighbour> getLinkLayerPresence() {
-        return linkLayerPresence;
-    }
-
-    public String getFirechatName() {
-        return firechatName;
-    }
-
-    public String getFirechatId() {
-        return firechatID;
-    }
-
 
 }

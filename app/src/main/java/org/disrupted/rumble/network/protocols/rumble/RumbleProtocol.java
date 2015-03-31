@@ -157,7 +157,7 @@ public class RumbleProtocol implements Protocol {
                 getBTState(neighbour.getLinkLayerAddress()).connectionInitiated(rumbleOverBluetooth.getWorkerIdentifier());
                 networkCoordinator.addWorker(rumbleOverBluetooth);
             } catch(RumbleBTState.StateException ignore) {
-                Log.d(TAG, neighbour.getLinkLayerAddress() + "state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
+                Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
 

@@ -3,22 +3,20 @@ package org.disrupted.rumble.network.protocols.rumble;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class RumbleNeighbour implements ProtocolNeighbour {
+public class RumbleNeighbour extends ProtocolNeighbour {
 
     String rumbleIdentifier;
 
-    List<LinkLayerNeighbour> linkLayerPresence;
-
-    public RumbleNeighbour(String rumbleIdentifier, LinkLayerNeighbour presence) {
+    public RumbleNeighbour(String rumbleIdentifier, LinkLayerNeighbour linkLayerNeighbour) {
+        super(linkLayerNeighbour);
         this.rumbleIdentifier = rumbleIdentifier;
-        this.linkLayerPresence = new LinkedList<LinkLayerNeighbour>();
-        linkLayerPresence.add(presence);
     }
 
     @Override
@@ -31,8 +29,5 @@ public class RumbleNeighbour implements ProtocolNeighbour {
         return rumbleIdentifier;
     }
 
-    @Override
-    public List<LinkLayerNeighbour> getLinkLayerPresence() {
-        return linkLayerPresence;
-    }
+
 }

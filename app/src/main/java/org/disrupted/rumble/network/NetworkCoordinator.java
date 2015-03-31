@@ -24,6 +24,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -31,13 +32,18 @@ import android.util.Log;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.RoutingActivity;
+import org.disrupted.rumble.network.events.LinkLayerStopped;
+import org.disrupted.rumble.network.events.NeighborhoodChanged;
+import org.disrupted.rumble.network.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
@@ -48,6 +54,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 import de.greenrobot.event.NoSubscriberEvent;
@@ -77,6 +84,7 @@ public class NetworkCoordinator extends Service {
     private Map<String, WorkerPool> workerPools;
     private Map<String, Protocol> protocols;
     private List<Scanner> scannerList;
+    public NeighbourManager neighbourManager;
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
@@ -91,6 +99,8 @@ public class NetworkCoordinator extends Service {
         synchronized (lock) {
             Log.d(TAG, "[+] Starting NetworkCoordinator");
 
+            neighbourManager = new NeighbourManager();
+            neighbourManager.startMonitoring();
             scannerList = new LinkedList<Scanner>();
 
             // register link layers
@@ -152,7 +162,7 @@ public class NetworkCoordinator extends Service {
             }
             adapters.clear();
             adapters = null;
-
+            neighbourManager.stopMonitoring();
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
         }
@@ -276,35 +286,6 @@ public class NetworkCoordinator extends Service {
         }
     }
 
-    public final List<NeighbourInfo>  getNeighborList() {
-        List<NeighbourInfo> ret = new LinkedList<NeighbourInfo>();
-
-        // first we search through every scanner we know
-        for (Iterator<Scanner> it = scannerList.iterator(); it.hasNext(); ) {
-            Scanner element = it.next();
-            HashSet<LinkLayerNeighbour> set = element.getNeighbourList();
-            for (LinkLayerNeighbour n : set) {
-                ret.add(new NeighbourInfo(n));
-            }
-        }
-
-        // then we ask the protocols
-        // todo : merge
-        for (Map.Entry<String, Protocol> entry : protocols.entrySet())
-        {
-            Protocol protocol = entry.getValue();
-            List<ProtocolNeighbour> list = protocol.getNeighbourList();
-            Iterator<ProtocolNeighbour> it = list.iterator();
-            while(it.hasNext()) {
-                ProtocolNeighbour protocolNeighbour = it.next();
-                NeighbourInfo info = new NeighbourInfo(protocolNeighbour);
-                ret.add(info);
-            }
-            list.clear();
-        }
-        return ret;
-    }
-
     public boolean addWorker(Worker worker) {
         synchronized (lock) {
             if(workerPools == null)
@@ -344,7 +325,8 @@ public class NetworkCoordinator extends Service {
                 return;
 
             WorkerPool pool = workerPools.get(linkLayerIdentifier);
-            pool.stopWorker(workerID);
+            if(pool != null)
+                pool.stopWorker(workerID);
         }
     }
 
@@ -353,4 +335,107 @@ public class NetworkCoordinator extends Service {
      */
     public void onEvent(NoSubscriberEvent event) {
     }
+
+    public class NeighbourManager {
+
+        private final Object managerLock = new Object();
+        private HashMap<String, LinkLayerNeighbour> physicalNeighbours; // linkLayerAddress to LinkLayerNeighbour Object
+        private HashMap<String, Set<String>> connectedProtocols; // linkLayerAddress to connected protocols
+
+        public NeighbourManager() {
+            physicalNeighbours = new HashMap<String, LinkLayerNeighbour>();
+            connectedProtocols = new HashMap<String, Set<String>>();
+        }
+
+        public void startMonitoring() {
+            EventBus.getDefault().register(this);
+        }
+        public void stopMonitoring() {
+            synchronized (managerLock) {
+                if (EventBus.getDefault().isRegistered(this))
+                    EventBus.getDefault().unregister(this);
+
+                physicalNeighbours.clear();
+                for (Map.Entry<String, Set<String>> entry : connectedProtocols.entrySet()) {
+                    if (entry.getValue() != null)
+                        entry.getValue().clear();
+                }
+                connectedProtocols.clear();
+            }
+        }
+
+        public void onEvent(LinkLayerStopped event) {
+            synchronized (managerLock) {
+                Iterator<Map.Entry<String, LinkLayerNeighbour>> it = physicalNeighbours.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String,LinkLayerNeighbour> entry = it.next();
+                    LinkLayerNeighbour neighbour = entry.getValue();
+                    if (neighbour != null) {
+                        if (neighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier)) {
+                            connectedProtocols.remove(entry.getKey());
+                            it.remove();
+                        }
+                    }
+                }
+            }
+            EventBus.getDefault().post(new NeighborhoodChanged());
+        }
+        public void onEvent(NeighbourReachable event) {
+            synchronized (managerLock) {
+                if (physicalNeighbours.get(event.neighbour.getLinkLayerAddress()) != null)
+                    return;
+
+                physicalNeighbours.put(event.neighbour.getLinkLayerAddress(), event.neighbour);
+            }
+            EventBus.getDefault().post(new NeighborhoodChanged());
+        }
+        public void onEvent(NeighbourUnreachable event) {
+            synchronized (managerLock) {
+                if (connectedProtocols.get(event.neighbour.getLinkLayerAddress()) != null)
+                    return;
+
+                physicalNeighbours.remove(event.neighbour.getLinkLayerAddress());
+            }
+            EventBus.getDefault().post(new NeighborhoodChanged());
+        }
+        public void onEvent(NeighbourConnected event) {
+            synchronized (managerLock) {
+                Set<String> protocolSet = connectedProtocols.get(event.neighbour.getLinkLayerAddress());
+                if (protocolSet == null)
+                    protocolSet = new HashSet<String>();
+                protocolSet.add(event.protocolIdentifier);
+                connectedProtocols.put(event.neighbour.getLinkLayerAddress(), protocolSet);
+            }
+            EventBus.getDefault().post(new NeighborhoodChanged());
+        }
+        public void onEvent(NeighbourDisconnected event) {
+            synchronized (managerLock) {
+                Set<String> protocolSet = connectedProtocols.get(event.neighbour.getLinkLayerAddress());
+                if (protocolSet != null) {
+                    protocolSet.remove(event.protocolIdentifier);
+                    connectedProtocols.put(event.neighbour.getLinkLayerAddress(), protocolSet);
+                }
+                physicalNeighbours.remove(event.neighbour.getLinkLayerAddress());
+            }
+            EventBus.getDefault().post(new NeighborhoodChanged());
+        }
+
+        public List<NeighbourInfo> getNeighbourList() {
+            synchronized (managerLock) {
+                List<NeighbourInfo> ret = new LinkedList<NeighbourInfo>();
+                for (Map.Entry<String, LinkLayerNeighbour> entry : physicalNeighbours.entrySet()) {
+                    NeighbourInfo info = new NeighbourInfo(entry.getValue());
+                    if (connectedProtocols.get(entry.getKey()) != null) {
+                        for (String protocol : connectedProtocols.get(entry.getKey())) {
+                            info.addProtocol(protocol);
+                        }
+                    }
+
+                    ret.add(info);
+                }
+                return ret;
+            }
+        }
+    }
+
 }

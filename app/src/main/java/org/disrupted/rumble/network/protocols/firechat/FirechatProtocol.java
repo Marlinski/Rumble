@@ -21,7 +21,6 @@ package org.disrupted.rumble.network.protocols.firechat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.LinkLayerStarted;
 import org.disrupted.rumble.network.events.LinkLayerStopped;
@@ -148,7 +147,7 @@ public class FirechatProtocol implements Protocol {
                 FirechatOverBluetooth firechatOverBluetooth = new FirechatOverBluetooth(this, con);
                 networkCoordinator.addWorker(firechatOverBluetooth);
             } catch (FirechatBTState.StateException ignore) {
-                Log.d(TAG, neighbour.getLinkLayerAddress()+"state error: "+getBTState(neighbour.getLinkLayerAddress()).printState());
+                Log.d(TAG, neighbour.getLinkLayerAddress()+" state error: "+getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
 

@@ -30,6 +30,7 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
 import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 
 import java.io.IOException;
@@ -92,9 +93,10 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     public void disconnect() throws LinkLayerConnectionException {
         try {
             mmConnectedSocket.close();
-            Log.d(TAG, "[-] Socket Closed Manually");
         } catch (IOException e) {
             throw new SocketAlreadyClosedException();
+        } catch (NullPointerException e) {
+            throw new NullSocketException();
         } finally {
             if(registered)
                 RumbleApplication.getContext().unregisterReceiver(mReceiver);

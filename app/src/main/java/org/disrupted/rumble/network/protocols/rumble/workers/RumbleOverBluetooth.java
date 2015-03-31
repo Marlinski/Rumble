@@ -137,22 +137,23 @@ public class RumbleOverBluetooth extends ProtocolWorker {
              */
             onWorkerConnected();
 
-        } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
         } catch (RumbleBTState.StateException e) {
             Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" impossible connection state: "+connectionState.printState());
+            return;
+        } catch (LinkLayerConnectionException exception) {
+            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
         } finally {
             stopWorker();
+        }
 
-            if(connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
-                connectionState.notConnected();
-                EventBus.getDefault().post(new NeighbourDisconnected(
-                                new BluetoothNeighbour(con.getRemoteMacAddress()),
-                                getProtocolIdentifier())
-                );
-            } else {
-                connectionState.notConnected();
-            }
+        if(connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
+            connectionState.notConnected();
+            EventBus.getDefault().post(new NeighbourDisconnected(
+                            new BluetoothNeighbour(con.getRemoteMacAddress()),
+                            getProtocolIdentifier())
+            );
+        } else {
+            connectionState.notConnected();
         }
     }
 
@@ -163,6 +164,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             byte[] payload = null;
             while (true) {
                 try {
+                    Log.d(TAG, "processing... ");
                     long timeToTransfer = System.currentTimeMillis();
 
                 /* receiving header */
@@ -234,7 +236,9 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 }
             }
         } catch (IOException silentlyCloseConnection) {
+            Log.d(TAG, silentlyCloseConnection.getMessage());
         } catch (InputOutputStreamException silentlyCloseConnection) {
+            Log.d(TAG, silentlyCloseConnection.getMessage());
         }
     }
 
@@ -307,8 +311,8 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         working = false;
         try {
             con.disconnect();
-        } catch (LinkLayerConnectionException e) {
-            Log.e(TAG, e.getMessage());
+        } catch (LinkLayerConnectionException ignore) {
+            Log.d(TAG, "[-]"+ignore.getMessage());
         }
     }
 

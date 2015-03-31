@@ -170,16 +170,20 @@ public class WorkerPool {
             while(itq.hasNext()) {
                 QueueElement element = itq.next();
                 if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier)) {
+                    Log.d(TAG, "[-] removing worker from queue ("+element.getWorker().getWorkerIdentifier()+")");
                     element.getWorker().cancelWorker();
                     itq.remove();
                 }
             }
 
             Iterator<WorkerThread> itp = pool.iterator();
-            while(itq.hasNext()) {
+            while(itp.hasNext()) {
                 WorkerThread element = itp.next();
-                if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
-                    element.getWorker().stopWorker();
+                if(element.getWorker() != null)
+                    if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier)) {
+                        Log.d(TAG, "[-] stopping worker from thread ("+element.getWorker().getWorkerIdentifier()+")");
+                        element.killWorker();
+                    }
             }
         }
     }
@@ -190,16 +194,20 @@ public class WorkerPool {
             while(itq.hasNext()) {
                 QueueElement element = itq.next();
                 if(element.getWorker().getWorkerIdentifier().equals(workerID)) {
+                    Log.d(TAG, "[-] removing worker from queue ("+element.getWorker().getWorkerIdentifier()+")");
                     element.getWorker().cancelWorker();
                     itq.remove();
                 }
             }
 
             Iterator<WorkerThread> itp = pool.iterator();
-            while(itq.hasNext()) {
+            while(itp.hasNext()) {
                 WorkerThread element = itp.next();
-                if(element.getWorker().getWorkerIdentifier().equals(workerID))
-                    element.getWorker().stopWorker();
+                if(element.getWorker() != null)
+                    if(element.getWorker().getWorkerIdentifier().equals(workerID)) {
+                        Log.d(TAG, "[-] stopping worker from thread ("+element.getWorker().getWorkerIdentifier()+")");
+                        element.getWorker().stopWorker();
+                    }
             }
         }
     }
@@ -251,16 +259,17 @@ public class WorkerPool {
 
             try {
                 while (true) {
-                        worker = null;
-                        QueueElement element;
+                    worker = null;
+                    QueueElement element;
 
-                        element = queue.take();
+                    element = queue.take();
 
-                        if(element == null)
-                            continue;
-                        //Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
-                        this.worker = element.getWorker();
-                        worker.startWorker();
+                    if(element == null)
+                        continue;
+
+                    Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getWorker().getWorkerIdentifier());
+                    this.worker = element.getWorker();
+                    worker.startWorker();
                 }
             } catch (InterruptedException ignore) {
             }

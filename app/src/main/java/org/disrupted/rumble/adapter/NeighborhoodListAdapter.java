@@ -29,6 +29,7 @@ import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourInfo;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
@@ -54,7 +55,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        NeighbourInfo neighbour = neighborhood.get(i);
+        NeighbourInfo entry = neighborhood.get(i);
 
         View neighborView = inflater.inflate(R.layout.neighbour_item, null, true);
         TextView name = (TextView) neighborView.findViewById(R.id.neighbour_item_name);
@@ -62,20 +63,20 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        if(neighbour.isReachable(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(entry.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
             bluetoothIcon.setVisibility(View.VISIBLE);
-            if(neighbour.isConnected(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            if(entry.isConnected())
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
             else
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
-            BluetoothNeighbour btneighbour = (BluetoothNeighbour)(neighbour.first);
+            BluetoothNeighbour btneighbour = (BluetoothNeighbour)(entry.neighbour);
             name.setText(btneighbour.getBluetoothDeviceName());
             id.setText(btneighbour.getLinkLayerAddress());
         } else {
             bluetoothIcon.setVisibility(View.INVISIBLE);
         }
 
-        if(neighbour.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(entry.neighbour.getLinkLayerIdentifier().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
         } else {
             wifiIcon.setVisibility(View.INVISIBLE);

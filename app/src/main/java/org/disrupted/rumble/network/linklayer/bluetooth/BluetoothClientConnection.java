@@ -91,7 +91,6 @@ public class BluetoothClientConnection extends BluetoothConnection {
             if (mmConnectedSocket == null)
                 throw new NullSocketException();
 
-
             mmConnectedSocket.connect();
         }catch (IOException e) {
             throw new ConnectionFailedException(remoteMacAddress+" "+bt_service_uuid.toString());
