@@ -59,21 +59,23 @@ public class RumbleBTServer extends BluetoothServer {
         return RumbleProtocol.protocolID;
     }
 
-    /*
-     * onClientConnected may accept or not the connection depending on RumbleBTState
-     */
     @Override
     protected void onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
         try {
             RumbleBTState connectionState = protocol.getBTState(neighbour.getLinkLayerAddress());
             switch (connectionState.getState()) {
+                case CONNECTED:
+                case CONNECTION_ACCEPTED:
+                    Log.d(TAG, "[-] refusing client connection");
+                    mmConnectedSocket.close();
+                    return;
                 case CONNECTION_INITIATED:
                     if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
-                        Log.d(TAG, "[-] refusing connection");
+                        Log.d(TAG, "[-] refusing client connection");
                         mmConnectedSocket.close();
                     } else {
-                        Log.d(TAG, "[-] cancelling network thread " + connectionState.getConnectionInitiatedWorkerID());
+                        Log.d(TAG, "[-] cancelling worker " + connectionState.getConnectionInitiatedWorkerID());
                         networkCoordinator.stopWorker(
                                 BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                 connectionState.getConnectionInitiatedWorkerID());
@@ -82,7 +84,8 @@ public class RumbleBTServer extends BluetoothServer {
                     Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
                     connectionState.connectionAccepted(worker.getWorkerIdentifier());
                     networkCoordinator.addWorker(worker);
-                default: return;
+                default:
+                    return;
             }
 
         } catch(IOException ignore) {

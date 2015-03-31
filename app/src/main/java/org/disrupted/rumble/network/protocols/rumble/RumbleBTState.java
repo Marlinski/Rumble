@@ -40,6 +40,7 @@ public class RumbleBTState {
      */
     public void connectionInitiated(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 case CONNECTED:
                 case CONNECTION_INITIATED:
@@ -49,6 +50,7 @@ public class RumbleBTState {
                 default:
                     this.workerID = workerID;
                     state = RumbleBluetoothState.CONNECTION_INITIATED;
+                    Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
             }
         }
     }
@@ -62,6 +64,7 @@ public class RumbleBTState {
      */
     public void connectionAccepted(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 case CONNECTED:
                 case CONNECTION_ACCEPTED:
@@ -71,6 +74,7 @@ public class RumbleBTState {
                 default:
                     this.workerID = workerID;
                     state = RumbleBluetoothState.CONNECTION_ACCEPTED;
+                    Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
             }
         }
     }
@@ -83,6 +87,7 @@ public class RumbleBTState {
      */
     public void connected(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 case NOT_CONNECTED:
                 case CONNECTED:
@@ -90,8 +95,9 @@ public class RumbleBTState {
                 case CONNECTION_INITIATED:
                 case CONNECTION_ACCEPTED:
                 default:
-                    state = RumbleBluetoothState.CONNECTED;
                     this.workerID = workerID;
+                    state = RumbleBluetoothState.CONNECTED;
+                    Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
             }
         }
     }
@@ -103,10 +109,12 @@ public class RumbleBTState {
      */
     public void notConnected() {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 default:
                     state = RumbleBluetoothState.NOT_CONNECTED;
                     this.workerID = null;
+                    Log.d(TAG, previous+" -> "+printState());
             }
         }
     }

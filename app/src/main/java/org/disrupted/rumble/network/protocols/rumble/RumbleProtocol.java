@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
+import android.util.Log;
+
 import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.LinkLayerStarted;
@@ -52,6 +54,8 @@ import de.greenrobot.event.EventBus;
  * @author Marlinski
  */
 public class RumbleProtocol implements Protocol {
+
+    public static final String TAG = "RumbleProtocol";
 
     public static final String protocolID = "Rumble";
 
@@ -102,12 +106,13 @@ public class RumbleProtocol implements Protocol {
     public void protocolStop() {
         if(!started)
             return;
+        started = false;
 
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
+
         networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
-        started = false;
         bluetoothState.clear();
     }
 
@@ -152,7 +157,7 @@ public class RumbleProtocol implements Protocol {
                 getBTState(neighbour.getLinkLayerAddress()).connectionInitiated(rumbleOverBluetooth.getWorkerIdentifier());
                 networkCoordinator.addWorker(rumbleOverBluetooth);
             } catch(RumbleBTState.StateException ignore) {
-                // this means that we are already connected or trying to connect to
+                Log.d(TAG, neighbour.getLinkLayerAddress() + "state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
 

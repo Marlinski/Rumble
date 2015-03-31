@@ -59,7 +59,7 @@ import de.greenrobot.event.EventBus;
  */
 public class FirechatOverBluetooth extends ProtocolWorker {
 
-    private static final String TAG = "FirechatBluetoothClient";
+    private static final String TAG = "FirechatOverBluetooth";
 
     private FirechatProtocol protocol;
     private static final FirechatMessageParser parser = new FirechatMessageParser();
@@ -111,24 +111,37 @@ public class FirechatOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public void startWorking() {
+    public void cancelWorker() {
+        FirechatBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
+        if(working) {
+            Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
+            stopWorker();
+            if (connectionState.getState().equals(FirechatBTState.FirechatBluetoothState.CONNECTED)) {
+                connectionState.notConnected();
+                EventBus.getDefault().post(new NeighbourDisconnected(
+                                new BluetoothNeighbour(con.getRemoteMacAddress()),
+                                getProtocolIdentifier())
+                );
+            } else {
+                connectionState.notConnected();
+            }
+        } else
+            connectionState.notConnected();
+    }
+
+    @Override
+    public void startWorker() {
         if(working)
             return;
         working = true;
 
+        FirechatBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
+
         try {
             con.connect();
-        } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
-            return;
-        }
 
-        FirechatBTState connectionState = null;
-        try {
-            connectionState = protocol.getBTState(con.getRemoteMacAddress());
             connectionState.connected(this.getWorkerIdentifier());
 
-            Log.d(TAG, "[+] ESTABLISHED: " + getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
                             new BluetoothNeighbour(con.getRemoteMacAddress()),
                             getProtocolIdentifier())
@@ -139,18 +152,22 @@ public class FirechatOverBluetooth extends ProtocolWorker {
              * and one for processing the messages from the network
              */
             onWorkerConnected();
+        } catch (LinkLayerConnectionException exception) {
+            Log.d(TAG, exception.getMessage());
         } catch (FirechatBTState.StateException ignore) {
             Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" connection state mismatch");
         } finally {
-            stopWorking();
+            stopWorker();
 
-            if(connectionState != null)
+            if(connectionState.getState().equals(FirechatBTState.FirechatBluetoothState.CONNECTED)) {
                 connectionState.notConnected();
-
-            EventBus.getDefault().post(new NeighbourDisconnected(
-                            new BluetoothNeighbour(con.getRemoteMacAddress()),
-                            getProtocolIdentifier() )
-            );
+                EventBus.getDefault().post(new NeighbourDisconnected(
+                                new BluetoothNeighbour(con.getRemoteMacAddress()),
+                                getProtocolIdentifier())
+                );
+            } else {
+                connectionState.notConnected();
+            }
         }
     }
 
@@ -325,7 +342,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public void stopWorking() {
+    public void stopWorker() {
         if(!working)
             return;
 
@@ -335,7 +352,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
         } catch (LinkLayerConnectionException e) {
             Log.e(TAG, e.getMessage());
         }
-        Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
     }
 
 }

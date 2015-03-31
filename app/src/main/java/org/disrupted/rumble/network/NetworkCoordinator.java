@@ -139,7 +139,7 @@ public class NetworkCoordinator extends Service {
 
             // destroy worker pools
             for (Map.Entry<String, WorkerPool> entry : workerPools.entrySet()) {
-                entry.getValue().killPool();
+                entry.getValue().stopPool();
                 entry.setValue(null);
             }
             workerPools.clear();
@@ -197,6 +197,14 @@ public class NetworkCoordinator extends Service {
         synchronized (lock) {
             if (adapters == null)
                 return;
+            if (workerPools == null)
+                return;
+
+            WorkerPool pool = workerPools.get(linkLayerIdentifier);
+            if(pool == null)
+                return;
+            pool.startPool();
+
             LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
             if (adapter == null)
                 return;
@@ -207,10 +215,16 @@ public class NetworkCoordinator extends Service {
         synchronized (lock) {
             if (adapters == null)
                 return;
+
             LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
             if (adapter == null)
                 return;
             adapter.linkStop();
+
+            WorkerPool pool = workerPools.get(linkLayerIdentifier);
+            if(pool == null)
+                return;
+            pool.stopPool();
         }
     }
     public boolean isLinkLayerEnabled(String linkLayerIdentifier) {
@@ -319,7 +333,8 @@ public class NetworkCoordinator extends Service {
                 return;
 
             WorkerPool pool = workerPools.get(linkLayerIdentifier);
-            pool.stopWorkers(protocolIdentifier);
+            if(pool != null)
+                pool.stopWorkers(protocolIdentifier);
         }
     }
 

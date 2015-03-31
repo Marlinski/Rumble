@@ -20,7 +20,6 @@
 package org.disrupted.rumble.network;
 
 
-import android.renderscript.Element;
 import android.util.Log;
 
 import org.disrupted.rumble.network.protocols.Worker;
@@ -45,16 +44,47 @@ public class WorkerPool {
 
     private PriorityBlockingQueue<QueueElement> queue;
     private LinkedList<WorkerThread> pool;
+    private int poolSize;
 
     private static final Object lock = new Object();
 
     public WorkerPool(int N) {
         queue = new PriorityBlockingQueue<QueueElement>();
         pool = new LinkedList<WorkerThread>();
-        for (int i = 0; i < N; i++) {
-            WorkerThread thread = new WorkerThread("Thread "+i);
-            thread.start();
-            pool.add(thread);
+        this.poolSize = N;
+    }
+
+    public void startPool() {
+        synchronized (lock) {
+            for (int i = 0; i < poolSize; i++) {
+                WorkerThread thread = new WorkerThread("Thread " + i);
+                thread.start();
+                pool.add(thread);
+            }
+        }
+    }
+
+    public void stopPool() {
+        synchronized (lock) {
+            Iterator<QueueElement> itq = queue.iterator();
+            while(itq.hasNext()) {
+                QueueElement el = itq.next();
+                if(el != null) {
+                    if(el.getWorker() != null)
+                        el.getWorker().cancelWorker();
+                    itq.remove();
+                }
+            }
+
+            Iterator<WorkerThread> itp = pool.iterator();
+            while(itp.hasNext()) {
+                WorkerThread wt = itp.next();
+                if(wt != null) {
+                    wt.killWorker();
+                    wt.interrupt();
+                }
+                itp.remove();
+            }
         }
     }
 
@@ -71,7 +101,7 @@ public class WorkerPool {
         return false;
     }
 
-    public QueueElement alreadyInQueue(QueueElement qe) {
+    private QueueElement alreadyInQueue(QueueElement qe) {
         Iterator<QueueElement> it = queue.iterator();
         while (it.hasNext()) {
             QueueElement element = it.next();
@@ -139,58 +169,38 @@ public class WorkerPool {
             Iterator<QueueElement> itq = queue.iterator();
             while(itq.hasNext()) {
                 QueueElement element = itq.next();
-                if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
+                if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier)) {
+                    element.getWorker().cancelWorker();
                     itq.remove();
+                }
             }
 
             Iterator<WorkerThread> itp = pool.iterator();
             while(itq.hasNext()) {
                 WorkerThread element = itp.next();
                 if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
-                    element.getWorker().stopWorking();
+                    element.getWorker().stopWorker();
             }
         }
     }
 
     public void stopWorker(String workerID) {
         synchronized (lock) {
-            final List<Worker> ret = new LinkedList<Worker>();
             Iterator<QueueElement> itq = queue.iterator();
             while(itq.hasNext()) {
                 QueueElement element = itq.next();
-                if(element.getWorker().getWorkerIdentifier().equals(workerID))
+                if(element.getWorker().getWorkerIdentifier().equals(workerID)) {
+                    element.getWorker().cancelWorker();
                     itq.remove();
+                }
             }
 
             Iterator<WorkerThread> itp = pool.iterator();
             while(itq.hasNext()) {
                 WorkerThread element = itp.next();
                 if(element.getWorker().getWorkerIdentifier().equals(workerID))
-                    element.getWorker().stopWorking();
+                    element.getWorker().stopWorker();
             }
-        }
-    }
-
-    public void killPool() {
-        synchronized (lock) {
-            Iterator<QueueElement> itq = queue.iterator();
-            while(itq.hasNext()) {
-                QueueElement el = itq.next();
-                if(el != null)
-                    itq.remove();
-            }
-            queue = null;
-
-            Iterator<WorkerThread> itp = pool.iterator();
-            while(itp.hasNext()) {
-                WorkerThread wt = itp.next();
-                if(wt != null) {
-                    wt.killWorker();
-                    wt.interrupt();
-                }
-                itp.remove();
-            }
-            pool = null;
         }
     }
 
@@ -229,12 +239,10 @@ public class WorkerPool {
         private static final String TAG = "WorkerThread";
 
         private Worker worker;
-        private boolean isRunning;
 
         WorkerThread(String name) {
             super(name);
             worker = null;
-            isRunning = false;
         }
 
         @Override
@@ -244,19 +252,17 @@ public class WorkerPool {
             try {
                 while (true) {
                         worker = null;
-                        isRunning = false;
                         QueueElement element;
 
                         element = queue.take();
 
-                        if(element == null) continue;
+                        if(element == null)
+                            continue;
                         //Log.d(TAG, "[+] "+this.getName()+" consumes "+element.getNetworkThread().getNetworkThreadID());
                         this.worker = element.getWorker();
-                        isRunning = true;
-                        worker.startWorking();
+                        worker.startWorker();
                 }
-            } catch (InterruptedException e) {
-                Log.d(TAG, "worker interrupted ", e);
+            } catch (InterruptedException ignore) {
             }
         }
 
@@ -265,8 +271,8 @@ public class WorkerPool {
         }
 
         public void killWorker() {
-            if(isRunning)
-                worker.stopWorking();
+            if(worker != null)
+                worker.stopWorker();
         }
     }
 }

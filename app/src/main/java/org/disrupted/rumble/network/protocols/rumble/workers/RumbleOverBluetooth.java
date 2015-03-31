@@ -32,7 +32,6 @@ import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamExcepti
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
-import org.disrupted.rumble.network.protocols.rumble.RumbleNeighbour;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
@@ -96,24 +95,36 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public void startWorking() {
+    public void cancelWorker() {
+        RumbleBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
+        if(working) {
+            Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
+            stopWorker();
+            if (connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
+                connectionState.notConnected();
+                EventBus.getDefault().post(new NeighbourDisconnected(
+                                new BluetoothNeighbour(con.getRemoteMacAddress()),
+                                getProtocolIdentifier())
+                );
+            } else {
+                connectionState.notConnected();
+            }
+        } else
+            connectionState.notConnected();
+    }
+
+    @Override
+    public void startWorker() {
         if(working)
             return;
         working = true;
 
+        RumbleBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
         try {
             con.connect();
-        } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
-            return;
-        }
 
-        RumbleBTState connectionState = null;
-        try {
-            connectionState = protocol.getBTState(con.getRemoteMacAddress());
             connectionState.connected(this.getWorkerIdentifier());
 
-            Log.d(TAG, "[+] ESTABLISHED: " + getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
                     new BluetoothNeighbour(con.getRemoteMacAddress()),
                     getProtocolIdentifier() )
@@ -126,18 +137,22 @@ public class RumbleOverBluetooth extends ProtocolWorker {
              */
             onWorkerConnected();
 
+        } catch (LinkLayerConnectionException exception) {
+            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
         } catch (RumbleBTState.StateException e) {
             Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" impossible connection state: "+connectionState.printState());
         } finally {
-            stopWorking();
+            stopWorker();
 
-            if(connectionState != null)
+            if(connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
                 connectionState.notConnected();
-
-            EventBus.getDefault().post(new NeighbourDisconnected(
-                    new BluetoothNeighbour(con.getRemoteMacAddress()),
-                    getProtocolIdentifier() )
-            );
+                EventBus.getDefault().post(new NeighbourDisconnected(
+                                new BluetoothNeighbour(con.getRemoteMacAddress()),
+                                getProtocolIdentifier())
+                );
+            } else {
+                connectionState.notConnected();
+            }
         }
     }
 
@@ -286,7 +301,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public void stopWorking() {
+    public void stopWorker() {
         if(!working)
             return;
         working = false;
@@ -295,7 +310,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         } catch (LinkLayerConnectionException e) {
             Log.e(TAG, e.getMessage());
         }
-        Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
     }
 
 }

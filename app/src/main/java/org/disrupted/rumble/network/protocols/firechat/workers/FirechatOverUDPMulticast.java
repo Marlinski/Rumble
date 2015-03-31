@@ -24,14 +24,12 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
-import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.json.JSONException;
 
@@ -39,8 +37,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.LinkedList;
 import java.util.List;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -93,7 +89,12 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
     }
 
     @Override
-    public void startWorking() {
+    public void cancelWorker() {
+        return;
+    }
+
+    @Override
+    public void startWorker() {
         if(working)
             return;
         working = true;
@@ -115,7 +116,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
             onWorkerConnected();
 
         } finally {
-            stopWorking();
+            stopWorker();
         }
     }
 
@@ -159,7 +160,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
     }
 
     @Override
-    public void stopWorking() {
+    public void stopWorker() {
         if(!working)
             return;
 

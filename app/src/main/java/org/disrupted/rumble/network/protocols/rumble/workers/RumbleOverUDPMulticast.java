@@ -21,13 +21,11 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
-import org.disrupted.rumble.network.protocols.rumble.RumbleNeighbour;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.net.DatagramPacket;
@@ -87,7 +85,12 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     }
 
     @Override
-    public void startWorking() {
+    public void cancelWorker() {
+        return;
+    }
+
+    @Override
+    public void startWorker() {
         if(working)
             return;
         working = true;
@@ -109,7 +112,7 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
             onWorkerConnected();
 
         } finally {
-            stopWorking();
+            stopWorker();
         }
     }
 
@@ -129,7 +132,7 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
 
 
     @Override
-    public void stopWorking() {
+    public void stopWorker() {
         if(!working)
             return;
 

@@ -1,5 +1,7 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
+import android.util.Log;
+
 /**
  * @author Marlinski
  */
@@ -30,6 +32,7 @@ public class FirechatBTState {
 
     public void connectionInitiated() throws StateException {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 case CONNECTED:
                 case CONNECTION_INITIATED:
@@ -37,12 +40,14 @@ public class FirechatBTState {
                 case NOT_CONNECTED:
                 default:
                     state = FirechatBluetoothState.CONNECTION_INITIATED;
+                    Log.d(TAG, previous+" -> "+printState());
             }
         }
     }
 
     public void connected(String workerID) throws StateException {
         synchronized (lockRumbleBTState) {
+            String previous = printState();
             switch (state) {
                 case NOT_CONNECTED:
                 case CONNECTED:
@@ -50,16 +55,16 @@ public class FirechatBTState {
                 case CONNECTION_INITIATED:
                 default:
                     state = FirechatBluetoothState.CONNECTED;
+                    Log.d(TAG, previous+" -> "+printState());
             }
         }
     }
 
     public void notConnected() {
         synchronized (lockRumbleBTState) {
-            switch (state) {
-                default:
-                    state = FirechatBluetoothState.NOT_CONNECTED;
-            }
+            String previous = printState();
+            state = FirechatBluetoothState.NOT_CONNECTED;
+            Log.d(TAG, previous+" -> "+printState());
         }
     }
 

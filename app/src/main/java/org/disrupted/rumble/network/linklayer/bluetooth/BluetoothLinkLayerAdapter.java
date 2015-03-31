@@ -86,16 +86,17 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
     public void linkStop() {
         if(!activated)
             return;
+        activated = false;
 
         Log.d(TAG, "[+] Stopping Bluetooth");
         networkCoordinator.delScanner(btScanner);
         btScanner.destroy();
 
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
+
         if(register)
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
         register = false;
-        activated = false;
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

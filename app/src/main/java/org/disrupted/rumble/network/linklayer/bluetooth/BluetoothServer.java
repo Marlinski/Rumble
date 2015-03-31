@@ -25,10 +25,8 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.WorkerPool;
 import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.Worker;
 
 import java.io.IOException;
@@ -73,7 +71,15 @@ public abstract class BluetoothServer implements Worker {
     }
 
     @Override
-    public void startWorking() {
+    public void cancelWorker() {
+        if(working) {
+            Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
+            stopWorker();
+        }
+    }
+
+    @Override
+    public void startWorker() {
         if(working)
             return;
         working = true;
@@ -116,14 +122,14 @@ public abstract class BluetoothServer implements Worker {
         } catch (IOException e) {
             Log.d(TAG, "[-] ENDED "+getWorkerIdentifier());
         } finally {
-            stopWorking();
+            stopWorker();
         }
     }
 
     abstract protected void onClientConnected(BluetoothSocket mmConnectedSocket);
 
     @Override
-    public void stopWorking() {
+    public void stopWorker() {
         if(!working)
             return;
         working = false;

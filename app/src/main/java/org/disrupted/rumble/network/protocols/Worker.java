@@ -11,9 +11,11 @@ public interface Worker {
 
     public String getLinkLayerIdentifier();
 
-    public void startWorking();
+    public void cancelWorker();
 
-    public void stopWorking();
+    public void startWorker();
+
+    public void stopWorker();
 
     public boolean isWorking();
 
