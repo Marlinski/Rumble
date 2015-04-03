@@ -32,7 +32,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
-public abstract class ProtocolWorker implements Worker {
+public abstract class ProtocolWorker implements Worker, CommandExecutor {
 
     private static final String TAG = "ProtocolWorker";
 
@@ -73,17 +73,16 @@ public abstract class ProtocolWorker implements Worker {
         }
     };
 
-    /*
-     * Protocol Interface implementation of the executeCommand method
-     * This method add a command to the commandQueue that will be processed by the
-     * processingCommandFromQueue thread
-     */
-    public final boolean executeCommand(Command command) throws InterruptedException{
-        if(isCommandSupported(command.getCommandName())) {
-            commandQueue.put(command);
-            return true;
-        } else {
-            Log.d(TAG, "[!] command is not supported: " + command.getCommandName());
+    public final boolean execute(Command command){
+        try {
+            if (isCommandSupported(command.getCommandName())) {
+                commandQueue.put(command);
+                return true;
+            } else {
+                Log.d(TAG, "[!] command is not supported: " + command.getCommandName());
+                return false;
+            }
+        } catch (InterruptedException ignore) {
             return false;
         }
     }

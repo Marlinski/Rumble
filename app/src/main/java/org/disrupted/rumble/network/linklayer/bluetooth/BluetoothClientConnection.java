@@ -109,7 +109,6 @@ public class BluetoothClientConnection extends BluetoothConnection {
 
     }
 
-
     /*
          * todo: it is possible that if the user stops everything it may keep a locking state
          * we don't want to connect while we are discovering cause it mess with the bluetooth

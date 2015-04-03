@@ -47,6 +47,4 @@ public interface Protocol {
 
     public void onEvent(NeighbourUnreachable event);
 
-    public List<ProtocolNeighbour> getNeighbourList();
-
 }

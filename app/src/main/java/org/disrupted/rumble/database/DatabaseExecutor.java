@@ -76,41 +76,43 @@ public class DatabaseExecutor {
         startExecutor();
     }
 
-    public void startExecutor() {
+    @Override
+    protected void finalize() throws Throwable {
+        stopExecutor();
+        super.finalize();
+    }
+
+    private void startExecutor() {
         if(running)
             return;
+        running = true;
 
-        synchronized (lock) {
-            executorThread = new Thread() {
-                @Override
-                public synchronized void run() {
-                    Log.d(TAG, "[+] Database executor started");
-                    try {
-                        while (true) {
-                            Runnable task = queryQueue.take();
-                            task.run();
-                        }
-                    } catch (InterruptedException e) {
-                        Log.d(TAG, "[!] Executor thread has stopped");
+        executorThread = new Thread() {
+            @Override
+            public synchronized void run() {
+                Log.d(TAG, "[+] Database executor started");
+                try {
+                    while (true) {
+                        Runnable task = queryQueue.take();
+                        task.run();
                     }
+                } catch (InterruptedException e) {
+                    Log.d(TAG, "[!] Executor thread has stopped");
                 }
-            };
-            executorThread.start();
-            running = true;
-        }
+            }
+        };
+        executorThread.start();
     }
 
     public void stopExecutor() {
         if(!running)
             return;
+        running = false;
 
-        synchronized (lock) {
-            if (executorThread != null)
-                executorThread.interrupt();
-            executorThread = null;
-            queryQueue.clear();
-            running = false;
-        }
+        if (executorThread != null)
+            executorThread.interrupt();
+        executorThread = null;
+        queryQueue.clear();
     }
 
     public boolean addQuery(final WritableQuery query, final WritableQueryCallback callback) {

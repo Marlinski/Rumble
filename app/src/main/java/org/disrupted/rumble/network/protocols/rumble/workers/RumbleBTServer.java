@@ -62,6 +62,7 @@ public class RumbleBTServer extends BluetoothServer {
     @Override
     protected void onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
+        // todo lock the state before accessing it
         try {
             RumbleBTState connectionState = protocol.getBTState(neighbour.getLinkLayerAddress());
             switch (connectionState.getState()) {

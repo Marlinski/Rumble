@@ -134,7 +134,7 @@ public class StatusDatabase extends Database {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[]{ID}, ID + " = ?", new String[]{Long.toString(id)}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, ID + " = ?", new String[]{Long.toString(id)}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())

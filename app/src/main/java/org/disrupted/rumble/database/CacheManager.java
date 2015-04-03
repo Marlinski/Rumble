@@ -74,14 +74,14 @@ public class CacheManager {
             event.status.addForwarder(event.sender, event.protocolID);
             event.status.addDuplicate(1);
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(event.status, null);
+            Log.d(TAG, "[+] status inserted: "+event.status.toString());
         } else {
             exists.addForwarder(event.sender, event.protocolID);
             exists.addDuplicate(1);
             if(event.status.getLike() > 0)
                 exists.addLike();
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
+            Log.d(TAG, "[+] status updated: "+event.status.toString());
         }
     }
-
-
 }

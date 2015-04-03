@@ -46,7 +46,7 @@ import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.HashtagDatabase;
-import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -157,7 +157,7 @@ public class FragmentStatusList extends Fragment {
         super.onDestroy();
     }
 
-
+    // todo: only get last 50 statuses and request it as the user browse it
     public void getStatuses() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -387,7 +387,7 @@ public class FragmentStatusList extends Fragment {
     /*
      * Events that come from outside the activity (like new status for instance)
      */
-    public void onEvent(NewStatusEvent status) {
+    public void onEvent(StatusInsertedEvent status) {
         getStatuses();
     }
 

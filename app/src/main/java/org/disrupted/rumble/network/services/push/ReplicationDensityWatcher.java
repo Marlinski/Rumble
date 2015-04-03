@@ -5,6 +5,7 @@ import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import java.util.HashMap;
 import java.util.Map;
 import android.os.Handler;
+import android.util.Log;
 
 import de.greenrobot.event.EventBus;
 
@@ -19,6 +20,8 @@ import de.greenrobot.event.EventBus;
  * @author Marlinski
  */
 public class ReplicationDensityWatcher {
+
+    private static final String TAG = "ReplicationDensityWatcher";
 
     private boolean started;
     private long windowSize;   //window size in seconds
@@ -39,6 +42,7 @@ public class ReplicationDensityWatcher {
             return;
         started = true;
 
+        Log.d(TAG, "[+] RD Watcher Started");
         EventBus.getDefault().register(this);
     }
 
@@ -46,6 +50,8 @@ public class ReplicationDensityWatcher {
         if(!started)
             return;
         started = false;
+
+        Log.d(TAG, "[+] RD Watcher Stopped");
         handler.removeCallbacksAndMessages(null);
         copiesReceived.clear();
 
@@ -56,10 +62,10 @@ public class ReplicationDensityWatcher {
     public float computeMetric(String uuid) {
         Integer nbOfCopies = copiesReceived.get(uuid);
         if(nbOfCopies == null)
-            return 0;
+            return 1;
 
         if(messageReceived == 0)
-            return 0;
+            return 1;
 
         return (1-(nbOfCopies / messageReceived));
     }

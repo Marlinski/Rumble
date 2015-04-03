@@ -24,6 +24,7 @@ import android.util.Log;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -120,40 +121,37 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         working = true;
 
         RumbleBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
+
         try {
+
             con.connect();
 
             connectionState.connected(this.getWorkerIdentifier());
-
             EventBus.getDefault().post(new NeighbourConnected(
                     new BluetoothNeighbour(con.getRemoteMacAddress()),
                     getProtocolIdentifier() )
             );
+            protocol.workerConnected(this);
 
-            /*
-             * this method automatically creates two threads that runs in a while(true) loop,
-             *   - one for processing the command from the upper layer
-             *   - one for processing the packet received by the link layer layer
-             */
             onWorkerConnected();
 
-        } catch (RumbleBTState.StateException e) {
-            Log.e(TAG, "[!] FAILED: "+getWorkerIdentifier()+" impossible connection state: "+connectionState.printState());
-            return;
-        } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED: "+getWorkerIdentifier()+" "+exception.getMessage());
-        } finally {
-            stopWorker();
-        }
-
-        if(connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
+            protocol.workerDisconnected(this);
             connectionState.notConnected();
             EventBus.getDefault().post(new NeighbourDisconnected(
                             new BluetoothNeighbour(con.getRemoteMacAddress()),
                             getProtocolIdentifier())
             );
-        } else {
+
+
+        } catch (RumbleBTState.StateException e) {
+            // this can happen if we accepted a connection while this thread was connecting
+            // todo: prevent race condition by introducing a lock
+            Log.e(TAG, "[!] FAILED STATE: "+getWorkerIdentifier()+connectionState.printState());
+        } catch (LinkLayerConnectionException exception) {
+            Log.d(TAG, "[!] FAILED CON: "+getWorkerIdentifier()+" "+exception.getMessage());
             connectionState.notConnected();
+        } finally {
+            stopWorker();
         }
     }
 
@@ -206,11 +204,11 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                              * CacheManager and will update the database accordingly
                              */
                             timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-                            List<String> sender = new LinkedList<String>();
-                            sender.add(con.getRemoteMacAddress());
-                            EventBus.getDefault().post(new StatusSentEvent(
+                            //List<String> sender = new LinkedList<String>();
+                            //sender.add(con.getRemoteMacAddress());
+                            EventBus.getDefault().post(new StatusReceivedEvent(
                                             statusMessage,
-                                            sender,
+                                            con.getRemoteMacAddress(),
                                             RumbleProtocol.protocolID,
                                             BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                             blockStatus.getBytes().length,

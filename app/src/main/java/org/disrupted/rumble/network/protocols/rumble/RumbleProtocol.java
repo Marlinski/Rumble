@@ -36,10 +36,12 @@ import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverUDPMulticast;
+import org.disrupted.rumble.network.services.push.PushService;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,10 +72,12 @@ public class RumbleProtocol implements Protocol {
     private boolean started;
 
     private Map<String, RumbleBTState>   bluetoothState;
+    private Map<String, PushService.MessageDispatcher>  pushServices;
 
     public RumbleProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         bluetoothState = new HashMap<String, RumbleBTState>();
+        pushServices = new HashMap<String, PushService.MessageDispatcher>();
         started = false;
     }
 
@@ -99,6 +103,7 @@ public class RumbleProtocol implements Protocol {
             return;
 
         started = true;
+        PushService.startService();
         EventBus.getDefault().register(this);
     }
 
@@ -107,13 +112,26 @@ public class RumbleProtocol implements Protocol {
         if(!started)
             return;
         started = false;
-
+        PushService.stopService();
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
 
         networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         bluetoothState.clear();
+    }
+
+
+    public void workerConnected(ProtocolWorker worker) {
+        PushService.MessageDispatcher dispatcher = new PushService.MessageDispatcher(worker,null,0);
+        pushServices.put(worker.getWorkerIdentifier(), dispatcher);
+        dispatcher.startDispatcher();
+    }
+
+    public void workerDisconnected(ProtocolWorker worker) {
+        PushService.MessageDispatcher dispatcher =  pushServices.get(worker.getWorkerIdentifier());
+        dispatcher.stopDispatcher();
+        pushServices.remove(worker.getWorkerIdentifier());
     }
 
     @Override
@@ -192,50 +210,4 @@ public class RumbleProtocol implements Protocol {
              */
         }
     }
-
-    public List<ProtocolNeighbour> getNeighbourList() {
-        List<ProtocolNeighbour> ret = new LinkedList<ProtocolNeighbour>();
-
-        List<Worker> workers = networkCoordinator.getWorkers(
-                BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                protocolID,
-                true);
-        Iterator<Worker> it = workers.iterator();
-        while(it.hasNext()) {
-            Worker worker = it.next();
-
-            if(worker instanceof RumbleOverBluetooth) {
-                RumbleOverBluetooth cast = (RumbleOverBluetooth)(worker);
-                // todo use the real rumble name
-                ProtocolNeighbour info = new RumbleNeighbour(
-                        cast.getBluetoothNeighbour().getLinkLayerAddress(),
-                        cast.getBluetoothNeighbour());
-                ret.add(info);
-            }
-        }
-
-        workers = networkCoordinator.getWorkers(
-            WifiManagedLinkLayerAdapter.LinkLayerIdentifier,
-            protocolID,
-            true);
-        it = workers.iterator();
-        while(it.hasNext()) {
-            Worker worker = it.next();
-
-            if(worker instanceof RumbleOverUDPMulticast) {
-                RumbleOverUDPMulticast cast = (RumbleOverUDPMulticast)(worker);
-                List<ProtocolNeighbour> udpNeighbours = cast.getUDPNeighbourList();
-                Iterator<ProtocolNeighbour> itUdp = udpNeighbours.iterator();
-                while(itUdp.hasNext()) {
-                    ProtocolNeighbour protocolNeighbour = itUdp.next();
-                    ret.add(protocolNeighbour);
-                }
-                udpNeighbours.clear();
-            }
-        }
-
-        return ret;
-    }
-
-
 }
