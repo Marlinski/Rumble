@@ -61,7 +61,7 @@ public class ReplicationDensityWatcher {
         if(messageReceived == 0)
             return 0;
 
-        return (nbOfCopies / messageReceived);
+        return (1-(nbOfCopies / messageReceived));
     }
 
     public void onEvent(StatusReceivedEvent event) {

@@ -59,7 +59,7 @@ public class StatusMessage extends Message{
 
     public StatusMessage(String post, String author, long timeOfCreation) {
         this.messageType = TYPE;
-
+        this.dbid   = -1;
         this.status = post;
         this.author = author;
         this.group  = GroupDatabase.DEFAULT_GROUP;
@@ -120,6 +120,7 @@ public class StatusMessage extends Message{
     public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
     public void setHopCount(long hopcount){       this.hopCount       = hopcount; }
     public void setLike(long like){               this.like           = like;    }
+    public void addLike(){                        this.like++;    }
     public void setTTL(long ttl){                 this.ttl            = ttl;      }
     public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
     public void setHashtagSet(Set<String> hashtagSet) {
@@ -139,13 +140,17 @@ public class StatusMessage extends Message{
         forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
 
-
     public boolean hasBeenReadAlready(){ return read; }
     public boolean hasAttachedFile() {
         return (attachedFile != "");
     }
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
         return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
+    }
+
+    public void discard() {
+        hashtagSet.clear();
+        forwarderList.clear();
     }
 
     public String toString() {
