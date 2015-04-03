@@ -77,7 +77,9 @@ public class CacheManager {
         } else {
             exists.addForwarder(event.sender, event.protocolID);
             exists.addDuplicate(1);
-            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
+            if(event.status.getLike() > 0)
+                exists.addLike();
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
         }
     }
 

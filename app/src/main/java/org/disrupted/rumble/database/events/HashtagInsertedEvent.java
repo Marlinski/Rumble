@@ -19,17 +19,15 @@
 
 package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.contact.Contact;
-
 /**
  * @author Marlinski
  */
-public class NewContactEvent extends ResourceEvent {
+public class HashtagInsertedEvent extends ResourceEvent {
 
-    public Contact contact;
+    public final String hashtag;
 
-    public NewContactEvent(Contact contact){
-        this.contact = contact;
+    public HashtagInsertedEvent(String hashtag) {
+        this.hashtag = hashtag;
     }
 
 }

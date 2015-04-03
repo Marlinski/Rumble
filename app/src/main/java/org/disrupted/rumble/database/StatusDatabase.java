@@ -26,13 +26,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.events.NewStatusEvent;
+import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.message.StatusMessage;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -84,6 +83,22 @@ public class StatusDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    public boolean getStatusesId(DatabaseExecutor.ReadableQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.ReadableQuery() {
+                    @Override
+                    public Cursor read() {
+                        return getStatuses();
+                    }
+                }, callback);
+    }
+    private Cursor getStatusesId() {
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, null, null, null, null, null);
+        return cursor;
+    }
+
+
     public boolean getStatuses(DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
@@ -104,6 +119,22 @@ public class StatusDatabase extends Database {
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             cursor = database.query(TABLE_NAME, new String[]{ID}, UUID + " = ?", new String[]{uuid}, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToStatus(cursor);
+            else
+                return null;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+    public StatusMessage getStatus(long id) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[]{ID}, ID + " = ?", new String[]{Long.toString(id)}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -232,7 +263,7 @@ public class StatusDatabase extends Database {
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
             }
-            EventBus.getDefault().post(new NewStatusEvent(status));
+            EventBus.getDefault().post(new StatusInsertedEvent(status));
         }
 
         return statusID;

@@ -26,7 +26,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.contact.Contact;
-import org.disrupted.rumble.database.events.NewContactEvent;
+import org.disrupted.rumble.database.events.ContactInsertedEvent;
 
 import de.greenrobot.event.EventBus;
 
@@ -129,7 +129,7 @@ public class ContactDatabase extends Database  {
         long contactID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
 
         if(contactID > 0)
-            EventBus.getDefault().post(new NewContactEvent(contact));
+            EventBus.getDefault().post(new ContactInsertedEvent(contact));
 
         return contactID;
     }

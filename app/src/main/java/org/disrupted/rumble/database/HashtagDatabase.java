@@ -26,7 +26,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.SystemClock;
 
-import org.disrupted.rumble.database.events.NewHashtagEvent;
+import org.disrupted.rumble.database.events.HashtagInsertedEvent;
 
 import de.greenrobot.event.EventBus;
 
@@ -123,7 +123,7 @@ public class HashtagDatabase extends  Database{
         }
 
         if(res >= 0)
-            EventBus.getDefault().post(new NewHashtagEvent(hashtag));
+            EventBus.getDefault().post(new HashtagInsertedEvent(hashtag));
 
         return res;
     }
