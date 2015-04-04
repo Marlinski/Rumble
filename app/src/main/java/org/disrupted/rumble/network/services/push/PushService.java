@@ -157,7 +157,7 @@ public class PushService {
             final ReentrantLock takeLock = this.takeLock;
             takeLock.lock();
             try {
-
+                notEmpty.signal();
             } finally {
                 takeLock.unlock();
             }
