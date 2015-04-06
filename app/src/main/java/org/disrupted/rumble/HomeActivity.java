@@ -34,9 +34,9 @@ import android.view.MenuItem;
 import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 
-import org.disrupted.rumble.fragments.FragmentNavigationDrawer;
-import org.disrupted.rumble.fragments.FragmentNetworkDrawer;
-import org.disrupted.rumble.fragments.FragmentStatusList;
+import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
+import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
+import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 
 /**

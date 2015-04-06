@@ -17,6 +17,10 @@
     <string name="navigation_drawer_status_list">Status</string>
     <string name="navigation_drawer_status_favored">Favorites</string>
 
+    <string name="status_more_option_like">Like</string>
+    <string name="status_more_option_save">Save</string>
+    <string name="status_more_option_delete">Delete</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_search">Filter</string>
     <string name="action_compose">Compose</string>

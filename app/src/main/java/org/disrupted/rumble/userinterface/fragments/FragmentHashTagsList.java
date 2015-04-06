@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.fragments;
 
 
 import android.os.Bundle;
@@ -32,13 +32,14 @@ import org.disrupted.rumble.R;
 /**
  * @author Marlinski
  */
-public class FragmentDiscussionList extends Fragment {
+public class FragmentHashTagsList extends Fragment {
+
 
     private static View mView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.discussion_list, container, false);
+        mView = inflater.inflate(R.layout.hashtags_list, container, false);
         return mView;
     }
 }

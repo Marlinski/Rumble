@@ -17,29 +17,33 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.adapter;
 
+import java.util.List;
 
-import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-
-import org.disrupted.rumble.R;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
 
 /**
  * @author Marlinski
  */
-public class FragmentHashTagsList extends Fragment {
+public class PagerAdapter extends FragmentPagerAdapter {
 
+    private List<Fragment> fragments;
 
-    private static View mView;
+    public PagerAdapter(FragmentManager fm, List<Fragment> fragments) {
+        super(fm);
+        this.fragments = fragments;
+    }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.hashtags_list, container, false);
-        return mView;
+    public Fragment getItem(int position) {
+        return this.fragments.get(position);
+    }
+
+    @Override
+    public int getCount() {
+        return this.fragments.size();
     }
 }

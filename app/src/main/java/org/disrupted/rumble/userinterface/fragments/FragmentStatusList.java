@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Intent;
 import android.database.Cursor;
@@ -40,8 +40,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.adapter.FilterListAdapter;
-import org.disrupted.rumble.adapter.StatusListAdapter;
+import org.disrupted.rumble.database.events.StatusDeletedEvent;
+import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
+import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -349,8 +350,6 @@ public class FragmentStatusList extends Fragment {
         }
     }
 
-
-
     private class OnClickSend implements View.OnClickListener {
         @Override
         public void onClick(View view) {
@@ -385,9 +384,12 @@ public class FragmentStatusList extends Fragment {
     }
 
     /*
-     * Events that come from outside the activity (like new status for instance)
+     * Events that come from outside the activity
      */
-    public void onEvent(StatusInsertedEvent status) {
+    public void onEvent(StatusInsertedEvent event) {
+        getStatuses();
+    }
+    public void onEvent(StatusDeletedEvent event) {
         getStatuses();
     }
 

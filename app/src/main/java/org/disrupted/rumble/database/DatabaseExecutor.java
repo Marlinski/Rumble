@@ -56,7 +56,6 @@ public class DatabaseExecutor {
     private static final Object lock = new Object();
     private boolean running;
 
-
     public interface WritableQuery {
         public boolean write();
     }

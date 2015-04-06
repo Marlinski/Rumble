@@ -45,8 +45,8 @@ public class StatusMessage extends Message{
     protected String      group;
     protected String      status;
     protected Set<String> hashtagSet;
-    protected String      attachedFile;
-    protected long        fileSize; //todo: move it to file database
+    protected String      attachedFile; //todo: move it to file database
+    protected long        fileSize;
     protected long        timeOfCreation;
     protected long        timeOfArrival;
     protected long        ttl;
@@ -54,8 +54,13 @@ public class StatusMessage extends Message{
     protected long        like;
     protected long        replication;
     protected long        duplicate;
-    protected boolean     read;
     protected Set<String> forwarderList;
+
+    // local user preference for this message
+    protected boolean hasUserRead;
+    protected boolean hasUserLiked;
+    protected boolean hasUserSaved;
+
 
     public StatusMessage(String post, String author, long timeOfCreation) {
         this.messageType = TYPE;
@@ -91,7 +96,12 @@ public class StatusMessage extends Message{
             uuid = new String(digest);
         }
         catch (NoSuchAlgorithmException ignore) {}
+
+        hasUserRead  = false;
+        hasUserLiked = false;
+        hasUserSaved = false;
     }
+
 
     public long    getdbId() {              return this.dbid; }
     public String  getUuid() {              return this.uuid; }
@@ -110,6 +120,16 @@ public class StatusMessage extends Message{
     public long    getLike(){               return like; }
     public long    getReplication(){        return replication; }
     public long    getDuplicate(){          return duplicate; }
+    public boolean hasAttachedFile() {
+        return (attachedFile != "");
+    }
+    public boolean isForwarder(String linkLayerAddress, String protocolID) {
+        return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
+    }
+    public boolean hasUserLiked() {         return hasUserLiked; }
+    public boolean hasUserReadAlready() {   return hasUserRead; }
+    public boolean hasUserSaved() {         return hasUserSaved; }
+
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
     public void setUuid(String uuid) {            this.uuid           = uuid;     }
@@ -130,7 +150,6 @@ public class StatusMessage extends Message{
     }
     public void addReplication(long replication){ this.replication  += replication; }
     public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
-    public void setRead(boolean read){            this.read = read; }
     public void setForwarderList(Set<String> fl){
         if(forwarderList.size() > 0)
             forwarderList.clear();
@@ -139,14 +158,9 @@ public class StatusMessage extends Message{
     public void addForwarder(String linkLayerAddress, String protocolID) {
         forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
-
-    public boolean hasBeenReadAlready(){ return read; }
-    public boolean hasAttachedFile() {
-        return (attachedFile != "");
-    }
-    public boolean isForwarder(String linkLayerAddress, String protocolID) {
-        return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
-    }
+    public void setUserLike(boolean hasUserLiked){   this.hasUserRead = hasUserLiked; }
+    public void setUserRead(boolean userHasRead){     this.hasUserRead = userHasRead; }
+    public void setUserSaved(boolean hasUserSaved){   this.hasUserRead = hasUserSaved; }
 
     public void discard() {
         hashtagSet.clear();

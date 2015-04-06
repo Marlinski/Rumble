@@ -24,6 +24,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
@@ -58,7 +59,9 @@ public class StatusDatabase extends Database {
     public static final String LIKE             = "like";        // number of like (in the path)
     public static final String REPLICATION      = "replication"; // number of replications
     public static final String DUPLICATE        = "duplicate";   // number of copies received
-    public static final String READ             = "read";        // has the user read it already ?
+    public static final String USERREAD         = "read";        // has the user read it already ?
+    public static final String USERLIKED         = "liked";        // has the user liked it ?
+    public static final String USERSAVED         = "saved";        // has the user liked it ?
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
@@ -74,7 +77,9 @@ public class StatusDatabase extends Database {
                  + HOP_COUNT   + " INTEGER, "
                  + REPLICATION + " INTEGER, "
                  + DUPLICATE   + " INTEGER, "
-                 + READ        + " INTEGER, "
+                 + USERREAD    + " INTEGER, "
+                 + USERLIKED   + " INTEGER, "
+                 + USERSAVED   + " INTEGER, "
                  + "UNIQUE ( " + UUID + " ), "
                  + "FOREIGN KEY ( "+ GROUP + " ) REFERENCES " + GroupDatabase.TABLE_NAME + " ( " + GroupDatabase.NAME   + " ) "
           + " );";
@@ -98,7 +103,6 @@ public class StatusDatabase extends Database {
         return cursor;
     }
 
-
     public boolean getStatuses(DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
@@ -118,7 +122,7 @@ public class StatusDatabase extends Database {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[]{ID}, UUID + " = ?", new String[]{uuid}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, UUID + " = ?", new String[]{uuid}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -179,6 +183,7 @@ public class StatusDatabase extends Database {
         return cursor;
     }
 
+    // todo delete attached file too
     public boolean deleteStatus(final long statusID, DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
@@ -190,11 +195,43 @@ public class StatusDatabase extends Database {
     }
     private long deleteStatus(long statusID) {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
         int count = db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
-        if(count > 0)
+        if(count > 0) {
+            DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
+            DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(statusID);
             EventBus.getDefault().post(new StatusDeletedEvent(statusID));
+        }
         return count;
+    }
+
+    public boolean deleteStatus(final String uuid, DatabaseExecutor.WritableQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.WritableQuery() {
+                    @Override
+                    public boolean write() {
+                        return (deleteStatus(uuid) > 0);
+                    }
+                }, callback);
+    }
+    private long deleteStatus(String uuid) {
+        long total = 0;
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, UUID+ " = ?", new String[]{uuid}, null, null, null);
+        if(cursor == null) {
+            Log.d(TAG, "status not found" );
+            return total;
+        }
+        try {
+            for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+                Log.d(TAG, "status found with ID "+id );
+                total += deleteStatus(id);
+            }
+        } finally {
+            cursor.close();
+        }
+        Log.d(TAG, total+" status deleted" );
+        return total;
     }
 
     public boolean updateStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
@@ -212,7 +249,9 @@ public class StatusDatabase extends Database {
         contentValues.put(LIKE, status.getLike());
         contentValues.put(REPLICATION, status.getReplication());
         contentValues.put(DUPLICATE, status.getDuplicate());
-        contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
+        contentValues.put(USERREAD, status.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
+        contentValues.put(USERSAVED, status.hasUserSaved() ? 1 : 0);
 
         int count = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = " + status.getdbId(), null);
 
@@ -248,7 +287,9 @@ public class StatusDatabase extends Database {
         contentValues.put(TTL, status.getTTL());
         contentValues.put(REPLICATION, status.getReplication());
         contentValues.put(DUPLICATE, status.getDuplicate());
-        contentValues.put(READ, status.hasBeenReadAlready() ? 1 : 0);
+        contentValues.put(USERREAD, status.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
+        contentValues.put(USERSAVED, status.hasUserLiked() ? 1 : 0);
 
         long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
         status.setdbId(statusID);
@@ -310,7 +351,8 @@ public class StatusDatabase extends Database {
         message.setLike(cursor.getInt(cursor.getColumnIndexOrThrow(LIKE)));
         message.addReplication(cursor.getInt(cursor.getColumnIndexOrThrow(REPLICATION)));
         message.addDuplicate(cursor.getInt(cursor.getColumnIndexOrThrow(DUPLICATE)));
-        message.setRead((cursor.getInt(cursor.getColumnIndexOrThrow(READ)) == 1));
+        message.setUserRead((cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1));
+        message.setUserLike((cursor.getInt(cursor.getColumnIndexOrThrow(USERLIKED)) == 1));
         message.setHashtagSet(getHashTagList(statusID));
         message.setForwarderList(getForwarderList(statusID));
         return message;

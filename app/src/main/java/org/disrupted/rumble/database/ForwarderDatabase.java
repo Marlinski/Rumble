@@ -65,6 +65,11 @@ public class ForwarderDatabase extends Database {
         return cursor;
     }
 
+    public void deleteEntriesMatchingStatusID(long statusID){
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        db.delete(TABLE_NAME, ID + " = ?" , new String[] {statusID + ""});
+    }
+
     public long insertForwarder(long statusID, String receivedBy){
         ContentValues contentValues = new ContentValues();
         contentValues.put(ID, statusID);

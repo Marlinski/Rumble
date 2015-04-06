@@ -6,6 +6,10 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
+import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
+import org.disrupted.rumble.userinterface.events.UserLikedStatus;
+import org.disrupted.rumble.userinterface.events.UserReadStatus;
+import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 
 import java.util.Iterator;
 
@@ -49,14 +53,10 @@ public class CacheManager {
             started = false;
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
-            started = false;
         }
     }
 
     public void onEvent(StatusSentEvent event) {
-        if(!started)
-            return;
-
         Iterator<String> it = event.recipients.iterator();
         while(it.hasNext())
             event.status.addForwarder(it.next(), event.protocolID);
@@ -66,9 +66,6 @@ public class CacheManager {
     }
 
     public void onEvent(StatusReceivedEvent event) {
-        if(!started)
-            return;
-
         StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
             event.status.addForwarder(event.sender, event.protocolID);
@@ -83,5 +80,35 @@ public class CacheManager {
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
             Log.d(TAG, "[+] status updated: "+event.status.toString());
         }
+    }
+
+    public void onEvent(UserReadStatus event) {
+        StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
+        message.setUserRead(true);
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+        message.discard();
+        message = null;
+    }
+    public void onEvent(UserLikedStatus event) {
+        Log.d(TAG, " [.] status "+event.uuid+" liked");
+        StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
+        if(message == null)
+            return;
+        message.setUserRead(true);
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+        message.discard();
+        message = null;
+    }
+    public void onEvent(UserSavedStatus event) {
+        Log.d(TAG, " [.] status "+event.uuid+" saved");
+        StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
+        message.setUserRead(true);
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+        message.discard();
+        message = null;
+    }
+    public void onEvent(UserDeleteStatus event) {
+        Log.d(TAG, " [.] status "+event.uuid+" deleted");
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid, null);
     }
 }

@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
+package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -29,13 +29,10 @@ import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourInfo;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**

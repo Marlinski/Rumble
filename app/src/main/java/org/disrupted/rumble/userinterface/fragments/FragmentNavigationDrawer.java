@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -33,8 +33,8 @@ import android.widget.ListView;
 
 import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.adapter.NavigationItem;
-import org.disrupted.rumble.adapter.NavigationItemListAdapter;
+import org.disrupted.rumble.userinterface.adapter.NavigationItem;
+import org.disrupted.rumble.userinterface.adapter.NavigationItemListAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 
 import java.util.LinkedList;
@@ -70,7 +70,7 @@ public class FragmentNavigationDrawer extends Fragment {
         firstList = new LinkedList<NavigationItem>();
         firstList.add(new NavigationItem(R.drawable.ic_world, "Public Messages", 1));
         firstList.add(new NavigationItem(R.drawable.ic_favorite_outline_white_24dp, "Favorites", 2));
-        firstList.add(new NavigationItem(R.drawable.ic_cancel_white_24dp, "Exit", 3));
+        firstList.add(new NavigationItem(R.drawable.ic_close_white_24dp, "Exit", 3));
 
         mFirstListAdapter = new NavigationItemListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);

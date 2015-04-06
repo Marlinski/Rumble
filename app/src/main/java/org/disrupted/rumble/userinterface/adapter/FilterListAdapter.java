@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
+package org.disrupted.rumble.userinterface.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -28,7 +28,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.fragments.FragmentStatusList;
+import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 import java.util.Iterator;
 import java.util.LinkedList;

@@ -77,7 +77,6 @@ public class ContactDatabase extends Database  {
         return cursor;
     }
 
-
     public Contact getLocalContact() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, LOCALUSER+" = 1", null, null, null, null);

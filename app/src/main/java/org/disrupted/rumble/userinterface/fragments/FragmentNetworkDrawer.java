@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -42,17 +42,14 @@ import android.widget.ProgressBar;
 import android.widget.Switch;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.adapter.NeighborhoodListAdapter;
+import org.disrupted.rumble.userinterface.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NeighbourInfo;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.events.LinkLayerStarted;
 import org.disrupted.rumble.network.events.LinkLayerStopped;
-import org.disrupted.rumble.network.events.NeighbourConnected;
-import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;

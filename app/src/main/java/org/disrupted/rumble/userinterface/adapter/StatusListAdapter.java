@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
+package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,22 +29,31 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.support.v7.widget.PopupMenu;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.StatusDatabase;
-import org.disrupted.rumble.fragments.FragmentStatusList;
+import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
+import org.disrupted.rumble.userinterface.events.UserLikedStatus;
+import org.disrupted.rumble.userinterface.events.UserSavedStatus;
+import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -80,25 +89,30 @@ public class StatusListAdapter extends BaseAdapter{
         View status = inflater.inflate(R.layout.status_item, null, true);
         ImageView avatarView   = (ImageView) status.findViewById(R.id.status_item_avatar);
         TextView  authorView   = (TextView) status.findViewById(R.id.status_item_author);
-        TextView  postView     = (TextView) status.findViewById(R.id.status_item_body);
+        TextView  statusView     = (TextView) status.findViewById(R.id.status_item_body);
         TextView  tocView      = (TextView) status.findViewById(R.id.status_item_created);
         TextView  toaView      = (TextView) status.findViewById(R.id.status_item_received);
         ImageView attachedView = (ImageView) status.findViewById(R.id.status_item_attached_image);
+        ImageView moreView     = (ImageView) status.findViewById(R.id.status_item_more_options);
 
         if(!statuses.moveToPosition(i))
             return status;
 
-        String author   = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR));
-        String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
-        String post     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
-        long toc        = statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
+        final String author   = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR));
+        final String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
+        final String post     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
+        final long toc        = statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
+        final String uuid     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.UUID));
 
+        // we set the avatar
         ColorGenerator generator = ColorGenerator.DEFAULT;
         avatarView.setImageDrawable(builder.build(author.substring(0,1), generator.getColor(author)));
 
+        // we set the author field
         authorView.setText(author);
         tocView.setText(new TimeElapsed(toc).display());
 
+        // we draw the attached file (if any)
         if(!filename.equals("")) {
             File directory = FileUtil.getReadableAlbumStorageDir();
             if (directory != null) {
@@ -109,20 +123,30 @@ public class StatusListAdapter extends BaseAdapter{
             }
         }
 
+        // we set the status
         if(post.length() == 0) {
-            postView.setVisibility(View.GONE);
-            return status;
-        }
-
-        SpannableString ss = new SpannableString(post);
-        int beginCharPosition = -1;
-        int j;
-        for(j=0; j < post.length(); j++)
-        {
-            if(post.charAt(j) == '#')
-                beginCharPosition = j;
-            if((post.charAt(j) == ' ') && (beginCharPosition >= 0)){
-                final String word = post.substring(beginCharPosition,j);
+            statusView.setVisibility(View.GONE);
+        } else {
+            SpannableString ss = new SpannableString(post);
+            int beginCharPosition = -1;
+            int j;
+            for (j = 0; j < post.length(); j++) {
+                if (post.charAt(j) == '#')
+                    beginCharPosition = j;
+                if ((post.charAt(j) == ' ') && (beginCharPosition >= 0)) {
+                    final String word = post.substring(beginCharPosition, j);
+                    ClickableSpan clickableSpan = new ClickableSpan() {
+                        @Override
+                        public void onClick(View textView) {
+                            fragment.addFilter(word);
+                        }
+                    };
+                    ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    beginCharPosition = -1;
+                }
+            }
+            if (beginCharPosition >= 0) {
+                final String word = post.substring(beginCharPosition, j);
                 ClickableSpan clickableSpan = new ClickableSpan() {
                     @Override
                     public void onClick(View textView) {
@@ -130,21 +154,40 @@ public class StatusListAdapter extends BaseAdapter{
                     }
                 };
                 ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                beginCharPosition = -1;
             }
+            statusView.setText(ss);
+            statusView.setMovementMethod(LinkMovementMethod.getInstance());
         }
-        if(beginCharPosition >= 0) {
-            final String word = post.substring(beginCharPosition,j);
-            ClickableSpan clickableSpan = new ClickableSpan() {
-                @Override
-                public void onClick(View textView) {
-                    fragment.addFilter(word);
-                }
-            };
-            ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-        postView.setText(ss);
-        postView.setMovementMethod(LinkMovementMethod.getInstance());
+
+        // we enable the click for more options
+        moreView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu popupMenu = new PopupMenu(activity, view);
+                popupMenu.getMenu().add(Menu.NONE, 1, Menu.NONE, R.string.status_more_option_like);
+                popupMenu.getMenu().add(Menu.NONE, 2, Menu.NONE, R.string.status_more_option_save);
+                popupMenu.getMenu().add(Menu.NONE, 3, Menu.NONE, R.string.status_more_option_delete);
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        switch (menuItem.getItemId()) {
+                            case 1:
+                                EventBus.getDefault().post(new UserLikedStatus(uuid));
+                                break;
+                            case 2:
+                                EventBus.getDefault().post(new UserSavedStatus(uuid));
+                                break;
+                            case 3:
+                                EventBus.getDefault().post(new UserDeleteStatus(uuid));
+                                break;
+                            default: return false;
+                        }
+                        return false;
+                    }
+                });
+                popupMenu.show();
+            }
+        });
 
         return status;
     }
@@ -211,12 +254,12 @@ public class StatusListAdapter extends BaseAdapter{
             if(time < 2*ONE_MONTH_IN_SECONDS)
                 return res.getString(R.string.month_ago);
             if(time < ONE_YEAR_IN_SECONDS)
-                return getTimeInDays()+" "+res.getString(R.string.months_ago);
+                return getTimeInMonths()+" "+res.getString(R.string.months_ago);
 
             if(time < 2*ONE_YEAR_IN_SECONDS)
                 return res.getString(R.string.year_ago);
             if(time < 10*ONE_YEAR_IN_SECONDS)
-                return getTimeInDays()+" "+res.getString(R.string.years_ago);
+                return getTimeInYears()+" "+res.getString(R.string.years_ago);
 
             return res.getString(R.string.too_old);
         }

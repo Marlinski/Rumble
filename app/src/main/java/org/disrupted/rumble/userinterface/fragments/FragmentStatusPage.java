@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.fragments;
+package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -31,7 +31,7 @@ import android.widget.TabHost;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.TabFactory;
-import org.disrupted.rumble.adapter.PagerAdapter;
+import org.disrupted.rumble.userinterface.adapter.PagerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

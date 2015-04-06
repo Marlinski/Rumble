@@ -17,6 +17,7 @@
     <color name="grey_blue">#ffd5d6dd</color>
     <color name="light_grey">#76a9a9a9</color>
     <color name="status_background">#efefef</color>
+    <color name="status_background_liked">#efefef</color>
 
     <style name="Drawer.Interfaces.Name" parent="@android:style/TextAppearance">
         <item name="android:textSize">16.0sp</item>

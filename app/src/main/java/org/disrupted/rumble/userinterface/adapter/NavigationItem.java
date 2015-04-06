@@ -17,33 +17,32 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
-
-import java.util.List;
-
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
+package org.disrupted.rumble.userinterface.adapter;
 
 /**
  * @author Marlinski
  */
-public class PagerAdapter extends FragmentPagerAdapter {
+public class NavigationItem {
 
-    private List<Fragment> fragments;
+    private int icon;
+    private String text;
+    private int id;
 
-    public PagerAdapter(FragmentManager fm, List<Fragment> fragments) {
-        super(fm);
-        this.fragments = fragments;
+    public NavigationItem(int icon, String text, int id) {
+        this.icon = icon;
+        this.text = text;
+        this.id = id;
     }
 
-    @Override
-    public Fragment getItem(int position) {
-        return this.fragments.get(position);
+    public int getIcon() {
+        return this.icon;
     }
 
-    @Override
-    public int getCount() {
-        return this.fragments.size();
+    public String getText() {
+        return this.text;
+    }
+
+    public int getID() {
+        return id;
     }
 }

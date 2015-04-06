@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
+package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.Context;
@@ -55,7 +55,7 @@ public class NavigationItemListAdapter extends BaseAdapter {
         this.activity = activity;
         this.inflater = LayoutInflater.from(activity);
         this.itemlist = itemlist;
-        this.checked  = 2;
+        this.checked  = 0;
     }
 
     @Override

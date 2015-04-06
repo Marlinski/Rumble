@@ -57,8 +57,8 @@ public class PushService {
         }
     }
 
-    // todo: not sure who is responsible for shutdown the push service
-    // maybe the UI ?
+    // todo: not sure who is responsible for shutting down the push service
+    // maybe the UI ? Or should it be the NetworkCoordinator ?
     public static void stopService() {
         lock.lock();
         try {
@@ -285,7 +285,7 @@ public class PushService {
             }
         }
 
-        // todo: the complexity is DAMN TOO HIGH !!
+        // todo: iterating over the entire array, the complexity is DAMN TOO HIGH !!
         private void updateMax() {
             float maxScore = 0;
             if(max != null) {

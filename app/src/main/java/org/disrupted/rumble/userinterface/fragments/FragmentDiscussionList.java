@@ -17,32 +17,28 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.adapter;
+package org.disrupted.rumble.userinterface.fragments;
+
+
+import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import org.disrupted.rumble.R;
 
 /**
  * @author Marlinski
  */
-public class NavigationItem {
+public class FragmentDiscussionList extends Fragment {
 
-    private int icon;
-    private String text;
-    private int id;
+    private static View mView;
 
-    public NavigationItem(int icon, String text, int id) {
-        this.icon = icon;
-        this.text = text;
-        this.id = id;
-    }
-
-    public int getIcon() {
-        return this.icon;
-    }
-
-    public String getText() {
-        return this.text;
-    }
-
-    public int getID() {
-        return id;
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        mView = inflater.inflate(R.layout.discussion_list, container, false);
+        return mView;
     }
 }
