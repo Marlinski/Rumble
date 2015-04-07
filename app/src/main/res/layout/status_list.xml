@@ -67,7 +67,7 @@
         android:layout_weight="1"
         android:background="@color/grey_blue"
         android:divider="@null"
-        android:dividerHeight="10dp"
+        android:dividerHeight="5dp"
         android:paddingBottom="5dp"
         android:paddingTop="5dp"
         android:clipToPadding="false"/>

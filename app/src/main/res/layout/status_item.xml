@@ -31,11 +31,12 @@
     <RelativeLayout
     android:layout_width="0dip"
     android:layout_height="wrap_content"
-    android:layout_weight="38">
+    android:layout_weight="45">
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:id="@+id/status_item_box"
             android:background="@drawable/status_shape">
 
             <LinearLayout
