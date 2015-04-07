@@ -37,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.support.v7.widget.PopupMenu;
 
@@ -48,6 +49,7 @@ import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
+import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
@@ -95,8 +97,13 @@ public class StatusListAdapter extends BaseAdapter{
         TextView  toaView      = (TextView) status.findViewById(R.id.status_item_received);
         ImageView attachedView = (ImageView) status.findViewById(R.id.status_item_attached_image);
         ImageView moreView     = (ImageView) status.findViewById(R.id.status_item_more_options);
+        LinearLayout box       = (LinearLayout) status.findViewById(R.id.status_item_box);
+
+        if(statuses == null)
+            return status;
 
         StatusMessage message = statuses.get(i);
+
         if(message == null)
             return status;
 
@@ -186,6 +193,11 @@ public class StatusListAdapter extends BaseAdapter{
             }
         });
 
+        if(!message.hasUserReadAlready()){
+            box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+            EventBus.getDefault().post(new UserReadStatus(message.getUuid()));
+        }
+
         return status;
     }
 
@@ -208,6 +220,7 @@ public class StatusListAdapter extends BaseAdapter{
         return statuses.size();
     }
 
+    // todo: investigate why nullpointerexception when swap(null)
     public void swap(ArrayList<StatusMessage> statuses) {
         if(this.statuses != null) {
             for (StatusMessage message : this.statuses) {

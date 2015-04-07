@@ -181,15 +181,13 @@ public class FragmentStatusList extends Fragment {
     StatusDatabase.StatusQueryCallback onStatusesLoaded = new StatusDatabase.StatusQueryCallback() {
         @Override
         public void onStatusQueryFinished(ArrayList<StatusMessage> array) {
+            if (getActivity() == null)
+                return;
             final ArrayList<StatusMessage> answer = array;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (getActivity() == null) {
-                        return;
-                    }
                     statusListAdapter.swap(answer);
-
                     progressBar.setVisibility(View.GONE);
                     statusListAdapter.notifyDataSetChanged();
                 }
@@ -352,6 +350,7 @@ public class FragmentStatusList extends Fragment {
             Contact localContact = DatabaseFactory.getContactDatabase(getActivity()).getLocalContact();
             long now = (System.currentTimeMillis() / 1000L);
             StatusMessage statusMessage = new StatusMessage(message, localContact.getName(), now);
+            statusMessage.setUserRead(true);
 
             try {
                 String filename = saveImageOnDisk();
@@ -360,15 +359,14 @@ public class FragmentStatusList extends Fragment {
             catch (IOException ignore) {
             }
 
-            //todo: replace by an Event !!
-            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, null);
-
             composeTextView.setText("");
             for(String filter : filterListAdapter.getFilterList()) {
                 if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
                     composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
             }
 
+            //todo: replace by an Event !!
+            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, null);
         }
     }
 

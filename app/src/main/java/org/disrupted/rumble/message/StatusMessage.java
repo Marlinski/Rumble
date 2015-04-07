@@ -158,9 +158,9 @@ public class StatusMessage extends Message{
     public void addForwarder(String linkLayerAddress, String protocolID) {
         forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
-    public void setUserLike(boolean hasUserLiked){   this.hasUserRead = hasUserLiked; }
+    public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
     public void setUserRead(boolean userHasRead){     this.hasUserRead = userHasRead; }
-    public void setUserSaved(boolean hasUserSaved){   this.hasUserRead = hasUserSaved; }
+    public void setUserSaved(boolean hasUserSaved){   this.hasUserSaved = hasUserSaved; }
 
     public void discard() {
         hashtagSet.clear();

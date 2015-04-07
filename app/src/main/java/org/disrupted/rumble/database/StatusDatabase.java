@@ -399,6 +399,7 @@ public class StatusDatabase extends Database {
         message.addDuplicate(cursor.getInt(cursor.getColumnIndexOrThrow(DUPLICATE)));
         message.setUserRead((cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1));
         message.setUserLike((cursor.getInt(cursor.getColumnIndexOrThrow(USERLIKED)) == 1));
+        message.setUserSaved((cursor.getInt(cursor.getColumnIndexOrThrow(USERSAVED)) == 1));
         message.setHashtagSet(getHashTagList(statusID));
         message.setForwarderList(getForwarderList(statusID));
         return message;
