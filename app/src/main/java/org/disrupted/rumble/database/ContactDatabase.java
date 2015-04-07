@@ -28,6 +28,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
 
+import java.util.ArrayList;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -57,54 +59,91 @@ public class ContactDatabase extends Database  {
                  + WIFIID    + " TEXT "
                  + " );";
 
+    public abstract class ContactsQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        @Override
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof ArrayList)
+                onContactsQueryFinished((ArrayList<Contact>)(object));
+        }
+        public abstract void onContactsQueryFinished(ArrayList<Contact> statuses);
+    }
+    public abstract class ContactQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        @Override
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof Contact)
+                onContactQueryFinished((Contact)(object));
+        }
+        public abstract void onContactQueryFinished(Contact contact);
+    }
+
+
     public ContactDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
-    }
-
-
-    public boolean getContacts(DatabaseExecutor.ReadableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.ReadableQuery() {
-                    @Override
-                    public Cursor read() {
-                        return getContacts();
-                    }
-                }, callback);
-    }
-    private Cursor getContacts() {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
-        return cursor;
     }
 
     public Contact getLocalContact() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, LOCALUSER+" = 1", null, null, null, null);
-        cursor.moveToFirst();
-
-        String author = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
-        String uid    = cursor.getString(cursor.getColumnIndexOrThrow(UID));
-        boolean local = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
-
-        return new Contact(author, uid, local);
+        if(cursor == null)
+            return null;
+        try {
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToContact(cursor);
+            else
+                return null;
+        } finally {
+            cursor.close();
+        }
     }
 
-
-    public boolean getContact(final String uid, DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getContact(final String uid, ContactQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public Cursor read() {
+                    public Contact read() {
                         return getContact(uid);
                     }
                 }, callback);
     }
-    private Cursor getContact(String id) {
+    private Contact getContact(String id) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, ID+" = ?", new String[] {id}, null, null, null);
-        return cursor;
+        if(cursor == null)
+            return null;
+        try {
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToContact(cursor);
+            else
+                return null;
+        } finally {
+            cursor.close();
+        }
     }
 
+    public boolean getContacts(ContactsQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.ReadableQuery() {
+                    @Override
+                    public ArrayList<Contact> read() {
+                        return getContacts();
+                    }
+                }, callback);
+    }
+    private ArrayList<Contact> getContacts() {
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
+        if(cursor == null)
+            return null;
+        ArrayList<Contact> ret = new ArrayList<Contact>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursorToContact(cursor));
+            }
+        } finally {
+            cursor.close();
+        }
+        return ret;
+    }
 
     public boolean insertContact(final Contact contact, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
@@ -131,6 +170,13 @@ public class ContactDatabase extends Database  {
             EventBus.getDefault().post(new ContactInsertedEvent(contact));
 
         return contactID;
+    }
+
+    private Contact cursorToContact(final Cursor cursor) {
+        String author = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
+        String uid    = cursor.getString(cursor.getColumnIndexOrThrow(UID));
+        boolean local = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
+        return new Contact(author, uid, local);
     }
 
 }

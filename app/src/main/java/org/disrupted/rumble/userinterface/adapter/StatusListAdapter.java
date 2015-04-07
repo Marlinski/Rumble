@@ -45,6 +45,7 @@ import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
@@ -52,6 +53,7 @@ import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
 
@@ -65,7 +67,7 @@ public class StatusListAdapter extends BaseAdapter{
     private FragmentStatusList fragment;
     private Activity           activity;
     private LayoutInflater     inflater;
-    private Cursor             statuses;
+    private ArrayList<StatusMessage> statuses;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     public StatusListAdapter(Activity activity, FragmentStatusList fragment) {
@@ -76,8 +78,7 @@ public class StatusListAdapter extends BaseAdapter{
     }
 
     public void clean() {
-        if(statuses != null)
-            statuses.close();
+        swap(null);
         statuses = null;
         inflater = null;
         activity = null;
@@ -95,28 +96,23 @@ public class StatusListAdapter extends BaseAdapter{
         ImageView attachedView = (ImageView) status.findViewById(R.id.status_item_attached_image);
         ImageView moreView     = (ImageView) status.findViewById(R.id.status_item_more_options);
 
-        if(!statuses.moveToPosition(i))
+        StatusMessage message = statuses.get(i);
+        if(message == null)
             return status;
-
-        final String author   = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.AUTHOR));
-        final String filename = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.FILE_NAME));
-        final String post     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.POST));
-        final long toc        = statuses.getLong(statuses.getColumnIndexOrThrow(StatusDatabase.TIME_OF_CREATION));
-        final String uuid     = statuses.getString(statuses.getColumnIndexOrThrow(StatusDatabase.UUID));
 
         // we set the avatar
         ColorGenerator generator = ColorGenerator.DEFAULT;
-        avatarView.setImageDrawable(builder.build(author.substring(0,1), generator.getColor(author)));
+        avatarView.setImageDrawable(builder.build(message.getAuthor().substring(0, 1), generator.getColor(message.getAuthor())));
 
         // we set the author field
-        authorView.setText(author);
-        tocView.setText(new TimeElapsed(toc).display());
+        authorView.setText(message.getAuthor());
+        tocView.setText(new TimeElapsed(message.getTimeOfCreation()).display());
 
         // we draw the attached file (if any)
-        if(!filename.equals("")) {
+        if(!message.getFileName().equals("")) {
             File directory = FileUtil.getReadableAlbumStorageDir();
             if (directory != null) {
-                File attachedFile = new File(directory + File.separator + filename);
+                File attachedFile = new File(directory + File.separator + message.getFileName());
                 Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
                 attachedView.setImageBitmap(bitmapImage);
                 attachedView.setVisibility(View.VISIBLE);
@@ -124,17 +120,17 @@ public class StatusListAdapter extends BaseAdapter{
         }
 
         // we set the status
-        if(post.length() == 0) {
+        if(message.getPost().length() == 0) {
             statusView.setVisibility(View.GONE);
         } else {
-            SpannableString ss = new SpannableString(post);
+            SpannableString ss = new SpannableString(message.getPost());
             int beginCharPosition = -1;
             int j;
-            for (j = 0; j < post.length(); j++) {
-                if (post.charAt(j) == '#')
+            for (j = 0; j < message.getPost().length(); j++) {
+                if (message.getPost().charAt(j) == '#')
                     beginCharPosition = j;
-                if ((post.charAt(j) == ' ') && (beginCharPosition >= 0)) {
-                    final String word = post.substring(beginCharPosition, j);
+                if ((message.getPost().charAt(j) == ' ') && (beginCharPosition >= 0)) {
+                    final String word = message.getPost().substring(beginCharPosition, j);
                     ClickableSpan clickableSpan = new ClickableSpan() {
                         @Override
                         public void onClick(View textView) {
@@ -146,7 +142,7 @@ public class StatusListAdapter extends BaseAdapter{
                 }
             }
             if (beginCharPosition >= 0) {
-                final String word = post.substring(beginCharPosition, j);
+                final String word = message.getPost().substring(beginCharPosition, j);
                 ClickableSpan clickableSpan = new ClickableSpan() {
                     @Override
                     public void onClick(View textView) {
@@ -160,6 +156,7 @@ public class StatusListAdapter extends BaseAdapter{
         }
 
         // we enable the click for more options
+        final String uuid = message.getUuid();
         moreView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -208,13 +205,17 @@ public class StatusListAdapter extends BaseAdapter{
     public int getCount() {
         if(statuses == null)
             return 0;
-        return statuses.getCount();
+        return statuses.size();
     }
 
-    public void swap(Cursor cursor) {
-        if(statuses != null)
-            statuses.close();
-        statuses = cursor;
+    public void swap(ArrayList<StatusMessage> statuses) {
+        if(this.statuses != null) {
+            for (StatusMessage message : this.statuses) {
+                message.discard();
+            }
+            this.statuses.clear();
+        }
+        this.statuses = statuses;
     }
 
     private class TimeElapsed {

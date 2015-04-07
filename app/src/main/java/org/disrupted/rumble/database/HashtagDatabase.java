@@ -28,6 +28,8 @@ import android.os.SystemClock;
 
 import org.disrupted.rumble.database.events.HashtagInsertedEvent;
 
+import java.util.ArrayList;
+
 import de.greenrobot.event.EventBus;
 
 /**
@@ -52,24 +54,41 @@ public class HashtagDatabase extends  Database{
                  + "UNIQUE( " + HASHTAG + " ) "
           + " );";
 
+    public abstract class HashtagsQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof ArrayList)
+                onHashtagsQueryFinished((ArrayList<String>)(object));
+        }
+        public abstract void onHashtagsQueryFinished(ArrayList<String> hashtags);
+    }
 
     public HashtagDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    private boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
+    private boolean getHashtags(HashtagsQueryCallback callback) {
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public Cursor read() {
+                    public ArrayList<String> read() {
                         return getHashtags();
                     }
                 }, callback);
     }
-    private Cursor getHashtags() {
+    private ArrayList<String>  getHashtags() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor           = database.query(TABLE_NAME, null, null, null, null, null, null);
-        return cursor;
+        if(cursor == null)
+            return null;
+        ArrayList<String> ret = new ArrayList<String>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursor.getString(cursor.getColumnIndexOrThrow(HASHTAG)));
+            }
+        }finally {
+            cursor.close();
+        }
+        return ret;
     }
 
     public long getHashtagCount(String hashtag) {

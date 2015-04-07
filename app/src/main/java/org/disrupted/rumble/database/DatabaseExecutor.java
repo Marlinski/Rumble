@@ -63,10 +63,10 @@ public class DatabaseExecutor {
         public void onWritableQueryFinished(boolean success);
     }
     public interface ReadableQuery {
-        public Cursor read();
+        public Object read();
     }
     public interface ReadableQueryCallback {
-        public void onReadableQueryFinished(Cursor cursor);
+        public void onReadableQueryFinished(Object object);
     }
 
     public DatabaseExecutor() {
@@ -137,9 +137,9 @@ public class DatabaseExecutor {
             queryQueue.add(new Runnable() {
                 @Override
                 public void run() {
-                    Cursor cursor = query.read();
+                    Object object = query.read();
                     if(callback != null)
-                        callback.onReadableQueryFinished(cursor);
+                        callback.onReadableQueryFinished(object);
 
                 }
             });

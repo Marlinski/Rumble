@@ -25,6 +25,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.ArrayList;
+
 /**
  * @author Marlinski
  */
@@ -48,27 +50,28 @@ public class SubscriptionDatabase extends Database {
             "CREATE INDEX IF NOT EXISTS hashtag_contact_id_index ON " + TABLE_NAME + " (" + CID + ");"
     };
 
+    public static abstract class SubscriptionsQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof ArrayList)
+                onSubscriptionsQueryFinished((ArrayList<String>)(object));
+        }
+        public abstract void onSubscriptionsQueryFinished(ArrayList<String> subscriptions);
+    }
+
     public SubscriptionDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public Cursor getSubscriptions() {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
-
-        return cursor;
-    }
-
-    public boolean getLocalUserSubscriptions(DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getLocalUserSubscriptions(SubscriptionsQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public Cursor read() {
+                    public ArrayList<String> read() {
                         return getLocalUserSubscriptions();
                     }
                 }, callback);
     }
-    public Cursor getLocalUserSubscriptions() {
+    private ArrayList<String> getLocalUserSubscriptions() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         StringBuilder query = new StringBuilder(
                 "SELECT "+ HashtagDatabase.HASHTAG +" FROM "+HashtagDatabase.TABLE_NAME+" h"+
@@ -79,7 +82,17 @@ public class SubscriptionDatabase extends Database {
                 " WHERE c."+ContactDatabase.LOCALUSER+" = 1");
         query.append(" GROUP BY h."+HashtagDatabase.ID);
         Cursor cursor = database.rawQuery(query.toString(), null);
-        return cursor;
+        if(cursor == null)
+            return null;
+        ArrayList<String> ret = new ArrayList<String>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursor.getString(cursor.getColumnIndexOrThrow(HashtagDatabase.HASHTAG)));
+            }
+        }finally {
+            cursor.close();
+        }
+        return ret;
     }
 
     public Cursor getContactSubscriptions(String uid) {

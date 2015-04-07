@@ -40,6 +40,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.database.SubscriptionDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
@@ -55,6 +57,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -106,7 +109,7 @@ public class FragmentStatusList extends Fragment {
         filterListAdapter = new FilterListAdapter(getActivity());
         filters.setAdapter(filterListAdapter);
         filters.setClickable(false);
-        subscriptionList = new LinkedList<String>();
+        subscriptionList = new ArrayList<String>();
 
         // progress bar
         progressBar = (ProgressBar) mView.findViewById(R.id.loadingStatusList);
@@ -175,16 +178,14 @@ public class FragmentStatusList extends Fragment {
             }
         });
     }
-    DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+    StatusDatabase.StatusQueryCallback onStatusesLoaded = new StatusDatabase.StatusQueryCallback() {
         @Override
-        public void onReadableQueryFinished(Cursor cursor) {
-            final Cursor answer = cursor;
+        public void onStatusQueryFinished(ArrayList<StatusMessage> array) {
+            final ArrayList<StatusMessage> answer = array;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (getActivity() == null) {
-                        if (answer != null)
-                            answer.close();
                         return;
                     }
                     statusListAdapter.swap(answer);
@@ -202,27 +203,16 @@ public class FragmentStatusList extends Fragment {
                 .getLocalUserSubscriptions(onSubscriptionsLoaded);
 
     }
-    DatabaseExecutor.ReadableQueryCallback onSubscriptionsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+    SubscriptionDatabase.SubscriptionsQueryCallback onSubscriptionsLoaded = new SubscriptionDatabase.SubscriptionsQueryCallback() {
         @Override
-        public void onReadableQueryFinished(Cursor cursor) {
-            final Cursor answer = cursor;
+        public void onSubscriptionsQueryFinished(ArrayList<String> answer) {
+            if (getActivity() == null)
+                return;
+            final ArrayList<String> subscriptions = answer;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-
                     loadingSubscriptions = false;
-                    if (getActivity() == null) {
-                        if (answer != null)
-                            answer.close();
-                        return;
-                    }
-                    List<String> subscriptions = new LinkedList<String>();
-                    if (answer.moveToFirst()) {
-                        do {
-                            subscriptions.add(answer.getString(answer.getColumnIndexOrThrow(HashtagDatabase.HASHTAG)));
-                        } while (answer.moveToNext());
-                    }
-                    answer.close();
                     subscriptionList.clear();
                     subscriptionList = subscriptions;
                     filterListAdapter.swapSubscriptions(subscriptions);
@@ -235,7 +225,6 @@ public class FragmentStatusList extends Fragment {
     OnFilterClick onFilterClick = new OnFilterClick() {
         @Override
         public void onClick(String filter) {
-
             if(composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
                 composeTextView.setText(TextUtils.replace(composeTextView.getText(),
                         new String[] {" "+filter.toLowerCase()},

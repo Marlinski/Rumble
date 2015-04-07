@@ -32,6 +32,7 @@ import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.message.StatusMessage;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -84,47 +85,124 @@ public class StatusDatabase extends Database {
                  + "FOREIGN KEY ( "+ GROUP + " ) REFERENCES " + GroupDatabase.TABLE_NAME + " ( " + GroupDatabase.NAME   + " ) "
           + " );";
 
+    public static abstract class StatusQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof ArrayList)
+                onStatusQueryFinished((ArrayList<StatusMessage>)(object));
+        }
+        public abstract void onStatusQueryFinished(ArrayList<StatusMessage> statuses);
+    }
+    public static abstract class StatusIdQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
+        public final void onReadableQueryFinished(Object object) {
+            if(object instanceof ArrayList)
+                onStatusIdQueryFinished((ArrayList<Long>)(object));
+        }
+        public abstract void onStatusIdQueryFinished(ArrayList<Long> statusIds);
+    }
+
     public StatusDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public boolean getStatusesId(DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getStatusesId(StatusIdQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public Cursor read() {
-                        return getStatuses();
+                    public ArrayList<Long> read() {
+                        return getStatusesId();
                     }
                 }, callback);
     }
-    private Cursor getStatusesId() {
+    private ArrayList<Long> getStatusesId() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, null, null, null, null, null);
-        return cursor;
+        if(cursor == null)
+            return null;
+        ArrayList<Long> ret = new ArrayList<Long>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
+            }
+        }finally {
+            cursor.close();
+        }
+        return ret;
     }
 
-    public boolean getStatuses(DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getStatuses(StatusQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public Cursor read() {
+                    public ArrayList<StatusMessage> read() {
                         return getStatuses();
                     }
                 }, callback);
     }
-    private Cursor getStatuses() {
+    private ArrayList<StatusMessage> getStatuses() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
-        return cursor;
+        if(cursor == null)
+            return null;
+        ArrayList<StatusMessage> ret = new ArrayList<StatusMessage>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursorToStatus(cursor));
+            }
+        }finally {
+            cursor.close();
+        }
+        return ret;
+    }
+
+    public boolean getFilteredStatuses(final List<String> filters, StatusQueryCallback callback){
+        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
+                new DatabaseExecutor.ReadableQuery() {
+                    @Override
+                    public ArrayList<StatusMessage> read() {
+                        return getFilteredStatuses(filters);
+                    }
+                }, callback);
+    }
+    private ArrayList<StatusMessage> getFilteredStatuses(List<String> hashtagFilters) {
+        if(hashtagFilters.size() == 0)
+            return getStatuses();
+
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        StringBuilder query = new StringBuilder(
+                "SELECT * FROM "+StatusDatabase.TABLE_NAME+" s"+
+                " JOIN " + StatusTagDatabase.TABLE_NAME+" m"+
+                " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
+                " JOIN "+HashtagDatabase.TABLE_NAME+" h"                     +
+                " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
+                " WHERE lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
+
+
+        String[] array = new String[hashtagFilters.size()];
+        for(int i = 1; i < hashtagFilters.size(); i++) {
+            query.append(" OR lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
+        }
+        query.append(" GROUP BY "+StatusDatabase.ID);
+        Cursor cursor = database.rawQuery(query.toString(),hashtagFilters.toArray(array));
+        if(cursor == null)
+            return null;
+
+        ArrayList<StatusMessage> ret = new ArrayList<StatusMessage>();
+        try {
+            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                ret.add(cursorToStatus(cursor));
+            }
+        }finally {
+            cursor.close();
+        }
+        return ret;
     }
 
     public StatusMessage getStatus(String uuid) {
-        Cursor cursor = null;
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(TABLE_NAME, null, UUID + " = ?", new String[]{uuid}, null, null, null);
+        if(cursor == null)
+            return null;
         try {
-            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, null, UUID + " = ?", new String[]{uuid}, null, null, null);
-            if(cursor == null)
-                return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
                 return cursorToStatus(cursor);
             else
@@ -149,38 +227,6 @@ public class StatusDatabase extends Database {
             if(cursor != null)
                 cursor.close();
         }
-    }
-
-    public boolean getFilteredStatuses(final List<String> filters, DatabaseExecutor.ReadableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.ReadableQuery() {
-                    @Override
-                    public Cursor read() {
-                        return getFilteredStatuses(filters);
-                    }
-                }, callback);
-    }
-    private Cursor getFilteredStatuses(List<String> hashtagFilters) {
-        if(hashtagFilters.size() == 0)
-            return getStatuses();
-
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        StringBuilder query = new StringBuilder(
-                "SELECT * FROM "+StatusDatabase.TABLE_NAME+" s"+
-                " JOIN " + StatusTagDatabase.TABLE_NAME+" m"+
-                " ON s."+StatusDatabase.ID+" = m."+StatusTagDatabase.SID  +
-                " JOIN "+HashtagDatabase.TABLE_NAME+" h"                     +
-                " ON h."+HashtagDatabase.ID+" = m."+StatusTagDatabase.HID +
-                " WHERE lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
-
-
-        String[] array = new String[hashtagFilters.size()];
-        for(int i = 1; i < hashtagFilters.size(); i++) {
-            query.append(" OR lower(h."+HashtagDatabase.HASHTAG+") = lower(?)");
-        }
-        query.append(" GROUP BY "+StatusDatabase.ID);
-        Cursor cursor = database.rawQuery(query.toString(),hashtagFilters.toArray(array));
-        return cursor;
     }
 
     // todo delete attached file too
@@ -329,7 +375,7 @@ public class StatusDatabase extends Database {
      * utility function to transform a row into a StatusMessage
      * ! this method does not close the cursor
      */
-    public StatusMessage cursorToStatus(Cursor cursor) {
+    private StatusMessage cursorToStatus(final Cursor cursor) {
         if(cursor == null)
             return null;
         if(cursor.isAfterLast())

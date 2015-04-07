@@ -120,9 +120,9 @@ public class NetworkCoordinator extends Service {
             // register protocols
             protocols = new HashMap<String, Protocol>();
             Protocol rumbleProtocol = new RumbleProtocol(this);
-            Protocol firechatProtocol = new FirechatProtocol(this);
+            //Protocol firechatProtocol = new FirechatProtocol(this);
             protocols.put(rumbleProtocol.getProtocolIdentifier(), rumbleProtocol);
-            protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
+            //protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
 
             EventBus.getDefault().register(this);
         }

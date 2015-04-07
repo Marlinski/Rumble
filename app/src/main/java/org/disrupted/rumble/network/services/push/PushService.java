@@ -79,23 +79,20 @@ public class PushService {
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
                 .getStatusesId(onStatusLoaded);
     }
-    DatabaseExecutor.ReadableQueryCallback onStatusLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+    StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
         @Override
-        public void onReadableQueryFinished(Cursor cursor) {
-            final Cursor answer = cursor;
-            if (answer.moveToFirst()) {
+        public void onStatusIdQueryFinished(ArrayList<Long> answer) {
+            if (answer != null) {
                 lock.lock();
                 try {
-                    do {
-                        statusIds.add(answer.getLong(answer.getColumnIndexOrThrow(StatusDatabase.ID)));
-                    } while (answer.moveToNext());
+                    statusIds.clear();
+                    statusIds = answer;
                     Log.d(TAG, "[+] PushService initiated");
                     serviceStarted.signal();
                 } finally {
                     lock.unlock();
                 }
             }
-            answer.close();
         }
     };
 
