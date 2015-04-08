@@ -31,6 +31,7 @@
     <string name="action_create_group">New Group</string>
     <string name="action_new_discussion">New Discussion</string>
 
+    <string name="popup_compose_title">Compose</string>
 
     <string name="menu_interfaces_title">Interfaces</string>
     <string name="menu_neighbors_title">Neighborhood</string>

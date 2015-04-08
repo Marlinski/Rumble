@@ -90,11 +90,16 @@
         <activity
             android:name=".HomeActivity"
             android:label="@string/app_name"
-            android:windowSoftInputMode="stateHidden"
+            android:windowSoftInputMode="adjustPan|adjustResize|stateHidden"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
         </activity>
+
+        <activity
+            android:name=".userinterface.fragments.PopupCompose"
+            android:theme="@style/PopupCompose"
+            android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
         <activity
             android:name=".LoginScreen">

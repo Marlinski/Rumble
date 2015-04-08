@@ -84,10 +84,12 @@ public class CacheManager {
 
     public void onEvent(UserReadStatus event) {
         StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        message.setUserRead(true);
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
-        message.discard();
-        message = null;
+        if(message != null) {
+            message.setUserRead(true);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+            message.discard();
+            message = null;
+        }
     }
     public void onEvent(UserLikedStatus event) {
         Log.d(TAG, " [.] status "+event.uuid+" liked");

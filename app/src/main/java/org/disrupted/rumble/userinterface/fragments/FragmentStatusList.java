@@ -21,13 +21,9 @@ package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Intent;
 import android.database.DataSetObserver;
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,11 +31,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.StatusDatabase;
@@ -47,19 +40,12 @@ import org.disrupted.rumble.database.SubscriptionDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
-import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.util.FileUtil;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import de.greenrobot.event.EventBus;
@@ -71,25 +57,13 @@ public class FragmentStatusList extends Fragment {
 
     private static final String TAG = "FragmentStatusList";
 
-    public static final int REQUEST_IMAGE_CAPTURE = 42;
-
     private View mView;
     private StatusListAdapter statusListAdapter;
     private FilterListAdapter filterListAdapter;
-    private TextView composeTextView;
-    private ImageButton sendButton;
 
     private ListView filters;
     private List<String> subscriptionList;
     private ProgressBar progressBar;
-    private ImageButton plusButton;
-    private LinearLayout attachedMenu;
-    private boolean menuOpen;
-    private boolean loadingStatuses;
-    private boolean loadingSubscriptions;
-
-    private Bitmap imageBitmap;
-
 
     public interface OnFilterClick {
         public void onClick(String filter);
@@ -153,14 +127,13 @@ public class FragmentStatusList extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         switch (item.getItemId()) {
             case R.id.action_search_public:
                 //do something
                 return true;
-
             case R.id.action_compose:
-                //do something
+                Intent compose = new Intent(getActivity(), PopupCompose.class );
+                startActivity(compose);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -172,7 +145,6 @@ public class FragmentStatusList extends Fragment {
             @Override
             public void run() {
                 progressBar.setVisibility(View.VISIBLE);
-                loadingStatuses = true;
                 if (filterListAdapter.getCount() == 0) {
                     DatabaseFactory.getStatusDatabase(getActivity())
                             .getStatuses(onStatusesLoaded);
@@ -201,7 +173,6 @@ public class FragmentStatusList extends Fragment {
     };
 
     public void getSubscriptions() {
-        loadingSubscriptions = true;
         DatabaseFactory.getSubscriptionDatabase(getActivity())
                 .getLocalUserSubscriptions(onSubscriptionsLoaded);
 
@@ -215,7 +186,6 @@ public class FragmentStatusList extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    loadingSubscriptions = false;
                     subscriptionList.clear();
                     subscriptionList = subscriptions;
                     filterListAdapter.swapSubscriptions(subscriptions);
@@ -228,10 +198,12 @@ public class FragmentStatusList extends Fragment {
     OnFilterClick onFilterClick = new OnFilterClick() {
         @Override
         public void onClick(String filter) {
+            /*
             if(composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
                 composeTextView.setText(TextUtils.replace(composeTextView.getText(),
                         new String[] {" "+filter.toLowerCase()},
                         new CharSequence[]{""}));
+                        */
 
             filterListAdapter.deleteFilter(filter);
             filterListAdapter.notifyDataSetChanged();
@@ -242,6 +214,7 @@ public class FragmentStatusList extends Fragment {
         }
     };
 
+    // todo should have its own object
     OnSubscriptionClick onSubscriptionClick = new OnSubscriptionClick() {
         @Override
         public void onClick(String filter) {
@@ -263,9 +236,6 @@ public class FragmentStatusList extends Fragment {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
 
-        if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
-            composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
-
         FilterListAdapter.FilterEntry entry = new FilterListAdapter.FilterEntry();
         entry.filter = filter;
         entry.filterClick = onFilterClick;
@@ -277,104 +247,6 @@ public class FragmentStatusList extends Fragment {
         }
     }
 
-    private class OnAttachedMenuClick implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            if(menuOpen) {
-                attachedMenu.setVisibility(View.GONE);
-                menuOpen = false;
-            } else {
-                attachedMenu.setVisibility(View.VISIBLE);
-                menuOpen = true;
-            }
-        }
-    }
-
-    private class OnTakePictureClick implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
-                getActivity().startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-            }
-        }
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == getActivity().RESULT_OK) {
-            Bundle extras = data.getExtras();
-            imageBitmap = (Bitmap) extras.get("data");
-        }
-    }
-
-    //todo review this code, probably a bit dirty
-    public String saveImageOnDisk() throws IOException{
-        String filename = null;
-        if(imageBitmap == null)
-            throw new IOException();
-
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        filename = "JPEG_" + timeStamp + ".jpeg";
-        // todo getByteCount returns the number of byte on-memory, not on-disk
-        File storageDir = FileUtil.getWritableAlbumStorageDir(imageBitmap.getByteCount());
-        String path = storageDir.toString() + File.separator + filename;
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(path);
-            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
-        } catch (Exception e) {
-            imageBitmap = null;
-            return null;
-        } finally {
-            try {
-                if (out != null)
-                    out.close();
-            } catch (IOException ignore) { }
-        }
-        imageBitmap = null;
-
-        return filename;
-    }
-
-    private class OnAttachPictureClick implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-        }
-    }
-
-    private class OnClickSend implements View.OnClickListener {
-        @Override
-        public void onClick(View view) {
-            if (composeTextView == null)
-                return;
-
-            String message = composeTextView.getText().toString();
-            if ((message == "") && (imageBitmap == null))
-                return;
-
-            Contact localContact = DatabaseFactory.getContactDatabase(getActivity()).getLocalContact();
-            long now = (System.currentTimeMillis() / 1000L);
-            StatusMessage statusMessage = new StatusMessage(message, localContact.getName(), now);
-            statusMessage.setUserRead(true);
-
-            try {
-               String filename = saveImageOnDisk();
-                statusMessage.setFileName(filename);
-            }
-            catch (IOException ignore) {
-            }
-
-            composeTextView.setText("");
-            for(String filter : filterListAdapter.getFilterList()) {
-                if(!composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
-                    composeTextView.setText(composeTextView.getText().toString() +" "+filter.toLowerCase());
-            }
-
-            //todo: replace by an Event !!
-            DatabaseFactory.getStatusDatabase(getActivity()).insertStatus(statusMessage, null);
-        }
-    }
 
     /*
      * Events that come from outside the activity
