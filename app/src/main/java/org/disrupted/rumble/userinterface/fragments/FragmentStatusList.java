@@ -20,7 +20,6 @@
 package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -30,6 +29,9 @@ import android.support.v4.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -48,7 +50,6 @@ import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.HashtagDatabase;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
@@ -59,7 +60,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import de.greenrobot.event.EventBus;
@@ -98,10 +98,16 @@ public class FragmentStatusList extends Fragment {
         public void onClick(String filter);
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
+        super.onCreateView(inflater, container, savedInstanceState);
+
         mView = inflater.inflate(R.layout.status_list, container, false);
 
         // the filters
@@ -127,31 +133,9 @@ public class FragmentStatusList extends Fragment {
         statusList.setAdapter(statusListAdapter);
         getStatuses();
         getSubscriptions();
-
         EventBus.getDefault().register(this);
 
-        // the additional menu to attach file
-        plusButton = (ImageButton) mView.findViewById(R.id.attached_button);
-        plusButton.setOnClickListener(new OnAttachedMenuClick());
-        attachedMenu = (LinearLayout) mView.findViewById(R.id.attached_menu);
-        menuOpen = false;
-        ImageButton takePicture = (ImageButton) mView.findViewById(R.id.take_picture);
-        takePicture.setOnClickListener(new OnTakePictureClick());
-        ImageButton attachPicture = (ImageButton) mView.findViewById(R.id.attache_image);
-        attachPicture.setOnClickListener(new OnAttachPictureClick());
-        imageBitmap = null;
-
-        // the text and button to submit
-        sendButton = (ImageButton) mView.findViewById(R.id.button_send);
-        sendButton.setOnClickListener(new OnClickSend());
-        this.composeTextView = (TextView) mView.findViewById(R.id.user_status);
-
         return mView;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
     }
 
     @Override
@@ -159,6 +143,27 @@ public class FragmentStatusList extends Fragment {
         EventBus.getDefault().unregister(this);
         statusListAdapter.clean();
         super.onDestroy();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.public_message_menu, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId()) {
+            case R.id.action_search_public:
+                //do something
+                return true;
+
+            case R.id.action_compose:
+                //do something
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     // todo: only get last 50 statuses and request it as the user browse it
@@ -311,6 +316,7 @@ public class FragmentStatusList extends Fragment {
 
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         filename = "JPEG_" + timeStamp + ".jpeg";
+        // todo getByteCount returns the number of byte on-memory, not on-disk
         File storageDir = FileUtil.getWritableAlbumStorageDir(imageBitmap.getByteCount());
         String path = storageDir.toString() + File.separator + filename;
         FileOutputStream out = null;
@@ -353,7 +359,7 @@ public class FragmentStatusList extends Fragment {
             statusMessage.setUserRead(true);
 
             try {
-                String filename = saveImageOnDisk();
+               String filename = saveImageOnDisk();
                 statusMessage.setFileName(filename);
             }
             catch (IOException ignore) {

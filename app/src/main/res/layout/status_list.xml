@@ -72,6 +72,8 @@
         android:paddingTop="5dp"
         android:clipToPadding="false"/>
 
+
+    <!--
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -100,6 +102,7 @@
             android:src="@drawable/ic_send_black_36dp"
             android:background="#00000000"/>
     </LinearLayout>
+
 
     <LinearLayout
         android:id="@+id/attached_menu"
@@ -130,5 +133,5 @@
             android:background="@drawable/attached_file_option"/>
 
     </LinearLayout>
-
+    -->
 </LinearLayout>

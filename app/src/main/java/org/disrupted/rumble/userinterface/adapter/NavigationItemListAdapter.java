@@ -43,19 +43,11 @@ public class NavigationItemListAdapter extends BaseAdapter {
     private final Activity activity;
     private final LayoutInflater inflater;
     private List<NavigationItem> itemlist;
-    private int checked;
-
-    public NavigationItemListAdapter(Activity activity) {
-        this.activity = activity;
-        this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.itemlist = new LinkedList<NavigationItem>();
-    }
 
     public NavigationItemListAdapter(Activity activity, List<NavigationItem> itemlist) {
         this.activity = activity;
         this.inflater = LayoutInflater.from(activity);
         this.itemlist = itemlist;
-        this.checked  = 0;
     }
 
     @Override
@@ -63,12 +55,8 @@ public class NavigationItemListAdapter extends BaseAdapter {
         View item = inflater.inflate(R.layout.navigation_item, null, true);
         ImageView icon = (ImageView) item.findViewById(R.id.navigation_item_icon);
         TextView text = (TextView) item.findViewById(R.id.navigation_item_text);
-        View checkView = (View) item.findViewById(R.id.navigation_item_check);
         icon.setImageResource(itemlist.get(i).getIcon());
         text.setText(itemlist.get(i).getText());
-        if(i == checked) {
-            checkView.setVisibility(View.VISIBLE);
-        }
         return item;
     }
 
@@ -85,13 +73,6 @@ public class NavigationItemListAdapter extends BaseAdapter {
     @Override
     public int getCount() {
         return itemlist.size();
-    }
-
-    public boolean setChecked(int position) {
-        boolean isDifferent = (position != this.checked);
-        this.checked = position;
-        notifyDataSetChanged();
-        return isDifferent;
     }
 }
 

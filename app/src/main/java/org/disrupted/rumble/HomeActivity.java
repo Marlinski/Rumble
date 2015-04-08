@@ -22,18 +22,21 @@ package org.disrupted.rumble;
 
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import android.support.v4.widget.DrawerLayout;
 import android.view.View;
 
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
+
+import org.disrupted.rumble.userinterface.fragments.FragmentDirectMessage;
+import org.disrupted.rumble.userinterface.fragments.FragmentGroupStatus;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
@@ -48,11 +51,14 @@ public class HomeActivity extends ActionBarActivity {
     private CharSequence mTitle;
 
     private ActionBar actionBar;
-    private ActionBarDrawerToggle mDrawerToggle;
-    private DrawerLayout mDrawerLayout;
     private FragmentNavigationDrawer mNavigationDrawerFragment;
-    private FragmentNetworkDrawer mNeighborhoodDrawerFragment;
+    private FragmentNetworkDrawer mNetworkDrawerFragment;
+    private SlidingMenu slidingMenu;
 
+    ActionBar.Tab publicStatus, groupStatus, tchatStatus;
+    Fragment fragmentStatusList  = new FragmentStatusList();
+    Fragment fragmentGroupStatus = new FragmentGroupStatus();
+    Fragment fragmentTchat       = new FragmentDirectMessage();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,161 +68,58 @@ public class HomeActivity extends ActionBarActivity {
         mTitle = getTitle();
         actionBar = getSupportActionBar();
 
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerToggle = new ActionBarDrawerToggle(
-                this,
-                mDrawerLayout,
-                R.drawable.ic_drawer,
-                R.string.drawer_open,
-                R.string.drawer_close) {
-
-            @Override
-            public void onDrawerOpened(View drawerView) {
-                super.onDrawerOpened(drawerView);
-                invalidateOptionsMenu();
-            }
-
-            @Override
-            public void onDrawerClosed(View drawerView) {
-                super.onDrawerClosed(drawerView);
-                invalidateOptionsMenu();
-            }
-
-            @Override
-            public boolean onOptionsItemSelected(MenuItem item) {
-                if(super.onOptionsItemSelected(item)) {
-                    if(isRightDrawerOpen())
-                        mDrawerLayout.closeDrawer(Gravity.END);
-                    return true;
-                }
-                return false;
-            }
-        };
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
-        actionBar.setHomeButtonEnabled(true);
-        actionBar.setDisplayHomeAsUpEnabled(true);
-
-        mNavigationDrawerFragment   = (FragmentNavigationDrawer)getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mNeighborhoodDrawerFragment = (FragmentNetworkDrawer)getSupportFragmentManager().findFragmentById(R.id.neighborhood_drawer);
-
-        /*
-        // increase the dragging area to swipe between the drawer
-        // disabled because now we swipe between tab
-        Field mLeftDragger  = null;
-        Field mRightDragger = null;
-        try {
-            mLeftDragger  = mDrawerLayout.getClass().getDeclaredField("mLeftDragger");
-            mRightDragger = mDrawerLayout.getClass().getDeclaredField("mRightDragger");
-            mLeftDragger.setAccessible(true);
-            mRightDragger.setAccessible(true);
-            ViewDragHelper leftDraggerObj = (ViewDragHelper) mLeftDragger.get(mDrawerLayout);
-            ViewDragHelper rightDraggerObj = (ViewDragHelper) mRightDragger.get(mDrawerLayout);
-            Field mLeftEdgeSize = leftDraggerObj.getClass().getDeclaredField("mEdgeSize");
-            Field mRightEdgeSize = rightDraggerObj.getClass().getDeclaredField("mEdgeSize");
-            mLeftEdgeSize.setAccessible(true);
-            mRightEdgeSize.setAccessible(true);
-            mLeftEdgeSize.setInt(leftDraggerObj,  400);
-            mRightEdgeSize.setInt(rightDraggerObj, 400);
-        } catch (Exception e) {
+        slidingMenu = new SlidingMenu(this);
+        slidingMenu.setShadowWidthRes(R.dimen.shadow_width);
+        slidingMenu.setShadowDrawable(R.drawable.shadow);
+        slidingMenu.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+        slidingMenu.setFadeDegree(0.35f);
+        slidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+        slidingMenu.setMode(SlidingMenu.LEFT_RIGHT);
+        slidingMenu.setMenu(R.layout.navigation_frame);
+        slidingMenu.setSecondaryMenu(R.layout.network_frame);
+        slidingMenu.setSecondaryShadowDrawable(R.drawable.shadowright);
+        if (savedInstanceState == null) {
+            mNavigationDrawerFragment = new FragmentNavigationDrawer();
+            mNetworkDrawerFragment = new FragmentNetworkDrawer();
+            this.getSupportFragmentManager().beginTransaction()
+                .replace(R.id.navigation_drawer_frame, mNavigationDrawerFragment).commit();
+            this.getSupportFragmentManager().beginTransaction()
+                .replace(R.id.network_drawer_frame, mNetworkDrawerFragment).commit();
+        } else {
+            mNavigationDrawerFragment = (FragmentNavigationDrawer)this.getSupportFragmentManager().findFragmentById(R.id.navigation_drawer_frame);
+            mNetworkDrawerFragment = (FragmentNetworkDrawer)this.getSupportFragmentManager().findFragmentById(R.id.network_drawer_frame);
         }
-        */
+        slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
+
+
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        publicStatus = actionBar.newTab().setIcon(R.drawable.ic_world)
+                .setTabListener(new HomeTabListener(fragmentStatusList));
+        groupStatus = actionBar.newTab().setIcon(R.drawable.ic_group_white_24dp)
+                .setTabListener(new HomeTabListener(fragmentGroupStatus));
+        tchatStatus = actionBar.newTab().setIcon(R.drawable.ic_forum_white_24dp)
+                .setTabListener(new HomeTabListener(fragmentTchat));
+
+        actionBar.addTab(publicStatus);
+        actionBar.addTab(groupStatus);
+        actionBar.addTab(tchatStatus);
+
+        // hide the action bar
+        actionBar.setHomeButtonEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(false);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        mDrawerToggle.syncState();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        restoreActionBar();
-        return true;
-    }
-
-    public void restoreActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
-    }
-
-    public boolean isLeftDrawerOpen() {
-        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(this.findViewById(R.id.navigation_drawer));
-    }
-
-    public boolean isRightDrawerOpen() {
-        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(this.findViewById(R.id.neighborhood_drawer));
-    }
-
-    public void closeDrawer(){
-        if(isLeftDrawerOpen()) {
-            mDrawerLayout.closeDrawer(Gravity.START);
-            return;
-        }
-        if(isRightDrawerOpen()) {
-            mDrawerLayout.closeDrawer(Gravity.END);
-            return;
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        mDrawerToggle.onConfigurationChanged(newConfig);
-    }
-
-    /*
-     * User Interactions
-     */
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        super.onOptionsItemSelected(item);
-        if(mDrawerToggle.onOptionsItemSelected(item))
-            return true;
-        if(mNeighborhoodDrawerFragment.onOptionsItemSelected(item))
-            return true;
-        if(mNavigationDrawerFragment.onOptionsItemSelected(item))
-            return true;
-
-        switch(item.getItemId()) {
-            case R.id.action_network:
-                if(isLeftDrawerOpen())
-                    mDrawerLayout.closeDrawer(Gravity.START);
-                if(isRightDrawerOpen())
-                    mDrawerLayout.closeDrawer(Gravity.END);
-                else
-                    mDrawerLayout.openDrawer(Gravity.END);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
 
     public void onBluetoothToggleClicked(View view) {
-        mNeighborhoodDrawerFragment.onBluetoothToggleClicked(view);
+        mNetworkDrawerFragment.onBluetoothToggleClicked(view);
     }
     public void onWifiToggleClicked(View view) {
-        mNeighborhoodDrawerFragment.onWifiToggleClicked(view);
+        mNetworkDrawerFragment.onWifiToggleClicked(view);
     }
     public void onForceScanClicked(View view) {
-        mNeighborhoodDrawerFragment.onForceScanClicked(view);
+        mNetworkDrawerFragment.onForceScanClicked(view);
     }
 
     @Override
@@ -230,10 +133,39 @@ public class HomeActivity extends ActionBarActivity {
                 break;
             case BluetoothConfigureInteraction.REQUEST_ENABLE_BT:
             case BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE:
-                mNeighborhoodDrawerFragment.manageBTCode(requestCode, resultCode, data);
+                mNetworkDrawerFragment.manageBTCode(requestCode, resultCode, data);
                 break;
         }
     }
 
 
+    private class HomeTabListener implements ActionBar.TabListener {
+
+        private Fragment fragment;
+
+        public HomeTabListener(Fragment fragment) {
+            this.fragment = fragment;
+        }
+
+        @Override
+        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+            if(fragment != null) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.container, fragment)
+                        .commit();
+            }
+        }
+
+        @Override
+        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.beginTransaction()
+                    .remove(fragment)
+                    .commit();
+        }
+
+        @Override
+        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        }
+    }
 }

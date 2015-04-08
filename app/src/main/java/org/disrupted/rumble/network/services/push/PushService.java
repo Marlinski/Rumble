@@ -322,6 +322,7 @@ public class PushService {
          *  See the paper:
          *  "Roulette-wheel selection via stochastic acceptance"
          *  By Adam Lipowski, Dorota Lipowska
+         *  todo: only pick new message for certain neighbour
          */
         private StatusMessage pickMessage() throws InterruptedException {
             final ReentrantLock takelock = this.takeLock;

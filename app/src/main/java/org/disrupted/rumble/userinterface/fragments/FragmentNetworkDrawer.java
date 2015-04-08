@@ -91,7 +91,7 @@ public class FragmentNetworkDrawer extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
-        mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.network_drawer, container, false);
+        mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.fragment_network_drawer, container, false);
         Intent intent = new Intent(getActivity(), NetworkCoordinator.class);
         getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
         return mDrawerFragmentLayout;

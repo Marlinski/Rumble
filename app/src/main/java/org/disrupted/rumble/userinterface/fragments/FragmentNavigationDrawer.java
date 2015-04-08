@@ -20,9 +20,9 @@
 package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,7 +31,6 @@ import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 
-import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.adapter.NavigationItem;
 import org.disrupted.rumble.userinterface.adapter.NavigationItemListAdapter;
@@ -64,25 +63,17 @@ public class FragmentNavigationDrawer extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mDrawerFragmentLayout = (LinearLayout) inflater.inflate(R.layout.navigation_drawer, container, false);
+        mDrawerFragmentLayout = (LinearLayout) inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
 
+        Resources res = getActivity().getResources();
         mFirstListView   = (ListView) mDrawerFragmentLayout.findViewById(R.id.navigation_first_item_list);
         firstList = new LinkedList<NavigationItem>();
-        firstList.add(new NavigationItem(R.drawable.ic_world, "Public Messages", 1));
-        firstList.add(new NavigationItem(R.drawable.ic_favorite_outline_white_24dp, "Favorites", 2));
-        firstList.add(new NavigationItem(R.drawable.ic_close_white_24dp, "Exit", 3));
+        firstList.add(new NavigationItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 1));
+        firstList.add(new NavigationItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 2));
 
         mFirstListAdapter = new NavigationItemListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);
         mFirstListView.setOnItemClickListener(new NavigationItemClickListener());
-
-        Fragment fragment = new FragmentStatusList();
-        if(fragment != null) {
-            FragmentManager fragmentManager = getFragmentManager();
-            fragmentManager.beginTransaction()
-                    .replace(R.id.container, fragment)
-                    .commit();
-        }
 
         return mDrawerFragmentLayout;
     }
@@ -104,33 +95,14 @@ public class FragmentNavigationDrawer extends Fragment {
 
         @Override
         public void onItemClick(AdapterView parent, View view, int position, long id) {
-            if(!mFirstListAdapter.setChecked(position))
-                return;
-
-            Fragment fragment = null;
-
             switch(firstList.get(position).getID()) {
-                case 1:
-                    fragment = new FragmentStatusList();
-                    break;
                 case 2:
-                    fragment = new FragmentFavoriteList();
-                    break;
-                case 3:
                     Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
                     stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
                     getActivity().stopService(stopIntent);
                     getActivity().finish();
                     System.exit(0);
                 default:
-            }
-
-            if(fragment != null) {
-                FragmentManager fragmentManager = getFragmentManager();
-                fragmentManager.beginTransaction()
-                        .replace(R.id.container, fragment)
-                        .commit();
-                ((HomeActivity) getActivity()).closeDrawer();
             }
         }
     }

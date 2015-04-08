@@ -193,8 +193,12 @@ public class StatusListAdapter extends BaseAdapter{
             }
         });
 
-        if(!message.hasUserReadAlready()){
-            box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+        if(!message.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - message.getTimeOfArrival()) < 60) ){
+            if( android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+            } else {
+                box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+            }
             EventBus.getDefault().post(new UserReadStatus(message.getUuid()));
         }
 
