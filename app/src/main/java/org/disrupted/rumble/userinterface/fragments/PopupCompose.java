@@ -4,18 +4,15 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.media.Image;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
-import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
@@ -39,6 +36,7 @@ public class PopupCompose extends Activity {
     public static final int REQUEST_IMAGE_CAPTURE = 42;
 
     private LinearLayout dismiss;
+    private ImageView   composeBackground;
     private EditText    compose;
     private ImageButton takePicture;
     private ImageButton choosePicture;
@@ -53,6 +51,7 @@ public class PopupCompose extends Activity {
 
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
         compose = (EditText)(findViewById(R.id.popup_user_status));
+        composeBackground = (ImageView)(findViewById(R.id.popup_compose_background));
         takePicture = (ImageButton)(findViewById(R.id.popup_take_picture));
         choosePicture = (ImageButton)(findViewById(R.id.popup_choose_image));
         send = (ImageButton)(findViewById(R.id.popup_button_send));
@@ -157,6 +156,8 @@ public class PopupCompose extends Activity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
             imageBitmap = (Bitmap) extras.get("data");
+            composeBackground.setScaleType(ImageView.ScaleType.FIT_START);
+            composeBackground.setImageDrawable(new BitmapDrawable(getResources(), imageBitmap));
         }
     }
 }

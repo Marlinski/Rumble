@@ -34,8 +34,9 @@
         android:top="2dp" >
     </padding>
 
-    <corners
-        android:radius="6dp"   >
-    </corners>
-
-</shape>
+    <!--
+        <corners
+            android:radius="6dp"   >
+        </corners>
+    -->
+ </shape>

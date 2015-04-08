@@ -58,15 +58,28 @@
                 android:layout_height="1dp"
                 android:background="@color/black"/>
 
-            <EditText
-                android:id="@+id/popup_user_status"
-                android:layout_marginBottom="5dp"
-                android:layout_marginTop="5dp"
+            <LinearLayout
+                android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minLines="4"
-                android:textColor="@color/pure_white"
-                android:hint="What's happening?"/>
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/popup_compose_background"
+                    android:layout_marginRight="5dp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <EditText
+                    android:id="@+id/popup_user_status"
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginTop="5dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minLines="4"
+                    android:textColor="@color/pure_white"
+                    android:hint="What's happening?"/>
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
