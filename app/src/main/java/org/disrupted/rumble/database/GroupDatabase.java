@@ -16,13 +16,15 @@ public class GroupDatabase  extends  Database{
     public static final String TABLE_NAME   = "groups";
     public static final String ID           = "_id";
     public static final String NAME         = "name";
+    public static final String KEY          = "groupkey";
 
     public static final String DEFAULT_GROUP = "rumble.public";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID     + " INTEGER PRIMARY KEY, "
                  + NAME   + " TEXT, "
-                 + "UNIQUE( " + NAME + " ) "
+                 + KEY    + " TEXT, "
+                 + "UNIQUE( " + NAME + " ,"+ KEY +" ) "
                  + " );";
 
     public GroupDatabase(Context context, SQLiteOpenHelper databaseHelper) {

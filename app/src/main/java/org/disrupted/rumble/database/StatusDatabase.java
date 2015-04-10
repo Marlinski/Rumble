@@ -50,7 +50,7 @@ public class StatusDatabase extends Database {
     public static final String ID               = "_id";
     public static final String UUID             = "uuid";        // unique ID 128 bits
     public static final String AUTHOR           = "author";      // original author of the post
-    public static final String GROUP            = "group_name"; // the name of the group it belongs to
+    public static final String GROUP            = "group_name";  // the name of the group it belongs to
     public static final String POST             = "post";        // the post itself
     public static final String FILE_NAME        = "filename";    // the name of the attached file
     public static final String TIME_OF_CREATION = "toc";         // time of creation of the post
