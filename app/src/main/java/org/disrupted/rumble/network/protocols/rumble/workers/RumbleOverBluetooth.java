@@ -123,16 +123,27 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         RumbleBTState connectionState = protocol.getBTState(con.getRemoteMacAddress());
 
         try {
+            // this is to prevent race condition that happen when server
+            // and client connect at the same time
+            connectionState.lockWorker.lock();
 
             con.connect();
 
             connectionState.connected(this.getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
-                    new BluetoothNeighbour(con.getRemoteMacAddress()),
-                    getProtocolIdentifier() )
+                            new BluetoothNeighbour(con.getRemoteMacAddress()),
+                            getProtocolIdentifier())
             );
             protocol.workerConnected(this);
+        } catch (LinkLayerConnectionException exception) {
+            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + connectionState.printState());
+        } catch (RumbleBTState.StateException e) {
+            Log.e(TAG, "[!] FAILED STATE: " + getWorkerIdentifier() + connectionState.printState());
+        } finally {
+            connectionState.lockWorker.unlock();
+        }
 
+        try {
             onWorkerConnected();
 
             protocol.workerDisconnected(this);
@@ -141,15 +152,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                             new BluetoothNeighbour(con.getRemoteMacAddress()),
                             getProtocolIdentifier())
             );
-
-
-        } catch (RumbleBTState.StateException e) {
-            // this can happen if we accepted a connection while this thread was connecting
-            // todo: prevent race condition by introducing a lock
-            Log.e(TAG, "[!] FAILED STATE: "+getWorkerIdentifier()+connectionState.printState());
-        } catch (LinkLayerConnectionException exception) {
-            Log.d(TAG, "[!] FAILED CON: "+getWorkerIdentifier()+" "+exception.getMessage());
-            connectionState.notConnected();
         } finally {
             stopWorker();
         }

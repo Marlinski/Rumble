@@ -122,6 +122,7 @@ public class RumbleProtocol implements Protocol {
     }
 
 
+    // todo : should be the PushService responsibility to start/stop the dispatcher
     public void workerConnected(ProtocolWorker worker) {
         PushService.MessageDispatcher dispatcher = new PushService.MessageDispatcher(worker,null,0);
         pushServices.put(worker.getWorkerIdentifier(), dispatcher);
@@ -130,7 +131,8 @@ public class RumbleProtocol implements Protocol {
 
     public void workerDisconnected(ProtocolWorker worker) {
         PushService.MessageDispatcher dispatcher =  pushServices.get(worker.getWorkerIdentifier());
-        dispatcher.stopDispatcher();
+        if(dispatcher != null)
+            dispatcher.stopDispatcher();
         pushServices.remove(worker.getWorkerIdentifier());
     }
 

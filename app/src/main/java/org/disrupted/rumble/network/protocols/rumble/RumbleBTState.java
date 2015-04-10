@@ -2,6 +2,8 @@ package org.disrupted.rumble.network.protocols.rumble;
 
 import android.util.Log;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * @author Marlinski
  */
@@ -13,6 +15,7 @@ public class RumbleBTState {
         NOT_CONNECTED, CONNECTION_INITIATED, CONNECTION_ACCEPTED, CONNECTED;
     }
 
+    public final ReentrantLock lockWorker = new ReentrantLock();
     private final Object lockRumbleBTState = new Object();
     private RumbleBluetoothState state;
     private String workerID;

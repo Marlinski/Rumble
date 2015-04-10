@@ -114,9 +114,10 @@ public abstract class BluetoothServer implements Worker {
                     Log.d(TAG, "[+] Client connected");
 
                     LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-                    EventBus.getDefault().post(new NeighbourReachable(neighbour));
 
                     onClientConnected(mmConnectedSocket);
+
+                    EventBus.getDefault().post(new NeighbourReachable(neighbour));
                 }
             }
         } catch (IOException e) {
