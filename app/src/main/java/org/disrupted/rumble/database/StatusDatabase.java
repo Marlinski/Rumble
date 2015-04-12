@@ -304,6 +304,8 @@ public class StatusDatabase extends Database {
         contentValues.put(USERREAD, status.hasUserReadAlready() ? 1 : 0);
         contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
         contentValues.put(USERSAVED, status.hasUserSaved() ? 1 : 0);
+        if(!status.getFileName().equals(""))
+            contentValues.put(FILE_NAME, status.getFileName());
 
         int count = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = " + status.getdbId(), null);
 

@@ -86,7 +86,6 @@ public class CacheManager {
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
     }
 
-    // todo: populate file database
     public void onEvent(StatusReceivedEvent event) {
         StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
@@ -146,7 +145,6 @@ public class CacheManager {
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid, null);
     }
 
-    // todo: populate file database
     public void onEvent(UserComposeStatus event) {
         if(event.status == null)
             return;

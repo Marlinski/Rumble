@@ -243,6 +243,7 @@ public class PushService {
                     worker.getProtocolIdentifier()))
                 return false;
 
+            Log.d(TAG, "[+] add message to dispatcher: "+message.toString());
             final ReentrantLock putlock = this.putLock;
             putlock.lock();
             try {

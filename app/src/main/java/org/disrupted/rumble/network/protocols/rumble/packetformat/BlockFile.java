@@ -165,7 +165,7 @@ public class BlockFile extends Block {
                 // update the database
                 Log.e(TAG, "[+] "+(header.getBlockLength()+header.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
                 EventBus.getDefault().post(new FileReceivedEvent(
-                                imageFileName,
+                                attachedFile.getAbsolutePath(),
                                 new String(uid),
                                 RumbleProtocol.protocolID,
                                 con.getLinkLayerIdentifier(),
