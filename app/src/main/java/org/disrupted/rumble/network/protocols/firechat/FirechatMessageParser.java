@@ -26,6 +26,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -60,11 +61,13 @@ public class FirechatMessageParser {
             if(message.getFileName().equals(""))
                 jsonStatus.put(MESSAGE, message.getPost());
             else {
-                //todo use a FILE DATABASE
-                File file=new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
-                if(file.exists() && !file.isDirectory()) {
-                    jsonStatus.put(LENGTH, file.length());
-                    jsonStatus.put(URL, "image");
+                try {
+                    File file = new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
+                    if (file.exists() && !file.isDirectory()) {
+                        jsonStatus.put(LENGTH, file.length());
+                        jsonStatus.put(URL, "image");
+                    }
+                } catch(IOException ignore){
                 }
             }
 

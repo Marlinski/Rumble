@@ -223,11 +223,11 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                         String jsonString = new String(buffer, 0, i - 1);
 
                         StatusMessage status = parser.networkToStatus(jsonString);
-                        String filePath = downloadFile(status.getFileSize());
-                        if (filePath != null) {
-                            status.setFileName(filePath);
+                        String filename = downloadFile(status.getFileSize());
+                        if (filename != null) {
+                            status.setFileName(filename);
                         } else {
-                            status.setFileSize(0);
+                            status.setFileName("");
                         }
 
                         /*
@@ -269,9 +269,10 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             directory = FileUtil.getWritableAlbumStorageDir();
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             String imageFileName = "JPEG_" + timeStamp + "_";
+            String suffix = ".jpg";
             File attachedFile = File.createTempFile(
                     imageFileName,  /* prefix */
-                    ".jpg",         /* suffix */
+                    suffix,         /* suffix */
                     directory       /* directory */
             );
 
@@ -300,7 +301,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             mediaScanIntent.setData(contentUri);
             RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
 
-            return attachedFile.getAbsolutePath();
+            return attachedFile.getName();
         } catch (IOException e) {
             Log.e(TAG, "[-] file has not been downloaded ",e);
             return null;
@@ -330,9 +331,9 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 long timeToTransfer = System.currentTimeMillis();
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
                 con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
-                //todo maybe only send thumbnail ?
+
                 if(!statusMessage.getFileName().equals("")) {
-                    File attachedFile = new File(statusMessage.getFileName());
+                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),statusMessage.getFileName());
                     if(attachedFile.exists() && attachedFile.isFile()) {
                         FileInputStream fis = null;
                         try {
@@ -367,7 +368,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
 
                 Log.d(TAG, "Status Sent ("+con.getRemoteLinkLayerAddress()+","+(throughput/1000L)+"): " + statusMessage.toString());
             } catch(IOException ignore){
-                Log.e(TAG, "[!] error while sending"+ignore.getMessage());
+                Log.e(TAG, "[!] error while sending: "+ignore.getMessage());
             } catch (InputOutputStreamException e) {
                 Log.e(TAG, e.getMessage());
             }

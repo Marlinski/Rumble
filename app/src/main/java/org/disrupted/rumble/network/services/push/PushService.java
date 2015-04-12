@@ -206,7 +206,9 @@ public class PushService {
         private void initStatuses() {
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
                     .getStatusesIdForUser(
-                            HashUtil.computeHash(worker.getLinkLayerConnection().getRemoteLinkLayerAddress(), worker.getProtocolIdentifier()),
+                            HashUtil.computeHash(
+                                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
+                                    worker.getProtocolIdentifier()),
                             onStatusLoaded);
         }
         StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
@@ -217,8 +219,10 @@ public class PushService {
                     for (Integer s : answer) {
                         StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
                                 .getStatus(s);
-                        add(message);
-                        message.discard();
+                        if(message != null) {
+                            add(message);
+                            message.discard();
+                        }
                     }
                     EventBus.getDefault().register(MessageDispatcher.this);
                     start();

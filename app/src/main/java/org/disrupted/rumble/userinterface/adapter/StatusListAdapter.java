@@ -59,6 +59,7 @@ import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
@@ -121,23 +122,28 @@ public class StatusListAdapter extends BaseAdapter{
 
         // we draw the attached file (if any)
         if(!message.getFileName().equals("")) {
-            File attachedFile = new File(message.getFileName());
+            try {
+                File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
+                if(!attachedFile.isFile() || !attachedFile.exists())
+                    throw new IOException("file does not exists");
 
-            Bitmap bitmapImage = ThumbnailUtils.extractThumbnail(
-                    BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
-                    512,
-                    384);
-            attachedView.setImageBitmap(bitmapImage);
-            attachedView.setVisibility(View.VISIBLE);
-            final Uri uri = Uri.parse("file:"+attachedFile.getAbsolutePath());
-            attachedView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                    intent.setDataAndType(uri,"image/*");
-                    activity.startActivity(intent);
-                }
-            });
+                Bitmap bitmapImage = ThumbnailUtils.extractThumbnail(
+                        BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
+                        512,
+                        384);
+                attachedView.setImageBitmap(bitmapImage);
+                attachedView.setVisibility(View.VISIBLE);
+                final Uri uri = Uri.parse("file:" + attachedFile.getAbsolutePath());
+                attachedView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                        intent.setDataAndType(uri, "image/*");
+                        activity.startActivity(intent);
+                    }
+                });
+            } catch(IOException ignore) {
+            }
         }
 
         // we set the status

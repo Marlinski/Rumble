@@ -117,7 +117,7 @@ public class StatusDatabase extends Database {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         StringBuilder query = new StringBuilder(
                 "SELECT s."+ID+" FROM "+StatusDatabase.TABLE_NAME+" s"+
-                        " JOIN " + ForwarderDatabase.TABLE_NAME+" f"+
+                        " RIGHT JOIN " + ForwarderDatabase.TABLE_NAME+" f"+
                         " ON s."+StatusDatabase.ID+" = f."+ForwarderDatabase.ID  +
                         " WHERE f."+ForwarderDatabase.RECEIVEDBY+" != ?" +
                         " GROUP BY s."+StatusDatabase.ID);

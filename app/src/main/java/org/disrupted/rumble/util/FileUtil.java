@@ -55,7 +55,7 @@ public class FileUtil {
 
     public static File getWritableAlbumStorageDir() throws IOException {
         if(!isExternalStorageWritable())
-            return null;
+            throw  new IOException("Storage is not writable");
 
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);
@@ -67,9 +67,9 @@ public class FileUtil {
         return file;
     }
 
-    public static File getReadableAlbumStorageDir() {
+    public static File getReadableAlbumStorageDir() throws IOException {
         if(!isExternalStorageReadable())
-            return null;
+            throw  new IOException("Storage is not readable");
 
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES),  RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);

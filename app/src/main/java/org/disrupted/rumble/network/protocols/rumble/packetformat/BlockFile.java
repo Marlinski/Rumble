@@ -21,9 +21,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
-import org.apache.http.Header;
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.events.FileReceivedEvent;
 import org.disrupted.rumble.network.events.FileSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -34,7 +32,6 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -82,17 +79,17 @@ public class BlockFile extends Block {
 
     public final static int MIME_TYPE_IMAGE = 0x01;
 
-    public String filepath;
+    public String filename;
     public String UUID;
 
     public BlockFile(BlockHeader header) {
         super(header);
     }
 
-    public BlockFile(String filepath, String UUID) {
+    public BlockFile(String filename, String UUID) {
         super(new BlockHeader());
         header.setBlockType(BlockHeader.BLOCKTYPE_FILE);
-        this.filepath = filepath;
+        this.filename = filename;
         this.UUID = UUID;
     }
 
@@ -129,9 +126,10 @@ public class BlockFile extends Block {
                 directory = FileUtil.getWritableAlbumStorageDir();
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String imageFileName = "JPEG_" + timeStamp + "_";
+                String suffix = ".jpg";
                 File attachedFile = File.createTempFile(
                         imageFileName,  /* prefix */
-                        ".jpg",         /* suffix */
+                        suffix,         /* suffix */
                         directory       /* directory */
                 );
 
@@ -165,7 +163,7 @@ public class BlockFile extends Block {
                 // update the database
                 Log.e(TAG, "[+] "+(header.getBlockLength()+header.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
                 EventBus.getDefault().post(new FileReceivedEvent(
-                                attachedFile.getAbsolutePath(),
+                                attachedFile.getName(),
                                 new String(uid),
                                 RumbleProtocol.protocolID,
                                 con.getLinkLayerIdentifier(),
@@ -191,21 +189,24 @@ public class BlockFile extends Block {
 
     @Override
     public long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException {
-        if(filepath == null)
-            return 0;
+        if(filename == null)
+            throw new IOException("filename is null");
+
+        File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), filename);
+        if(!attachedFile.exists() || !attachedFile.isFile())
+            throw new IOException(filename+" is not a file or does not exists");
 
         long timeToTransfer = System.currentTimeMillis();
 
         /* calculate the total block size */
-        File attachedFile = new File(filepath);
         long size = attachedFile.length();
-        this.header.setBlockHeaderLength(size+MIN_PAYLOAD_SIZE);
+        this.header.setBlockHeaderLength(size + MIN_PAYLOAD_SIZE);
 
         ByteBuffer bufferBlockHeader = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
-        bufferBlockHeader.put(UUID.getBytes(),0,UID_SIZE);
-        bufferBlockHeader.put((byte)MIME_TYPE_IMAGE);
+        bufferBlockHeader.put(UUID.getBytes(), 0, UID_SIZE);
+        bufferBlockHeader.put((byte) MIME_TYPE_IMAGE);
 
-        /* send the header, the pseudo-header and the attached file */
+    /* send the header, the pseudo-header and the attached file */
         header.writeBlock(con.getOutputStream());
         con.getOutputStream().write(bufferBlockHeader.array());
 
@@ -215,25 +216,25 @@ public class BlockFile extends Block {
             final int BUFFER_SIZE = 1024;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
-            int bytesread = fis.read(fileBuffer,0,BUFFER_SIZE);
-            while(bytesread > 0) {
-                out.write(fileBuffer,0,bytesread);
-                bytesread = fis.read(fileBuffer,0,BUFFER_SIZE);
+            int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
+            while (bytesread > 0) {
+                out.write(fileBuffer, 0, bytesread);
+                bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } finally {
-            if(fis != null)
+            if (fis != null)
                 fis.close();
         }
 
-        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+        timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new FileSentEvent(
-                        filepath,
+                        filename,
                         recipients,
                         RumbleProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        header.getBlockLength()+header.BLOCK_HEADER_LENGTH,
+                        header.getBlockLength() + header.BLOCK_HEADER_LENGTH,
                         timeToTransfer)
         );
 

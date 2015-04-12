@@ -69,7 +69,7 @@ public class PopupCompose extends Activity {
     private ImageButton choosePicture;
     private ImageButton send;
 
-    private Bitmap imageBitmap;
+
     private String mCurrentPhotoFile;
 
     @Override
@@ -85,7 +85,7 @@ public class PopupCompose extends Activity {
 
         dismiss.setOnClickListener(onDiscardClick);
         takePicture.setOnClickListener(onTakePictureClick);
-        choosePicture.setOnClickListener(onAttachePictureClick);
+        choosePicture.setOnClickListener(onAttachPictureClick);
         send.setOnClickListener(onClickSend);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
@@ -108,14 +108,15 @@ public class PopupCompose extends Activity {
                 File photoFile;
                 try {
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                    String imageFileName = "JPEG_" + timeStamp + "_";
                     File storageDir = FileUtil.getWritableAlbumStorageDir();
+                    String imageFileName = "JPEG_" + timeStamp + "_";
+                    String suffix = ".jpg";
                     photoFile = File.createTempFile(
                             imageFileName,  /* prefix */
-                            ".jpg",         /* suffix */
+                            suffix,         /* suffix */
                             storageDir      /* directory */
                     );
-                    mCurrentPhotoFile = photoFile.getAbsolutePath();
+                    mCurrentPhotoFile = photoFile.getName();
                 } catch (IOException error) {
                     Log.e(TAG, "[!] cannot create photo file");
                     return;
@@ -131,22 +132,25 @@ public class PopupCompose extends Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            File attachedFile = new File(mCurrentPhotoFile);
-            Bitmap imageBitmap = ThumbnailUtils.extractThumbnail(
-                    BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
-                    512,
-                    384);
-            BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), imageBitmap);
-            bitmapDrawable.setAlpha(100);
-            if( android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                compose.setBackgroundDrawable(bitmapDrawable);
-            } else {
-                compose.setBackground(bitmapDrawable);
+            try {
+                File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),mCurrentPhotoFile);
+                Bitmap imageBitmap = ThumbnailUtils.extractThumbnail(
+                        BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
+                        512,
+                        384);
+                BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), imageBitmap);
+                bitmapDrawable.setAlpha(100);
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                    compose.setBackgroundDrawable(bitmapDrawable);
+                } else {
+                    compose.setBackground(bitmapDrawable);
+                }
+            } catch(IOException ignore){
             }
         }
     }
 
-    View.OnClickListener onAttachePictureClick = new View.OnClickListener() {
+    View.OnClickListener onAttachPictureClick = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
         }
@@ -157,7 +161,7 @@ public class PopupCompose extends Activity {
         public void onClick(View view) {
             try {
                 String message = compose.getText().toString();
-                if ((message == "") && (imageBitmap == null))
+                if (message.equals(""))
                     return;
 
                 Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
@@ -170,7 +174,7 @@ public class PopupCompose extends Activity {
 
                     // add the photo to the media library
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    File f = new File(mCurrentPhotoFile);
+                    File f = new File(FileUtil.getReadableAlbumStorageDir(), mCurrentPhotoFile);
                     Uri contentUri = Uri.fromFile(f);
                     mediaScanIntent.setData(contentUri);
                     sendBroadcast(mediaScanIntent);

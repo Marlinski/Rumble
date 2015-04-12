@@ -206,13 +206,10 @@ public class RumbleOverBluetooth extends ProtocolWorker {
 
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand) command).getStatus();
-            //todo ce n'est pas ici de prendre cette decision
-            if (statusMessage.isForwarder(con.getRemoteLinkLayerAddress(), RumbleProtocol.protocolID))
-                return false;
-            Log.d(TAG, "[+] sending status "+statusMessage.toString());
-            Block blockStatus = new BlockStatus(statusMessage);
             try {
-                long total = blockStatus.writeBlock(con);
+                Log.d(TAG, "[+] sending status "+statusMessage.toString());
+                Block blockStatus = new BlockStatus(statusMessage);
+                blockStatus.writeBlock(con);
             }
             catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending");
