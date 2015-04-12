@@ -92,6 +92,8 @@ public class BluetoothClientConnection extends BluetoothConnection {
                 throw new NullSocketException();
 
             mmConnectedSocket.connect();
+            socketConnected = true;
+            BluetoothScanner.openedSocket++;
         }catch (IOException e) {
             throw new ConnectionFailedException(remoteMacAddress+" "+bt_service_uuid.toString());
         }
@@ -110,10 +112,10 @@ public class BluetoothClientConnection extends BluetoothConnection {
     }
 
     /*
-         * todo: it is possible that if the user stops everything it may keep a locking state
-         * we don't want to connect while we are discovering cause it mess with the bluetooth
-         * This one unlock the latch locked when trying to connect
-         */
+     * todo: it is possible that if the user stops everything it may keep a locking state
+     * we don't want to connect while we are discovering cause it mess with the bluetooth
+     * This one unlock the latch locked when trying to connect
+     */
     public void onEvent(BluetoothScanEnded scanEnded) {
         latch.countDown();
     }

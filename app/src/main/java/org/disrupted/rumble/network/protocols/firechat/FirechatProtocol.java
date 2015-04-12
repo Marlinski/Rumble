@@ -36,6 +36,7 @@ import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.protocols.firechat.workers.FirechatBTServer;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverBluetooth;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverUDPMulticast;
 
@@ -60,7 +61,8 @@ public class FirechatProtocol implements Protocol {
     /*
      * Firechat Bluetooth Configuration
      */
-    public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    //public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    public static final UUID   FIRECHAT_BT_UUID_128 = UUID.fromString("249916a5-4173-46e9-9320-36a8c1e8c487");
     public static final String FIRECHAT_BT_STR      = "FireChat";
 
     private static final Object lock = new Object();
@@ -116,6 +118,11 @@ public class FirechatProtocol implements Protocol {
         if(!started)
             return;
 
+        if(event.linkLayerIdentifier.equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+            Worker BTServer = new FirechatBTServer(this, networkCoordinator);
+            networkCoordinator.addWorker(BTServer);
+        }
+
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             Worker firechatOverUDP = new FirechatOverUDPMulticast();
             networkCoordinator.addWorker(firechatOverUDP);
@@ -149,6 +156,7 @@ public class FirechatProtocol implements Protocol {
             } catch (FirechatBTState.StateException ignore) {
                 Log.d(TAG, neighbour.getLinkLayerAddress()+" state error: "+getBTState(neighbour.getLinkLayerAddress()).printState());
             }
+
         }
 
         if(neighbour instanceof UDPNeighbour) {

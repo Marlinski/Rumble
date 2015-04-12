@@ -92,7 +92,7 @@ public class FirechatMessageParser {
         String author    = object.getString(NAME);
         String firechat  = object.getString(FIRECHAT);
         long   timestamp = object.getLong(TIMESTAMP);
-        long now = (System.currentTimeMillis() / 1000L);
+        long   now = (System.currentTimeMillis() / 1000L);
 
         try { post   = object.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
         try { length = object.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }

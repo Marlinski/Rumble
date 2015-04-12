@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,20 +11,21 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.rumble.packetformat;
+package org.disrupted.rumble.userinterface.events;
 
-import org.disrupted.rumble.message.Message;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.message.StatusMessage;
 
 /**
  * @author Marlinski
  */
-public interface BlockMessage {
+public class UserComposeStatus extends UserInteractionEvent  {
+    public final StatusMessage status;
 
-    public Message getMessage() throws MalformedBlock;
-
+    public UserComposeStatus(StatusMessage status) {
+        this.status = status;
+    }
 }

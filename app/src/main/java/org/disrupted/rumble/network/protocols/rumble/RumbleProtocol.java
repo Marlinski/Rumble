@@ -41,6 +41,9 @@ import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverUDPMulticast;
+import org.disrupted.rumble.network.services.exceptions.ServiceException;
+import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
+import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
 import org.disrupted.rumble.network.services.push.PushService;
 
 import java.util.HashMap;
@@ -72,12 +75,10 @@ public class RumbleProtocol implements Protocol {
     private boolean started;
 
     private Map<String, RumbleBTState>   bluetoothState;
-    private Map<String, PushService.MessageDispatcher>  pushServices;
 
     public RumbleProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         bluetoothState = new HashMap<String, RumbleBTState>();
-        pushServices = new HashMap<String, PushService.MessageDispatcher>();
         started = false;
     }
 
@@ -103,7 +104,6 @@ public class RumbleProtocol implements Protocol {
             return;
 
         started = true;
-        PushService.startService();
         EventBus.getDefault().register(this);
     }
 
@@ -112,7 +112,6 @@ public class RumbleProtocol implements Protocol {
         if(!started)
             return;
         started = false;
-        PushService.stopService();
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
 
@@ -124,16 +123,17 @@ public class RumbleProtocol implements Protocol {
 
     // todo : should be the PushService responsibility to start/stop the dispatcher
     public void workerConnected(ProtocolWorker worker) {
-        PushService.MessageDispatcher dispatcher = new PushService.MessageDispatcher(worker,null,0);
-        pushServices.put(worker.getWorkerIdentifier(), dispatcher);
-        dispatcher.startDispatcher();
+        try {
+            PushService.bind(worker);
+        } catch( ServiceException ignore){
+        }
     }
 
     public void workerDisconnected(ProtocolWorker worker) {
-        PushService.MessageDispatcher dispatcher =  pushServices.get(worker.getWorkerIdentifier());
-        if(dispatcher != null)
-            dispatcher.stopDispatcher();
-        pushServices.remove(worker.getWorkerIdentifier());
+        try {
+            PushService.unbind(worker);
+        } catch( ServiceException ignore ) {
+        }
     }
 
     @Override
@@ -177,7 +177,7 @@ public class RumbleProtocol implements Protocol {
                 getBTState(neighbour.getLinkLayerAddress()).connectionInitiated(rumbleOverBluetooth.getWorkerIdentifier());
                 networkCoordinator.addWorker(rumbleOverBluetooth);
             } catch(RumbleBTState.StateException ignore) {
-                Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
+                //Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
 

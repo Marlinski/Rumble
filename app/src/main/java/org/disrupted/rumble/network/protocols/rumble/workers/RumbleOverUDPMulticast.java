@@ -21,6 +21,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
@@ -77,6 +78,11 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     @Override
     public String getWorkerIdentifier() {
         return getProtocolIdentifier()+" "+con.getConnectionID();
+    }
+
+    @Override
+    public LinkLayerConnection getLinkLayerConnection() {
+        return con;
     }
 
     @Override

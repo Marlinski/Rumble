@@ -34,7 +34,7 @@ public class RumbleBTState {
         NOT_CONNECTED, CONNECTION_INITIATED, CONNECTION_ACCEPTED, CONNECTED;
     }
 
-    public final ReentrantLock lockWorker = new ReentrantLock();
+    public  final ReentrantLock lockWorker = new ReentrantLock();
     private final Object lockRumbleBTState = new Object();
     private RumbleBluetoothState state;
     private String workerID;

@@ -28,6 +28,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
@@ -55,6 +56,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     protected InputStream inputStream;
     protected OutputStream outputStream;
     protected boolean registered;
+    protected boolean socketConnected;
 
     public BluetoothConnection(String remoteMacAddress) {
         this.remoteMacAddress = remoteMacAddress;
@@ -63,6 +65,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         this.inputStream = null;
         this.outputStream = null;
         this.registered = false;
+        this.socketConnected = false;
     }
 
     @Override
@@ -70,6 +73,7 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
     }
 
+    @Override
     public InputStream getInputStream() throws IOException, InputOutputStreamException{
         InputStream input = mmConnectedSocket.getInputStream();
         if(input == null)
@@ -77,6 +81,17 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         return input;
     }
 
+    @Override
+    public String getRemoteLinkLayerAddress() {
+        return remoteMacAddress;
+    }
+
+    @Override
+    public LinkLayerNeighbour getLinkLayerNeighbour() {
+        return new BluetoothNeighbour(getRemoteLinkLayerAddress());
+    }
+
+    @Override
     public OutputStream getOutputStream() throws IOException, InputOutputStreamException {
         OutputStream output = mmConnectedSocket.getOutputStream();
         if(output == null)
@@ -84,14 +99,11 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         return output;
     }
 
-    public String getRemoteMacAddress() {
-        return remoteMacAddress;
-    }
-
-
     @Override
     public void disconnect() throws LinkLayerConnectionException {
         try {
+            if(socketConnected)
+                BluetoothScanner.openedSocket--;
             mmConnectedSocket.close();
         } catch (IOException e) {
             throw new SocketAlreadyClosedException();
@@ -121,4 +133,6 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
             }
         }
     };
+
+
 }

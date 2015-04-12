@@ -56,6 +56,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
 
     private static final Object lock = new Object();
     private static BluetoothScanner instance;
+    public static int openedSocket;
 
     private enum ScanningState {
         SCANNING_ON, SCANNING_OFF
@@ -133,6 +134,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
         scanningState    = ScanningState.SCANNING_OFF;
         hasCallback = false;
         registered = false;
+        openedSocket = 0;
 
         mSensorManager = (SensorManager) RumbleApplication.getContext().getSystemService(Context.SENSOR_SERVICE);
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
@@ -288,7 +290,6 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
                 return;
 
             String action = intent.getAction();
-            //Log.d(TAG, "[*] "+action);
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 if(scanningState == ScanningState.SCANNING_OFF)
@@ -336,6 +337,17 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
                     Log.d(TAG, "[!] started unsollicited Discovery");
                 } else {
                     Log.d(TAG, "[+] started sollicited Discovery");
+                }
+
+                if(openedSocket > 0) {
+                    Log.d(TAG, "[!] "+openedSocket+" sockets opened, delay the scanning");
+                    handler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            startDiscovery();
+                        }
+                    }, (long) trickleTimer);
+                    // todo sometime it drops the connection, sometime not
                 }
 
                 scanningState    = ScanningState.SCANNING_ON;

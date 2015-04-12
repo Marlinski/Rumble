@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,31 +11,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
-
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+package org.disrupted.rumble.network.services.exceptions;
 
 /**
  * @author Marlinski
  */
-public interface Worker {
-
-    public String getWorkerIdentifier();
-
-    public String getProtocolIdentifier();
-
-    public String getLinkLayerIdentifier();
-
-    public void cancelWorker();
-
-    public void startWorker();
-
-    public void stopWorker();
-
-    public boolean isWorking();
-
+public class ServiceAlreadyStarted extends ServiceException {
 }

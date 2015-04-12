@@ -95,33 +95,39 @@ public class StatusDatabase extends Database {
     public static abstract class StatusIdQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
         public final void onReadableQueryFinished(Object object) {
             if(object instanceof ArrayList)
-                onStatusIdQueryFinished((ArrayList<Long>)(object));
+                onStatusIdQueryFinished((ArrayList<Integer>)(object));
         }
-        public abstract void onStatusIdQueryFinished(ArrayList<Long> statusIds);
+        public abstract void onStatusIdQueryFinished(ArrayList<Integer> statusIds);
     }
 
     public StatusDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public boolean getStatusesId(StatusIdQueryCallback callback){
+    public boolean getStatusesIdForUser(final String hash, StatusIdQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public ArrayList<Long> read() {
-                        return getStatusesId();
+                    public ArrayList<Integer> read() {
+                        return getStatusesIdForUser(hash);
                     }
                 }, callback);
     }
-    private ArrayList<Long> getStatusesId() {
+    private ArrayList<Integer> getStatusesIdForUser(final String hash) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, null, null, null, null, null);
+        StringBuilder query = new StringBuilder(
+                "SELECT s."+ID+" FROM "+StatusDatabase.TABLE_NAME+" s"+
+                        " JOIN " + ForwarderDatabase.TABLE_NAME+" f"+
+                        " ON s."+StatusDatabase.ID+" = f."+ForwarderDatabase.ID  +
+                        " WHERE f."+ForwarderDatabase.RECEIVEDBY+" != ?" +
+                        " GROUP BY s."+StatusDatabase.ID);
+        Cursor cursor = database.rawQuery(query.toString(), new String[]{ hash });
         if(cursor == null)
             return null;
-        ArrayList<Long> ret = new ArrayList<Long>();
+        ArrayList<Integer> ret = new ArrayList<Integer>();
         try {
             for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                ret.add(cursor.getLong(cursor.getColumnIndexOrThrow(ID)));
+                ret.add(cursor.getInt(cursor.getColumnIndexOrThrow(ID)));
             }
         }finally {
             cursor.close();

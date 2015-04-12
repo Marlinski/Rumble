@@ -47,6 +47,7 @@ import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.services.push.PushService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -124,6 +125,8 @@ public class NetworkCoordinator extends Service {
             protocols.put(rumbleProtocol.getProtocolIdentifier(), rumbleProtocol);
             //protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
 
+            // start services
+            PushService.startService();
             EventBus.getDefault().register(this);
         }
     }
@@ -138,6 +141,9 @@ public class NetworkCoordinator extends Service {
         super.onDestroy();
         synchronized (lock) {
             Log.d(TAG, "[-] Destroy NetworkCoordinator");
+
+            // stop services
+            PushService.stopService();
 
             // destroy protocols
             for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {

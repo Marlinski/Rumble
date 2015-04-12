@@ -20,45 +20,55 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.network.events.StatusReceivedEvent;
+import org.disrupted.rumble.network.events.StatusSentEvent;
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * A BlockStatus holds all the information necessary to retrieve a Status
  *
- * +--------------------------+
- * |       BlockHeader        |
- * +--------------------------+
- *
  *
  * +-------------------------------------------+
  * |                                           |
- * |       UID = Hash(author, post, toc)       |   16 bytes (128 bits UID)
+ * |       UID = Hash(author, post, toc)       |  16 bytes (128 bits UID)
  * |                                           |
  * |                                           |
  * +--------+----------------------------------+
- * | Length |              Author (String)     |   1 byte + variable
+ * | Length |         Author (String)          |  1 byte + VARIABLE
  * +--------+---------+------------------------+
- * |      Length      |     Status (String)    |   2 bytes + variable
+ * | Length |         Group (String)           |  1 byte + VARIABLE
+ * +--------+---------+------------------------+
+ * |      Length      |     Status (String)    |  2 bytes + VARIABLE
  * +------------------+------------------------+
  * |             Time of Creation              |
- * +                                           |   8 bytes
+ * +                                           |  8 bytes
  * +-------------------------------------------+
  * |              Time to Live                 |
  * |                                           |  8 bytes
  * +-------------------+-----------------------+
  * |   Hop Count       |      Replication      |  2 bytes + 2 bytes
- * +-------------------+-----------------------+
- * |     like          |
- * +-------------------+
+ * +---------+---------+-----------------------+
+ * |  like   |                                    1 byte
+ * +---------+
  *
  * @author Marlinski
  */
-public class BlockStatus extends Block {
+public class BlockStatus extends Block{
 
     private static final String TAG = "BlockStatus";
 
@@ -66,16 +76,18 @@ public class BlockStatus extends Block {
      * Byte size
      */
     private static final int UID                 = 16;
-    private static final int AUTHOR_LENGTH_FIELD = 2;
+    private static final int AUTHOR_LENGTH_FIELD = 1;
+    private static final int GROUP_LENGTH_FIELD  = 1;
     private static final int STATUS_LENGTH_FIELD = 2;
     private static final int TIME_OF_CREATION    = 8;
     private static final int TTL                 = 8;
     private static final int HOPS                = 2;
     private static final int REPLICATION         = 2;
-    private static final int LIKE                = 2;
+    private static final int LIKE                = 1;
 
-    public  static final int MIN_PAYLOAD_SIZE = ( UID +
+    private  static final int MIN_PAYLOAD_SIZE = ( UID +
             AUTHOR_LENGTH_FIELD +
+            GROUP_LENGTH_FIELD +
             STATUS_LENGTH_FIELD +
             TIME_OF_CREATION +
             TTL +
@@ -83,109 +95,172 @@ public class BlockStatus extends Block {
             REPLICATION +
             LIKE);
 
-    public static final int SUBTYPE = 0x02;
+    private static final int MAX_STATUS_SIZE = 500; // limiting status to 500 character;
+    private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_STATUS_SIZE;
 
     private StatusMessage status;
 
-    public BlockStatus(BlockHeader header, StatusMessage status) {
-        super(header, null);
-        this.header.setType(BlockHeader.Type.PUSH);
-        this.header.setSubtype(SUBTYPE);
-        this.header.setLastBlock(true);
+    public BlockStatus(StatusMessage status) {
+        super(new BlockHeader());
+        this.header.setBlockType(BlockHeader.BLOCKTYPE_STATUS);
+        this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.status = status;
     }
 
-    public BlockStatus(BlockHeader header, byte[] payload) {
-        super(header, payload);
-        status = null;
+    public BlockStatus(BlockHeader header) {
+        super(header);
+        this.status = null;
     }
 
     @Override
-    public void readBuffer() throws BufferMismatchBlockSize, MalformedRumblePacket {
-        if(payload.length < MIN_PAYLOAD_SIZE)
-            throw new BufferMismatchBlockSize();
+    public long readBlock(LinkLayerConnection con) throws MalformedRumblePacket, IOException, InputOutputStreamException {
+        if(header.getBlockType() != BlockHeader.BLOCKTYPE_STATUS)
+            throw new MalformedRumblePacket("Block type BLOCK_FILE expected");
 
-        ByteBuffer byteBuffer = ByteBuffer.wrap(payload);
+        long readleft = header.getBlockLength();
+        if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
+            throw new MalformedRumblePacket("wrong header length parameter: "+readleft);
 
-        byte[] uid = new byte[UID];
-        byteBuffer.get(uid,0,UID);
+        long timeToTransfer = System.currentTimeMillis();
 
-        short authorLength = byteBuffer.getShort();
-        byte[] author;
-        if((authorLength > 0) && (authorLength < (payload.length-UID)))
-            author = new byte[authorLength];
-        else
-            throw new MalformedRumblePacket("wrong author length parameter: "+authorLength);
-        byteBuffer.get(author);
 
-        short postLength = byteBuffer.getShort();
-        byte[] post;
-        if((postLength > 0) && (postLength < (payload.length - UID - authorLength)))
-            post = new byte[postLength];
-        else
-            throw new MalformedRumblePacket("wrong post length parameter: "+postLength);
+        /* read the block */
+        InputStream in = con.getInputStream();
+        byte[] blockBuffer = new byte[(int)header.getBlockLength()];
+        if (in.read(blockBuffer, 0, (int)header.getBlockLength()) < (int)header.getBlockLength())
+            throw new MalformedRumblePacket("read less bytes than expected");
 
-        byteBuffer.get(post);
+        /* process the read buffer */
+        try {
+            ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
+            byte[] uid = new byte[UID];
+            byteBuffer.get(uid, 0, UID);
+            readleft -= UID;
 
-        long  toc   = byteBuffer.getLong();
-        long  ttl   = byteBuffer.getLong();
-        short hops  = byteBuffer.getShort();
-        short replication = byteBuffer.getShort();
-        short like  = byteBuffer.getShort();
+            short authorLength = byteBuffer.get();
+            readleft -= 1;
+            if ((authorLength <= 0) || (authorLength > readleft))
+                throw new MalformedRumblePacket("wrong author length parameter: " + authorLength);
+            byte[] author = new byte[authorLength];
+            byteBuffer.get(author, 0, authorLength);
+            readleft -= authorLength;
 
-        status = new StatusMessage(new String(post), new String(author), toc);
-        status.setUuid(new String(uid));
-        status.setTimeOfCreation(toc);
-        status.setHopCount((int) hops);
-        status.setTTL((int) ttl);
-        status.addReplication((int) replication);
-        status.setLike((int) like);
-        status.setTimeOfArrival(System.currentTimeMillis()/1000L);
+            short groupLength = byteBuffer.get();
+            readleft -= 1;
+            if ((groupLength <= 0) || (groupLength > readleft))
+                throw new MalformedRumblePacket("wrong group length parameter: " + groupLength);
+            byte[] group = new byte[groupLength];
+            byteBuffer.get(group, 0, groupLength);
+            readleft -= groupLength;
+
+            short postLength = byteBuffer.getShort();
+            readleft -= 2;
+            if ((postLength <= 0) || (postLength > readleft))
+                throw new MalformedRumblePacket("wrong status length parameter: " + postLength);
+            byte[] post = new byte[postLength];
+            byteBuffer.get(post, 0, postLength);
+
+            long toc = byteBuffer.getLong();
+            long ttl = byteBuffer.getLong();
+            short hops = byteBuffer.getShort();
+            short replication = byteBuffer.getShort();
+            byte like = byteBuffer.get();
+
+        /* assemble the status */
+            status = new StatusMessage(new String(post), new String(author), toc);
+            status.setGroup(new String(group));
+            status.setUuid(new String(uid));
+            status.setTimeOfCreation(toc);
+            status.setHopCount((int) hops);
+            status.setTTL((int) ttl);
+            status.addReplication((int) replication);
+            status.setLike((int) like);
+            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
+
+            timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
+            EventBus.getDefault().post(new StatusReceivedEvent(
+                            status,
+                            con.getRemoteLinkLayerAddress(),
+                            RumbleProtocol.protocolID,
+                            con.getLinkLayerIdentifier(),
+                            header.getBlockLength(),
+                            timeToTransfer)
+            );
+        } catch (BufferUnderflowException exception) {
+            throw new MalformedRumblePacket("buffer too small");
+        }
+
+        return header.getBlockLength();
     }
 
     @Override
-    public StatusMessage getMessage() throws MalformedBlock {
+    public long writeBlock(LinkLayerConnection con) throws IOException,InputOutputStreamException {
+        long timeToTransfer = System.currentTimeMillis();
+
+        /* calculate the total block size */
+        byte[] post   = status.getPost().getBytes(Charset.forName("UTF-8"));
+        byte[] group = status.getGroup().getBytes(Charset.forName("UTF-8"));
+        byte[] author = status.getAuthor().getBytes(Charset.forName("UTF-8"));
+        int length = MIN_PAYLOAD_SIZE +
+                author.length +
+                group.length +
+                post.length;
+        header.setBlockHeaderLength(length);
+
+        BlockFile blockFile = null;
+        if(!status.getFileName().equals("")) {
+            header.setLastBlock(false);
+            blockFile = new BlockFile(status.getFileName(), status.getUuid());
+        }
+
+        /* prepare the buffer */
+        ByteBuffer blockBuffer = ByteBuffer.allocate(length);
+        blockBuffer.put(status.getUuid().getBytes(), 0, UID);
+        blockBuffer.put((byte)author.length);
+        blockBuffer.put(author,0,author.length);
+        blockBuffer.put((byte)group.length);
+        blockBuffer.put(group,0,group.length);
+        blockBuffer.putShort((short) post.length);
+        blockBuffer.put(post,0,post.length);
+        blockBuffer.putLong(status.getTimeOfCreation());
+        blockBuffer.putLong(status.getTTL());
+        blockBuffer.putShort((short) status.getHopCount());
+        blockBuffer.putShort((short) status.getReplication());
+        blockBuffer.put((byte) status.getLike());
+
+        /* send the header, the status and the attached file */
+        header.writeBlock(con.getOutputStream());
+        con.getOutputStream().write(blockBuffer.array());
+        if(blockFile != null)
+            blockFile.writeBlock(con);
+
+        /*
+         * It is very important to post an event as it will be catch by the
+         * CacheManager and will update the database accordingly
+         */
+        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+        List<String> recipients = new ArrayList<String>();
+        recipients.add(con.getRemoteLinkLayerAddress());
+        EventBus.getDefault().post(new StatusSentEvent(
+                        status,
+                        recipients,
+                        RumbleProtocol.protocolID,
+                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                        header.getBlockLength()+header.BLOCK_HEADER_LENGTH,
+                        timeToTransfer)
+        );
+
+        return header.getBlockLength()+header.BLOCK_HEADER_LENGTH;
+    }
+
+    public StatusMessage getStatus() {
         return status;
     }
 
     @Override
-    public byte[] getBytes() throws MalformedRumblePacket {
-        byte[] post   = status.getPost().getBytes(Charset.forName("UTF-8"));
-        byte[] author = status.getAuthor().getBytes(Charset.forName("UTF-8"));
-
-        int length = MIN_PAYLOAD_SIZE +
-                author.length +
-                post.length;
-
-        header.setPayloadLength(length);
-
-        ByteBuffer byteBuffer = ByteBuffer.allocate(length+header.HEADER_LENGTH);
-
-        /*
-         * we first add the header
-         */
-        byteBuffer.put(header.getBytes());
-
-        /*
-         * and then the payload
-         */
-        byteBuffer.put(status.getUuid().getBytes(),0,UID);
-
-        byteBuffer.putShort((short) author.length);
-        byteBuffer.put(author);
-
-        byteBuffer.putShort((short) post.length);
-        byteBuffer.put(post);
-
-        byteBuffer.putLong(status.getTimeOfCreation());
-        byteBuffer.putLong(status.getTTL());
-
-        byteBuffer.putShort((short)status.getHopCount());
-        byteBuffer.putShort((short)status.getReplication());
-        byteBuffer.putShort((short)status.getLike());
-
-        return byteBuffer.array();
+    public void dismiss() {
+        if(status != null)
+            this.status.discard();
     }
-
 }
 

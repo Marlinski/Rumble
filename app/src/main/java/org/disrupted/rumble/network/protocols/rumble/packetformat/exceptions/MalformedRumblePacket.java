@@ -26,12 +26,12 @@ public class MalformedRumblePacket extends Exception {
 
     public String reason;
 
-    public MalformedRumblePacket() {
-        reason = "";
-    }
-
     public MalformedRumblePacket(String reason) {
         this.reason = reason;
     }
 
+    @Override
+    public String getMessage() {
+        return reason;
+    }
 }

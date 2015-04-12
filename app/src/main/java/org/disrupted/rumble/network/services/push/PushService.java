@@ -1,21 +1,25 @@
 package org.disrupted.rumble.network.services.push;
 
-import android.database.Cursor;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.message.StatusMessage;
-import org.disrupted.rumble.network.protocols.CommandExecutor;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.services.exceptions.ServiceAlreadyStarted;
+import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
+import org.disrupted.rumble.network.services.exceptions.WorkerAlreadyBinded;
+import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -29,80 +33,73 @@ public class PushService {
 
     private static final String TAG = "PushService";
 
-    private static final ReentrantLock lock = new ReentrantLock();
-    private static final Condition serviceStarted = lock.newCondition();
+    private static final Object lock = new Object();
     private static PushService instance;
 
-    private static List<Long> statusIds;
     private static ReplicationDensityWatcher rdwatcher;
     private static final Random random = new Random();
 
+    private static Map<String, MessageDispatcher> workerIdentifierTodispatcher;
+
     private PushService() {
-        statusIds = new LinkedList<Long>();
         rdwatcher = new ReplicationDensityWatcher(1000*3600);
     }
 
     public static void startService() {
-        lock.lock();
-        try {
+        if(instance != null)
+            return;
+
+        synchronized (lock) {
             Log.d(TAG, "[.] Starting PushService");
             if (instance == null) {
                 instance = new PushService();
                 rdwatcher.start();
-                instance.initStatuses();
-                EventBus.getDefault().register(instance);
+                workerIdentifierTodispatcher = new HashMap<String, MessageDispatcher>();
             }
-        } finally {
-            lock.unlock();
         }
     }
 
-    // todo: not sure who is responsible for shutting down the push service
-    // maybe the UI ? Or should it be the NetworkCoordinator ?
     public static void stopService() {
-        lock.lock();
-        try {
+        if(instance == null)
+                return;
+        synchronized (lock) {
             Log.d(TAG, "[-] Stopping PushService");
-            if (instance != null) {
-                if (EventBus.getDefault().isRegistered(instance))
-                    EventBus.getDefault().unregister(instance);
-                statusIds.clear();
-                rdwatcher.stop();
-                instance = null;
+            for(Map.Entry<String, MessageDispatcher> entry : instance.workerIdentifierTodispatcher.entrySet()) {
+                MessageDispatcher dispatcher = entry.getValue();
+                dispatcher.interrupt();
             }
-        } finally {
-            lock.unlock();
+            instance.workerIdentifierTodispatcher.clear();
+            rdwatcher.stop();
+            instance = null;
         }
     }
 
-    private void initStatuses() {
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
-                .getStatusesId(onStatusLoaded);
-    }
-    StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
-        @Override
-        public void onStatusIdQueryFinished(ArrayList<Long> answer) {
-            if (answer != null) {
-                lock.lock();
-                try {
-                    statusIds.clear();
-                    statusIds = answer;
-                    Log.d(TAG, "[+] PushService initiated");
-                    serviceStarted.signal();
-                } finally {
-                    lock.unlock();
-                }
-            }
-        }
-    };
+    public static void bind(ProtocolWorker worker) throws ServiceNotStarted, WorkerAlreadyBinded{
 
-    public void onEvent(StatusInsertedEvent event) {
-        lock.lock();
-        try {
-            statusIds.add(event.status.getdbId());
-        } finally {
-            lock.unlock();
+        if(instance == null)
+            throw new ServiceNotStarted();
+        synchronized (lock) {
+            MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(worker.getWorkerIdentifier());
+            if (dispatcher != null)
+                throw new WorkerAlreadyBinded();
+            dispatcher =  new MessageDispatcher(worker);
+            instance.workerIdentifierTodispatcher.put(worker.getWorkerIdentifier(), dispatcher);
+            dispatcher.startDispatcher();
         }
+    }
+
+    public static void unbind(ProtocolWorker worker) throws ServiceNotStarted, WorkerNotBinded {
+        if(instance == null)
+            throw new ServiceNotStarted();
+
+        synchronized (lock) {
+            MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(worker.getWorkerIdentifier());
+            if (dispatcher == null)
+                throw new WorkerNotBinded();
+            dispatcher.stopDispatcher();
+            instance.workerIdentifierTodispatcher.remove(worker.getWorkerIdentifier());
+        }
+
     }
 
     private static float computeScore(StatusMessage message, InterestVector interestVector) {
@@ -118,19 +115,19 @@ public class PushService {
         float c = (float)0.4;
 
         float score = (a*relevance + b*replicationDensity + c*quality)*age*(distance ? 1 : 0);
-        //Log.d(TAG, "quality="+quality+" rd="+replicationDensity+" quality="+quality+" age="+age+" score="+score+" --- "+message.toString());
+        Log.d(TAG, "quality="+quality+" rd="+replicationDensity+" quality="+quality+" age="+age+" score="+score+" --- "+message.toString());
 
         return score;
     }
 
     // todo: not being dependant on age would make it so much easier ....
-    public static class MessageDispatcher extends Thread {
+    private static class MessageDispatcher extends Thread {
 
         private static final String TAG = "MessageDispatcher";
 
-        private CommandExecutor executor;
+        private ProtocolWorker worker;
         private InterestVector interestVector;
-        private ArrayList<Long> statuses;
+        private ArrayList<Integer> statuses;
         private float threshold;
 
         // locks for managing the ArrayList
@@ -160,40 +157,26 @@ public class PushService {
             }
         }
 
-        public MessageDispatcher(CommandExecutor executor, InterestVector interestVector, float threshold) {
+        public MessageDispatcher(ProtocolWorker worker) {
             this.running = false;
-            this.executor = executor;
+            this.worker = worker;
             this.max = null;
-            this.threshold = threshold;
-            this.interestVector = interestVector;
-            statuses = new ArrayList<Long>();
+            this.threshold = 0;
+            this.interestVector = null;
+            statuses = new ArrayList<Integer>();
         }
 
         @Override
         public void run() {
             Log.d(TAG, "[.] MessageDispatcher started");
-            running = true;
             try {
-                init();
                 Log.d(TAG, "[+] MessageDispatcher initiated");
                 do {
-                    // pause the process if the PushService is stopped
-                    lock.lockInterruptibly();
-                    try {
-                        while (instance == null)
-                            serviceStarted.await();
-                    } catch(InterruptedException ie) {
-                        throw ie;
-                    } finally {
-                        serviceStarted.signal(); // propagate signal
-                        lock.unlock();
-                    }
-
                     // pickup a message and send it to the CommandExecutor
-                    if (executor != null) {
+                    if (worker != null) {
                         StatusMessage message = pickMessage();
                         Log.d(TAG, "message picked");
-                        executor.execute(new SendStatusMessageCommand(message));
+                        worker.execute(new SendStatusMessageCommand(message));
                         //todo just for the sake of debugging
                         sleep(1000, 0);
                     }
@@ -208,37 +191,40 @@ public class PushService {
         }
 
         public void startDispatcher() {
-            this.start();
+            running = true;
+            initStatuses();
         }
 
         public void stopDispatcher() {
             this.interrupt();
             running = false;
-            executor = null;
+            worker = null;
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
         }
 
-        private void init() {
-            fullyLock(); // locking CommandExecutor
-            lock.lock(); // locking PushService
-            try {
-                for (Long s : statusIds) {
-                    StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
-                            .getStatus(s);
-                    float score = computeScore(message, interestVector);
-
-                    if (score <= threshold) {
+        private void initStatuses() {
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
+                    .getStatusesIdForUser(
+                            HashUtil.computeHash(worker.getLinkLayerConnection().getRemoteLinkLayerAddress(), worker.getProtocolIdentifier()),
+                            onStatusLoaded);
+        }
+        StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
+            @Override
+            public void onStatusIdQueryFinished(ArrayList<Integer> answer) {
+                if (answer != null) {
+                    Log.d(TAG, "[+] MessageDispatcher initiated");
+                    for (Integer s : answer) {
+                        StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
+                                .getStatus(s);
+                        add(message);
                         message.discard();
-                        continue;
                     }
-
-                    add(message);
+                    EventBus.getDefault().register(MessageDispatcher.this);
+                    start();
                 }
-                EventBus.getDefault().register(this);
-            } finally {
-                fullyUnlock();
-                lock.unlock();
             }
-        }
+        };
 
         private void clear() {
             fullyLock();
@@ -252,6 +238,11 @@ public class PushService {
         }
 
         private boolean add(StatusMessage message){
+            if(message.isForwarder(
+                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
+                    worker.getProtocolIdentifier()))
+                return false;
+
             final ReentrantLock putlock = this.putLock;
             putlock.lock();
             try {
@@ -262,7 +253,7 @@ public class PushService {
                     return false;
                 }
 
-                statuses.add(message.getdbId());
+                statuses.add((int)message.getdbId());
 
                 if (max == null) {
                     max = message;
@@ -291,15 +282,15 @@ public class PushService {
                     return;
             }
 
-            Iterator<Long> it = statuses.iterator();
+            Iterator<Integer> it = statuses.iterator();
             while(it.hasNext()) {
-                Long id = it.next();
+                Integer id = it.next();
                 StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
                         .getStatus(id);
                 float score = computeScore(max, interestVector);
                 if(score <= threshold) {
                     message.discard();
-                    statuses.remove(message.getdbId());
+                    statuses.remove(Integer.valueOf((int)message.getdbId()));
                     continue;
                 }
 
@@ -322,7 +313,6 @@ public class PushService {
          *  See the paper:
          *  "Roulette-wheel selection via stochastic acceptance"
          *  By Adam Lipowski, Dorota Lipowska
-         *  todo: only pick new message for certain neighbour
          */
         private StatusMessage pickMessage() throws InterruptedException {
             final ReentrantLock takelock = this.takeLock;
@@ -351,7 +341,7 @@ public class PushService {
 
                         if (score <= threshold) {
                             // the message is not valid anymore, that should happen very rarely
-                            statuses.remove(message.getdbId());
+                            statuses.remove(Integer.valueOf((int)message.getdbId()));
                             message.discard();
                             message = null;
                             continue;
@@ -360,7 +350,7 @@ public class PushService {
                         int shallwepick = random.nextInt((int) (maxScore * 1000));
                         if (shallwepick <= (score * 1000)) {
                             // we keep this status with probability Pu/Pmax
-                            statuses.remove(message.getdbId());
+                            statuses.remove(Integer.valueOf((int)message.getdbId()));
                             pickup = true;
                         } else {
                             // else we pick another one
@@ -374,6 +364,15 @@ public class PushService {
                 takelock.unlock();
             }
             return message;
+        }
+
+        public void onEvent(StatusDeletedEvent event) {
+            fullyLock();
+            try {
+                statuses.remove(Integer.valueOf((int) event.statusID));
+            } finally {
+                fullyUnlock();
+            }
         }
 
         public void onEvent(StatusInsertedEvent event) {

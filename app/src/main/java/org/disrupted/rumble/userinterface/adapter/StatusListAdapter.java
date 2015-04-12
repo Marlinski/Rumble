@@ -21,10 +21,14 @@ package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -117,13 +121,23 @@ public class StatusListAdapter extends BaseAdapter{
 
         // we draw the attached file (if any)
         if(!message.getFileName().equals("")) {
-            File directory = FileUtil.getReadableAlbumStorageDir();
-            if (directory != null) {
-                File attachedFile = new File(directory + File.separator + message.getFileName());
-                Bitmap bitmapImage = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
-                attachedView.setImageBitmap(bitmapImage);
-                attachedView.setVisibility(View.VISIBLE);
-            }
+            File attachedFile = new File(message.getFileName());
+
+            Bitmap bitmapImage = ThumbnailUtils.extractThumbnail(
+                    BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
+                    512,
+                    384);
+            attachedView.setImageBitmap(bitmapImage);
+            attachedView.setVisibility(View.VISIBLE);
+            final Uri uri = Uri.parse("file:"+attachedFile.getAbsolutePath());
+            attachedView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(uri,"image/*");
+                    activity.startActivity(intent);
+                }
+            });
         }
 
         // we set the status

@@ -23,8 +23,10 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.network.events.FileReceivedEvent;
 import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
+import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
@@ -84,6 +86,7 @@ public class CacheManager {
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
     }
 
+    // todo: populate file database
     public void onEvent(StatusReceivedEvent event) {
         StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
@@ -99,6 +102,16 @@ public class CacheManager {
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
             Log.d(TAG, "[+] status updated: "+event.status.toString());
         }
+    }
+    public void onEvent(FileReceivedEvent event) {
+        StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
+        if(exists == null) {
+            Log.d(TAG, "[-] received file "+event.filename+" attached to an unknown status: "+event.uuid);
+            return;
+        }
+        exists.setFileName(event.filename);
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
+        Log.d(TAG, "[+] status updated: "+exists.getUuid());
     }
 
     public void onEvent(UserReadStatus event) {
@@ -131,5 +144,13 @@ public class CacheManager {
     public void onEvent(UserDeleteStatus event) {
         Log.d(TAG, " [.] status "+event.uuid+" deleted");
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid, null);
+    }
+
+    // todo: populate file database
+    public void onEvent(UserComposeStatus event) {
+        if(event.status == null)
+            return;
+        Log.d(TAG, " [.] user composed status: "+event.status.toString());
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(event.status, null);
     }
 }

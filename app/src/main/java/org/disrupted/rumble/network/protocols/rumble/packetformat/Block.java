@@ -19,19 +19,33 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * @author Marlinski
  */
-public abstract class Block implements BlockBuilder, BlockMessage {
+public abstract class Block {
 
-    private static final String TAG = "Block";
+    protected BlockHeader  header;
 
-    protected BlockHeader header;
-    protected byte[] payload;
-
-    public Block(BlockHeader header, byte[] payload) {
+    protected Block(BlockHeader header) {
         this.header = header;
-        this.payload = payload;
     }
 
+    protected final BlockHeader getHeader() {
+        return header;
+    }
+
+    public abstract long readBlock(LinkLayerConnection con) throws MalformedRumblePacket, IOException, InputOutputStreamException;
+
+    public abstract long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException;
+
+    public abstract void dismiss();
 }

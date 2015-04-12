@@ -21,6 +21,7 @@ package org.disrupted.rumble.network.protocols;
 
 import android.util.Log;
 
+import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.util.concurrent.BlockingQueue;
@@ -32,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
-public abstract class ProtocolWorker implements Worker, CommandExecutor {
+public abstract class ProtocolWorker implements Worker {
 
     private static final String TAG = "ProtocolWorker";
 
@@ -42,15 +43,8 @@ public abstract class ProtocolWorker implements Worker, CommandExecutor {
         commandQueue = new LinkedBlockingQueue<Command>(1);
     }
 
-    abstract protected void processingPacketFromNetwork();
-
-    abstract protected boolean onCommandReceived(Command command);
-
-    abstract protected boolean isCommandSupported(String commandName);
-
-    public final void onWorkerConnected() {
+    protected final void onWorkerConnected() {
         processingCommandFromQueue.start();
-
         try {
             processingPacketFromNetwork();
         }finally {
@@ -86,4 +80,13 @@ public abstract class ProtocolWorker implements Worker, CommandExecutor {
             return false;
         }
     }
+
+
+    abstract public boolean isCommandSupported(String commandName);
+
+    abstract protected boolean onCommandReceived(Command command);
+
+    abstract public LinkLayerConnection getLinkLayerConnection();
+
+    abstract protected void processingPacketFromNetwork();
 }

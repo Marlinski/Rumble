@@ -19,7 +19,12 @@
 
 package org.disrupted.rumble.network.linklayer;
 
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * LinkLayerConnection is an interface for a class to implement connect() and disconnect()
@@ -36,5 +41,13 @@ public interface LinkLayerConnection {
     public void connect() throws LinkLayerConnectionException;
 
     public void disconnect() throws LinkLayerConnectionException;
+
+    public InputStream getInputStream() throws IOException, InputOutputStreamException;
+
+    public OutputStream getOutputStream()  throws IOException, InputOutputStreamException;
+
+    public String getRemoteLinkLayerAddress();
+
+    public LinkLayerNeighbour getLinkLayerNeighbour();
 
 }

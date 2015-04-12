@@ -27,10 +27,14 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -67,6 +71,26 @@ public class UDPMulticastConnection implements LinkLayerConnection {
     @Override
     public String getConnectionID() {
         return "UDPMulticastConnection";
+    }
+
+    @Override
+    public InputStream getInputStream() throws IOException, InputOutputStreamException {
+        return null;
+    }
+
+    @Override
+    public OutputStream getOutputStream() throws IOException, InputOutputStreamException {
+        return null;
+    }
+
+    @Override
+    public LinkLayerNeighbour getLinkLayerNeighbour() {
+        return null;
+    }
+
+    @Override
+    public String getRemoteLinkLayerAddress() {
+        return null;
     }
 
     @Override

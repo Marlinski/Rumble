@@ -24,6 +24,9 @@ import android.os.Environment;
 import org.disrupted.rumble.app.RumbleApplication;
 
 import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * From https://developer.android.com/training/basics/data-storage/files.html
@@ -33,7 +36,7 @@ public class FileUtil {
 
     private static final String TAG = "FileUtil";
 
-    public static boolean isExternalStorageWritable() {
+    private static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {
             return true;
@@ -41,7 +44,7 @@ public class FileUtil {
         return false;
     }
 
-    public static boolean isExternalStorageReadable() {
+    private static boolean isExternalStorageReadable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state) ||
                 Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
@@ -50,20 +53,16 @@ public class FileUtil {
         return false;
     }
 
-    public static File getWritableAlbumStorageDir(long size) {
+    public static File getWritableAlbumStorageDir() throws IOException {
         if(!isExternalStorageWritable())
             return null;
 
         File file = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_PICTURES), RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);
-        if (!file.mkdirs()) {
-        }
-
-        if(file.getFreeSpace() < size)
-            return null;
+        file.mkdirs();
 
         if(file.getFreeSpace() < RumbleApplication.MINIMUM_FREE_SPACE_AVAILABLE)
-            return null;
+            throw  new IOException("not enough space available");
 
         return file;
     }

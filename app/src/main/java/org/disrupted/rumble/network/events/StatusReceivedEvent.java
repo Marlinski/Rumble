@@ -23,6 +23,7 @@ import java.util.List;
  * @author Marlinski
  */
 public class StatusReceivedEvent {
+
     public StatusMessage status;
     public String sender;
     public String protocolID;
