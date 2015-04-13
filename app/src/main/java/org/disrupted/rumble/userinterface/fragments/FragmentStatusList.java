@@ -24,16 +24,15 @@ import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.GroupDatabase;
@@ -58,12 +57,13 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FragmentStatusList extends Fragment {
+public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.OnRefreshListener{
 
     private static final String TAG = "FragmentStatusList";
 
     private View mView;
     private ListView statusList;
+    private SwipeRefreshLayout swipeLayout;
     private StatusListAdapter statusListAdapter;
     private FilterListAdapter filterListAdapter;
 
@@ -97,6 +97,15 @@ public class FragmentStatusList extends Fragment {
         subscriptionList = new ArrayList<String>();
 
         // the list of status
+        swipeLayout = (SwipeRefreshLayout) mView.findViewById(R.id.swipe_container);
+        swipeLayout.setOnRefreshListener(this);
+
+        /*
+        final float density = getResources().getDisplayMetrics().density;
+        final int swipeDistance = Math.round(64 * density);
+        swipeLayout.setProgressViewOffset(true, 10, 10+swipeDistance);
+        */
+
         statusList = (ListView) mView.findViewById(R.id.status_list);
         statusListAdapter = new StatusListAdapter(getActivity(), this);
         statusListAdapter.registerDataSetObserver(new DataSetObserver() {
@@ -142,8 +151,6 @@ public class FragmentStatusList extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    // todo: only get last 50 statuses and request it as the user browse it
-    // no need to run on UI thread here
     public void getStatuses() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -176,10 +183,21 @@ public class FragmentStatusList extends Fragment {
                     if(array != null) {
                         answer.clear();
                     }
+                    swipeLayout.setRefreshing(false);
                 }
             });
         }
     };
+
+    @Override
+    public void onRefresh() {
+        swipeLayout.setRefreshing(true);
+        getStatuses();
+    }
+
+    /*
+     * Hashtag List and subscription
+     */
 
     public void getSubscriptions() {
         DatabaseFactory.getSubscriptionDatabase(getActivity())
@@ -207,13 +225,6 @@ public class FragmentStatusList extends Fragment {
     OnFilterClick onFilterClick = new OnFilterClick() {
         @Override
         public void onClick(String filter) {
-            /*
-            if(composeTextView.getText().toString().toLowerCase().contains(filter.toLowerCase()))
-                composeTextView.setText(TextUtils.replace(composeTextView.getText(),
-                        new String[] {" "+filter.toLowerCase()},
-                        new CharSequence[]{""}));
-                        */
-
             filterListAdapter.deleteFilter(filter);
             filterListAdapter.notifyDataSetChanged();
             getStatuses();
@@ -222,6 +233,7 @@ public class FragmentStatusList extends Fragment {
 
         }
     };
+
 
     // todo should have its own object
     OnSubscriptionClick onSubscriptionClick = new OnSubscriptionClick() {
@@ -258,7 +270,7 @@ public class FragmentStatusList extends Fragment {
 
 
     /*
-     * Events that come from outside the activity
+     * Handling Events coming from outside the activity
      */
     public void onEvent(StatusInsertedEvent event) {
         getStatuses();

@@ -97,7 +97,11 @@
         </activity>
 
         <activity
-            android:name=".userinterface.fragments.PopupCompose"
+            android:name=".userinterface.activity.Settings">
+        </activity>
+
+        <activity
+            android:name=".userinterface.activity.PopupCompose"
             android:theme="@style/PopupCompose"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 

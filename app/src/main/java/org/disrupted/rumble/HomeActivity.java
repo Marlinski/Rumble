@@ -26,7 +26,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
-
 import android.view.View;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
@@ -61,6 +60,7 @@ public class HomeActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.home_activity);
+
         mTitle = getTitle();
         actionBar = getSupportActionBar();
 
@@ -74,6 +74,7 @@ public class HomeActivity extends ActionBarActivity {
         slidingMenu.setMenu(R.layout.navigation_frame);
         slidingMenu.setSecondaryMenu(R.layout.network_frame);
         slidingMenu.setSecondaryShadowDrawable(R.drawable.shadowright);
+
         if (savedInstanceState == null) {
             mNavigationDrawerFragment = new FragmentNavigationDrawer();
             mNetworkDrawerFragment = new FragmentNetworkDrawer();
@@ -86,7 +87,6 @@ public class HomeActivity extends ActionBarActivity {
             mNetworkDrawerFragment = (FragmentNetworkDrawer)this.getSupportFragmentManager().findFragmentById(R.id.network_drawer_frame);
         }
         slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
-
 
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         publicStatus = actionBar.newTab().setIcon(R.drawable.ic_world)
@@ -105,8 +105,8 @@ public class HomeActivity extends ActionBarActivity {
         actionBar.setDisplayHomeAsUpEnabled(false);
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
-    }
 
+    }
 
     public void onBluetoothToggleClicked(View view) {
         mNetworkDrawerFragment.onBluetoothToggleClicked(view);
@@ -158,4 +158,6 @@ public class HomeActivity extends ActionBarActivity {
         public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
         }
     }
+
+
 }

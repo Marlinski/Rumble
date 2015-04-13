@@ -54,7 +54,7 @@
         <item name="android:textColor">#ffffffff</item>
     </style>
 
-    <style name="Drawer.Navigation.Item" parent="@android:style/TextAppearance">
+    <style name="IconText.Text" parent="@android:style/TextAppearance">
         <item name="android:textSize">16.0sp</item>
         <item name="android:typeface">sans</item>
         <item name="android:textStyle">normal</item>

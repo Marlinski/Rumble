@@ -2,9 +2,7 @@
 
 <!--
   ~ Copyright (C) 2014 Disrupted Systems
-  ~
   ~ This file is part of Rumble.
-  ~
   ~ Rumble is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
   ~ the Free Software Foundation, either version 3 of the License, or
@@ -15,8 +13,8 @@
   ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   ~ GNU General Public License for more details.
   ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -33,18 +31,17 @@
         android:paddingBottom="10dp"
         android:gravity="center_vertical">
 
-        <ImageView android:id="@+id/navigation_item_icon"
+        <ImageView android:id="@+id/setting_item_icon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="20dp"
             android:gravity="left"/>
 
-        <TextView android:id="@+id/navigation_item_text"
+        <TextView android:id="@+id/setting_item_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:gravity="left"
-            style="@style/Drawer.Navigation.Item"/>
+            android:gravity="left"/>
     </LinearLayout>
 
     <View

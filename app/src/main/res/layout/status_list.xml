@@ -40,14 +40,6 @@
         android:layout_height="1dp"
         android:background="@color/white" />
 
-    <ProgressBar
-        android:id="@+id/loadingStatusList"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:indeterminate="true" />
-
     <FrameLayout
         android:id="@+id/status_list_progressbar"
         android:layout_width="match_parent"
@@ -59,79 +51,26 @@
             android:layout_height="wrap_content"/>
     </FrameLayout>
 
-    <ListView android:id="@+id/status_list"
+    <android.support.v4.widget.SwipeRefreshLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/swipe_container"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
-        android:layout_weight="1"
-        android:background="@color/grey_blue"
-        android:divider="@null"
-        android:dividerHeight="5dp"
-        android:paddingBottom="5dp"
-        android:paddingTop="5dp"
-        android:clipToPadding="false"/>
-
-
-    <!--
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="#ffffff">
-
-        <ImageButton android:id="@+id/attached_button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:src="@drawable/ic_control_point_black_24dp"
-            android:background="#00000000"/>
-
-        <EditText android:id="@+id/user_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+        android:layout_height="match_parent">
+        <ListView android:id="@+id/status_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:stackFromBottom="false"
             android:layout_weight="1"
-            android:layout_gravity="left"
-            android:hint="whatcha wanna say ?"/>
+            android:background="@color/grey_blue"
+            android:divider="@null"
+            android:dividerHeight="5dp"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:clipToPadding="false"
+            android:smoothScrollbar="true"
+            android:scrollingCache="false"
+            android:animationCache="false" />
+    </android.support.v4.widget.SwipeRefreshLayout>
 
-        <ImageButton android:id="@+id/button_send"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|right"
-            android:src="@drawable/ic_send_black_36dp"
-            android:background="#00000000"/>
-    </LinearLayout>
 
-
-    <LinearLayout
-        android:id="@+id/attached_menu"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:background="#ffffffff"
-        android:visibility="gone">
-
-        <ImageButton android:id="@+id/take_picture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:layout_marginRight="10dp"
-            android:src="@drawable/ic_photo_camera_black_48dp"
-            android:background="@drawable/attached_file_option"/>
-
-        <ImageButton android:id="@+id/attache_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|center_horizontal"
-            android:src="@drawable/ic_photo_album_black_48dp"
-            android:background="@drawable/attached_file_option"/>
-
-    </LinearLayout>
-    -->
 </LinearLayout>
