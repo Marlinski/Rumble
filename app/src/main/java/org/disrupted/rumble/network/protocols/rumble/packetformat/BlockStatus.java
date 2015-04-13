@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
+import android.util.Log;
+
 import org.disrupted.rumble.message.StatusMessage;
 import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
@@ -170,8 +172,9 @@ public class BlockStatus extends Block{
 
         /* assemble the status */
             status = new StatusMessage(new String(post), new String(author), toc);
-            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
+            Log.d(TAG, status.getUuid()+" - "+new String(uid));
             status.setUuid(new String(uid));
+            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setGroup(new String(group));
             status.setTimeOfCreation(toc);
             status.setHopCount((int) hopCount);

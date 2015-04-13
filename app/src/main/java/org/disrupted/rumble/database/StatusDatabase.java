@@ -237,7 +237,7 @@ public class StatusDatabase extends Database {
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
-        Log.d(TAG, "[Q] query: "+query.toString());
+        //Log.d(TAG, "[Q] query: "+query.toString());
 
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));

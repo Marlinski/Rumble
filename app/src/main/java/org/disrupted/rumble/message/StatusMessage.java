@@ -100,7 +100,7 @@ public class StatusMessage extends Message{
             ByteBuffer byteBuffer = ByteBuffer.wrap(md.digest());
             byte[] digest128bits = new byte[16];
             byteBuffer.get(digest128bits, 0, 16);
-            uuid = Base64.encodeToString(digest128bits,0,16,Base64.DEFAULT);
+            uuid = Base64.encodeToString(digest128bits,0,16,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
         }
