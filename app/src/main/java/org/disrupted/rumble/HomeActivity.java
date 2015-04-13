@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble;
 
+import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -26,7 +27,11 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
@@ -50,10 +55,10 @@ public class HomeActivity extends ActionBarActivity {
     private FragmentNetworkDrawer mNetworkDrawerFragment;
     private SlidingMenu slidingMenu;
 
-    ActionBar.Tab publicStatus, groupStatus, tchatStatus;
-    Fragment fragmentStatusList  = new FragmentStatusList();
-    Fragment fragmentGroupStatus = new FragmentGroupStatus();
-    Fragment fragmentTchat       = new FragmentDirectMessage();
+    private ActionBar.Tab publicStatus, groupStatus, tchatStatus;
+    private Fragment fragmentStatusList  = new FragmentStatusList();
+    private Fragment fragmentGroupStatus = new FragmentGroupStatus();
+    private Fragment fragmentTchat       = new FragmentDirectMessage();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,11 +94,14 @@ public class HomeActivity extends ActionBarActivity {
         slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        publicStatus = actionBar.newTab().setIcon(R.drawable.ic_world)
+        publicStatus = actionBar.newTab()
+                .setCustomView(renderTabView(this, R.drawable.ic_world))
                 .setTabListener(new HomeTabListener(fragmentStatusList));
-        groupStatus = actionBar.newTab().setIcon(R.drawable.ic_group_white_24dp)
+        groupStatus = actionBar.newTab()
+                .setCustomView(renderTabView(this, R.drawable.ic_group_white_24dp))
                 .setTabListener(new HomeTabListener(fragmentGroupStatus));
-        tchatStatus = actionBar.newTab().setIcon(R.drawable.ic_forum_white_24dp)
+        tchatStatus = actionBar.newTab()
+                .setCustomView(renderTabView(this, R.drawable.ic_forum_white_24dp))
                 .setTabListener(new HomeTabListener(fragmentTchat));
 
         actionBar.addTab(publicStatus);
@@ -128,6 +136,13 @@ public class HomeActivity extends ActionBarActivity {
         }
     }
 
+
+    public static View renderTabView(Context context, int iconResource) {
+        RelativeLayout view = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.badge_tab_layout, null);
+        view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        ((ImageView)view.findViewById(R.id.tab_icon)).setImageResource(iconResource);
+        return view;
+    }
 
     private class HomeTabListener implements ActionBar.TabListener {
 

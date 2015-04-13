@@ -27,9 +27,10 @@
     <string name="wifi_state_on_openning">wifi_state_on_openning</string>
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
-    <string name="home_tab">Home</string>
-    <string name="hashtag_tab">HashTags</string>
-    <string name="discussion_tab">Chat</string>
+
+    <string name="tab_public">Public</string>
+    <string name="tab_group">Group</string>
+    <string name="tab_chat">Chat</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

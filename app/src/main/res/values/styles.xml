@@ -39,6 +39,7 @@
     <color name="status_background">#efefef</color>
     <color name="status_background_liked">#efefef</color>
     <color name="status_unread">#ffd2efdc</color>
+    <color name="tab_notification">#ff0000</color>
 
     <style name="Drawer.Interfaces.Name" parent="@android:style/TextAppearance">
         <item name="android:textSize">16.0sp</item>

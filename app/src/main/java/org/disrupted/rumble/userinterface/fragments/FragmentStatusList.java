@@ -19,12 +19,15 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,7 +35,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.GroupDatabase;
@@ -70,6 +76,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private ListView filters;
     private List<String> subscriptionList;
 
+    private int notif;
+
     public interface OnFilterClick {
         public void onClick(String filter);
     }
@@ -81,6 +89,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+
     }
 
     @Override
@@ -88,6 +97,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         super.onCreateView(inflater, container, savedInstanceState);
 
         mView = inflater.inflate(R.layout.status_list, container, false);
+        notif = 0;
 
         // the filters
         filters = (ListView) (mView.findViewById(R.id.filter_list));
@@ -272,9 +282,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     /*
      * Handling Events coming from outside the activity
      */
-    public void onEvent(StatusInsertedEvent event) {
-        getStatuses();
-    }
+    public void onEvent(StatusInsertedEvent event) { getStatuses();}
     public void onEvent(StatusDeletedEvent event)  {
         getStatuses();
     }
