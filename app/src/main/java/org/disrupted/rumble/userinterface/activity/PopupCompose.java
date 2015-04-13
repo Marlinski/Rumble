@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.fragments;
+package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
 import android.content.Context;
@@ -47,7 +47,6 @@ import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -63,11 +62,11 @@ public class PopupCompose extends Activity {
     public static final int REQUEST_IMAGE_CAPTURE = 42;
 
     private LinearLayout dismiss;
-    private ImageView   composeBackground;
     private EditText    compose;
     private ImageButton takePicture;
     private ImageButton choosePicture;
     private ImageButton send;
+    private Bitmap imageBitmap;
 
 
     private String mCurrentPhotoFile;
@@ -82,12 +81,22 @@ public class PopupCompose extends Activity {
         takePicture = (ImageButton)(findViewById(R.id.popup_take_picture));
         choosePicture = (ImageButton)(findViewById(R.id.popup_choose_image));
         send = (ImageButton)(findViewById(R.id.popup_button_send));
+        imageBitmap = null;
 
         dismiss.setOnClickListener(onDiscardClick);
         takePicture.setOnClickListener(onTakePictureClick);
         choosePicture.setOnClickListener(onAttachPictureClick);
         send.setOnClickListener(onClickSend);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        if(imageBitmap != null) {
+            imageBitmap.recycle();
+            imageBitmap = null;
+        }
+        super.onDestroy();
     }
 
     View.OnClickListener onDiscardClick = new View.OnClickListener() {
@@ -134,7 +143,7 @@ public class PopupCompose extends Activity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             try {
                 File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),mCurrentPhotoFile);
-                Bitmap imageBitmap = ThumbnailUtils.extractThumbnail(
+                imageBitmap = ThumbnailUtils.extractThumbnail(
                         BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
                         512,
                         384);

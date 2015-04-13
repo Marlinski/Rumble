@@ -20,6 +20,9 @@
 package org.disrupted.rumble.message;
 
 
+import android.util.Base64;
+import android.util.Log;
+
 import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.util.HashUtil;
 
@@ -50,10 +53,11 @@ public class StatusMessage extends Message{
     protected long        timeOfCreation;
     protected long        timeOfArrival;
     protected long        ttl;
-    protected long        hopCount;
-    protected long        like;
-    protected long        replication;
-    protected long        duplicate;
+    protected int         hopCount;
+    protected int         hopLimit;
+    protected int         like;
+    protected int         replication;
+    protected int         duplicate;
     protected Set<String> forwarderList;
 
     // local user preference for this message
@@ -81,6 +85,7 @@ public class StatusMessage extends Message{
         this.timeOfCreation = timeOfCreation;
         timeOfArrival  = (System.currentTimeMillis() / 1000L);
         hopCount       = 0;
+        hopLimit       = Integer.MAX_VALUE;
         forwarderList  = new HashSet<String>();
         ttl            = 0;
         like           = 0;
@@ -92,10 +97,13 @@ public class StatusMessage extends Message{
             md.update(author.getBytes());
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
-            byte[] digest = md.digest();
-            uuid = new String(digest);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(md.digest());
+            byte[] digest128bits = new byte[16];
+            byteBuffer.get(digest128bits, 0, 16);
+            uuid = Base64.encodeToString(digest128bits,0,16,Base64.DEFAULT);
         }
-        catch (NoSuchAlgorithmException ignore) {}
+        catch (NoSuchAlgorithmException ignore) {
+        }
 
         hasUserRead  = false;
         hasUserLiked = false;
@@ -112,24 +120,20 @@ public class StatusMessage extends Message{
     public long    getTimeOfCreation(){     return this.timeOfCreation; }
     public long    getTimeOfArrival(){      return this.timeOfArrival; }
     public long    getHopCount(){           return this.hopCount; }
+    public long    getHopLimit(){           return this.hopLimit; }
     public Set<String> getForwarderList(){  return this.forwarderList; }
     public long    getTTL(){                return this.ttl;}
     public String  getFileName(){           return this.attachedFile; }
     public long    getFileSize(){           return this.fileSize; }
-    public long    getFileID(){             return 0; }
     public long    getLike(){               return like; }
     public long    getReplication(){        return replication; }
     public long    getDuplicate(){          return duplicate; }
-    public boolean hasAttachedFile() {
-        return (attachedFile != "");
-    }
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
         return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
     public boolean hasUserLiked() {         return hasUserLiked; }
     public boolean hasUserReadAlready() {   return hasUserRead; }
     public boolean hasUserSaved() {         return hasUserSaved; }
-
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
     public void setUuid(String uuid) {            this.uuid           = uuid;     }
@@ -138,11 +142,11 @@ public class StatusMessage extends Message{
     public void setFileSize(long size) {          this.fileSize       = size;     }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
     public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
-    public void setHopCount(long hopcount){       this.hopCount       = hopcount; }
-    public void setLike(long like){               this.like           = like;    }
+    public void setHopCount(int hopcount){        this.hopCount       = hopcount; }
+    public void setHopLimit(int hopLimit){        this.hopLimit       = hopLimit; }
+    public void setLike(int like){                this.like           = like;    }
     public void addLike(){                        this.like++;    }
     public void setTTL(long ttl){                 this.ttl            = ttl;      }
-    public void addHashtag(String tag){           this.hashtagSet.add(tag);       }
     public void setHashtagSet(Set<String> hashtagSet) {
         if(hashtagSet.size() > 0)
             hashtagSet.clear();
@@ -159,8 +163,8 @@ public class StatusMessage extends Message{
         forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
     }
     public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
-    public void setUserRead(boolean userHasRead){     this.hasUserRead = userHasRead; }
-    public void setUserSaved(boolean hasUserSaved){   this.hasUserSaved = hasUserSaved; }
+    public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead; }
+    public void setUserSaved(boolean hasUserSaved){  this.hasUserSaved = hasUserSaved; }
 
     public void discard() {
         hashtagSet.clear();

@@ -44,7 +44,6 @@ public class DatabaseFactory {
     private final HashtagDatabase      hashtagDatabase;
     private final StatusTagDatabase    statusTagDatabase;
     private final GroupDatabase        groupDatabase;
-    private final FileDatabase         fileDatabase;
     private final SubscriptionDatabase subscriptionDatabase;
     private final ContactDatabase      contactDatabase;
     private final ForwarderDatabase    forwarderDatabase;
@@ -71,9 +70,6 @@ public class DatabaseFactory {
     public static GroupDatabase getGroupDatabase(Context context) {
         return getInstance(context).groupDatabase;
     }
-    public static FileDatabase getDocumentDatabase(Context context) {
-        return getInstance(context).fileDatabase;
-    }
     public static SubscriptionDatabase getSubscriptionDatabase(Context context) {
         return getInstance(context).subscriptionDatabase;
     }
@@ -94,7 +90,6 @@ public class DatabaseFactory {
         this.hashtagDatabase      = new HashtagDatabase(context, databaseHelper);
         this.statusTagDatabase    = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase        = new GroupDatabase(context, databaseHelper);
-        this.fileDatabase         = new FileDatabase(context, databaseHelper);
         this.contactDatabase      = new ContactDatabase(context, databaseHelper);
         this.subscriptionDatabase = new SubscriptionDatabase(context, databaseHelper);
         this.forwarderDatabase    = new ForwarderDatabase(context, databaseHelper);
@@ -110,7 +105,6 @@ public class DatabaseFactory {
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
-        this.fileDatabase.reset(databaseHelper);
         this.subscriptionDatabase.reset(databaseHelper);
         this.forwarderDatabase.reset(databaseHelper);
         old.close();
@@ -134,7 +128,6 @@ public class DatabaseFactory {
             db.execSQL(StatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
-            db.execSQL(FileDatabase.CREATE_TABLE);
             db.execSQL(SubscriptionDatabase.CREATE_TABLE);
             db.execSQL(ForwarderDatabase.CREATE_TABLE);
 

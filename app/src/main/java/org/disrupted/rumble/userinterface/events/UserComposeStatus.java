@@ -23,6 +23,7 @@ import org.disrupted.rumble.message.StatusMessage;
  * @author Marlinski
  */
 public class UserComposeStatus extends UserInteractionEvent  {
+
     public final StatusMessage status;
 
     public UserComposeStatus(StatusMessage status) {

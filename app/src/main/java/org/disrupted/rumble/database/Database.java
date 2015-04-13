@@ -29,7 +29,6 @@ public abstract class Database {
 
     private static final String TAG = "Database";
 
-
     protected static final String ID_WHERE            = "_id = ?";
 
     protected SQLiteOpenHelper databaseHelper;

@@ -32,8 +32,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.userinterface.adapter.NavigationItem;
-import org.disrupted.rumble.userinterface.adapter.NavigationItemListAdapter;
+import org.disrupted.rumble.userinterface.activity.Settings;
+import org.disrupted.rumble.userinterface.adapter.IconTextItem;
+import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 
 import java.util.LinkedList;
@@ -42,15 +43,14 @@ import java.util.List;
 /**
  * @author Marlinski
  */
-public class FragmentNavigationDrawer extends Fragment {
+public class FragmentNavigationDrawer extends Fragment implements ListView.OnItemClickListener{
 
     public static final String TAG = "DrawerNavigationFragment";
 
     private LinearLayout mDrawerFragmentLayout;
-
     private ListView mFirstListView;
-    private NavigationItemListAdapter mFirstListAdapter;
-    List<NavigationItem> firstList;
+    private IconTextListAdapter mFirstListAdapter;
+    List<IconTextItem> firstList;
 
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
@@ -67,13 +67,13 @@ public class FragmentNavigationDrawer extends Fragment {
 
         Resources res = getActivity().getResources();
         mFirstListView   = (ListView) mDrawerFragmentLayout.findViewById(R.id.navigation_first_item_list);
-        firstList = new LinkedList<NavigationItem>();
-        firstList.add(new NavigationItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 1));
-        firstList.add(new NavigationItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 2));
+        firstList = new LinkedList<IconTextItem>();
+        firstList.add(new IconTextItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 1));
+        firstList.add(new IconTextItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 2));
 
-        mFirstListAdapter = new NavigationItemListAdapter(getActivity(), firstList);
+        mFirstListAdapter = new IconTextListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);
-        mFirstListView.setOnItemClickListener(new NavigationItemClickListener());
+        mFirstListView.setOnItemClickListener(this);
 
         return mDrawerFragmentLayout;
     }
@@ -88,22 +88,23 @@ public class FragmentNavigationDrawer extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private class NavigationItemClickListener implements ListView.OnItemClickListener {
-
-        public NavigationItemClickListener() {
-        }
-
-        @Override
-        public void onItemClick(AdapterView parent, View view, int position, long id) {
-            switch(firstList.get(position).getID()) {
-                case 2:
-                    Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
-                    stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
-                    getActivity().stopService(stopIntent);
-                    getActivity().finish();
-                    System.exit(0);
-                default:
-            }
+    @Override
+    public void onItemClick(AdapterView parent, View view, int position, long id) {
+        switch(firstList.get(position).getID()) {
+            case 1:
+                Intent settings = new Intent(getActivity(), Settings.class );
+                startActivity(settings);
+                //getActivity().overridePendingTransition(R.anim.right_slide_in, 0);
+                break;
+            case 2:
+                Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
+                stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
+                getActivity().stopService(stopIntent);
+                getActivity().finish();
+                System.exit(0);
+                break;
+            default:
         }
     }
+
 }

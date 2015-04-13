@@ -30,9 +30,10 @@ public class FileReceivedEvent extends NetworkEvent {
     public long size;
     public long duration;
 
-    public FileReceivedEvent(String filename, String uuid, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public FileReceivedEvent(String filename, String uuid, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.filename = filename;
         this.uuid = uuid;
+        this.sender = sender;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;

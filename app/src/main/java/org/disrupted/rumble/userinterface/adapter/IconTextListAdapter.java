@@ -20,7 +20,6 @@
 package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,21 +29,20 @@ import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class NavigationItemListAdapter extends BaseAdapter {
+public class IconTextListAdapter extends BaseAdapter {
 
     private static final String TAG = "NeighborListAdapter";
 
     private final Activity activity;
     private final LayoutInflater inflater;
-    private List<NavigationItem> itemlist;
+    private List<IconTextItem> itemlist;
 
-    public NavigationItemListAdapter(Activity activity, List<NavigationItem> itemlist) {
+    public IconTextListAdapter(Activity activity, List<IconTextItem> itemlist) {
         this.activity = activity;
         this.inflater = LayoutInflater.from(activity);
         this.itemlist = itemlist;
@@ -52,9 +50,9 @@ public class NavigationItemListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        View item = inflater.inflate(R.layout.navigation_item, null, true);
-        ImageView icon = (ImageView) item.findViewById(R.id.navigation_item_icon);
-        TextView text = (TextView) item.findViewById(R.id.navigation_item_text);
+        View item = inflater.inflate(R.layout.icontext_item, null, true);
+        ImageView icon = (ImageView) item.findViewById(R.id.item_icon);
+        TextView text = (TextView) item.findViewById(R.id.item_text);
         icon.setImageResource(itemlist.get(i).getIcon());
         text.setText(itemlist.get(i).getText());
         return item;

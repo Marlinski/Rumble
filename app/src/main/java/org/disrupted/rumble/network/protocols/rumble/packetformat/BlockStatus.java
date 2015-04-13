@@ -30,7 +30,6 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -45,7 +44,7 @@ import de.greenrobot.event.EventBus;
  *
  * +-------------------------------------------+
  * |                                           |
- * |       UID = Hash(author, post, toc)       |  16 bytes (128 bits UID)
+ * |       UID = Hash(author, post, toc)       |  24 bytes (128 bits UID)
  * |                                           |
  * |                                           |
  * +--------+----------------------------------+
@@ -61,10 +60,10 @@ import de.greenrobot.event.EventBus;
  * |              Time to Live                 |
  * |                                           |  8 bytes
  * +-------------------+-----------------------+
- * |   Hop Count       |      Replication      |  2 bytes + 2 bytes
- * +---------+---------+-----------------------+
- * |  like   |                                    1 byte
- * +---------+
+ * |   Hop Count       |      Hop Limit        |  2 bytes + 2 bytes
+ * +-------------------+-----------------------+
+ * |    Replication    |    like   |              2 byte + 1 byte
+ * +-------------------+-----------+
  *
  * @author Marlinski
  */
@@ -75,13 +74,14 @@ public class BlockStatus extends Block{
     /*
      * Byte size
      */
-    private static final int UID                 = 16;
+    private static final int UID                 = 24;
     private static final int AUTHOR_LENGTH_FIELD = 1;
     private static final int GROUP_LENGTH_FIELD  = 1;
     private static final int STATUS_LENGTH_FIELD = 2;
     private static final int TIME_OF_CREATION    = 8;
     private static final int TTL                 = 8;
-    private static final int HOPS                = 2;
+    private static final int HOP_COUNT           = 2;
+    private static final int HOP_LIMIT           = 2;
     private static final int REPLICATION         = 2;
     private static final int LIKE                = 1;
 
@@ -91,7 +91,8 @@ public class BlockStatus extends Block{
             STATUS_LENGTH_FIELD +
             TIME_OF_CREATION +
             TTL +
-            HOPS +
+            HOP_COUNT +
+            HOP_LIMIT +
             REPLICATION +
             LIKE);
 
@@ -162,20 +163,22 @@ public class BlockStatus extends Block{
 
             long toc = byteBuffer.getLong();
             long ttl = byteBuffer.getLong();
-            short hops = byteBuffer.getShort();
+            short hopCount = byteBuffer.getShort();
+            short hopLimit = byteBuffer.getShort();
             short replication = byteBuffer.getShort();
             byte like = byteBuffer.get();
 
         /* assemble the status */
             status = new StatusMessage(new String(post), new String(author), toc);
-            status.setGroup(new String(group));
+            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setUuid(new String(uid));
+            status.setGroup(new String(group));
             status.setTimeOfCreation(toc);
-            status.setHopCount((int) hops);
+            status.setHopCount((int) hopCount);
+            status.setHopLimit((int) hopLimit);
             status.setTTL((int) ttl);
             status.addReplication((int) replication);
             status.setLike((int) like);
-            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
 
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new StatusReceivedEvent(
@@ -225,12 +228,13 @@ public class BlockStatus extends Block{
         blockBuffer.putLong(status.getTimeOfCreation());
         blockBuffer.putLong(status.getTTL());
         blockBuffer.putShort((short) status.getHopCount());
+        blockBuffer.putShort((short) status.getHopLimit());
         blockBuffer.putShort((short) status.getReplication());
         blockBuffer.put((byte) status.getLike());
 
         /* send the header, the status and the attached file */
         header.writeBlock(con.getOutputStream());
-        con.getOutputStream().write(blockBuffer.array());
+        con.getOutputStream().write(blockBuffer.array(),0,length);
         if(blockFile != null)
             blockFile.writeBlock(con);
 

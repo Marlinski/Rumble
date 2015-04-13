@@ -110,7 +110,7 @@ public class CacheManager {
         }
         exists.setFileName(event.filename);
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
-        Log.d(TAG, "[+] status updated: "+exists.getUuid());
+        Log.d(TAG, "[+] status updated: "+new String(exists.getUuid()));
     }
 
     public void onEvent(UserReadStatus event) {

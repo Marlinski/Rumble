@@ -30,14 +30,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.SubscriptionDatabase;
+import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
+import org.disrupted.rumble.database.events.StatusUpdatedEvent;
+import org.disrupted.rumble.userinterface.activity.PopupCompose;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
@@ -58,12 +63,12 @@ public class FragmentStatusList extends Fragment {
     private static final String TAG = "FragmentStatusList";
 
     private View mView;
+    private ListView statusList;
     private StatusListAdapter statusListAdapter;
     private FilterListAdapter filterListAdapter;
 
     private ListView filters;
     private List<String> subscriptionList;
-    private ProgressBar progressBar;
 
     public interface OnFilterClick {
         public void onClick(String filter);
@@ -91,11 +96,8 @@ public class FragmentStatusList extends Fragment {
         filters.setClickable(false);
         subscriptionList = new ArrayList<String>();
 
-        // progress bar
-        progressBar = (ProgressBar) mView.findViewById(R.id.loadingStatusList);
-
         // the list of status
-        ListView statusList = (ListView) mView.findViewById(R.id.status_list);
+        statusList = (ListView) mView.findViewById(R.id.status_list);
         statusListAdapter = new StatusListAdapter(getActivity(), this);
         statusListAdapter.registerDataSetObserver(new DataSetObserver() {
                                                       public void onChanged() {
@@ -105,8 +107,9 @@ public class FragmentStatusList extends Fragment {
                                                   }
         );
         statusList.setAdapter(statusListAdapter);
-        getStatuses();
+
         getSubscriptions();
+        getStatuses();
         EventBus.getDefault().register(this);
 
         return mView;
@@ -140,24 +143,28 @@ public class FragmentStatusList extends Fragment {
     }
 
     // todo: only get last 50 statuses and request it as the user browse it
+    // no need to run on UI thread here
     public void getStatuses() {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                progressBar.setVisibility(View.VISIBLE);
+                StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
+                options.groupName = GroupDatabase.DEFAULT_GROUP;
                 if (filterListAdapter.getCount() == 0) {
                     DatabaseFactory.getStatusDatabase(getActivity())
-                            .getStatuses(onStatusesLoaded);
+                            .getStatuses(options, onStatusesLoaded);
                 } else {
+                    options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_TAG;
+                    options.hashtagFilters = filterListAdapter.getFilterList();
                     DatabaseFactory.getStatusDatabase(getActivity())
-                            .getFilteredStatuses(filterListAdapter.getFilterList(), onStatusesLoaded);
+                            .getStatuses(options, onStatusesLoaded);
                 }
             }
         });
     }
     StatusDatabase.StatusQueryCallback onStatusesLoaded = new StatusDatabase.StatusQueryCallback() {
         @Override
-        public void onStatusQueryFinished(ArrayList<StatusMessage> array) {
+        public void onStatusQueryFinished(final ArrayList<StatusMessage> array) {
             if (getActivity() == null)
                 return;
             final ArrayList<StatusMessage> answer = array;
@@ -165,8 +172,10 @@ public class FragmentStatusList extends Fragment {
                 @Override
                 public void run() {
                     statusListAdapter.swap(answer);
-                    progressBar.setVisibility(View.GONE);
                     statusListAdapter.notifyDataSetChanged();
+                    if(array != null) {
+                        answer.clear();
+                    }
                 }
             });
         }
@@ -254,7 +263,13 @@ public class FragmentStatusList extends Fragment {
     public void onEvent(StatusInsertedEvent event) {
         getStatuses();
     }
-    public void onEvent(StatusDeletedEvent event) {
+    public void onEvent(StatusDeletedEvent event)  {
+        getStatuses();
+    }
+    public void onEvent(StatusDatabaseEvent event) {
+        getStatuses();
+    }
+    public void onEvent(StatusUpdatedEvent event)  {
         getStatuses();
     }
 

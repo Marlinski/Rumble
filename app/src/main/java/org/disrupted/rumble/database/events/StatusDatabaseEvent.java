@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,24 +11,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
-
-
-import java.util.UUID;
+package org.disrupted.rumble.database.events;
 
 /**
  * @author Marlinski
  */
-public class UserReadStatus extends UserInteractionEvent {
-
-    public String uuid;
-
-    public UserReadStatus(String uuid) {
-        this.uuid = uuid;
-    }
-
+public class StatusDatabaseEvent extends ResourceEvent {
 }

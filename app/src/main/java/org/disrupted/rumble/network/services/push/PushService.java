@@ -115,7 +115,6 @@ public class PushService {
         float c = (float)0.4;
 
         float score = (a*relevance + b*replicationDensity + c*quality)*age*(distance ? 1 : 0);
-        Log.d(TAG, "quality="+quality+" rd="+replicationDensity+" quality="+quality+" age="+age+" score="+score+" --- "+message.toString());
 
         return score;
     }
@@ -204,12 +203,7 @@ public class PushService {
         }
 
         private void initStatuses() {
-            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
-                    .getStatusesIdForUser(
-                            HashUtil.computeHash(
-                                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
-                                    worker.getProtocolIdentifier()),
-                            onStatusLoaded);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatusesId(onStatusLoaded);
         }
         StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
             @Override
@@ -246,8 +240,6 @@ public class PushService {
                     worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
                     worker.getProtocolIdentifier()))
                 return false;
-
-            Log.d(TAG, "[+] add message to dispatcher: "+message.toString());
             final ReentrantLock putlock = this.putLock;
             putlock.lock();
             try {

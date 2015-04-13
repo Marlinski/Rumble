@@ -44,7 +44,6 @@ import java.nio.ByteBuffer;
  *     0  1  2  3  4  5  6  7  8  9  1  1  1  1  1  1
  *                                   0  1  2  3  4  5
  *
- *
  * -- Type: the type of the current block
  * -- R: Reserved
  * -- Block Type: type of the payload

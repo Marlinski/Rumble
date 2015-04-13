@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -51,7 +52,7 @@ import de.greenrobot.event.EventBus;
  *
  * +-------------------------------------------+
  * |                                           |
- * |       UID = Hash(author, post, toc)       |  16 bytes (128 bits UID)
+ * |       UID = Hash(author, post, toc)       |  24 bytes (Base64 of 128 bits UID)
  * |                                           |
  * |                                           |
  * +-----------+-------------------------------+
@@ -72,7 +73,7 @@ public class BlockFile extends Block {
     /*
      * Byte size
      */
-    private static final int UID_SIZE             = 16;
+    private static final int UID_SIZE             = 24;
     private static final int MIME_TYPE_SIZE        = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = ( UID_SIZE + MIME_TYPE_SIZE);
@@ -165,6 +166,7 @@ public class BlockFile extends Block {
                 EventBus.getDefault().post(new FileReceivedEvent(
                                 attachedFile.getName(),
                                 new String(uid),
+                                con.getRemoteLinkLayerAddress(),
                                 RumbleProtocol.protocolID,
                                 con.getLinkLayerIdentifier(),
                                 header.getBlockLength()+header.BLOCK_HEADER_LENGTH,
