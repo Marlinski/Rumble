@@ -67,6 +67,7 @@ public class StatusMessage extends Message{
 
 
     public StatusMessage(String post, String author, long timeOfCreation) {
+        this.uuid = HashUtil.computeStatusUUID(post, author, timeOfCreation);
         this.messageType = TYPE;
         this.dbid   = -1;
         this.status = post;
@@ -92,19 +93,6 @@ public class StatusMessage extends Message{
         replication    = 0;
         duplicate      = 0;
 
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
-            md.update(author.getBytes());
-            md.update(post.getBytes());
-            md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
-            ByteBuffer byteBuffer = ByteBuffer.wrap(md.digest());
-            byte[] digest128bits = new byte[16];
-            byteBuffer.get(digest128bits, 0, 16);
-            uuid = Base64.encodeToString(digest128bits,0,16,Base64.NO_WRAP);
-        }
-        catch (NoSuchAlgorithmException ignore) {
-        }
-
         hasUserRead  = false;
         hasUserLiked = false;
         hasUserSaved = false;
@@ -129,8 +117,9 @@ public class StatusMessage extends Message{
     public long    getReplication(){        return replication; }
     public long    getDuplicate(){          return duplicate; }
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
-        return forwarderList.contains(HashUtil.computeHash(linkLayerAddress,protocolID));
+        return forwarderList.contains(HashUtil.computeForwarderHash(linkLayerAddress,protocolID));
     }
+    public boolean hasAttachedFile(){       return (!attachedFile.equals("")); }
     public boolean hasUserLiked() {         return hasUserLiked; }
     public boolean hasUserReadAlready() {   return hasUserRead; }
     public boolean hasUserSaved() {         return hasUserSaved; }
@@ -154,21 +143,21 @@ public class StatusMessage extends Message{
     }
     public void addReplication(long replication){ this.replication  += replication; }
     public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
-    public void setForwarderList(Set<String> fl){
-        if(forwarderList.size() > 0)
-            forwarderList.clear();
-        this.forwarderList  = fl;
+    public void setForwarderList(Set<String> forwarderList){
+        if(this.forwarderList.size() > 0)
+            this.forwarderList.clear();
+        this.forwarderList  = forwarderList;
     }
     public void addForwarder(String linkLayerAddress, String protocolID) {
-        forwarderList.add(HashUtil.computeHash(linkLayerAddress,protocolID));
+        forwarderList.add(HashUtil.computeForwarderHash(linkLayerAddress,protocolID));
     }
     public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
     public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead; }
     public void setUserSaved(boolean hasUserSaved){  this.hasUserSaved = hasUserSaved; }
 
     public void discard() {
-        hashtagSet.clear();
-        forwarderList.clear();
+        hashtagSet = null;
+        forwarderList = null;
     }
 
     public String toString() {

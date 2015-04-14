@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.userinterface.adapter;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -31,14 +32,17 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.support.v7.widget.PopupMenu;
 
@@ -57,6 +61,8 @@ import org.disrupted.rumble.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import de.greenrobot.event.EventBus;
 
@@ -70,22 +76,24 @@ public class StatusListAdapter extends BaseAdapter{
     private FragmentStatusList fragment;
     private Activity           activity;
     private LayoutInflater     inflater;
-    private ArrayList<StatusItemViewHolder> viewHolders;
+    private List<StatusItemViewHolder> viewHolders;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     public class StatusItemViewHolder {
         boolean       refresh;
         StatusMessage message;
-        View statusView;
-        ImageView avatarView;
-        TextView  authorView;
-        TextView  textView;
-        TextView  tocView;
-        TextView  toaView;
-        ImageView attachedView;
-        Bitmap    imageBitmap;
-        ImageView moreView;
-        LinearLayout box;
+        View          statusView;
+        ImageView     avatarView;
+        TextView      authorView;
+        TextView      textView;
+        TextView      tocView;
+        TextView      toaView;
+        TextView      groupNameView;
+        ImageView     attachedView;
+        Bitmap        imageBitmap;
+        ImageView     moreView;
+        LinearLayout  box;
+
         public StatusItemViewHolder(StatusMessage message) {
             this.message = message;
             refresh = true;
@@ -95,6 +103,7 @@ public class StatusListAdapter extends BaseAdapter{
             textView = null;
             tocView = null;
             toaView = null;
+            groupNameView = null;
             attachedView = null;
             moreView = null;
             imageBitmap = null;
@@ -118,14 +127,16 @@ public class StatusListAdapter extends BaseAdapter{
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+
         StatusItemViewHolder viewHolder = viewHolders.get(i);
         if(viewHolder.statusView == null) {
-            viewHolder.statusView = inflater.inflate(R.layout.status_item, null, true);
+            viewHolder.statusView = inflater.inflate(R.layout.status_item, null);
             viewHolder.avatarView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_avatar);
             viewHolder.authorView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_author);
             viewHolder.textView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_body);
             viewHolder.tocView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_created);
             viewHolder.toaView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_received);
+            viewHolder.groupNameView = (TextView) viewHolder.statusView.findViewById(R.id.status_group_name);
             viewHolder.attachedView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_attached_image);
             viewHolder.moreView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_more_options);
             viewHolder.box = (LinearLayout) viewHolder.statusView.findViewById(R.id.status_item_box);
@@ -143,6 +154,11 @@ public class StatusListAdapter extends BaseAdapter{
             // we draw the author field
             viewHolder.authorView.setText(viewHolder.message.getAuthor());
             viewHolder.tocView.setText(new TimeElapsed(viewHolder.message.getTimeOfCreation()).display());
+            viewHolder.toaView.setText(new TimeElapsed(viewHolder.message.getTimeOfArrival()).display());
+            viewHolder.groupNameView.setText(viewHolder.message.getGroup());
+            //viewHolder.groupNameView.setTextColor(generator.getColor(viewHolder.message.getGroup()));
+            //viewHolder.groupNameView.setBackgroundColor(generator.getColor(viewHolder.message.getGroup()));
+
 
             // we draw the status (with clickable hashtag)
             if (viewHolder.message.getPost().length() == 0) {
@@ -180,7 +196,7 @@ public class StatusListAdapter extends BaseAdapter{
                 viewHolder.textView.setMovementMethod(LinkMovementMethod.getInstance());
 
                 // we draw the attached file (if any)
-                if (!viewHolder.message.getFileName().equals("")) {
+                if (viewHolder.message.hasAttachedFile()) {
                     try {
                         File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), viewHolder.message.getFileName());
                         if (!attachedFile.isFile() || !attachedFile.exists())
@@ -192,7 +208,8 @@ public class StatusListAdapter extends BaseAdapter{
                                 96);
                         viewHolder.attachedView.setImageBitmap(viewHolder.imageBitmap);
                         viewHolder.attachedView.setVisibility(View.VISIBLE);
-                        final Uri uri = Uri.parse("file:" + attachedFile.getAbsolutePath());
+
+                        final Uri uri = Uri.fromFile(attachedFile);
                         viewHolder.attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
@@ -206,38 +223,7 @@ public class StatusListAdapter extends BaseAdapter{
                 }
             }
 
-            // we enable the click for more options
-            final String uuid = viewHolder.message.getUuid();
-            viewHolder.moreView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    PopupMenu popupMenu = new PopupMenu(activity, view);
-                    popupMenu.getMenu().add(Menu.NONE, 1, Menu.NONE, R.string.status_more_option_like);
-                    popupMenu.getMenu().add(Menu.NONE, 2, Menu.NONE, R.string.status_more_option_save);
-                    popupMenu.getMenu().add(Menu.NONE, 3, Menu.NONE, R.string.status_more_option_delete);
-                    popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                        @Override
-                        public boolean onMenuItemClick(MenuItem menuItem) {
-                            switch (menuItem.getItemId()) {
-                                case 1:
-                                    EventBus.getDefault().post(new UserLikedStatus(uuid));
-                                    break;
-                                case 2:
-                                    EventBus.getDefault().post(new UserSavedStatus(uuid));
-                                    break;
-                                case 3:
-                                    EventBus.getDefault().post(new UserDeleteStatus(uuid));
-                                    break;
-                                default:
-                                    return false;
-                            }
-                            return false;
-                        }
-                    });
-                    popupMenu.show();
-                }
-            });
-
+            viewHolder.moreView.setOnClickListener(new PopupMenuListener(viewHolder.message.getUuid()));
             if (!viewHolder.message.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - viewHolder.message.getTimeOfArrival()) < 60)) {
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
                     viewHolder.box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
@@ -245,7 +231,7 @@ public class StatusListAdapter extends BaseAdapter{
                     viewHolder.box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
                 }
                 if (!viewHolder.message.hasUserReadAlready())
-                    EventBus.getDefault().post(new UserReadStatus(uuid));
+                    EventBus.getDefault().post(new UserReadStatus(viewHolder.message.getUuid()));
             }
             viewHolder.refresh = false;
         }
@@ -290,6 +276,34 @@ public class StatusListAdapter extends BaseAdapter{
                 viewHolders.add(view);
             }
         }
+    }
+
+    public boolean addStatus(StatusMessage status) {
+        StatusItemViewHolder view = new StatusItemViewHolder(status);
+        viewHolders.add(0,view);
+        return true;
+    }
+    public boolean deleteStatus(String uuid) {
+        Iterator<StatusItemViewHolder> it =viewHolders.iterator();
+        while(it.hasNext()) {
+            StatusItemViewHolder item = it.next();
+            if(item.message.getUuid().equals(uuid)) {
+                it.remove();
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean updateStatus(StatusMessage status) {
+        Iterator<StatusItemViewHolder> it =viewHolders.iterator();
+        while(it.hasNext()) {
+            StatusItemViewHolder item = it.next();
+            if(item.message.getUuid().equals(status.getUuid())) {
+                item.message = status;
+                return true;
+            }
+        }
+        return false;
     }
 
     private class TimeElapsed {
@@ -359,5 +373,43 @@ public class StatusListAdapter extends BaseAdapter{
         }
 
     }
+
+    private class PopupMenuListener implements View.OnClickListener
+    {
+
+        String uuid;
+        public PopupMenuListener(String uuid) {
+            this.uuid = uuid;
+        }
+
+        @Override
+        public void onClick(View v)
+        {
+            PopupMenu popupMenu =  new PopupMenu(activity, v);
+            popupMenu.getMenu().add(Menu.NONE, 1, Menu.NONE, R.string.status_more_option_like);
+            popupMenu.getMenu().add(Menu.NONE, 2, Menu.NONE, R.string.status_more_option_save);
+            popupMenu.getMenu().add(Menu.NONE, 3, Menu.NONE, R.string.status_more_option_delete);
+            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    switch (menuItem.getItemId()) {
+                        case 1:
+                            EventBus.getDefault().post(new UserLikedStatus(uuid));
+                            return true;
+                        case 2:
+                            EventBus.getDefault().post(new UserSavedStatus(uuid));
+                            return true;
+                        case 3:
+                            EventBus.getDefault().post(new UserDeleteStatus(uuid));
+                            return true;
+                        default:
+                            return false;
+                    }
+                }
+            });
+            popupMenu.show();
+        }
+
+    };
 
 }

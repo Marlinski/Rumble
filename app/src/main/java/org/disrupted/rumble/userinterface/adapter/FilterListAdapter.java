@@ -139,6 +139,7 @@ public class FilterListAdapter extends BaseAdapter {
         if(!subscriptionList.isEmpty())
             subscriptionList.clear();
         subscriptionList = subscriptions;
+        notifyDataSetChanged();
     }
 
     public class OnAdapterFilterClick implements View.OnClickListener {

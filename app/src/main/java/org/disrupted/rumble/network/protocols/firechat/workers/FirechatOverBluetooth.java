@@ -332,7 +332,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
                 con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
 
-                if(!statusMessage.getFileName().equals("")) {
+                if(statusMessage.hasAttachedFile()) {
                     File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),statusMessage.getFileName());
                     if(attachedFile.exists() && attachedFile.isFile()) {
                         FileInputStream fis = null;

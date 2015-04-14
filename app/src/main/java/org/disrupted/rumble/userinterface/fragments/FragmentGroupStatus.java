@@ -35,6 +35,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
+import org.disrupted.rumble.message.Group;
 import org.disrupted.rumble.userinterface.activity.PopupCreateGroup;
 import org.disrupted.rumble.userinterface.adapter.GroupListAdapter;
 
@@ -98,7 +99,7 @@ public class FragmentGroupStatus extends Fragment {
     }
 
     public void getGroupList() {
-        DatabaseFactory.getGroupDatabase(getActivity()).getGroupNames(onGroupsLoaded);
+        DatabaseFactory.getGroupDatabase(getActivity()).getGroups(onGroupsLoaded);
     }
     private DatabaseExecutor.ReadableQueryCallback onGroupsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
@@ -108,7 +109,7 @@ public class FragmentGroupStatus extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ArrayList<String> answer = (ArrayList<String>)(result);
+                        ArrayList<Group> answer = (ArrayList<Group>)(result);
                         groupListAdapter.swap(answer);
                     }
                 }

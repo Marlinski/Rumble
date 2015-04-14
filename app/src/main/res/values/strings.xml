@@ -53,6 +53,8 @@
     <string name="action_new_discussion">New Discussion</string>
 
     <string name="popup_compose_title">Compose</string>
+    <string name="popup_create_group">Create new group</string>
+    <string name="popup_create_group_checkbox">Private Group</string>
 
     <string name="menu_interfaces_title">Interfaces</string>
     <string name="menu_neighbors_title">Neighborhood</string>
@@ -63,8 +65,8 @@
     <string name="settings_title">Settings</string>
     <string name="settings_action_delete">Clear status from database</string>
 
-    <string name="status_created">created</string>
-    <string name="status_received">received</string>
+    <string name="status_created">created: </string>
+    <string name="status_received">received: </string>
     <string name="second_ago">a second ago</string>
     <string name="seconds_ago">seconds ago</string>
     <string name="minute_ago">a minute ago</string>

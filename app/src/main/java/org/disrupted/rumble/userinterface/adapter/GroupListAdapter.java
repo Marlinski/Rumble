@@ -26,6 +26,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.message.Group;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -39,7 +40,7 @@ public class GroupListAdapter extends BaseAdapter {
 
     private Context context;
     private LayoutInflater inflater;
-    private ArrayList<String> groupList;
+    private ArrayList<Group> groupList;
 
 
     public GroupListAdapter(Context context) {
@@ -52,7 +53,7 @@ public class GroupListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         View layout = inflater.inflate(R.layout.group_list_item, null, true);
         TextView group_name   = (TextView) layout.findViewById(R.id.group_name);
-        group_name.setText(groupList.get(i));
+        group_name.setText(groupList.get(i).getName());
         return layout;
     }
 
@@ -78,7 +79,7 @@ public class GroupListAdapter extends BaseAdapter {
             return groupList.size();
     }
 
-    public void swap(ArrayList<String> groupList) {
+    public void swap(ArrayList<Group> groupList) {
         if(this.groupList == null)
             this.groupList = groupList;
         else {

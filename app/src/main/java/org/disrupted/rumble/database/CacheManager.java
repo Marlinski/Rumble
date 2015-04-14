@@ -32,7 +32,10 @@ import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
+import org.disrupted.rumble.util.FileUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Iterator;
 
 
@@ -83,7 +86,6 @@ public class CacheManager {
         while(it.hasNext())
             event.status.addForwarder(it.next(), event.protocolID);
         event.status.addReplication(event.recipients.size());
-
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
     }
 
@@ -105,13 +107,19 @@ public class CacheManager {
     }
     public void onEvent(FileReceivedEvent event) {
         StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if(exists == null) {
-            Log.d(TAG, "[-] received file "+event.filename+" attached to an unknown status: "+event.uuid);
+        if((exists != null) && !exists.hasAttachedFile()) {
+            exists.setFileName(event.filename);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
+            Log.d(TAG, "[+] status updated: " + exists.getUuid());
+            exists.discard();
             return;
         }
-        exists.setFileName(event.filename);
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
-        Log.d(TAG, "[+] status updated: "+new String(exists.getUuid()));
+        try {
+            File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
+            if (toDelete.exists() && toDelete.isFile())
+                toDelete.delete();
+        }catch(IOException ignore){
+        }
     }
 
     public void onEvent(UserReadStatus event) {
@@ -119,27 +127,23 @@ public class CacheManager {
         if(message != null) {
             message.setUserRead(true);
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
-            message.discard();
-            message = null;
         }
     }
     public void onEvent(UserLikedStatus event) {
         Log.d(TAG, " [.] status "+event.uuid+" liked");
         StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if(message == null)
-            return;
-        message.setUserRead(true);
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
-        message.discard();
-        message = null;
+        if(message != null) {
+            message.setUserRead(true);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+        }
     }
     public void onEvent(UserSavedStatus event) {
         Log.d(TAG, " [.] status "+event.uuid+" saved");
         StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        message.setUserRead(true);
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
-        message.discard();
-        message = null;
+        if(message != null) {
+            message.setUserRead(true);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(message, null);
+        }
     }
     public void onEvent(UserDeleteStatus event) {
         Log.d(TAG, " [.] status "+event.uuid+" deleted");

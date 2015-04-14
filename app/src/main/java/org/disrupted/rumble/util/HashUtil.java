@@ -19,6 +19,9 @@
 
 package org.disrupted.rumble.util;
 
+import android.util.Base64;
+
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -27,16 +30,29 @@ import java.security.NoSuchAlgorithmException;
  */
 public class HashUtil {
 
-    public static final String computeHash(String linkLayerAddress, String protocol) {
-        String hash = "";
+    public static final String computeForwarderHash(String linkLayerAddress, String protocol) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(linkLayerAddress.getBytes());
             md.update(protocol.getBytes());
-            byte[] digest = md.digest();
-            hash = new String(digest);
+            return Base64.encodeToString(md.digest(), 0, 16, Base64.NO_WRAP);
         }
-        catch (NoSuchAlgorithmException ignore) {}
-        return hash;
+        catch (NoSuchAlgorithmException ignore) {
+            return null;
+        }
     }
+
+    public static final String computeStatusUUID(String author, String post, long timeOfCreation) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(author.getBytes());
+            md.update(post.getBytes());
+            md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
+            return Base64.encodeToString(md.digest(),0,16,Base64.NO_WRAP);
+        }
+        catch (NoSuchAlgorithmException ignore) {
+            return null;
+        }
+    }
+
 }

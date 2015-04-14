@@ -82,19 +82,19 @@
         <item name="android:typeface">sans</item>
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:textColor">#888888</item>
+        <item name="android:background">@drawable/status_group_background</item>
     </style>
 
     <style name="Status.Info.TimeOfArrival" parent="@android:style/TextAppearance">
-        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textSize">8sp</item>
         <item name="android:typeface">sans</item>
         <item name="android:textStyle">italic</item>
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:textColor">#888888</item>
-        <item name="android:visibility">gone</item>
     </style>
 
     <style name="Status.Info.TimeOfCreation" parent="@android:style/TextAppearance">
-        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textSize">8sp</item>
         <item name="android:typeface">sans</item>
         <item name="android:textStyle">italic</item>
         <item name="android:fontFamily">sans-serif-light</item>
@@ -116,7 +116,7 @@
         <item name="android:background">@drawable/filter_shape</item>
     </style>
 
-    <style name="PopupCompose">
+    <style name="PopupActivity">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:colorBackgroundCacheHint">@null</item>
         <item name="android:windowIsTranslucent">true</item>

@@ -17,31 +17,49 @@
 
 package org.disrupted.rumble.message;
 
+import android.util.Log;
+
+import org.disrupted.rumble.util.AESUtil;
+
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+
 /**
  * @author Marlinski
  */
 public class Group {
 
-    private String name;
-    private String groupkey;
-    private boolean privateGroup;
+    public static final String TAG = "Group";
 
-    public Group(String name) {
+    private String    name;
+    private SecretKey key;
+    private boolean   isPrivate;
+
+    public Group(String name, boolean isPrivate) throws NoSuchAlgorithmException{
         this.name = name;
-        this.groupkey = name;
-        this.privateGroup = false;
+        key = AESUtil.generateRandomAESKey();
+        this.isPrivate = isPrivate;
+    }
+
+    public Group(String name, SecretKey key) {
+        this.name = name;
+        this.key = key;
+        this.isPrivate = (key != null);
     }
 
     public final String getName() {
         return name;
     }
 
-    public final String getGroupkey() {
-        return groupkey;
+    public final SecretKey getGroupKey() {
+        return key;
     }
 
-    public final boolean isPrivate() {
-        return privateGroup;
+    public boolean isIsprivate() {
+        return isPrivate;
     }
 
 }

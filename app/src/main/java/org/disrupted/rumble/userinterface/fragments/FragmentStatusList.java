@@ -55,6 +55,7 @@ import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -192,9 +193,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                 public void run() {
                     statusListAdapter.swap(answer);
                     statusListAdapter.notifyDataSetChanged();
-                    if(result != null) {
-                        answer.clear();
-                    }
                     swipeLayout.setRefreshing(false);
                     ((HomeActivity)getActivity()).refreshNotifications();
                 }
@@ -240,10 +238,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         public void onClick(String filter) {
             filterListAdapter.deleteFilter(filter);
             filterListAdapter.notifyDataSetChanged();
-            getStatuses();
             if(filterListAdapter.getCount() == 0)
                 filters.setVisibility(View.GONE);
-
+            getStatuses();
         }
     };
 
@@ -281,10 +278,43 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         }
     }
 
+    public void onEvent(UserComposeStatus event) {
+        getStatuses();
+        /*
+        final StatusMessage message = event.status;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                statusListAdapter.addStatus(message);
+                statusListAdapter.notifyDataSetChanged();
+            }
+        });
+        */
+    }
     public void onEvent(StatusDeletedEvent event) {
-        //do something
+        getStatuses();
+        /*
+        final String uuid = event.uuid;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(statusListAdapter.deleteStatus(uuid))
+                    statusListAdapter.notifyDataSetChanged();
+            }
+        });
+        */
     }
     public void onEvent(StatusUpdatedEvent event) {
-        //do something
+        getStatuses();
+        /*
+        final StatusMessage message = event.status;
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(statusListAdapter.updateStatus(message))
+                    statusListAdapter.notifyDataSetChanged();
+            }
+        });
+        */
     }
 }

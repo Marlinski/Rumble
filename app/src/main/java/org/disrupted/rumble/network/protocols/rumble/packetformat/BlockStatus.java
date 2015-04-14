@@ -43,12 +43,6 @@ import de.greenrobot.event.EventBus;
 /**
  * A BlockStatus holds all the information necessary to retrieve a Status
  *
- *
- * +-------------------------------------------+
- * |                                           |
- * |       UID = Hash(author, post, toc)       |  24 bytes (128 bits UID)
- * |                                           |
- * |                                           |
  * +--------+----------------------------------+
  * | Length |         Author (String)          |  1 byte + VARIABLE
  * +--------+---------+------------------------+
@@ -76,7 +70,6 @@ public class BlockStatus extends Block{
     /*
      * Byte size
      */
-    private static final int UID                 = 24;
     private static final int AUTHOR_LENGTH_FIELD = 1;
     private static final int GROUP_LENGTH_FIELD  = 1;
     private static final int STATUS_LENGTH_FIELD = 2;
@@ -87,7 +80,7 @@ public class BlockStatus extends Block{
     private static final int REPLICATION         = 2;
     private static final int LIKE                = 1;
 
-    private  static final int MIN_PAYLOAD_SIZE = ( UID +
+    private  static final int MIN_PAYLOAD_SIZE = (
             AUTHOR_LENGTH_FIELD +
             GROUP_LENGTH_FIELD +
             STATUS_LENGTH_FIELD +
@@ -136,9 +129,6 @@ public class BlockStatus extends Block{
         /* process the read buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
-            byte[] uid = new byte[UID];
-            byteBuffer.get(uid, 0, UID);
-            readleft -= UID;
 
             short authorLength = byteBuffer.get();
             readleft -= 1;
@@ -172,8 +162,6 @@ public class BlockStatus extends Block{
 
         /* assemble the status */
             status = new StatusMessage(new String(post), new String(author), toc);
-            Log.d(TAG, status.getUuid()+" - "+new String(uid));
-            status.setUuid(new String(uid));
             status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setGroup(new String(group));
             status.setTimeOfCreation(toc);
@@ -214,14 +202,13 @@ public class BlockStatus extends Block{
         header.setBlockHeaderLength(length);
 
         BlockFile blockFile = null;
-        if(!status.getFileName().equals("")) {
+        if(status.hasAttachedFile()) {
             header.setLastBlock(false);
             blockFile = new BlockFile(status.getFileName(), status.getUuid());
         }
 
         /* prepare the buffer */
         ByteBuffer blockBuffer = ByteBuffer.allocate(length);
-        blockBuffer.put(status.getUuid().getBytes(), 0, UID);
         blockBuffer.put((byte)author.length);
         blockBuffer.put(author,0,author.length);
         blockBuffer.put((byte)group.length);

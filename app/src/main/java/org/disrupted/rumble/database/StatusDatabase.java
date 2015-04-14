@@ -31,7 +31,10 @@ import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.util.FileUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -352,45 +355,51 @@ public class StatusDatabase extends Database {
     /*
      * Delete a status per ID or UUID
      */
-    // todo delete attached file too
     public boolean deleteStatus(final String uuid, DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
                     @Override
                     public boolean write() {
-                        return (deleteStatus(uuid) > 0);
+                        return deleteStatus(uuid);
                     }
                 }, callback);
     }
-    private long deleteStatus(String uuid) {
-        long total = 0;
+    private boolean deleteStatus(String uuid) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, UUID+ " = ?", new String[]{new String(uuid)}, null, null, null);
+        Cursor cursor = database.query(TABLE_NAME, new String[]{ID, FILE_NAME}, UUID+ " = ?", new String[]{uuid}, null, null, null);
         if(cursor == null) {
             Log.d(TAG, "status not found" );
-            return total;
+            return false;
         }
         try {
-            for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+            SQLiteDatabase wd = databaseHelper.getReadableDatabase();
+            if(cursor.moveToFirst() && !cursor.isAfterLast()) {
+
                 long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-                Log.d(TAG, "status found with ID "+id );
-                total += deleteStatus(id);
+                String filename = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
+
+                int count = wd.delete(TABLE_NAME, ID_WHERE, new String[]{Long.valueOf(id).toString()});
+                if (count > 0) {
+                    DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(id);
+                    DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(id);
+                }
+                try {
+                    File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(), filename);
+                    if (attachedFile.exists() && attachedFile.isFile())
+                        attachedFile.delete();
+                } catch (IOException ignore) {
+                }
+
+                EventBus.getDefault().post(new StatusDeletedEvent(uuid, id));
+                return true;
+
+            } else {
+                return false;
             }
+
         } finally {
             cursor.close();
         }
-        Log.d(TAG, total+" status deleted" );
-        return total;
-    }
-    private long deleteStatus(long statusID) {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        int count = db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
-        if(count > 0) {
-            DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
-            DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(statusID);
-            EventBus.getDefault().post(new StatusDeletedEvent(statusID));
-        }
-        return count;
     }
 
     /*
@@ -418,7 +427,6 @@ public class StatusDatabase extends Database {
             contentValues.put(FILE_NAME, status.getFileName());
 
         int count = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = " + status.getdbId(), null);
-
         if(count > 0) {
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(status.getdbId(), forwarder);
@@ -460,15 +468,12 @@ public class StatusDatabase extends Database {
         contentValues.put(USERSAVED, status.hasUserLiked() ? 1 : 0);
 
         long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-        status.setdbId(statusID);
-
         if(statusID >= 0) {
             for (String hashtag : status.getHashtagSet()) {
                 long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag.toLowerCase());
                 if(tagID >=0 )
                     DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
             }
-
             for (String forwarder : status.getForwarderList()) {
                 DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
             }
@@ -505,9 +510,9 @@ public class StatusDatabase extends Database {
 
 
     /*
-         * utility function to transform a row into a StatusMessage
-         * ! this method does not close the cursor
-         */
+     * utility function to transform a row into a StatusMessage
+     * ! this method does not close the cursor
+     */
     private StatusMessage cursorToStatus(final Cursor cursor) {
         if(cursor == null)
             return null;

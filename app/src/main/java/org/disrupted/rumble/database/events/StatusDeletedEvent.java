@@ -24,9 +24,11 @@ package org.disrupted.rumble.database.events;
  */
 public class StatusDeletedEvent extends StatusDatabaseEvent {
 
-    public final long statusID;
+    public final String uuid;
+    public final long dbid;
 
-    public StatusDeletedEvent(long statusID){
-        this.statusID = statusID;
+    public StatusDeletedEvent(String uuid, long dbid){
+        this.uuid = uuid;
+        this.dbid = dbid;
     }
 }

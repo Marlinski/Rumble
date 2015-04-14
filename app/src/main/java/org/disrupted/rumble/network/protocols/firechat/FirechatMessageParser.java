@@ -58,7 +58,7 @@ public class FirechatMessageParser {
             jsonStatus.put(UUID, this.generateRandomUUID());
             jsonStatus.put(USER, message.getAuthor());
 
-            if(message.getFileName().equals(""))
+            if(!message.hasAttachedFile())
                 jsonStatus.put(MESSAGE, message.getPost());
             else {
                 try {

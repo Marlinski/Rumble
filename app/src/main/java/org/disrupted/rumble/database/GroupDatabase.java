@@ -5,11 +5,17 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Base64;
 
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.message.Group;
+import org.disrupted.rumble.util.AESUtil;
 
 import java.util.ArrayList;
+
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.SecretKeySpec;
 
 import de.greenrobot.event.EventBus;
 
@@ -41,26 +47,50 @@ public class GroupDatabase  extends  Database{
         super(context, databaseHelper);
     }
 
-    public boolean getGroupNames(DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getGroups(DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
                     public Object read() {
-                        return getGroupNames();
+                        return getGroups();
                     }
                 }, callback);
     }
-    private ArrayList<String> getGroupNames() {
+    private ArrayList<Group> getGroups() {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
         if(cursor == null)
             return null;
         try {
-            ArrayList<String> ret = new ArrayList<String>();
+            ArrayList<Group> ret = new ArrayList<Group>();
             for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                ret.add(cursor.getString(cursor.getColumnIndexOrThrow(NAME)));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
+                String keyEncodedBase64 = cursor.getString(cursor.getColumnIndexOrThrow(KEY));
+                byte[] decodedKey = Base64.decode(keyEncodedBase64, Base64.NO_WRAP);
+                SecretKey key = AESUtil.getSecretKeyFromByteArray(decodedKey);
+                ret.add(new Group(name, key));
             }
             return ret;
+        } finally {
+            cursor.close();
+        }
+    }
+
+    public Group getGroup(String groupName) {
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(TABLE_NAME, null, NAME + " = ?", new String[] {groupName}, null, null, null);
+        if(cursor == null)
+            return null;
+
+        try {
+            if(cursor.moveToFirst() && !cursor.isAfterLast()) {
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
+                String keyEncodedBase64 = cursor.getString(cursor.getColumnIndexOrThrow(KEY));
+                byte[] decodedKey = Base64.decode(keyEncodedBase64, Base64.NO_WRAP);
+                SecretKey key = AESUtil.getSecretKeyFromByteArray(decodedKey);
+                return new Group(name, key);
+            } else
+                return null;
         } finally {
             cursor.close();
         }
@@ -69,10 +99,12 @@ public class GroupDatabase  extends  Database{
     public long insertGroup(Group group){
         if(group == null)
             return 0;
+
+        String base64EncodedKey = Base64.encodeToString(group.getGroupKey().getEncoded(), Base64.NO_WRAP);
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(NAME, group.getName());
-        contentValues.put(KEY, group.getGroupkey());
-        contentValues.put(PRIVATE, group.isPrivate() ? 1 : 0);
+        contentValues.put(KEY, base64EncodedKey);
 
         long count = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
         if(count > 0)

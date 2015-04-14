@@ -168,7 +168,6 @@ public class PushService {
 
         @Override
         public void run() {
-            Log.d(TAG, "[.] MessageDispatcher started");
             try {
                 Log.d(TAG, "[+] MessageDispatcher initiated");
                 do {
@@ -370,7 +369,7 @@ public class PushService {
         public void onEvent(StatusDeletedEvent event) {
             fullyLock();
             try {
-                statuses.remove(Integer.valueOf((int) event.statusID));
+                statuses.remove(Integer.valueOf((int) event.dbid));
             } finally {
                 fullyUnlock();
             }

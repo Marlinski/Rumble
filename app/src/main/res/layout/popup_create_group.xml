@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 
+<!--
+  ~ Copyright (C) 2014 Disrupted Systems
+  ~ This file is part of Rumble.
+  ~ Rumble is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ Rumble is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_gravity="center_vertical"
     android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -29,7 +47,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <LinearLayout
-                    android:id="@+id/popup_dismiss"
+                    android:id="@+id/new_group_dismiss"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:background="@drawable/popup_button">
@@ -49,7 +67,7 @@
                         android:textColor="@color/pure_white"
                         android:textSize="20dp"
                         android:layout_gravity="center_vertical"
-                        android:text="@string/popup_compose_title"/>
+                        android:text="@string/popup_create_group"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -63,16 +81,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <EditText
-                    android:id="@+id/popup_user_status"
+                    android:id="@+id/popup_group_name"
                     android:layout_marginBottom="5dp"
                     android:layout_marginTop="5dp"
                     android:layout_marginRight="5dp"
                     android:layout_marginLeft="5dp"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minLines="4"
                     android:textColor="@color/pure_white"
-                    android:hint="What's happening?"/>
+                    android:hint="rumble.group.newgroup"/>
             </LinearLayout>
 
             <View
@@ -85,28 +102,30 @@
                 android:paddingRight="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <ImageButton android:id="@+id/popup_take_picture"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:src="@drawable/ic_photo_camera_white_24dp"/>
-                <ImageButton android:id="@+id/popup_choose_image"
+                    android:gravity="center"
+                    android:textSize="15dp"
+                    android:layout_gravity="center_vertical"
+                    android:text="@string/popup_create_group_checkbox"/>
+                <CheckBox android:id="@+id/popup_check_private"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:layout_gravity="center_vertical"
                     android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:src="@drawable/ic_photo_album_white_24dp"/>
+                    android:layout_marginBottom="10dp"/>
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="10"/>
-                <ImageButton android:id="@+id/popup_button_send"
+                <ImageButton android:id="@+id/popup_button_create_group"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:src="@drawable/ic_send_white_24dp"/>
+                    android:src="@drawable/ic_group_add_white_24dp"/>
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>

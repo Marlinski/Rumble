@@ -102,7 +102,11 @@
 
         <activity
             android:name=".userinterface.activity.PopupCompose"
-            android:theme="@style/PopupCompose"
+            android:theme="@style/PopupActivity"
+            android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
+        <activity
+            android:name=".userinterface.activity.PopupCreateGroup"
+            android:theme="@style/PopupActivity"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
         <activity
