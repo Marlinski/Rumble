@@ -28,6 +28,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -141,6 +142,21 @@ public class HomeActivity extends ActionBarActivity {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            slidingMenu.toggle();
+            return true;
+        }
+        if(keyCode == KeyEvent.KEYCODE_BACK) {
+            if(slidingMenu.isMenuShowing()) {
+                slidingMenu.toggle();
+                return true;
+            }
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     public void onBluetoothToggleClicked(View view) {

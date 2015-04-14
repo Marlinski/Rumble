@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -28,14 +29,28 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.DatabaseExecutor;
+import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.GroupInsertedEvent;
+import org.disrupted.rumble.userinterface.activity.PopupCreateGroup;
+import org.disrupted.rumble.userinterface.adapter.GroupListAdapter;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
 public class FragmentGroupStatus extends Fragment {
-    private static View mView;
+
+    private View mView;
+    private ListView groupList;
+    private GroupListAdapter groupListAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -46,7 +61,19 @@ public class FragmentGroupStatus extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mView = inflater.inflate(R.layout.fragment_group_status, container, false);
+        groupList = (ListView) mView.findViewById(R.id.group_list);
+        groupListAdapter = new GroupListAdapter(getActivity());
+        groupList.setAdapter(groupListAdapter);
+        EventBus.getDefault().register(this);
+        getGroupList();
         return mView;
+    }
+
+    @Override
+    public void onDestroy() {
+        if(EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
+        super.onDestroy();
     }
 
     @Override
@@ -63,9 +90,33 @@ public class FragmentGroupStatus extends Fragment {
                 return true;
 
             case R.id.action_create_group:
-                //do something
+                Intent create_group = new Intent(getActivity(), PopupCreateGroup.class );
+                startActivity(create_group);
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void getGroupList() {
+        DatabaseFactory.getGroupDatabase(getActivity()).getGroupNames(onGroupsLoaded);
+    }
+    private DatabaseExecutor.ReadableQueryCallback onGroupsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(final Object result) {
+            if(getActivity() == null)
+                return;
+            getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ArrayList<String> answer = (ArrayList<String>)(result);
+                        groupListAdapter.swap(answer);
+                    }
+                }
+            );
+        }
+    };
+
+    public void onEvent(GroupInsertedEvent event) {
+        getGroupList();
     }
 }

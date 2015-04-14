@@ -35,7 +35,6 @@ import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
@@ -74,7 +73,7 @@ public class PopupCompose extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.compose_popup);
+        setContentView(R.layout.popup_compose_status);
 
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
         compose = (EditText)(findViewById(R.id.popup_user_status));

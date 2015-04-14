@@ -165,26 +165,21 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     public void getStatuses() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-                options.groupName = GroupDatabase.DEFAULT_GROUP;
-                options.answerLimit = 20;
-                options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
-                options.order_by = StatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
+            StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
+            options.groupName = GroupDatabase.DEFAULT_GROUP;
+            options.answerLimit = 20;
+            options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
+            options.order_by = StatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
 
-                if (filterListAdapter.getCount() == 0) {
-                    DatabaseFactory.getStatusDatabase(getActivity())
-                            .getStatuses(options, onStatusesLoaded);
-                } else {
-                    options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_TAG;
-                    options.hashtagFilters = filterListAdapter.getFilterList();
-                    DatabaseFactory.getStatusDatabase(getActivity())
-                            .getStatuses(options, onStatusesLoaded);
-                }
+            if (filterListAdapter.getCount() == 0) {
+                DatabaseFactory.getStatusDatabase(getActivity())
+                        .getStatuses(options, onStatusesLoaded);
+            } else {
+                options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_TAG;
+                options.hashtagFilters = filterListAdapter.getFilterList();
+                DatabaseFactory.getStatusDatabase(getActivity())
+                        .getStatuses(options, onStatusesLoaded);
             }
-        });
     }
     DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
