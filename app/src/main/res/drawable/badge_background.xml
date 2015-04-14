@@ -19,4 +19,6 @@
 
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval" >
     <solid android:color="@color/tab_notification" />
+    <stroke android:color="@color/tab_notification" android:width="2dip"/>
+    <corners android:radius="10dip"></corners>
 </shape>

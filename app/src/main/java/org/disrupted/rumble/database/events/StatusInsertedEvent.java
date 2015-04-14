@@ -28,7 +28,7 @@ import org.disrupted.rumble.message.StatusMessage;
  *
  * @author Marlinski
  */
-public class StatusInsertedEvent extends ResourceEvent {
+public class StatusInsertedEvent extends StatusDatabaseEvent {
 
     public final StatusMessage status;
 

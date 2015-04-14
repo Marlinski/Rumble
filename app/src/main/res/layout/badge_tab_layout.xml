@@ -20,7 +20,8 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:minWidth="80dp">
 
     <ImageView
         android:id="@+id/tab_icon"
@@ -32,11 +33,13 @@
 
     <TextView
         android:id="@+id/tab_badge"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginLeft="-5dp"
         android:background="@drawable/badge_background"
-        android:visibility="gone"
         android:layout_toRightOf="@+id/tab_icon"
+        android:gravity="center"
         android:textSize="10sp"
         android:textColor="@color/white"/>
 

@@ -40,6 +40,7 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
@@ -94,6 +95,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
         super.onCreateView(inflater, container, savedInstanceState);
 
         mView = inflater.inflate(R.layout.status_list, container, false);
@@ -136,7 +138,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     @Override
     public void onDestroy() {
-        EventBus.getDefault().unregister(this);
+        if(EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
         statusListAdapter.clean();
         super.onDestroy();
     }
@@ -167,6 +170,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             public void run() {
                 StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
                 options.groupName = GroupDatabase.DEFAULT_GROUP;
+                options.answerLimit = 20;
+                options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
+                options.order_by = StatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
+
                 if (filterListAdapter.getCount() == 0) {
                     DatabaseFactory.getStatusDatabase(getActivity())
                             .getStatuses(options, onStatusesLoaded);
@@ -179,21 +186,22 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             }
         });
     }
-    StatusDatabase.StatusQueryCallback onStatusesLoaded = new StatusDatabase.StatusQueryCallback() {
+    DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
-        public void onStatusQueryFinished(final ArrayList<StatusMessage> array) {
+        public void onReadableQueryFinished(final Object result) {
             if (getActivity() == null)
                 return;
-            final ArrayList<StatusMessage> answer = array;
+            final ArrayList<StatusMessage> answer = (ArrayList<StatusMessage>)result;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     statusListAdapter.swap(answer);
                     statusListAdapter.notifyDataSetChanged();
-                    if(array != null) {
+                    if(result != null) {
                         answer.clear();
                     }
                     swipeLayout.setRefreshing(false);
+                    ((HomeActivity)getActivity()).refreshNotifications();
                 }
             });
         }
@@ -278,19 +286,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         }
     }
 
-
-    /*
-     * Handling Events coming from outside the activity
-     */
-    public void onEvent(StatusInsertedEvent event) { getStatuses();}
-    public void onEvent(StatusDeletedEvent event)  {
-        getStatuses();
+    public void onEvent(StatusDeletedEvent event) {
+        //do something
     }
-    public void onEvent(StatusDatabaseEvent event) {
-        getStatuses();
+    public void onEvent(StatusUpdatedEvent event) {
+        //do something
     }
-    public void onEvent(StatusUpdatedEvent event)  {
-        getStatuses();
-    }
-
 }

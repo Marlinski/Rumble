@@ -22,7 +22,7 @@ package org.disrupted.rumble.database.events;
 /**
  * @author Marlinski
  */
-public class StatusDeletedEvent extends ResourceEvent {
+public class StatusDeletedEvent extends StatusDatabaseEvent {
 
     public final long statusID;
 

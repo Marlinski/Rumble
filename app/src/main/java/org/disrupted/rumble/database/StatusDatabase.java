@@ -88,20 +88,6 @@ public class StatusDatabase extends Database {
                  + "FOREIGN KEY ( "+ GROUP + " ) REFERENCES " + GroupDatabase.TABLE_NAME + " ( " + GroupDatabase.NAME   + " ) "
           + " );";
 
-    public static abstract class StatusQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
-        public final void onReadableQueryFinished(Object object) {
-            if(object instanceof ArrayList)
-                onStatusQueryFinished((ArrayList<StatusMessage>)(object));
-        }
-        public abstract void onStatusQueryFinished(ArrayList<StatusMessage> statuses);
-    }
-    public static abstract class StatusIdQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
-        public final void onReadableQueryFinished(Object object) {
-            if(object instanceof ArrayList)
-                onStatusIdQueryFinished((ArrayList<Integer>)(object));
-        }
-        public abstract void onStatusIdQueryFinished(ArrayList<Integer> statusIds);
-    }
 
     public static class StatusQueryOption {
         public static final long FILTER_READ  = 0x0001;
@@ -113,6 +99,20 @@ public class StatusDatabase extends Database {
         public static final long FILTER_TOC_FROM  = 0x0080;
         public static final long FILTER_TOA_FROM  = 0x0100;
 
+        public enum QUERY_RESULT {
+            COUNT,
+            LIST_OF_MESSAGE,
+            LIST_OF_IDS;
+        }
+
+        public enum ORDER_BY {
+            NO_ORDERING,
+            TIME_OF_CREATION,
+            TIME_OF_ARRIVAL;
+        }
+
+        public boolean      read;
+        public boolean      like;
         public long         filterFlags;
         public List<String> hashtagFilters;
         public String       groupName;
@@ -121,119 +121,165 @@ public class StatusDatabase extends Database {
         public long         from_toc;
         public long         from_toa;
         public int          answerLimit;
+        public ORDER_BY     order_by;
+        public QUERY_RESULT query_result;
 
         public StatusQueryOption() {
             filterFlags = 0x00;
+            read = false;
+            like = false;
             hashtagFilters = null;
             groupName = GroupDatabase.DEFAULT_GROUP;
             userName = null;
             from_toc = 0;
             from_toa = 0;
-            answerLimit = 20;
+            answerLimit = 0;
+            order_by = ORDER_BY.NO_ORDERING;
+            query_result = QUERY_RESULT.LIST_OF_MESSAGE;
         }
     }
-
 
     public StatusDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public boolean getStatusesId(StatusIdQueryCallback callback){
+    /*
+     * General querying with versatil options
+     */
+    public boolean getStatuses(final StatusQueryOption options, DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
-                    public ArrayList<Integer> read() {
-                        return getStatusesId();
-                    }
-                }, callback);
-    }
-    private ArrayList<Integer> getStatusesId() {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, new String[]{ID}, null, null, null, null, null);
-        if(cursor == null)
-            return null;
-        ArrayList<Integer> ret = new ArrayList<Integer>();
-        try {
-            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                ret.add(cursor.getInt(cursor.getColumnIndexOrThrow(ID)));
-            }
-        }finally {
-            cursor.close();
-        }
-        return ret;
-    }
-
-    public boolean getStatuses(final StatusQueryOption options, StatusQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.ReadableQuery() {
-                    @Override
-                    public ArrayList<StatusMessage> read() {
+                    public Object read() {
                         return getStatuses(options);
                     }
                 }, callback);
     }
-    private ArrayList<StatusMessage> getStatuses(StatusQueryOption options) {
-        boolean groupby = false;
+    private Object getStatuses(StatusQueryOption options) {
+
+        if(options == null)
+            options = new StatusQueryOption();
+
+        String select = " * ";
+        switch (options.query_result) {
+            case COUNT:
+                select = " COUNT(*) ";
+                break;
+            case LIST_OF_IDS:
+                select = " s."+ID+" ";
+                break;
+            case LIST_OF_MESSAGE:
+                select = " * ";
+                break;
+        }
+
         StringBuilder query = new StringBuilder(
-                "SELECT * FROM "+StatusDatabase.TABLE_NAME+" s");
+                "SELECT "+select+" FROM "+StatusDatabase.TABLE_NAME+" s");
 
+        boolean groupby = false;
+        boolean firstwhere = true;
         List<String> argumentList = new ArrayList<String>();
-        if(options != null) {
-            if (((options.filterFlags & options.FILTER_TAG) == options.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
-                query.append(
-                        " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
-                        " ON s." + StatusDatabase.ID + " = m." + StatusTagDatabase.SID +
-                        " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
-                        " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID +
-                        " WHERE ( ( lower(h." + HashtagDatabase.HASHTAG + ") = lower(?)");
-                Iterator<String> it = options.hashtagFilters.iterator();
-                String hashtag = it.next();
+        if (((options.filterFlags & options.FILTER_TAG) == options.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
+            query.append(
+                    " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
+                    " ON s." + StatusDatabase.ID + " = m." + StatusTagDatabase.SID +
+                    " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
+                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID +
+                    " WHERE ( ( lower(h." + HashtagDatabase.HASHTAG + ") = lower(?)");
+
+            Iterator<String> it = options.hashtagFilters.iterator();
+            String hashtag = it.next();
+            argumentList.add(hashtag);
+            while (it.hasNext()) {
+                hashtag = it.next();
+                query.append(" OR lower(h." + HashtagDatabase.HASHTAG + ") = lower(?) ");
                 argumentList.add(hashtag);
-                while (it.hasNext()) {
-                    hashtag = it.next();
-                    query.append(" OR lower(h." + HashtagDatabase.HASHTAG + ") = lower(?) ");
-                    argumentList.add(hashtag);
-                }
-                query.append(" ) ");
-                groupby = true;
-            } else if (options.filterFlags > 0) {
-                query.append(" WHERE ( ");
             }
+            query.append(" ) ");
+            groupby = true;
+            firstwhere = false;
+        } else if (options.filterFlags > 0) {
+            query.append(" WHERE ( ");
+        }
 
-            if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP)) {
-                query.append(" AND s." + StatusDatabase.GROUP + " = lower(?) ");
-                argumentList.add(options.groupName);
-            }
-            if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.userName != null)) {
-                query.append(" AND s." + StatusDatabase.AUTHOR + " = lower(?) ");
-                argumentList.add(options.userName);
-            }
-            if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
-                query.append(" AND s." + StatusDatabase.TIME_OF_CREATION + " > ? ");
-                argumentList.add(Long.toString(options.from_toc));
-            }
-            if ((options.filterFlags & StatusQueryOption.FILTER_TOA_FROM) == StatusQueryOption.FILTER_TOA_FROM) {
-                query.append(" AND s." + StatusDatabase.TIME_OF_ARRIVAL + " > ? ");
-                argumentList.add(Long.toString(options.from_toa));
-            }
-            if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {
-                query.append(" AND s." + StatusDatabase.HOP_LIMIT + " = ? ");
-                argumentList.add(Integer.toString(options.hopLimit));
-            }
-            if ((options.filterFlags & StatusQueryOption.FILTER_READ) == StatusQueryOption.FILTER_READ) {
-                query.append(" AND s." + StatusDatabase.USERREAD + " = 1 ");
-            }
-            if ((options.filterFlags & StatusQueryOption.FILTER_LIKE) == StatusQueryOption.FILTER_LIKE) {
-                query.append(" AND s." + StatusDatabase.USERLIKED + " = 1 ");
-            }
+        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP)) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" lower(s." + StatusDatabase.GROUP + ") = lower(?) ");
+            argumentList.add(options.groupName);
+        }
 
-            if (options.filterFlags > 0)
-                query.append(" ) ");
+        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.userName != null)) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" lower(s." + StatusDatabase.AUTHOR + ") = lower(?) ");
+            argumentList.add(options.userName);
+        }
 
-            if (groupby)
-                query.append(" GROUP BY " + StatusDatabase.ID);
+        if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" s." + StatusDatabase.TIME_OF_CREATION + " > ? ");
+            argumentList.add(Long.toString(options.from_toc));
+        }
 
-            query.append(" ORDER BY "+StatusDatabase.TIME_OF_CREATION+" DESC LIMIT ?");
+        if ((options.filterFlags & StatusQueryOption.FILTER_TOA_FROM) == StatusQueryOption.FILTER_TOA_FROM) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" s." + StatusDatabase.TIME_OF_ARRIVAL + " > ? ");
+            argumentList.add(Long.toString(options.from_toa));
+        }
+
+        if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" s." + StatusDatabase.HOP_LIMIT + " = ? ");
+            argumentList.add(Integer.toString(options.hopLimit));
+        }
+
+        if ((options.filterFlags & StatusQueryOption.FILTER_READ) == StatusQueryOption.FILTER_READ) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            if(options.read)
+                query.append(" s." + StatusDatabase.USERREAD + " = 1 ");
+            else
+                query.append(" s." + StatusDatabase.USERREAD + " = 0 ");
+        }
+
+        if ((options.filterFlags & StatusQueryOption.FILTER_LIKE) == StatusQueryOption.FILTER_LIKE) {
+            if(!firstwhere)
+                query.append(" AND ");
+            if(options.like)
+                query.append(" s." + StatusDatabase.USERLIKED + " = 1 ");
+            else
+                query.append(" s." + StatusDatabase.USERLIKED + " = 0 ");
+        }
+
+        if (options.filterFlags > 0)
+            query.append(" ) ");
+
+        if (groupby)
+            query.append(" GROUP BY " + StatusDatabase.ID);
+
+        if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
+            switch (options.order_by) {
+                case TIME_OF_CREATION:
+                    query.append(" ORDER BY " + StatusDatabase.TIME_OF_CREATION + " DESC ");
+                    break;
+                case TIME_OF_ARRIVAL:
+                    query.append(" ORDER BY " + StatusDatabase.TIME_OF_CREATION + " DESC ");
+                    break;
+            }
+        }
+
+        if(options.answerLimit > 0) {
+            query.append(" LIMIT ? ");
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
@@ -244,18 +290,33 @@ public class StatusDatabase extends Database {
         if(cursor == null)
             return null;
 
-        ArrayList<StatusMessage> ret = new ArrayList<StatusMessage>();
         try {
-            for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                ret.add(cursorToStatus(cursor));
+            switch (options.query_result) {
+                case COUNT:
+                    cursor.moveToFirst();
+                    return cursor.getInt(0);
+                case LIST_OF_IDS:
+                    ArrayList<Integer> listMessages = new ArrayList<Integer>();
+                    for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                        listMessages.add(cursor.getInt(cursor.getColumnIndexOrThrow(ID)));
+                    }
+                    return listMessages;
+                case LIST_OF_MESSAGE:
+                    ArrayList<StatusMessage> listIds = new ArrayList<StatusMessage>();
+                    for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                        listIds.add(cursorToStatus(cursor));
+                    }
+                    return listIds;
             }
+            return null;
         }finally {
             cursor.close();
         }
-        return ret;
     }
 
-
+    /*
+     * Query only one status per UUID or per Index
+     */
     public StatusMessage getStatus(String  uuid) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, UUID + " = ?", new String[]{ uuid }, null, null, null);
@@ -288,27 +349,10 @@ public class StatusDatabase extends Database {
         }
     }
 
+    /*
+     * Delete a status per ID or UUID
+     */
     // todo delete attached file too
-    public boolean deleteStatus(final long statusID, DatabaseExecutor.WritableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.WritableQuery() {
-                    @Override
-                    public boolean write() {
-                        return (deleteStatus(statusID) > 0);
-                    }
-                }, callback);
-    }
-    private long deleteStatus(long statusID) {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        int count = db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
-        if(count > 0) {
-            DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
-            DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(statusID);
-            EventBus.getDefault().post(new StatusDeletedEvent(statusID));
-        }
-        return count;
-    }
-
     public boolean deleteStatus(final String uuid, DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
@@ -338,7 +382,20 @@ public class StatusDatabase extends Database {
         Log.d(TAG, total+" status deleted" );
         return total;
     }
+    private long deleteStatus(long statusID) {
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        int count = db.delete(TABLE_NAME, ID_WHERE, new String[]{statusID + ""});
+        if(count > 0) {
+            DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(statusID);
+            DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(statusID);
+            EventBus.getDefault().post(new StatusDeletedEvent(statusID));
+        }
+        return count;
+    }
 
+    /*
+     * Update a single status or insert it if it doesn't exist
+     */
     public boolean updateStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
@@ -371,6 +428,10 @@ public class StatusDatabase extends Database {
         return count;
     }
 
+
+    /*
+     * Insert a single status
+     */
     public boolean insertStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
@@ -417,6 +478,10 @@ public class StatusDatabase extends Database {
         return statusID;
     }
 
+
+    /*
+     * Clear the status database, todo: should add options
+     */
     public void clearStatus(final DatabaseExecutor.WritableQueryCallback callback) {
         DatabaseFactory.getDatabaseExecutor(context).addQuery(
             new DatabaseExecutor.WritableQuery() {

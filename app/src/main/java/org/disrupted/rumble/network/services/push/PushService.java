@@ -3,6 +3,7 @@ package org.disrupted.rumble.network.services.push;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
@@ -203,13 +204,16 @@ public class PushService {
         }
 
         private void initStatuses() {
-            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatusesId(onStatusLoaded);
+            StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
+            options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
         }
-        StatusDatabase.StatusIdQueryCallback onStatusLoaded = new StatusDatabase.StatusIdQueryCallback() {
+        DatabaseExecutor.ReadableQueryCallback onStatusLoaded = new DatabaseExecutor.ReadableQueryCallback() {
             @Override
-            public void onStatusIdQueryFinished(ArrayList<Integer> answer) {
-                if (answer != null) {
+            public void onReadableQueryFinished(Object result) {
+                if (result != null) {
                     Log.d(TAG, "[+] MessageDispatcher initiated");
+                    final ArrayList<Integer> answer = (ArrayList<Integer>)result;
                     for (Integer s : answer) {
                         StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
                                 .getStatus(s);
