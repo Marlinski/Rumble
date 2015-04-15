@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import javax.crypto.SecretKey;
+
 /**
  * @author Marlinski
  */
@@ -55,4 +57,28 @@ public class HashUtil {
         }
     }
 
+    public static final String computeContactUid(String name, long time) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(name.getBytes());
+            md.update(ByteBuffer.allocate(8).putLong(time).array());
+            return Base64.encodeToString(md.digest(),0,8,Base64.NO_WRAP);
+        }
+        catch (NoSuchAlgorithmException ignore) {
+            return null;
+        }
+    }
+
+    public static final String computeGroupUid(String name, boolean isPrivate) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(name.getBytes());
+            if(isPrivate)
+                md.update(ByteBuffer.allocate(8).putLong(System.currentTimeMillis()).array());
+            return Base64.encodeToString(md.digest(),0,8,Base64.NO_WRAP);
+        }
+        catch (NoSuchAlgorithmException ignore) {
+            return null;
+        }
+    }
 }

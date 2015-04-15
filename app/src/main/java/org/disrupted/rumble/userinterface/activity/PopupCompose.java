@@ -43,9 +43,9 @@ import android.widget.Spinner;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;

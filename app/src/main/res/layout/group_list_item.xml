@@ -23,6 +23,7 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
+        android:id="@+id/group_title"
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -71,7 +72,6 @@
         android:animateLayoutChanges="true"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:visibility="gone"
         android:gravity="center_vertical">
 
         <TextView
@@ -84,6 +84,13 @@
             android:id="@+id/group_desc"
             android:paddingBottom="10dp"
             android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <ImageView
+            android:id="@+id/group_invite"
+            android:paddingBottom="10dp"
+            android:layout_gravity="right"
+            android:src="@drawable/ic_person_add_grey600_24dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

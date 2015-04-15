@@ -29,6 +29,7 @@ import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
+import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
@@ -160,6 +161,12 @@ public class CacheManager {
         if(event.group == null)
             return;
         Log.d(TAG, " [.] user created group: "+event.group.getName());
+        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group);
+    }
+    public void onEvent(UserJoinGroup event) {
+        if(event.group == null)
+            return;
+        Log.d(TAG, " [.] user joined group: "+event.group.getName());
         DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group);
     }
 }

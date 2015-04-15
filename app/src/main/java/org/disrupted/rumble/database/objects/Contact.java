@@ -17,8 +17,34 @@
 
 package org.disrupted.rumble.database.objects;
 
+import org.disrupted.rumble.util.HashUtil;
+
 /**
  * @author Marlinski
  */
 public class Contact {
+
+    public String uid;
+    public String name;
+    public String avatar;
+    public boolean local;
+
+    public static Contact createLocalContact(String name) {
+        String uid = HashUtil.computeContactUid(name,System.currentTimeMillis());
+        return new Contact(name, uid, true);
+    }
+
+    public Contact(String name, String uid, boolean local) {
+        this.name = name;
+        this.uid = uid;
+        this.local = local;
+    }
+
+    public String getUid()    { return uid;}
+    public String getName()   { return name;}
+    public String getAvatar() { return avatar;}
+    public boolean isLocal()  { return local;}
+
+    public void setAvatar(String avatar) { this.avatar = avatar; }
+
 }

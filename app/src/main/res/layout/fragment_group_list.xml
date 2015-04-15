@@ -25,6 +25,9 @@
 
     <ListView
         android:id="@+id/group_list"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
     </ListView>

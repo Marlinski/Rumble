@@ -101,7 +101,7 @@ public class PopupCreateGroup extends Activity {
             try {
                 if (groupNameView.getText().toString().equals(""))
                     return;
-                Group group = new Group(groupNameView.getText().toString(), privateGroupCheckBox.isChecked());
+                Group group = Group.createNewGroup(groupNameView.getText().toString(), privateGroupCheckBox.isChecked());
                 EventBus.getDefault().post(new UserCreateGroup(group));
             } catch (Exception e) {
                 Log.e(TAG, "[!] " + e.getMessage());

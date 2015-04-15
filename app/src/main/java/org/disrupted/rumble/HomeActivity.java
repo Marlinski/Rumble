@@ -21,12 +21,15 @@ package org.disrupted.rumble;
 
 import android.content.Context;
 import android.content.Intent;
+import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
+import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,22 +38,28 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
+import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.fragments.FragmentDirectMessage;
-import org.disrupted.rumble.userinterface.fragments.FragmentGroupStatus;
+import org.disrupted.rumble.userinterface.fragments.FragmentGroupList;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
+import org.disrupted.rumble.util.AESUtil;
 
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
+
+import javax.crypto.SecretKey;
 
 import de.greenrobot.event.EventBus;
 
@@ -59,7 +68,7 @@ import de.greenrobot.event.EventBus;
  */
 public class HomeActivity extends ActionBarActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "HomeActivity";
     private CharSequence mTitle;
 
     private ActionBar actionBar;
@@ -68,7 +77,7 @@ public class HomeActivity extends ActionBarActivity {
     private SlidingMenu slidingMenu;
 
     private Fragment fragmentStatusList = new FragmentStatusList();
-    private Fragment fragmentGroupStatus = new FragmentGroupStatus();
+    private Fragment fragmentGroupStatus = new FragmentGroupList();
     private Fragment fragmentTchat = new FragmentDirectMessage();
     private View notifPublic;
     private View notifGroup;
@@ -171,6 +180,29 @@ public class HomeActivity extends ActionBarActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            byte[] resultbytes = Base64.decode(result.getContents().getBytes(),Base64.NO_WRAP);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(resultbytes);
+            // extract group name
+            int namesize = byteBuffer.get();
+            byte[] name  = new byte[namesize];
+            byteBuffer.get(name,0,namesize);
+
+            // extract group ID
+            int gidsize = byteBuffer.get();
+            byte[] gid  = new byte[gidsize];
+            byteBuffer.get(gid,0,gidsize);
+
+            // extract group Key
+            int keysize = resultbytes.length-2-namesize-gidsize;
+            byte[] key = new byte[keysize];
+            byteBuffer.get(key,0,keysize);
+            Group group = new Group(new String(name), new String(gid), AESUtil.getSecretKeyFromByteArray(key));
+
+            // add Group to database
+            EventBus.getDefault().post(new UserJoinGroup(group));
+        }
         switch (requestCode) {
             case BluetoothConfigureInteraction.REQUEST_ENABLE_BT:
             case BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE:

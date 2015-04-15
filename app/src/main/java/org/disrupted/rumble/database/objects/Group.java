@@ -18,6 +18,7 @@
 package org.disrupted.rumble.database.objects;
 
 import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -31,34 +32,33 @@ public class Group {
     public static final String TAG = "Group";
 
     private String    name;
+    private String    gid;
     private SecretKey key;
+    private String    desc;
     private boolean   isPrivate;
 
-    public Group(String name, boolean isPrivate) throws NoSuchAlgorithmException{
-        this.name = name;
+    public static Group createNewGroup(String name, boolean isPrivate) throws NoSuchAlgorithmException{
+        SecretKey key = null;
         if(isPrivate)
             key = AESUtil.generateRandomAESKey();
-        else
-            key = null;
-        this.isPrivate = isPrivate;
+        String gid = HashUtil.computeGroupUid(name, isPrivate);
+        return new Group(name, gid, key);
     }
 
-    public Group(String name, SecretKey key) {
+    public Group(String name, String gid, SecretKey key) {
         this.name = name;
-        this.key = key;
+        this.gid  = gid;
+        this.key  = key;
         this.isPrivate = (key != null);
+        this.desc = "";
     }
 
-    public final String getName() {
-        return name;
-    }
+    public final String getName() {        return name;      }
+    public final String getGid() {         return gid;       }
+    public final SecretKey getGroupKey() { return key;       }
+    public boolean isIsprivate() {         return isPrivate; }
+    public final String getDesc() {        return desc;      }
 
-    public final SecretKey getGroupKey() {
-        return key;
-    }
-
-    public boolean isIsprivate() {
-        return isPrivate;
-    }
+    public void setDesc(String desc) {     this.desc = desc; }
 
 }

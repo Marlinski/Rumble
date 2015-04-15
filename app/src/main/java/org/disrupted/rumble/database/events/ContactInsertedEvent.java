@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.contact.Contact;
+import org.disrupted.rumble.database.objects.Contact;
 
 /**
  * @author Marlinski

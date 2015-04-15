@@ -41,6 +41,9 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.app.RumbleApplication;
@@ -64,7 +67,7 @@ import de.greenrobot.event.EventBus;
  */
 public class FragmentNetworkDrawer extends Fragment {
 
-    public static final String TAG = "NeighborhoodDrawerFragment";
+    public static final String TAG = "FragmentNetworkDrawer";
 
     private LinearLayout mDrawerFragmentLayout;
     private ListView mDrawerNeighbourList;
@@ -169,11 +172,6 @@ public class FragmentNetworkDrawer extends Fragment {
     public void onForceScanClicked(View view) {
         if(mBound)
             mNetworkCoordinator.forceScan();
-    }
-
-
-    private ActionBar getActionBar() {
-        return ((ActionBarActivity) getActivity()).getSupportActionBar();
     }
 
     /*

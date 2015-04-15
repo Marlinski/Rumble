@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,6 +31,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
@@ -46,7 +50,9 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FragmentGroupStatus extends Fragment {
+public class FragmentGroupList extends Fragment {
+
+    public static final String TAG = "FragmentGroupList";
 
     private View mView;
     private ListView groupList;
@@ -60,7 +66,7 @@ public class FragmentGroupStatus extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.fragment_group_status, container, false);
+        mView = inflater.inflate(R.layout.fragment_group_list, container, false);
         groupList = (ListView) mView.findViewById(R.id.group_list);
         groupListAdapter = new GroupListAdapter(getActivity());
         groupList.setAdapter(groupListAdapter);
@@ -88,7 +94,9 @@ public class FragmentGroupStatus extends Fragment {
             case R.id.action_search_group:
                 //do something
                 return true;
-
+            case R.id.action_scan_qrcode:
+                IntentIntegrator.initiateScan(getActivity());
+                return true;
             case R.id.action_create_group:
                 Intent create_group = new Intent(getActivity(), PopupCreateGroup.class );
                 startActivity(create_group);

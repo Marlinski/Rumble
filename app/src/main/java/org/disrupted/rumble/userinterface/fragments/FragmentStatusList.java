@@ -175,16 +175,17 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(final Object result) {
+            final ArrayList<StatusMessage> answer = (ArrayList<StatusMessage>)result;
             if (getActivity() == null)
                 return;
-            final ArrayList<StatusMessage> answer = (ArrayList<StatusMessage>)result;
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     statusListAdapter.swap(answer);
                     statusListAdapter.notifyDataSetChanged();
                     swipeLayout.setRefreshing(false);
-                    ((HomeActivity)getActivity()).refreshNotifications();
+                    if (getActivity() != null)
+                        ((HomeActivity)getActivity()).refreshNotifications();
                 }
             });
         }

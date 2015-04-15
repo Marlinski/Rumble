@@ -29,10 +29,10 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.GroupDatabase;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 
 /**
@@ -68,12 +68,13 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         String username = usernameView.getText().toString();
         if(username != "") {
             try {
-                Group defaultGroup = new Group(GroupDatabase.DEFAULT_PUBLIC_GROUP, false);
+                Group defaultGroup = Group.createNewGroup(GroupDatabase.DEFAULT_PUBLIC_GROUP, false);
+                defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
                 DatabaseFactory.getGroupDatabase(this).insertGroup(defaultGroup);
             } catch(Exception impossibleWithPublicGroup){
             }
 
-            Contact localContact = new Contact(username, "", true);
+            Contact localContact = Contact.createLocalContact(username);
             DatabaseFactory.getContactDatabase(this).insertContact(localContact, callback);
         }
     }
