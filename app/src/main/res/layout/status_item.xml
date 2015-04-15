@@ -84,14 +84,14 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:layout_marginRight="10dp"
+                        android:layout_marginRight="5dp"
                         android:text="@string/status_created"
                         style="@style/Status.Info.TimeOfCreation"/>
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="right"
-                        android:layout_marginRight="10dp"
+                        android:layout_marginRight="5dp"
                         android:text="@string/status_received"
                         style="@style/Status.Info.TimeOfArrival"/>
                 </LinearLayout>

@@ -142,10 +142,13 @@ public class PopupCompose extends Activity {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             try {
                 File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),mCurrentPhotoFile);
+                Bitmap image = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
                 imageBitmap = ThumbnailUtils.extractThumbnail(
-                        BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
+                        image,
                         512,
                         384);
+                image.recycle();
+                image = null;
                 BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), imageBitmap);
                 bitmapDrawable.setAlpha(100);
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {

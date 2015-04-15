@@ -279,8 +279,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     public void onEvent(UserComposeStatus event) {
-        getStatuses();
-        /*
         final StatusMessage message = event.status;
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -289,11 +287,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                 statusListAdapter.notifyDataSetChanged();
             }
         });
-        */
+
     }
     public void onEvent(StatusDeletedEvent event) {
-        getStatuses();
-        /*
         final String uuid = event.uuid;
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -302,11 +298,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     statusListAdapter.notifyDataSetChanged();
             }
         });
-        */
     }
     public void onEvent(StatusUpdatedEvent event) {
-        getStatuses();
-        /*
         final StatusMessage message = event.status;
         getActivity().runOnUiThread(new Runnable() {
             @Override
@@ -315,6 +308,5 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     statusListAdapter.notifyDataSetChanged();
             }
         });
-        */
     }
 }

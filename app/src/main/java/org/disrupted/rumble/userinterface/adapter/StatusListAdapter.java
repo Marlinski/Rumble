@@ -48,6 +48,7 @@ import android.support.v7.widget.PopupMenu;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
+import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.message.StatusMessage;
@@ -90,7 +91,6 @@ public class StatusListAdapter extends BaseAdapter{
         TextView      toaView;
         TextView      groupNameView;
         ImageView     attachedView;
-        Bitmap        imageBitmap;
         ImageView     moreView;
         LinearLayout  box;
 
@@ -106,7 +106,6 @@ public class StatusListAdapter extends BaseAdapter{
             groupNameView = null;
             attachedView = null;
             moreView = null;
-            imageBitmap = null;
             box = null;
         }
     }
@@ -156,9 +155,7 @@ public class StatusListAdapter extends BaseAdapter{
             viewHolder.tocView.setText(new TimeElapsed(viewHolder.message.getTimeOfCreation()).display());
             viewHolder.toaView.setText(new TimeElapsed(viewHolder.message.getTimeOfArrival()).display());
             viewHolder.groupNameView.setText(viewHolder.message.getGroup());
-            //viewHolder.groupNameView.setTextColor(generator.getColor(viewHolder.message.getGroup()));
-            //viewHolder.groupNameView.setBackgroundColor(generator.getColor(viewHolder.message.getGroup()));
-
+            viewHolder.groupNameView.setTextColor(generator.getColor(viewHolder.message.getGroup()));
 
             // we draw the status (with clickable hashtag)
             if (viewHolder.message.getPost().length() == 0) {
@@ -202,11 +199,12 @@ public class StatusListAdapter extends BaseAdapter{
                         if (!attachedFile.isFile() || !attachedFile.exists())
                             throw new IOException("file does not exists");
 
-                        viewHolder.imageBitmap = ThumbnailUtils.extractThumbnail(
-                                BitmapFactory.decodeFile(attachedFile.getAbsolutePath()),
-                                96,
-                                96);
-                        viewHolder.attachedView.setImageBitmap(viewHolder.imageBitmap);
+                        Picasso.with(activity)
+                                .load("file://"+attachedFile.getAbsolutePath())
+                                .resize(96, 96)
+                                .centerCrop()
+                                .into(viewHolder.attachedView);
+
                         viewHolder.attachedView.setVisibility(View.VISIBLE);
 
                         final Uri uri = Uri.fromFile(attachedFile);
@@ -258,14 +256,10 @@ public class StatusListAdapter extends BaseAdapter{
         return viewHolders.size();
     }
 
-    public void swap(ArrayList<StatusMessage> statuses) {
+    public void swap(List<StatusMessage> statuses) {
         if(this.viewHolders != null) {
             for (StatusItemViewHolder view : this.viewHolders) {
                 view.message.discard();
-                if(view.imageBitmap != null) {
-                    view.imageBitmap.recycle();
-                    view.imageBitmap = null;
-                }
                 view.message = null;
             }
             this.viewHolders.clear();
@@ -278,9 +272,14 @@ public class StatusListAdapter extends BaseAdapter{
         }
     }
 
+
     public boolean addStatus(StatusMessage status) {
-        StatusItemViewHolder view = new StatusItemViewHolder(status);
-        viewHolders.add(0,view);
+        List<StatusMessage> newlist = new ArrayList<StatusMessage>();
+        newlist.add(status);
+        for ( StatusItemViewHolder item : viewHolders) {
+            newlist.add(item.message);
+        }
+        swap(newlist);
         return true;
     }
     public boolean deleteStatus(String uuid) {

@@ -25,6 +25,8 @@ import android.widget.BaseAdapter;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.amulyakhare.textdrawable.util.ColorGenerator;
+
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.message.Group;
 
@@ -54,6 +56,7 @@ public class GroupListAdapter extends BaseAdapter {
         View layout = inflater.inflate(R.layout.group_list_item, null, true);
         TextView group_name   = (TextView) layout.findViewById(R.id.group_name);
         group_name.setText(groupList.get(i).getName());
+        group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
         return layout;
     }
 

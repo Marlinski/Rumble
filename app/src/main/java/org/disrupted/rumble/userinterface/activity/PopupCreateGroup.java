@@ -27,6 +27,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
@@ -46,6 +47,7 @@ public class PopupCreateGroup extends Activity {
     private EditText     groupNameView;
     private CheckBox     privateGroupCheckBox;
     private ImageButton  createGroupButton;
+    private ImageView    groupLock;
 
 
     @Override
@@ -57,7 +59,10 @@ public class PopupCreateGroup extends Activity {
         groupNameView = (EditText)(findViewById(R.id.popup_group_name));
         createGroupButton = (ImageButton)(findViewById(R.id.popup_button_create_group));
         privateGroupCheckBox = (CheckBox)(findViewById(R.id.popup_check_private));
+        groupLock = (ImageView)(findViewById(R.id.group_lock_image));
 
+        groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
+        privateGroupCheckBox.setOnClickListener(displayLock);
         dismiss.setOnClickListener(onDiscardClick);
         createGroupButton.setOnClickListener(onCreateGroup);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
@@ -67,6 +72,16 @@ public class PopupCreateGroup extends Activity {
     protected void onDestroy() {
         super.onDestroy();
     }
+
+    View.OnClickListener displayLock = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if(!privateGroupCheckBox.isChecked())
+                groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
+            else
+                groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
+        }
+    };
 
     View.OnClickListener onDiscardClick = new View.OnClickListener() {
         @Override
