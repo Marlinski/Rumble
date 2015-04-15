@@ -50,6 +50,7 @@
     <string name="action_compose">Compose</string>
     <string name="action_network">Networking</string>
     <string name="action_create_group">New Group</string>
+    <string name="action_scan_qrcode">Scan Group</string>
     <string name="action_new_discussion">New Discussion</string>
 
     <string name="popup_compose_title">Compose</string>

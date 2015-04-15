@@ -30,6 +30,11 @@
         android:orderInCategory="100"
         app:showAsAction="always" />
 
+    <item android:id="@+id/action_scan_qrcode"
+        android:title="@string/action_scan_qrcode"
+        android:icon="@drawable/ic_scan_qrcode"
+        android:orderInCategory="100"
+        app:showAsAction="always" />
 
     <item android:id="@+id/action_create_group"
         android:title="@string/action_create_group"

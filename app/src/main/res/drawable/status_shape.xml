@@ -23,7 +23,7 @@
     android:insetRight="-2dp"
     android:insetLeft="-2dp">
 
-    <shape android:shape="rectangle"   >
+    <shape android:shape="rectangle">
         <solid
             android:color="@color/pure_white" >
         </solid>
