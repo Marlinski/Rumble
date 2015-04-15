@@ -18,9 +18,15 @@
 package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.os.Bundle;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Point;
 import android.util.Base64;
+import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,15 +35,23 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.aztec.AztecWriter;
+import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.qrcode.encoder.QRCode;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.userinterface.activity.DisplayQRCode;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 /**
  * @author Marlinski
@@ -98,8 +112,36 @@ public class GroupListAdapter extends BaseAdapter {
                     byteBuffer.put((byte)gid.length());
                     byteBuffer.put(gid.getBytes());
                     byteBuffer.put(key);
-                    String barcode = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
-                    IntentIntegrator.shareText(activity,barcode);
+                    String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
+
+                    try {
+                        IntentIntegrator.shareText(activity, buffer);
+                    } catch(ActivityNotFoundException notexists) {
+                        Log.d(TAG, "Barcode scanner is not installed on this device");
+                        int size = 200;
+                        Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
+                        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+                        QRCodeWriter qrCodeWriter = new QRCodeWriter();
+                        try {
+                            BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
+                            Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+
+                            if(image != null) {
+                                for (int i = 0; i < size; i++) {
+                                    for (int j = 0; j < size; j++) {
+                                        image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
+                                    }
+                                }
+                                Intent intent = new Intent(activity, DisplayQRCode.class);
+                                intent.putExtra("EXTRA_GROUP_NAME", name);
+                                intent.putExtra("EXTRA_BUFFER", buffer);
+                                intent.putExtra("EXTRA_QRCODE", image);
+                                activity.startActivity(intent);
+                            }
+                        }catch(WriterException ignore) {
+                        }
+                    }
+
                 }
             });
         }

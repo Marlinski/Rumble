@@ -89,7 +89,7 @@ public class GroupDatabase  extends  Database{
         contentValues.put(PRIVATE, group.isIsprivate() ? 1 : 0);
         contentValues.put(DESC, group.getDesc());
 
-        long count = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        long count = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
         if(count > 0)
             EventBus.getDefault().post(new GroupInsertedEvent(group));
 
