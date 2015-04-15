@@ -33,22 +33,30 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.contact.Contact;
+import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 
 import de.greenrobot.event.EventBus;
 
@@ -66,7 +74,10 @@ public class PopupCompose extends Activity {
     private ImageButton choosePicture;
     private ImageButton send;
     private Bitmap imageBitmap;
+    private ImageView groupLock;
 
+    private Spinner spinner;
+    private GroupSpinnerAdapter spinnerArrayAdapter;
 
     private String mCurrentPhotoFile;
 
@@ -75,12 +86,22 @@ public class PopupCompose extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.popup_compose_status);
 
+        imageBitmap = null;
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
         compose = (EditText)(findViewById(R.id.popup_user_status));
         takePicture = (ImageButton)(findViewById(R.id.popup_take_picture));
         choosePicture = (ImageButton)(findViewById(R.id.popup_choose_image));
         send = (ImageButton)(findViewById(R.id.popup_button_send));
-        imageBitmap = null;
+        spinner = (Spinner)(findViewById(R.id.group_list_spinner));
+        groupLock = (ImageView)(findViewById(R.id.group_lock_image));
+
+
+        groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
+
+        spinnerArrayAdapter = new GroupSpinnerAdapter();
+        spinner.setAdapter(spinnerArrayAdapter);
+        spinner.setOnItemSelectedListener(spinnerArrayAdapter);
+        getGroupList();
 
         dismiss.setOnClickListener(onDiscardClick);
         takePicture.setOnClickListener(onTakePictureClick);
@@ -88,6 +109,23 @@ public class PopupCompose extends Activity {
         send.setOnClickListener(onClickSend);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
     }
+
+    public void getGroupList() {
+        DatabaseFactory.getGroupDatabase(this).getGroups(onGroupsLoaded);
+    }
+    private DatabaseExecutor.ReadableQueryCallback onGroupsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(final Object result) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ArrayList<Group> answer = (ArrayList<Group>) (result);
+                    spinnerArrayAdapter.swap(answer);
+                    spinnerArrayAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
 
     @Override
     protected void onDestroy() {
@@ -180,6 +218,11 @@ public class PopupCompose extends Activity {
                 StatusMessage statusMessage = new StatusMessage(message, localContact.getName(), now);
                 statusMessage.setUserRead(true);
 
+                String group = spinnerArrayAdapter.getSelected();
+                if(group == null)
+                    return;
+                statusMessage.setGroup(group);
+
                 if (mCurrentPhotoFile != null) {
                     statusMessage.setFileName(mCurrentPhotoFile);
 
@@ -204,5 +247,61 @@ public class PopupCompose extends Activity {
             }
         }
     };
+
+    public class GroupSpinnerAdapter extends ArrayAdapter<String> implements AdapterView.OnItemSelectedListener{
+
+        private ArrayList<Group> groupList;
+        private String selectedItem;
+
+        public GroupSpinnerAdapter() {
+            super(PopupCompose.this, android.R.layout.simple_spinner_item);
+            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            groupList = new ArrayList<Group>();
+            selectedItem = null;
+        }
+
+        public String getSelected() {
+            return selectedItem;
+        }
+
+        @Override
+        public String getItem(int position) {
+            return groupList.get(position).getName();
+        }
+
+        @Override
+        public int getCount() {
+            return groupList.size();
+        }
+
+        public void swap(ArrayList<Group> array) {
+            this.groupList = array;
+            if(array != null)
+                selectedItem = array.get(0).getName();
+            else
+                selectedItem = null;
+        }
+
+        @Override
+        public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+            String clicked = (String)adapterView.getItemAtPosition(i);
+            Iterator<Group> it = groupList.iterator();
+            while(it.hasNext()) {
+                Group item = it.next();
+                if(item.getName().equals(clicked)) {
+                    if(!item.isIsprivate())
+                        groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
+                    else
+                        groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
+                    selectedItem = clicked;
+                }
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> adapterView) {
+        }
+
+    }
 
 }

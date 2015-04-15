@@ -31,7 +31,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.message.Group;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
 
 import de.greenrobot.event.EventBus;
@@ -43,11 +43,11 @@ public class PopupCreateGroup extends Activity {
 
     private static final String TAG = "PopupCreateGroup";
 
-    private LinearLayout dismiss;
-    private EditText     groupNameView;
-    private CheckBox     privateGroupCheckBox;
-    private ImageButton  createGroupButton;
-    private ImageView    groupLock;
+    private LinearLayout         dismiss;
+    private EditText             groupNameView;
+    private CheckBox             privateGroupCheckBox;
+    private ImageButton          createGroupButton;
+    private ImageView            groupLock;
 
 
     @Override
@@ -61,11 +61,13 @@ public class PopupCreateGroup extends Activity {
         privateGroupCheckBox = (CheckBox)(findViewById(R.id.popup_check_private));
         groupLock = (ImageView)(findViewById(R.id.group_lock_image));
 
-        groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
+        groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
         privateGroupCheckBox.setOnClickListener(displayLock);
         dismiss.setOnClickListener(onDiscardClick);
         createGroupButton.setOnClickListener(onCreateGroup);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE|WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+
+
     }
 
     @Override
@@ -79,7 +81,7 @@ public class PopupCreateGroup extends Activity {
             if(!privateGroupCheckBox.isChecked())
                 groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
             else
-                groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
+                groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
         }
     };
 

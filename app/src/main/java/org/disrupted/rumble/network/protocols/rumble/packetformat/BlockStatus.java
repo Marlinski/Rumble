@@ -19,9 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.util.Log;
-
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;

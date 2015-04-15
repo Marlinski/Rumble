@@ -17,17 +17,17 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
+package org.disrupted.rumble.database.objects;
 
 /**
  * @author Marlinski
  */
-public class UserDeleteStatus extends UserInteractionEvent {
+public abstract class Message {
 
-    public String uuid;
+    protected String messageType;
 
-    public UserDeleteStatus(String uuid) {
-        this.uuid = uuid;
+    public String getMessageType() {
+        return messageType;
     }
 
 }

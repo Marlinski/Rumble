@@ -22,7 +22,7 @@ package org.disrupted.rumble.database;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.network.events.FileReceivedEvent;
 import org.disrupted.rumble.network.events.StatusReceivedEvent;
 import org.disrupted.rumble.network.events.StatusSentEvent;

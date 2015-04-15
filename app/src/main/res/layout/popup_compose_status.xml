@@ -42,13 +42,12 @@
 
             <LinearLayout
                 android:orientation="horizontal"
-                android:layout_weight="5"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <LinearLayout
                     android:id="@+id/popup_dismiss"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
+                    android:layout_height="wrap_content"
                     android:background="@drawable/popup_button">
                     <ImageView
                         android:layout_width="wrap_content"
@@ -68,6 +67,25 @@
                         android:layout_gravity="center_vertical"
                         android:text="@string/popup_compose_title"/>
                 </LinearLayout>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="10"/>
+                <ImageView
+                    android:id="@+id/group_lock_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="5dp"
+                    android:gravity="center"
+                    android:layout_gravity="center_vertical"/>
+                <Spinner
+                    android:id="@+id/group_list_spinner"
+                    android:layout_gravity="center_vertical"
+                    android:minWidth="100dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
             </LinearLayout>
 
             <View

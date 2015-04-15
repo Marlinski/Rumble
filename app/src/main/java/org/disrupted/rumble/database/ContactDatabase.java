@@ -46,8 +46,6 @@ public class ContactDatabase extends Database  {
     public static final String NAME         = "name";
     public static final String AVATAR       = "avatar";
     public static final String LOCALUSER    = "local";
-    public static final String BTID         = "bluetoothID";
-    public static final String WIFIID       = "wifiID";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID        + " INTEGER PRIMARY KEY, "
@@ -55,8 +53,6 @@ public class ContactDatabase extends Database  {
                  + NAME      + " TEXT, "
                  + AVATAR    + " TEXT, "
                  + LOCALUSER + " INTEGER, "
-                 + BTID      + " TEXT, "
-                 + WIFIID    + " TEXT "
                  + " );";
 
     public abstract class ContactsQueryCallback implements DatabaseExecutor.ReadableQueryCallback {

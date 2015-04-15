@@ -53,6 +53,7 @@
     <string name="action_new_discussion">New Discussion</string>
 
     <string name="popup_compose_title">Compose</string>
+    <string name="popup_compose_group">Group: </string>
     <string name="popup_create_group">Create new group</string>
     <string name="popup_create_group_checkbox">Private Group</string>
 

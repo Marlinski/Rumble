@@ -17,7 +17,7 @@
 
 package org.disrupted.rumble.userinterface.events;
 
-import org.disrupted.rumble.message.Group;
+import org.disrupted.rumble.database.objects.Group;
 
 /**
  * @author Marlinski

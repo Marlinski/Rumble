@@ -5,17 +5,16 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
-import org.disrupted.rumble.network.services.exceptions.ServiceAlreadyStarted;
 import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
 import org.disrupted.rumble.network.services.exceptions.WorkerAlreadyBinded;
 import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
-import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -204,6 +203,9 @@ public class PushService {
 
         private void initStatuses() {
             StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
+            options.filterFlags = StatusDatabase.StatusQueryOption.FILTER_GROUP;
+            options.groupList = new ArrayList<String>();
+            options.groupList.add(GroupDatabase.DEFAULT_PUBLIC_GROUP);
             options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
         }

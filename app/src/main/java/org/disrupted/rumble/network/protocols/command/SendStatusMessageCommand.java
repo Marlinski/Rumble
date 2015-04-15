@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.command;
 
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 
 /**
  * @author Marlinski

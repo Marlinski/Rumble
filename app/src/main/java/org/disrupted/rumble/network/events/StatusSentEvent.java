@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 
 import java.util.List;
 

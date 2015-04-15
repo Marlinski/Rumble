@@ -1,8 +1,6 @@
 package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.message.StatusMessage;
-
-import java.util.List;
+import org.disrupted.rumble.database.objects.StatusMessage;
 
 /**
  * This event holds every information known on a received transmission that happened successfully.

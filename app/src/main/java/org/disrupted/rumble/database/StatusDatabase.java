@@ -30,7 +30,7 @@ import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
@@ -118,7 +118,7 @@ public class StatusDatabase extends Database {
         public boolean      like;
         public long         filterFlags;
         public List<String> hashtagFilters;
-        public String       groupName;
+        public List<String> groupList;
         public String       userName;
         public int          hopLimit;
         public long         from_toc;
@@ -132,7 +132,7 @@ public class StatusDatabase extends Database {
             read = false;
             like = false;
             hashtagFilters = null;
-            groupName = GroupDatabase.DEFAULT_GROUP;
+            groupList = null;
             userName = null;
             from_toc = 0;
             from_toa = 0;
@@ -182,14 +182,35 @@ public class StatusDatabase extends Database {
         boolean groupby = false;
         boolean firstwhere = true;
         List<String> argumentList = new ArrayList<String>();
+
+        /* Join The lists */
+        boolean hashtagJoined = false;
+        boolean groupJoined = false;
         if (((options.filterFlags & options.FILTER_TAG) == options.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
             query.append(
                     " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
                     " ON s." + StatusDatabase.ID + " = m." + StatusTagDatabase.SID +
                     " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
-                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID +
-                    " WHERE ( ( lower(h." + HashtagDatabase.HASHTAG + ") = lower(?)");
+                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID);
+            hashtagJoined = true;
+        }
 
+        if (((options.filterFlags & options.FILTER_GROUP) == options.FILTER_GROUP) && (options.groupList != null) && (options.groupList.size() > 0)) {
+            query.append(
+                    " JOIN " + GroupDatabase.TABLE_NAME + " g" +
+                    " ON s." + StatusDatabase.GROUP + " = g." + GroupDatabase.NAME);
+            groupJoined = true;
+        }
+
+        /* Add the constraints */
+        if (options.filterFlags > 0) {
+            query.append(" WHERE ( ");
+        }
+
+
+        if(hashtagJoined) {
+            firstwhere = false;
+            query.append( " ( lower(h." + HashtagDatabase.HASHTAG + ") = lower(?) ");
             Iterator<String> it = options.hashtagFilters.iterator();
             String hashtag = it.next();
             argumentList.add(hashtag);
@@ -200,17 +221,22 @@ public class StatusDatabase extends Database {
             }
             query.append(" ) ");
             groupby = true;
-            firstwhere = false;
-        } else if (options.filterFlags > 0) {
-            query.append(" WHERE ( ");
         }
 
-        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP)) {
+        if(groupJoined) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" lower(s." + StatusDatabase.GROUP + ") = lower(?) ");
-            argumentList.add(options.groupName);
+            query.append( " ( lower(s." + StatusDatabase.GROUP + ") = lower(?) ");
+            Iterator<String> it = options.groupList.iterator();
+            String group = it.next();
+            argumentList.add(group);
+            while (it.hasNext()) {
+                group = it.next();
+                query.append(" OR lower(h." + StatusDatabase.GROUP + ") = lower(?) ");
+                argumentList.add(group);
+            }
+            query.append(" ) ");
         }
 
         if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.userName != null)) {

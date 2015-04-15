@@ -20,7 +20,7 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
 import org.json.JSONObject;

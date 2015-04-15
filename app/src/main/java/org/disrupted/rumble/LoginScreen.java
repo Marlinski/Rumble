@@ -32,6 +32,8 @@ import android.widget.TextView;
 import org.disrupted.rumble.contact.Contact;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.GroupDatabase;
+import org.disrupted.rumble.database.objects.Group;
 
 /**
  * @author Marlinski
@@ -65,10 +67,11 @@ public class LoginScreen extends Activity implements View.OnClickListener{
     public void onClick(View view) {
         String username = usernameView.getText().toString();
         if(username != "") {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-            SharedPreferences.Editor ed = prefs.edit();
-            ed.putBoolean(getString(R.string.pref_previously_started), true);
-            ed.commit();
+            try {
+                Group defaultGroup = new Group(GroupDatabase.DEFAULT_PUBLIC_GROUP, false);
+                DatabaseFactory.getGroupDatabase(this).insertGroup(defaultGroup);
+            } catch(Exception impossibleWithPublicGroup){
+            }
 
             Contact localContact = new Contact(username, "", true);
             DatabaseFactory.getContactDatabase(this).insertContact(localContact, callback);
@@ -80,13 +83,20 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         public void onWritableQueryFinished(boolean success) {
             if(success)
                 runOnUiThread(new Runnable() {
-                                  @Override
-                                  public void run() {
-                                      Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
-                                      startActivity(routingActivity);
-                                      finish();
-                                  }
-                              });
+                      @Override
+                      public void run() {
+                          // do not show loginscreen next time
+                          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+                          SharedPreferences.Editor ed = prefs.edit();
+                          ed.putBoolean(getString(R.string.pref_previously_started), true);
+                          ed.commit();
+
+                          // start activity
+                          Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
+                          startActivity(routingActivity);
+                          finish();
+                      }
+                  });
         }
     };
 

@@ -19,15 +19,12 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
-import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,17 +32,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
 
 import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.SubscriptionDatabase;
-import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.userinterface.activity.PopupCompose;
@@ -53,8 +45,7 @@ import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.events.StatusInsertedEvent;
-import org.disrupted.rumble.message.StatusMessage;
+import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
 import java.util.ArrayList;
@@ -167,7 +158,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     public void getStatuses() {
             StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-            options.groupName = GroupDatabase.DEFAULT_GROUP;
             options.answerLimit = 20;
             options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
             options.order_by = StatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;

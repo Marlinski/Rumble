@@ -22,17 +22,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.amulyakhare.textdrawable.util.ColorGenerator;
+import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.message.Group;
+import org.disrupted.rumble.database.objects.Group;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author Marlinski
@@ -55,8 +53,18 @@ public class GroupListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         View layout = inflater.inflate(R.layout.group_list_item, null, true);
         TextView group_name   = (TextView) layout.findViewById(R.id.group_name);
+        ImageView group_lock   = (ImageView) layout.findViewById(R.id.group_lock_image);
+
         group_name.setText(groupList.get(i).getName());
-        group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
+        //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
+        if(groupList.get(i).isIsprivate())
+            Picasso.with(context)
+                    .load(R.drawable.ic_lock_grey600_24dp)
+                    .into(group_lock);
+        else
+            Picasso.with(context)
+                    .load(R.drawable.ic_lock_open_grey600_24dp)
+                    .into(group_lock);
         return layout;
     }
 

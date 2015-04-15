@@ -21,7 +21,6 @@ package org.disrupted.rumble;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -44,15 +43,14 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
-import org.disrupted.rumble.database.events.StatusDeletedEvent;
-import org.disrupted.rumble.database.events.StatusInsertedEvent;
-import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.userinterface.fragments.FragmentDirectMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentGroupStatus;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
+
+import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
 
@@ -221,8 +219,7 @@ public class HomeActivity extends ActionBarActivity {
 
     public void refreshNotifications() {
         StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-        options.filterFlags = StatusDatabase.StatusQueryOption.FILTER_GROUP | StatusDatabase.StatusQueryOption.FILTER_READ;
-        options.groupName = GroupDatabase.DEFAULT_GROUP;
+        options.filterFlags = StatusDatabase.StatusQueryOption.FILTER_READ;
         options.read = false;
         options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
         DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onRefreshPublic);

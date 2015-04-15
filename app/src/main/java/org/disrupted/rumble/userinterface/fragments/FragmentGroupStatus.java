@@ -35,11 +35,10 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
-import org.disrupted.rumble.message.Group;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.PopupCreateGroup;
 import org.disrupted.rumble.userinterface.adapter.GroupListAdapter;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
