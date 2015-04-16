@@ -213,7 +213,7 @@ public class StatusDatabase extends Database {
 
         if(hashtagJoined) {
             firstwhere = false;
-            query.append(HashtagDatabase.HASHTAG +" IN ( lower(?) ");
+            query.append(" h."+HashtagDatabase.HASHTAG +" IN ( lower(?) ");
             Iterator<String> it = options.hashtagFilters.iterator();
             argumentList.add(it.next());
             while (it.hasNext()) {
@@ -228,7 +228,7 @@ public class StatusDatabase extends Database {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(StatusDatabase.GROUP +" IN ( lower(?) ");
+            query.append(" g."+GroupDatabase.NAME +" IN ( lower(?) ");
             Iterator<String> it = options.groupList.iterator();
             argumentList.add(it.next());
             while (it.hasNext()) {
@@ -242,12 +242,11 @@ public class StatusDatabase extends Database {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(StatusDatabase.ID + "  NOT IN ( ");
-            query.append("  SELECT "+ForwarderDatabase.ID+" FROM "+ForwarderDatabase.TABLE_NAME+" f ");
+            query.append(" s."+StatusDatabase.ID + "  NOT IN ( ");
+            query.append("  SELECT f."+ForwarderDatabase.ID+" FROM "+ForwarderDatabase.TABLE_NAME+" f ");
             query.append("  WHERE f."+ForwarderDatabase.RECEIVEDBY+" = ? ");
             argumentList.add(options.peerName);
             query.append(" ) ");
-            argumentList.add(options.authorName);
         }
 
         if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorName != null)) {
@@ -324,6 +323,9 @@ public class StatusDatabase extends Database {
         }
 
         Log.d(TAG, "[Q] query: "+query.toString());
+        for(String argument : argumentList) {
+            Log.d(TAG, argument+" ");
+        }
 
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));

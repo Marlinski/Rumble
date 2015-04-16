@@ -237,6 +237,7 @@ public class PopupCompose extends Activity {
                 }
 
                 EventBus.getDefault().post(new UserComposeStatus(statusMessage));
+                statusMessage.discard();
             } catch (Exception e) {
                 Log.e(TAG,"[!] "+e.getMessage());
             } finally {

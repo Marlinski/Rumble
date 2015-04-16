@@ -65,10 +65,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         this.bluetoothNeighbour = (BluetoothNeighbour)con.getLinkLayerNeighbour();
     }
 
-    public BluetoothNeighbour getBluetoothNeighbour() {
-        return bluetoothNeighbour;
-    }
-
     @Override
     public boolean isWorking() {
         return working;
@@ -113,51 +109,85 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             connectionState.notConnected();
     }
 
+
+
     @Override
     public void startWorker() {
-        if(working)
+        if (working)
             return;
         working = true;
 
         RumbleBTState connectionState = protocol.getBTState(con.getRemoteLinkLayerAddress());
 
         try {
-            // this is to prevent race condition that happen when server
-            // and client connect at the same time
-            connectionState.lockWorker.lock();
+
+            if (con instanceof BluetoothClientConnection) {
+                if (!connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTION_SCHEDULED))
+                    throw new RumbleBTState.StateException();
+
+                ((BluetoothClientConnection) con).waitScannerToStop();
+
+                try {
+                    connectionState.lock.lock();
+                    connectionState.connectionInitiated(getWorkerIdentifier());
+                } catch (RumbleBTState.StateException e) {
+                    throw e;
+                } finally {
+                    connectionState.lock.unlock();
+                }
+            }
 
             con.connect();
-            // hack to synchronise the client and server
-            if(con instanceof BluetoothClientConnection)
-                con.getInputStream().read(new byte[1],0,1);
 
-            connectionState.connected(this.getWorkerIdentifier());
-            EventBus.getDefault().post(new NeighbourConnected(
-                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                            getProtocolIdentifier())
-            );
-            protocol.workerConnected(this);
-        } catch (IOException exception) {
-            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + connectionState.printState()+exception.getMessage());
-        } catch (LinkLayerConnectionException exception) {
-            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + connectionState.printState()+exception.getMessage());
-        } catch (RumbleBTState.StateException e) {
-            Log.e(TAG, "[!] FAILED STATE: " + getWorkerIdentifier() + connectionState.printState());
-        } finally {
-            connectionState.lockWorker.unlock();
+            try {
+                connectionState.lock.lock();
+                connectionState.connected(getWorkerIdentifier());
+            } catch (RumbleBTState.StateException e) {
+                throw e;
+            } finally {
+                connectionState.lock.unlock();
+            }
+
+            // hack to synchronise the client and server
+            if (con instanceof BluetoothClientConnection)
+                con.getInputStream().read(new byte[1], 0, 1);
+
+        } catch (RumbleBTState.StateException state) {
+            Log.e(TAG, "[-] client connected while trying to connect");
+            stopWorker();
+            return;
+        } catch (LinkLayerConnectionException llce) {
+            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + " - " + llce.getMessage());
+            stopWorker();
+            connectionState.notConnected();
+            return;
+        } catch (IOException io) {
+            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + " - " + io.getMessage());
+            stopWorker();
+            connectionState.notConnected();
+            return;
         }
 
-        try {
-            onWorkerConnected();
+        Log.d(TAG, "[+] connected");
+        EventBus.getDefault().post(new NeighbourConnected(
+                        new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                        getProtocolIdentifier())
+        );
 
+        try {
+            // we signal rumble that we are connected and ready to receive commands
+            protocol.workerConnected(this);
+
+            // we start the command executor  as well as the receiving thread
+            onWorkerConnected();
+        } finally {
             protocol.workerDisconnected(this);
+            stopWorker();
             connectionState.notConnected();
             EventBus.getDefault().post(new NeighbourDisconnected(
                             new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
                             getProtocolIdentifier())
             );
-        } finally {
-            stopWorker();
         }
     }
 
@@ -206,9 +236,9 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         if(command instanceof SendStatusMessageCommand) {
             StatusMessage statusMessage = ((SendStatusMessageCommand) command).getStatus();
             try {
-                Log.d(TAG, "[+] sending status "+statusMessage.toString());
                 Block blockStatus = new BlockStatus(statusMessage);
                 blockStatus.writeBlock(con);
+                blockStatus.dismiss();
             }
             catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending");
@@ -228,7 +258,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException ignore) {
-            Log.d(TAG, "[-]"+ignore.getMessage());
+            //Log.d(TAG, "[-]"+ignore.getMessage());
         }
     }
 

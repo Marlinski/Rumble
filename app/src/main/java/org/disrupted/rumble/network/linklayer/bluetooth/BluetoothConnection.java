@@ -74,11 +74,15 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException, InputOutputStreamException{
-        InputStream input = mmConnectedSocket.getInputStream();
-        if(input == null)
+    public InputStream getInputStream() throws InputOutputStreamException{
+        try {
+            InputStream input = mmConnectedSocket.getInputStream();
+            if (input == null)
+                throw new InputOutputStreamException();
+            return input;
+        } catch (IOException e) {
             throw new InputOutputStreamException();
-        return input;
+        }
     }
 
     @Override
@@ -92,11 +96,15 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     }
 
     @Override
-    public OutputStream getOutputStream() throws IOException, InputOutputStreamException {
-        OutputStream output = mmConnectedSocket.getOutputStream();
-        if(output == null)
+    public OutputStream getOutputStream() throws InputOutputStreamException {
+        try {
+            OutputStream output = mmConnectedSocket.getOutputStream();
+            if (output == null)
+                throw new InputOutputStreamException();
+            return output;
+        } catch (IOException e) {
             throw new InputOutputStreamException();
-        return output;
+        }
     }
 
     @Override

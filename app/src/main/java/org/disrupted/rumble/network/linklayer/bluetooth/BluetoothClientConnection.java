@@ -39,8 +39,6 @@ import de.greenrobot.event.EventBus;
 
 /**
  * BluetoothClient tries to establish a connection with a remote Bluetooth Device
- * If the BluetoothAdapter is performing a scan procedure, it waits for it to finish
- * in order to avoid connection issue.
  *
  * @author Marlinski
  */
@@ -66,21 +64,28 @@ public class BluetoothClientConnection extends BluetoothConnection {
         return "Bluetooth Client: "+remoteMacAddress;
     }
 
+
+    /*
+     * If the BluetoothAdapter is performing a scan procedure, it should wait for it to finish
+     * in order to avoid connection issue.
+     */
+    public void waitScannerToStop() throws LinkLayerConnectionException{
+        if (BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).isDiscovering()) {
+            EventBus.getDefault().register(this);
+            try {
+                latch.await();
+            } catch(InterruptedException e) {
+                throw new InterruptedLinkLayerConnection();
+            }
+            EventBus.getDefault().unregister(this);
+        }
+    }
+
+
     @Override
     public void connect() throws LinkLayerConnectionException {
-
         mmBluetoothDevice = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).getRemoteDevice(this.remoteMacAddress);
         if (mmBluetoothDevice == null) throw new NoRemoteBluetoothDevice();
-
-        if (BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).isDiscovering()) {
-                EventBus.getDefault().register(this);
-                try {
-                    latch.await();
-                } catch(InterruptedException e) {
-                    throw new InterruptedLinkLayerConnection();
-                }
-                EventBus.getDefault().unregister(this);
-        }
 
         try {
             if (secureSocket)

@@ -42,8 +42,8 @@ public class StatusMessage extends Message{
     protected String      group;
     protected String      status;
     protected Set<String> hashtagSet;
-    protected String      attachedFile; //todo: move it to file database
-    protected long        fileSize;
+    protected String      attachedFile;
+    protected long        fileSize; // firechat only
     protected long        timeOfCreation;
     protected long        timeOfArrival;
     protected long        ttl;
@@ -58,6 +58,27 @@ public class StatusMessage extends Message{
     protected boolean hasUserRead;
     protected boolean hasUserLiked;
     protected boolean hasUserSaved;
+
+
+    public StatusMessage(StatusMessage message) {
+        this.dbid = message.getdbId();
+        this.uuid = message.getUuid();
+        this.author = message.getAuthor();
+        this.group = message.getGroup();
+        this.status = message.getPost();
+        this.hashtagSet = new HashSet<String>(message.getHashtagSet());
+        this.attachedFile = message.getFileName();
+        this.fileSize = message.getFileSize();
+        this.timeOfCreation = message.getTimeOfCreation();
+        this.timeOfArrival = message.getTimeOfArrival();
+        this.ttl = message.getTTL();
+        this.hopCount = message.getHopCount();
+        this.hopLimit = message.getHopLimit();
+        this.like = message.getLike();
+        this.replication  = message.getReplication();
+        this.duplicate = message.getDuplicate();
+        this.forwarderList = new HashSet<String>(message.getForwarderList());
+    }
 
 
     public StatusMessage(String post, String author, long timeOfCreation) {
@@ -76,7 +97,7 @@ public class StatusMessage extends Message{
         }
 
         attachedFile   = "";
-        fileSize       = 0;
+        fileSize = 0;
         this.timeOfCreation = timeOfCreation;
         timeOfArrival  = (System.currentTimeMillis() / 1000L);
         hopCount       = 0;
@@ -93,42 +114,42 @@ public class StatusMessage extends Message{
     }
 
 
-    public long    getdbId() {              return this.dbid; }
-    public String  getUuid() {              return this.uuid; }
-    public String  getAuthor(){             return this.author; }
-    public String  getGroup() {             return this.group; }
-    public String  getPost(){               return this.status; }
-    public Set<String> getHashtagSet(){     return this.hashtagSet; }
-    public long    getTimeOfCreation(){     return this.timeOfCreation; }
-    public long    getTimeOfArrival(){      return this.timeOfArrival; }
-    public long    getHopCount(){           return this.hopCount; }
-    public long    getHopLimit(){           return this.hopLimit; }
-    public Set<String> getForwarderList(){  return this.forwarderList; }
-    public long    getTTL(){                return this.ttl;}
-    public String  getFileName(){           return this.attachedFile; }
-    public long    getFileSize(){           return this.fileSize; }
-    public long    getLike(){               return like; }
-    public long    getReplication(){        return replication; }
-    public long    getDuplicate(){          return duplicate; }
+    public long    getdbId() {              return this.dbid;                  }
+    public String  getUuid() {              return this.uuid;                  }
+    public String  getAuthor(){             return this.author;                }
+    public String  getGroup() {             return this.group;                 }
+    public String  getPost(){               return this.status;                }
+    public Set<String> getHashtagSet(){     return this.hashtagSet;            }
+    public long    getTimeOfCreation(){     return this.timeOfCreation;        }
+    public long    getTimeOfArrival(){      return this.timeOfArrival;         }
+    public int     getHopCount(){           return this.hopCount;              }
+    public int     getHopLimit(){           return this.hopLimit;              }
+    public Set<String> getForwarderList(){  return this.forwarderList;         }
+    public long    getTTL(){                return this.ttl;                   }
+    public String  getFileName(){           return this.attachedFile;          }
+    public long    getFileSize() {          return this.fileSize;              }
+    public int     getLike(){               return like;                       }
+    public int     getReplication(){        return replication;                }
+    public int     getDuplicate(){          return duplicate;                  }
+    public boolean hasAttachedFile(){       return (!attachedFile.equals("")); }
+    public boolean hasUserLiked() {         return hasUserLiked;               }
+    public boolean hasUserReadAlready() {   return hasUserRead;                }
+    public boolean hasUserSaved() {         return hasUserSaved;               }
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
         return forwarderList.contains(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
     }
-    public boolean hasAttachedFile(){       return (!attachedFile.equals("")); }
-    public boolean hasUserLiked() {         return hasUserLiked; }
-    public boolean hasUserReadAlready() {   return hasUserRead; }
-    public boolean hasUserSaved() {         return hasUserSaved; }
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
     public void setUuid(String uuid) {            this.uuid           = uuid;     }
     public void setGroup(String group) {          this.group           = group;   }
     public void setFileName(String filename){     this.attachedFile   = filename; }
-    public void setFileSize(long size) {          this.fileSize       = size;     }
+    public void setFileSize(long fileSize) {      this.fileSize = fileSize;       }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
     public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
     public void setHopCount(int hopcount){        this.hopCount       = hopcount; }
     public void setHopLimit(int hopLimit){        this.hopLimit       = hopLimit; }
-    public void setLike(int like){                this.like           = like;    }
-    public void addLike(){                        this.like++;    }
+    public void setLike(int like){                this.like           = like;     }
+    public void addLike(){                        this.like++;                    }
     public void setTTL(long ttl){                 this.ttl            = ttl;      }
     public void setHashtagSet(Set<String> hashtagSet) {
         if(hashtagSet.size() > 0)

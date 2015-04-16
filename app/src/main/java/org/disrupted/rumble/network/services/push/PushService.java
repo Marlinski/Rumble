@@ -176,6 +176,7 @@ public class PushService {
                         StatusMessage message = pickMessage();
                         Log.d(TAG, "message picked");
                         worker.execute(new SendStatusMessageCommand(message));
+                        message.discard();
                         //todo just for the sake of debugging
                         sleep(1000, 0);
                     }
@@ -246,6 +247,11 @@ public class PushService {
         }
 
         private boolean add(StatusMessage message){
+            if(message.isForwarder(
+                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
+                    worker.getProtocolIdentifier()))
+                return false;
+
             final ReentrantLock putlock = this.putLock;
             putlock.lock();
             try {
@@ -285,6 +291,7 @@ public class PushService {
                     return;
             }
 
+            ArrayList<Integer> toDelete = new ArrayList<Integer>();
             Iterator<Integer> it = statuses.iterator();
             while(it.hasNext()) {
                 Integer id = it.next();
@@ -293,7 +300,7 @@ public class PushService {
                 float score = computeScore(max, interestVector);
                 if(score <= threshold) {
                     message.discard();
-                    statuses.remove(Integer.valueOf((int)message.getdbId()));
+                    toDelete.add(Integer.valueOf((int)message.getdbId()));
                     continue;
                 }
 
@@ -310,6 +317,11 @@ public class PushService {
                 } else
                     message.discard();
             }
+
+            for(Integer i : toDelete) {
+                statuses.remove(i);
+            }
+
         }
 
         /*
@@ -336,6 +348,8 @@ public class PushService {
                         int index = random.nextInt(statuses.size());
                         long id = statuses.get(index);
                         message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(id);
+                        if(message == null)
+                            continue;
 
                         // get max probability Pmax
                         float maxScore = computeScore(max, interestVector);
@@ -379,7 +393,9 @@ public class PushService {
         }
 
         public void onEvent(StatusInsertedEvent event) {
-            add(event.status);
+            StatusMessage message = new StatusMessage(event.status);
+            add(message);
+            message.discard();
         }
     }
 }

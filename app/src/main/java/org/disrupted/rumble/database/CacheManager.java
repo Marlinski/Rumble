@@ -83,27 +83,31 @@ public class CacheManager {
     }
 
     public void onEvent(StatusSentEvent event) {
+        Log.d(TAG, "[+] status sent: "+event.status.toString());
+        StatusMessage status = new StatusMessage(event.status);
         Iterator<String> it = event.recipients.iterator();
         while(it.hasNext())
-            event.status.addForwarder(it.next(), event.protocolID);
-        event.status.addReplication(event.recipients.size());
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status, null);
+            status.addForwarder(it.next(), event.protocolID);
+        status.addReplication(event.recipients.size());
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(status, null);
     }
 
     public void onEvent(StatusReceivedEvent event) {
+        Log.d(TAG, "[+] received status: "+event.status.toString());
         StatusMessage exists = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
-            event.status.addForwarder(event.sender, event.protocolID);
-            event.status.addDuplicate(1);
-            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(event.status, null);
-            Log.d(TAG, "[+] status inserted: "+event.status.toString());
+            StatusMessage status = new StatusMessage(event.status);
+            status.addForwarder(event.sender, event.protocolID);
+            status.addDuplicate(1);
+            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
+            Log.d(TAG, "[+] status inserted: "+status.toString());
         } else {
             exists.addForwarder(event.sender, event.protocolID);
             exists.addDuplicate(1);
             if(event.status.getLike() > 0)
                 exists.addLike();
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
-            Log.d(TAG, "[+] status updated: "+event.status.toString());
+            Log.d(TAG, "[+] status updated: "+exists.toString());
         }
     }
     public void onEvent(FileReceivedEvent event) {
@@ -112,7 +116,6 @@ public class CacheManager {
             exists.setFileName(event.filename);
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
             Log.d(TAG, "[+] status updated: " + exists.getUuid());
-            exists.discard();
             return;
         }
         try {
@@ -155,7 +158,8 @@ public class CacheManager {
         if(event.status == null)
             return;
         Log.d(TAG, " [.] user composed status: "+event.status.toString());
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(event.status, null);
+        StatusMessage status = new StatusMessage(event.status);
+        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
     }
     public void onEvent(UserCreateGroup event) {
         if(event.group == null)

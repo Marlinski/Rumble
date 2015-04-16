@@ -135,7 +135,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
                     status = parser.networkToStatus(jsonString);
-                    if(status.getFileSize() > 0) {
+                    if(status.hasAttachedFile()) {
                         Log.d(TAG, "we do not accept attached file yet");
                         continue;
                     }

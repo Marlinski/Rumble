@@ -224,8 +224,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                         String filename = downloadFile(status.getFileSize());
                         if (filename != null) {
                             status.setFileName(filename);
-                        } else {
-                            status.setFileName("");
                         }
 
                         /*
@@ -241,8 +239,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                                         status.getFileSize()+jsonString.length(),
                                         timeToTransfer)
                         );
-
-                        Log.d(TAG, "Status received from Network:\n" + status.toString());
+                        status.discard();
 
                     } catch (JSONException ignore) {
                         Log.d(TAG, "malformed JSON");
@@ -363,8 +360,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                         bytesTransfered,
                         timeToTransfer)
                 );
-
-                Log.d(TAG, "Status Sent ("+con.getRemoteLinkLayerAddress()+","+(throughput/1000L)+"): " + statusMessage.toString());
             } catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending: "+ignore.getMessage());
             } catch (InputOutputStreamException e) {

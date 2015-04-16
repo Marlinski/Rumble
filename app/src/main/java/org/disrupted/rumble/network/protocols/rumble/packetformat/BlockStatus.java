@@ -178,6 +178,7 @@ public class BlockStatus extends Block{
                             header.getBlockLength(),
                             timeToTransfer)
             );
+            status.discard();
         } catch (BufferUnderflowException exception) {
             throw new MalformedRumblePacket("buffer too small");
         }

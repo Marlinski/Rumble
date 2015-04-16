@@ -64,7 +64,7 @@ public class RumbleBTServer extends BluetoothServer {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
         RumbleBTState connectionState = protocol.getBTState(neighbour.getLinkLayerAddress());
         try {
-            connectionState.lockWorker.lock();
+            connectionState.lock.lock();
             switch (connectionState.getState()) {
                 case CONNECTED:
                 case CONNECTION_ACCEPTED:
@@ -75,12 +75,18 @@ public class RumbleBTServer extends BluetoothServer {
                     if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
                         Log.d(TAG, "[-] refusing client connection");
                         mmConnectedSocket.close();
+                        return;
                     } else {
-                        Log.d(TAG, "[-] cancelling worker " + connectionState.getConnectionInitiatedWorkerID());
+                        Log.d(TAG, "[-] cancelling initiated connection " + connectionState.getWorkerID());
                         networkCoordinator.stopWorker(
                                 BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                                connectionState.getConnectionInitiatedWorkerID());
+                                connectionState.getWorkerID());
                     }
+                case CONNECTION_SCHEDULED:
+                    Log.d(TAG, "[-] cancelling scheduled worker");
+                    networkCoordinator.stopWorker(
+                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                            connectionState.getWorkerID());
                 case NOT_CONNECTED:
                     // hack to synchronise the client and server
                     mmConnectedSocket.getOutputStream().write(new byte[]{0},0,1);
@@ -95,7 +101,7 @@ public class RumbleBTServer extends BluetoothServer {
         } catch (RumbleBTState.StateException e) {
             Log.e(TAG,"[!] Rumble Bluetooth State Exception");
         } finally {
-            connectionState.lockWorker.unlock();
+            connectionState.lock.unlock();
         }
     }
 
