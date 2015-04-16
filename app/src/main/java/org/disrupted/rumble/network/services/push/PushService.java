@@ -15,6 +15,7 @@ import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
 import org.disrupted.rumble.network.services.exceptions.WorkerAlreadyBinded;
 import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -203,9 +204,13 @@ public class PushService {
 
         private void initStatuses() {
             StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-            options.filterFlags = StatusDatabase.StatusQueryOption.FILTER_GROUP;
+            options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_GROUP;
             options.groupList = new ArrayList<String>();
             options.groupList.add(GroupDatabase.DEFAULT_PUBLIC_GROUP);
+            options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_NEVER_SEND;
+            options.peerName = HashUtil.computeForwarderHash(
+                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
+                    worker.getProtocolIdentifier());
             options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
             DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
         }
@@ -241,10 +246,6 @@ public class PushService {
         }
 
         private boolean add(StatusMessage message){
-            if(message.isForwarder(
-                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
-                    worker.getProtocolIdentifier()))
-                return false;
             final ReentrantLock putlock = this.putLock;
             putlock.lock();
             try {

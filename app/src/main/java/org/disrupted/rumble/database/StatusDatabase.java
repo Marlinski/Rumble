@@ -93,14 +93,15 @@ public class StatusDatabase extends Database {
 
 
     public static class StatusQueryOption {
-        public static final long FILTER_READ  = 0x0001;
-        public static final long FILTER_GROUP = 0x0002;
-        public static final long FILTER_HOPS  = 0x0004;
-        public static final long FILTER_LIKE  = 0x0010;
-        public static final long FILTER_TAG   = 0x0020;
-        public static final long FILTER_USER  = 0x0040;
-        public static final long FILTER_TOC_FROM  = 0x0080;
-        public static final long FILTER_TOA_FROM  = 0x0100;
+        public static final long FILTER_READ       = 0x0001;
+        public static final long FILTER_GROUP      = 0x0002;
+        public static final long FILTER_HOPS       = 0x0004;
+        public static final long FILTER_LIKE       = 0x0008;
+        public static final long FILTER_TAG        = 0x0010;
+        public static final long FILTER_USER       = 0x0020;
+        public static final long FILTER_TOC_FROM   = 0x0040;
+        public static final long FILTER_TOA_FROM   = 0x0080;
+        public static final long FILTER_NEVER_SEND = 0x0100;
 
         public enum QUERY_RESULT {
             COUNT,
@@ -119,10 +120,11 @@ public class StatusDatabase extends Database {
         public long         filterFlags;
         public List<String> hashtagFilters;
         public List<String> groupList;
-        public String       userName;
+        public String       authorName;
         public int          hopLimit;
         public long         from_toc;
         public long         from_toa;
+        public String       peerName;
         public int          answerLimit;
         public ORDER_BY     order_by;
         public QUERY_RESULT query_result;
@@ -133,7 +135,8 @@ public class StatusDatabase extends Database {
             like = false;
             hashtagFilters = null;
             groupList = null;
-            userName = null;
+            authorName = null;
+            peerName = null;
             from_toc = 0;
             from_toa = 0;
             answerLimit = 0;
@@ -235,12 +238,24 @@ public class StatusDatabase extends Database {
             query.append(" ) ");
         }
 
-        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.userName != null)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND) == StatusQueryOption.FILTER_NEVER_SEND) && (options.peerName != null)) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(StatusDatabase.ID + "  NOT IN ( ");
+            query.append("  SELECT "+ForwarderDatabase.ID+" FROM "+ForwarderDatabase.TABLE_NAME+" f ");
+            query.append("  WHERE f."+ForwarderDatabase.RECEIVEDBY+" = ? ");
+            argumentList.add(options.peerName);
+            query.append(" ) ");
+            argumentList.add(options.authorName);
+        }
+
+        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorName != null)) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" lower(s." + StatusDatabase.AUTHOR + ") = lower(?) ");
-            argumentList.add(options.userName);
+            argumentList.add(options.authorName);
         }
 
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
@@ -308,7 +323,7 @@ public class StatusDatabase extends Database {
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
-        //Log.d(TAG, "[Q] query: "+query.toString());
+        Log.d(TAG, "[Q] query: "+query.toString());
 
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
