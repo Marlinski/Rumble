@@ -22,8 +22,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -31,40 +31,47 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.util.FileUtil;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Marlinski
  */
-public class DisplayQRCode extends ActionBarActivity {
+public class DisplayImage extends ActionBarActivity {
 
-    Bitmap bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.display_qrcode_layout);
+        setContentView(R.layout.display_image);
 
+        ImageView image = (ImageView)findViewById(R.id.image);
         Intent intent = getIntent();
-        bitmap = (Bitmap) intent.getParcelableExtra("EXTRA_QRCODE");
-        String name   = (String) intent.getStringExtra("EXTRA_GROUP_NAME");
-        String buffer = (String) intent.getStringExtra("EXTRA_BUFFER");
+        String name   = (String) intent.getStringExtra("IMAGE_NAME");
 
         setTitle(name);
         getSupportActionBar().hide();
 
-        ImageView qrView = (ImageView)findViewById(R.id.qrcode);
-        TextView  bufView = (TextView)findViewById(R.id.buffer);
+        try {
+            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), name);
+            if (!attachedFile.isFile() || !attachedFile.exists())
+                throw new IOException("file does not exists");
 
-        Drawable drawable = new BitmapDrawable(getResources(), bitmap);
-        qrView.setImageDrawable(drawable);
-        bufView.setText(buffer);
+            Picasso.with(this)
+                    .load("file://" + attachedFile.getAbsolutePath())
+                    .fit()
+                    .centerInside()
+                    .into(image);
 
+        } catch(Exception ignore) {
+            finish();
+        }
     }
 
     @Override
     protected void onDestroy() {
-        bitmap.recycle();
-        bitmap = null;
         super.onDestroy();
     }
 }

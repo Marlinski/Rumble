@@ -62,7 +62,7 @@ public class FileUtil {
         file.mkdirs();
 
         if(file.getFreeSpace() < RumbleApplication.MINIMUM_FREE_SPACE_AVAILABLE)
-            throw  new IOException("not enough space available");
+            throw  new IOException("not enough space available ("+file.getFreeSpace()+"/"+RumbleApplication.MINIMUM_FREE_SPACE_AVAILABLE+")");
 
         return file;
     }

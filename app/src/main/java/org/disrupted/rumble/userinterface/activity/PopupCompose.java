@@ -41,6 +41,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
+import com.squareup.picasso.Picasso;
+
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
@@ -70,6 +72,7 @@ public class PopupCompose extends Activity {
 
     private LinearLayout dismiss;
     private EditText    compose;
+    private ImageView   compose_background;
     private ImageButton takePicture;
     private ImageButton choosePicture;
     private ImageButton send;
@@ -89,6 +92,7 @@ public class PopupCompose extends Activity {
         imageBitmap = null;
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
         compose = (EditText)(findViewById(R.id.popup_user_status));
+        compose_background = (ImageView)(findViewById(R.id.popup_user_attached_photo));
         takePicture = (ImageButton)(findViewById(R.id.popup_take_picture));
         choosePicture = (ImageButton)(findViewById(R.id.popup_choose_image));
         send = (ImageButton)(findViewById(R.id.popup_button_send));
@@ -164,7 +168,7 @@ public class PopupCompose extends Activity {
                     );
                     mCurrentPhotoFile = photoFile.getName();
                 } catch (IOException error) {
-                    Log.e(TAG, "[!] cannot create photo file");
+                    Log.e(TAG, "[!] cannot create photo file "+error.getMessage());
                     return;
                 }
                 if(photoFile != null) {
@@ -178,8 +182,15 @@ public class PopupCompose extends Activity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+
             try {
                 File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),mCurrentPhotoFile);
+                Picasso.with(this)
+                        .load("file://"+attachedFile.getAbsolutePath())
+                        .fit()
+                        .centerCrop()
+                        .into(compose_background);
+                /*
                 Bitmap image = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
                 imageBitmap = ThumbnailUtils.extractThumbnail(
                         image,
@@ -194,6 +205,7 @@ public class PopupCompose extends Activity {
                 } else {
                     compose.setBackground(bitmapDrawable);
                 }
+                */
             } catch(IOException ignore){
             }
         }

@@ -28,6 +28,7 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -45,6 +46,7 @@ import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.userinterface.activity.DisplayImage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
@@ -188,7 +190,9 @@ public class StatusListAdapter extends BaseAdapter{
                 // we draw the attached file (if any)
                 if (viewHolder.message.hasAttachedFile()) {
                     try {
-                        File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), viewHolder.message.getFileName());
+                        File attachedFile = new File(
+                                FileUtil.getReadableAlbumStorageDir(),
+                                viewHolder.message.getFileName());
                         if (!attachedFile.isFile() || !attachedFile.exists())
                             throw new IOException("file does not exists");
 
@@ -200,15 +204,18 @@ public class StatusListAdapter extends BaseAdapter{
 
                         viewHolder.attachedView.setVisibility(View.VISIBLE);
 
-                        final Uri uri = Uri.fromFile(attachedFile);
+                        final String name =  viewHolder.message.getFileName();
                         viewHolder.attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
-                                intent.setDataAndType(uri, "image/*");
+                                Log.d(TAG, "trying to open: " + name);
+                                Intent intent = new Intent(activity, DisplayImage.class);
+                                intent.putExtra("IMAGE_NAME", name);
                                 activity.startActivity(intent);
                             }
                         });
+
+
                     } catch (IOException ignore) {
                     }
                 }
