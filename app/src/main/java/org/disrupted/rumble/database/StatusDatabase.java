@@ -210,14 +210,12 @@ public class StatusDatabase extends Database {
 
         if(hashtagJoined) {
             firstwhere = false;
-            query.append( " ( lower(h." + HashtagDatabase.HASHTAG + ") = lower(?) ");
+            query.append(HashtagDatabase.HASHTAG +" IN ( lower(?) ");
             Iterator<String> it = options.hashtagFilters.iterator();
-            String hashtag = it.next();
-            argumentList.add(hashtag);
+            argumentList.add(it.next());
             while (it.hasNext()) {
-                hashtag = it.next();
-                query.append(" OR lower(h." + HashtagDatabase.HASHTAG + ") = lower(?) ");
-                argumentList.add(hashtag);
+                argumentList.add(it.next());
+                query.append(" , lower(?) ");
             }
             query.append(" ) ");
             groupby = true;
@@ -227,14 +225,12 @@ public class StatusDatabase extends Database {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append( " ( lower(s." + StatusDatabase.GROUP + ") = lower(?) ");
+            query.append(StatusDatabase.GROUP +" IN ( lower(?) ");
             Iterator<String> it = options.groupList.iterator();
-            String group = it.next();
-            argumentList.add(group);
+            argumentList.add(it.next());
             while (it.hasNext()) {
-                group = it.next();
-                query.append(" OR lower(h." + StatusDatabase.GROUP + ") = lower(?) ");
-                argumentList.add(group);
+                argumentList.add(it.next());
+                query.append(" , lower(?) ");
             }
             query.append(" ) ");
         }
