@@ -104,26 +104,28 @@ public class CacheManager {
     public void onEvent(PushStatusReceivedEvent event) {
         if(event.status == null)
             return;
+        if((event.status.getAuthor() == null) || (event.status.getGroup() == null))
+            return;
         Log.d(TAG, " [.] status received: "+event.status.toString());
-        Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroupID());
+        Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
         if(group == null) {
             // we do not accept message for group we never added
             // group can only be added manually by the user
             Log.d(TAG, "[!] unknown group: refusing the message");
             return;
         } else {
-            if(!group.getName().equals(event.group_name)) {
-                Log.d(TAG, "[!] GroupID: "+group.getGid()+ " CONFLICT: db="+group.getName()+" status="+event.group_name);
+            if(!group.getName().equals(event.status.getGroup().getName())) {
+                Log.d(TAG, "[!] GroupID: "+group.getGid()+ " CONFLICT: db="+group.getName()+" status="+event.status.getGroup().getName());
                 return;
             }
         }
 
-        Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthorID());
+        Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
         if(contact == null) {
-            contact = new Contact(event.author_name, event.status.getAuthorID(), false);
-        } else if(!contact.getName().equals(event.author_name)) {
+            contact = event.status.getAuthor();
+        } else if(!contact.getName().equals(event.status.getAuthor().getName())) {
             // we do not accept message who have a conflict with user name
-            Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.author_name);
+            Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.status.getAuthor().getName());
             return;
         }
         DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact, null);

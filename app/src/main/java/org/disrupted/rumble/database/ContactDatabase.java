@@ -106,11 +106,11 @@ public class ContactDatabase extends Database  {
         return ret;
     }
 
-    public Contact getContact(String author_id) {
+    public Contact getContact(long contact_dbid) {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, null, UID+ " = ?", new String[] {author_id}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.valueOf(contact_dbid).toString()}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -123,12 +123,29 @@ public class ContactDatabase extends Database  {
         }
     }
 
-    public long getContactDBID(String author_id) {
+    public Contact getContact(String uid) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, UID+ " = ?", new String[] {uid }, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToContact(cursor);
+            else
+                return null;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+    public long getContactDBID(String contact_id) {
         long ret = -1;
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[] {ID}, UID+ " = ?", new String[] {author_id}, null, null, null);
+            cursor = database.query(TABLE_NAME, new String[] {ID}, UID+ " = ?", new String[] {contact_id}, null, null, null);
             if(cursor == null)
                 return ret;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -140,7 +157,6 @@ public class ContactDatabase extends Database  {
                 cursor.close();
         }
     }
-
 
     public boolean insertOrUpdateContact(final Contact contact, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
@@ -209,7 +225,6 @@ public class ContactDatabase extends Database  {
         String uid       = cursor.getString(cursor.getColumnIndexOrThrow(UID));
         boolean local    = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
         Contact contact  = new Contact(author, uid, local);
-        contact.setDBID(contactDBID);
         contact.setHashtagInterests(getHashtagsOfInterest(contactDBID));
         contact.setJoinedGroupIDs(getJoinedGroupIDs(contactDBID));
         return contact;

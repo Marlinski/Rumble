@@ -21,6 +21,8 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
 
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
 import org.disrupted.rumble.network.events.PushStatusSentEvent;
@@ -179,7 +181,10 @@ public class BlockPushStatus extends Block{
             /* assemble the status */
             String author_id_base64 = Base64.encodeToString(author_id,0,AUTHOR_ID,Base64.NO_WRAP);
             String group_id_base64  = Base64.encodeToString(group_id,0,GROUP_ID,Base64.NO_WRAP);
-            status = new PushStatus(author_id_base64, group_id_base64, new String(post), toc);
+
+            Contact contact  = new Contact(new String(author_name),author_id_base64,false);
+            Group   group = new Group(new String(group_name), group_id_base64, null);
+            status = new PushStatus(contact, group, new String(post), toc);
 
             status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setTimeOfCreation(toc);
@@ -192,8 +197,6 @@ public class BlockPushStatus extends Block{
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new PushStatusReceivedEvent(
                             status,
-                            new String(author_name),
-                            new String(group_name),
                             con.getRemoteLinkLayerAddress(),
                             RumbleProtocol.protocolID,
                             con.getLinkLayerIdentifier(),
@@ -215,9 +218,9 @@ public class BlockPushStatus extends Block{
         /* calculate the total block size */
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
         byte[] group_name  = status.getGroup().getName().getBytes(Charset.forName("UTF-8"));
-        byte[] group_id    = Base64.decode(status.getGroupID(), Base64.NO_WRAP);
+        byte[] group_id    = Base64.decode(status.getGroup().getName(), Base64.NO_WRAP);
         byte[] author_name = status.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
-        byte[] author_id   = Base64.decode(status.getAuthorID(),Base64.NO_WRAP);
+        byte[] author_id   = Base64.decode(status.getAuthor().getUid(),Base64.NO_WRAP);
         int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 group_name.length +

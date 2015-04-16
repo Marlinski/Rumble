@@ -73,11 +73,28 @@ public class GroupDatabase  extends  Database{
         }
     }
 
-    public Group getGroup(String group_id) {
+    public Group getGroup(long group_dbid) {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, null, GID+ " = ?", new String[] {group_id}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.valueOf(group_dbid).toString()}, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToGroup(cursor);
+            else
+                return null;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+    public Group getGroup(String gid) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, GID+ " = ?", new String[] {gid}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())

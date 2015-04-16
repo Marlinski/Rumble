@@ -38,7 +38,6 @@ import android.widget.ListView;
 import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
-import org.disrupted.rumble.database.SubscriptionDatabase;
 import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
@@ -49,7 +48,6 @@ import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
-import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 
 import java.util.ArrayList;
 import java.util.List;

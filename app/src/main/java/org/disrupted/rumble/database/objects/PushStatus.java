@@ -37,8 +37,8 @@ public class PushStatus extends Message{
 
     protected long        dbid;
     protected String      uuid;
-    protected String      author_id;
-    protected String      group_id;
+    protected Contact     author;
+    protected Group       group;
     protected String      status;
     protected Set<String> hashtagSet;
     protected String      attachedFile;
@@ -53,22 +53,19 @@ public class PushStatus extends Message{
     protected int         duplicate;
     protected Set<String> forwarderList;
 
-    protected Contact     author;
-    protected Group       group;
-
     // local user preference for this message
     protected boolean hasUserRead;
     protected boolean hasUserLiked;
     protected boolean hasUserSaved;
 
     public PushStatus(PushStatus message) {
-        this.author_id = message.getAuthorID();
+        this.author = message.getAuthor();
+        this.group  = message.getGroup();
         this.status = message.getPost();
         this.timeOfCreation = message.getTimeOfCreation();
 
         this.uuid = message.getUuid();
         this.dbid = message.getdbId();
-        this.group_id = message.getGroupID();
         if(message.getHashtagSet() != null)
             this.hashtagSet = new HashSet<String>(message.getHashtagSet());
         else
@@ -91,13 +88,13 @@ public class PushStatus extends Message{
         this.hasUserSaved = message.hasUserSaved();
     }
 
-    public PushStatus(String author_id, String group_id, String post, long timeOfCreation) {
-        this.uuid = HashUtil.computeStatusUUID(author_id, group_id, post, timeOfCreation);
+    public PushStatus(Contact author, Group group, String post, long timeOfCreation) {
+        this.uuid = HashUtil.computeStatusUUID(author.getUid(), group.getGid(), post, timeOfCreation);
         this.messageType = TYPE;
         this.dbid   = -1;
         this.status = post;
-        this.author_id = author_id;
-        this.group_id  = group_id;
+        this.author = author;
+        this.group  = group;
         hashtagSet  = new HashSet<String>();
         Pattern hashtagPattern = Pattern.compile("#(\\w+|\\W+)");
         Matcher hashtagMatcher = hashtagPattern.matcher(post);
@@ -125,8 +122,8 @@ public class PushStatus extends Message{
 
     public long    getdbId() {              return this.dbid;                  }
     public String  getUuid() {              return this.uuid;                  }
-    public String  getAuthorID(){           return this.author_id;             }
-    public String  getGroupID() {           return this.group_id;              }
+    public Contact getAuthor() {            return this.author;                }
+    public Group getGroup()  {              return this.group;                 }
     public String  getPost(){               return this.status;                }
     public Set<String> getHashtagSet(){     return this.hashtagSet;            }
     public long    getTimeOfCreation(){     return this.timeOfCreation;        }
@@ -147,8 +144,7 @@ public class PushStatus extends Message{
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
         return forwarderList.contains(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
     }
-    public Contact getAuthor() {            return this.author;                }
-    public Group getGroup()  {              return this.group;                 }
+
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
     public void setFileName(String filename){     this.attachedFile   = filename; }
@@ -195,8 +191,8 @@ public class PushStatus extends Message{
 
     public String toString() {
         String s = new String();
-        s += "Author: "+this.author_id+"\n";
-        s += "Group: "+this.group_id+"\n";
+        s += "Author: "+this.author.getUid()+"\n";
+        s += "Group: "+this.group.getGid()+"\n";
         s += "Status:" +this.status+"\n";
         s += "Time:" +this.timeOfCreation+"\n";
         return s;

@@ -30,6 +30,8 @@ import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -53,8 +55,8 @@ public class PushStatusDatabase extends Database {
     public static final String TABLE_NAME       = "push_status";
     public static final String ID               = "_id";
     public static final String UUID             = "uuid";        // unique ID 128 bits
-    public static final String AUTHOR_ID        = "author_id";   // unique ID 64  bits stored in Base64
-    public static final String GROUP_ID         = "group_id";  // the name of the group it belongs to
+    public static final String AUTHOR_DBID      = "author_db_id";   // unique ID 64  bits stored in Base64
+    public static final String GROUP_DBID       = "group_db_id";  // the name of the group it belongs to
     public static final String POST             = "post";        // the post itself
     public static final String FILE_NAME        = "filename";    // the name of the attached file
     public static final String TIME_OF_CREATION = "toc";         // time of creation of the post
@@ -72,8 +74,8 @@ public class PushStatusDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
                  + UUID        + " TEXT, "
-                 + AUTHOR_ID   + " TEXT, "
-                 + GROUP_ID    + " TEXT, "
+                 + AUTHOR_DBID + " INTEGER, "
+                 + GROUP_DBID  + " INTEGER, "
                  + POST        + " TEXT, "
                  + FILE_NAME   + " TEXT, "
                  + TIME_OF_CREATION  + " INTEGER, "
@@ -88,8 +90,8 @@ public class PushStatusDatabase extends Database {
                  + USERLIKED   + " INTEGER, "
                  + USERSAVED   + " INTEGER, "
                  + "UNIQUE ( " + UUID + " ), "
-                 + "FOREIGN KEY ( "+ AUTHOR_ID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.UID   + " ), "
-                 + "FOREIGN KEY ( "+ GROUP_ID  + " ) REFERENCES " + GroupDatabase.TABLE_NAME   + " ( " + GroupDatabase.GID   + " ) "
+                 + "FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ), "
+                 + "FOREIGN KEY ( "+ GROUP_DBID  + " ) REFERENCES " + GroupDatabase.TABLE_NAME   + " ( " + GroupDatabase.ID   + " ) "
           + " );";
 
 
@@ -167,6 +169,7 @@ public class PushStatusDatabase extends Database {
         if(options == null)
             options = new StatusQueryOption();
 
+        /* 1st:  configure what the query will return */
         String select = " * ";
         switch (options.query_result) {
             case COUNT:
@@ -176,21 +179,21 @@ public class PushStatusDatabase extends Database {
                 select = " s."+ID+" ";
                 break;
             case LIST_OF_MESSAGE:
-                select = " * ";
+                select = " s.* ";
                 break;
         }
 
         StringBuilder query = new StringBuilder(
-                "SELECT "+select+" FROM "+ PushStatusDatabase.TABLE_NAME+" s");
+                "SELECT "+select+" FROM "+ PushStatusDatabase.TABLE_NAME+" s"
+        );
 
         boolean groupby = false;
         boolean firstwhere = true;
         List<String> argumentList = new ArrayList<String>();
 
-        /* Join The lists */
+        /* 2nd:  Join The tables as needed */
         boolean hashtagJoined = false;
-        boolean groupJoined = false;
-        if (((options.filterFlags & options.FILTER_TAG) == options.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_TAG) == StatusQueryOption.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
             query.append(
                     " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
                     " ON s." + PushStatusDatabase.ID + " = m." + StatusTagDatabase.SDBID +
@@ -198,15 +201,22 @@ public class PushStatusDatabase extends Database {
                     " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HDBID);
             hashtagJoined = true;
         }
-
-        if (((options.filterFlags & options.FILTER_GROUP) == options.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0)) {
+        boolean contactJoined = false;
+        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) {
+            query.append(
+                    " JOIN " + ContactDatabase.TABLE_NAME + " c" +
+                    " ON s." + PushStatusDatabase.GROUP_DBID + " = c." + ContactDatabase.ID);
+            contactJoined = true;
+        }
+        boolean groupJoined = false;
+        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0)) {
             query.append(
                     " JOIN " + GroupDatabase.TABLE_NAME + " g" +
-                    " ON s." + PushStatusDatabase.GROUP_ID + " = g." + GroupDatabase.GID);
+                    " ON s." + PushStatusDatabase.GROUP_DBID + " = g." + GroupDatabase.ID);
             groupJoined = true;
         }
 
-        /* Add the constraints */
+        /* 3rd:  Add the constraints */
         if (options.filterFlags > 0) {
             query.append(" WHERE ( ");
         }
@@ -222,7 +232,14 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if(groupJoined) {
+        if (contactJoined && (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) ) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" c." + ContactDatabase.UID + " = ? ");
+            argumentList.add(options.authorID);
+        }
+        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -234,8 +251,9 @@ public class PushStatusDatabase extends Database {
                 query.append(" , ? ");
             }
             query.append(" ) ");
+            groupby = true;
         }
-        if (((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.peerName != null)) {
+        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.peerName != null) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -244,13 +262,7 @@ public class PushStatusDatabase extends Database {
             query.append("  WHERE f."+ForwarderDatabase.RECEIVEDBY+" = ? ");
             argumentList.add(options.peerName);
             query.append(" ) ");
-        }
-        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) {
-            if(!firstwhere)
-                query.append(" AND ");
-            firstwhere = false;
-            query.append(" s." + PushStatusDatabase.AUTHOR_ID + " = ? ");
-            argumentList.add(options.authorID);
+            groupby = true;
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
             if(!firstwhere)
@@ -295,7 +307,7 @@ public class PushStatusDatabase extends Database {
 
         /* group by if necessary */
         if (groupby)
-            query.append(" GROUP BY " + PushStatusDatabase.ID);
+            query.append(" GROUP BY s." + PushStatusDatabase.ID);
 
         /* ordering as requested */
         if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
@@ -483,9 +495,16 @@ public class PushStatusDatabase extends Database {
     }
     private long insertStatus(PushStatus status){
         ContentValues contentValues = new ContentValues();
+
+        long contact_DBID = DatabaseFactory.getContactDatabase(context).getContactDBID(status.getAuthor().getUid());
+        long group_DBID   = DatabaseFactory.getGroupDatabase(context).getGroupDBID(status.getGroup().getGid());
+
+        if((contact_DBID <0) || (group_DBID < 0))
+            return -1;
+
         contentValues.put(UUID, status.getUuid());
-        contentValues.put(AUTHOR_ID, status.getAuthorID());
-        contentValues.put(GROUP_ID, status.getGroupID());
+        contentValues.put(AUTHOR_DBID, contact_DBID);
+        contentValues.put(GROUP_DBID, group_DBID);
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_NAME, status.getFileName());
         contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
@@ -552,13 +571,15 @@ public class PushStatusDatabase extends Database {
         if(cursor.isAfterLast())
             return null;
 
-        long statusDBID   = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        String author_id  = cursor.getString(cursor.getColumnIndexOrThrow(AUTHOR_ID));
-        String group_id   = cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID));
-        long toc          = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
-        String post       = cursor.getString(cursor.getColumnIndexOrThrow(POST));
+        long statusDBID  = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        long author_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
+        Contact contact  = DatabaseFactory.getContactDatabase(context).getContact(author_dbid);
+        long group_dbid  = cursor.getLong(cursor.getColumnIndexOrThrow(GROUP_DBID));
+        Group group      = DatabaseFactory.getGroupDatabase(context).getGroup(group_dbid);
+        long toc         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
+        String post      = cursor.getString(cursor.getColumnIndexOrThrow(POST));
 
-        PushStatus message = new PushStatus(author_id, group_id, post, toc);
+        PushStatus message = new PushStatus(contact, group, post, toc);
         message.setdbId(statusDBID);
         message.setTimeOfArrival(cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL)));
         message.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME)));
@@ -572,10 +593,6 @@ public class PushStatusDatabase extends Database {
         message.setUserSaved((cursor.getInt(cursor.getColumnIndexOrThrow(USERSAVED)) == 1));
         message.setHashtagSet(getHashTagList(statusDBID));
         message.setForwarderList(DatabaseFactory.getForwarderDatabase(context).getForwarderList(statusDBID));
-
-        // todo grab them from the SQL Request Directly
-        message.setAuthor(DatabaseFactory.getContactDatabase(context).getContact(author_id));
-        message.setGroup(DatabaseFactory.getGroupDatabase(context).getGroup(group_id));
 
         return message;
     }

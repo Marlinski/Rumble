@@ -43,7 +43,6 @@ public class DatabaseFactory {
     private final HashtagDatabase                hashtagDatabase;
     private final StatusTagDatabase              statusTagDatabase;
     private final GroupDatabase                  groupDatabase;
-    private final SubscriptionDatabase           subscriptionDatabase;
     private final ContactDatabase                contactDatabase;
     private final ContactJoinGroupDatabase       contactJoinGroupDatabase;
     private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
@@ -74,9 +73,6 @@ public class DatabaseFactory {
     public static GroupDatabase getGroupDatabase(Context context) {
         return getInstance(context).groupDatabase;
     }
-    public static SubscriptionDatabase getSubscriptionDatabase(Context context) {
-        return getInstance(context).subscriptionDatabase;
-    }
     public static ContactDatabase getContactDatabase(Context context) {
         return getInstance(context).contactDatabase;
     }
@@ -102,7 +98,6 @@ public class DatabaseFactory {
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
         this.contactDatabase                = new ContactDatabase(context, databaseHelper);
-        this.subscriptionDatabase           = new SubscriptionDatabase(context, databaseHelper);
         this.forwarderDatabase              = new ForwarderDatabase(context, databaseHelper);
         this.contactJoinGroupDatabase       = new ContactJoinGroupDatabase(context, databaseHelper);
         this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
@@ -119,7 +114,6 @@ public class DatabaseFactory {
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
-        this.subscriptionDatabase.reset(databaseHelper);
         this.forwarderDatabase.reset(databaseHelper);
         this.contactJoinGroupDatabase.reset(databaseHelper);
         this.contactHashTagInterestDatabase.reset(databaseHelper);
@@ -145,7 +139,6 @@ public class DatabaseFactory {
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(ChatStatusDatabase.CREATE_TABLE);
-            db.execSQL(SubscriptionDatabase.CREATE_TABLE);
             db.execSQL(ForwarderDatabase.CREATE_TABLE);
             db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);
             db.execSQL(ContactHashTagInterestDatabase.CREATE_TABLE);

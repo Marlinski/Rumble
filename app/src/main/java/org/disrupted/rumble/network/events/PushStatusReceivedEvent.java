@@ -25,17 +25,13 @@ import org.disrupted.rumble.database.objects.PushStatus;
 public class PushStatusReceivedEvent {
 
     public PushStatus status;
-    public String author_name;
-    public String group_name;
     public String sender;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public PushStatusReceivedEvent(PushStatus status, String author_name, String group_name, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.author_name = author_name;
-        this.group_name = group_name;
+    public PushStatusReceivedEvent(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.sender = sender;
         this.protocolID = protocolID;

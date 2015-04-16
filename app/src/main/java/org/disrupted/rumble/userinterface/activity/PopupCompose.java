@@ -212,7 +212,7 @@ public class PopupCompose extends Activity {
 
                 Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
                 long now = (System.currentTimeMillis() / 1000L);
-                PushStatus pushStatus = new PushStatus(localContact.getUid(), group.getGid(), message, now);
+                PushStatus pushStatus = new PushStatus(localContact, group, message, now);
                 pushStatus.setAuthor(localContact);
                 pushStatus.setGroup(group);
                 pushStatus.setUserRead(true);

@@ -31,7 +31,6 @@ import java.util.Set;
  */
 public class Contact {
 
-    protected long   dbid;
     protected String uid;
     protected String name;
     protected String avatar;
@@ -50,7 +49,6 @@ public class Contact {
     }
 
     public Contact(String name, String uid, boolean local) {
-        this.dbid = -1;
         this.name = name;
         this.uid = uid;
         this.local = local;
@@ -65,7 +63,6 @@ public class Contact {
     public final Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
     public final Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
 
-    public void setDBID(long contactDBID) { this.dbid = contactDBID; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
         joinedGroupIDs.add(groupID);
