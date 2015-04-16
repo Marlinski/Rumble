@@ -448,7 +448,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             if(openedSocket == 1) {
                 Log.d(TAG, "[+] entering slow scan beta mode");
                 cancelDiscovery();
-                if ((mAccelerometer != null) && !sensorregistered) {
+                if ((mAccelerometer != null) && sensorregistered) {
                     mSensorManager.unregisterListener(this);
                     sensorregistered = true;
                 }
@@ -478,8 +478,8 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
                 handler.removeCallbacksAndMessages(null);
                 resetTrickleTimer();
                 betamode = false;
-                if((mAccelerometer != null) && sensorregistered) {
-                    mSensorManager.unregisterListener(this);
+                if((mAccelerometer != null) && !sensorregistered) {
+                    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                     sensorregistered = false;
                 }
                 handler.postDelayed(new Runnable() {

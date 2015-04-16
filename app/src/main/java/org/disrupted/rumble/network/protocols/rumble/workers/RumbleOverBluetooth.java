@@ -128,6 +128,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 }
             }
 
+            // maybe implement a form of randomized delay ?
             con.connect();
 
             try {

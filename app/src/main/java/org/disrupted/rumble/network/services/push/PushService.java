@@ -110,7 +110,6 @@ public class PushService {
                     return;
                 dispatcher.stopDispatcher();
                 instance.workerIdentifierTodispatcher.remove(neighbour.worker.getWorkerIdentifier());
-
             }
         }
     }
@@ -208,8 +207,8 @@ public class PushService {
         }
 
         public void stopDispatcher() {
-            this.interrupt();
             running = false;
+            this.interrupt();
             worker = null;
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
@@ -265,15 +264,15 @@ public class PushService {
                 return false;
 
             final ReentrantLock putlock = this.putLock;
-            putlock.lock();
             try {
+                putlock.lock();
+
                 float score = computeScore(message, interestVector);
 
                 if (score <= threshold) {
                     message.discard();
                     return false;
                 }
-
                 statuses.add((int)message.getdbId());
 
                 if (max == null) {
@@ -312,7 +311,7 @@ public class PushService {
                 float score = computeScore(max, interestVector);
                 if(score <= threshold) {
                     message.discard();
-                    toDelete.add(Integer.valueOf((int)message.getdbId()));
+                    toDelete.add((int)message.getdbId());
                     continue;
                 }
 
@@ -331,7 +330,7 @@ public class PushService {
             }
 
             for(Integer i : toDelete) {
-                statuses.remove(i);
+                statuses.remove(new Integer(i));
             }
 
         }
@@ -352,6 +351,9 @@ public class PushService {
                     while (statuses.size() == 0)
                         notEmpty.await();
 
+                    for(Integer id:statuses) {
+                        Log.d(TAG, ","+id);
+                    }
                     putlock.lock();
                     try {
                         updateMax();
@@ -360,8 +362,11 @@ public class PushService {
                         int index = random.nextInt(statuses.size());
                         long id = statuses.get(index);
                         message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(id);
-                        if(message == null)
+                        if(message == null) {
+                            //Log.d(TAG, "cannot retrieve statusId: "+id);
+                            statuses.remove(new Integer((int)id));
                             continue;
+                        }
 
                         // get max probability Pmax
                         float maxScore = computeScore(max, interestVector);
@@ -369,8 +374,8 @@ public class PushService {
                         float score = computeScore(message, interestVector);
 
                         if (score <= threshold) {
-                            // the message is not valid anymore, that should happen very rarely
-                            statuses.remove(Integer.valueOf((int)message.getdbId()));
+                            //Log.d(TAG, "score too low: "+score);
+                            statuses.remove(new Integer((int)id));
                             message.discard();
                             message = null;
                             continue;
@@ -378,8 +383,9 @@ public class PushService {
 
                         int shallwepick = random.nextInt((int) (maxScore * 1000));
                         if (shallwepick <= (score * 1000)) {
+                            //Log.d(TAG, "we picked up: "+id);
                             // we keep this status with probability Pu/Pmax
-                            statuses.remove(Integer.valueOf((int)message.getdbId()));
+                            statuses.remove(new Integer((int)message.getdbId()));
                             pickup = true;
                         } else {
                             // else we pick another one

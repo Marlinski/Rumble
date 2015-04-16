@@ -508,6 +508,7 @@ public class StatusDatabase extends Database {
 
         long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
         if(statusID >= 0) {
+            status.setdbId(statusID);
             for (String hashtag : status.getHashtagSet()) {
                 long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(hashtag.toLowerCase());
                 if(tagID >=0 )

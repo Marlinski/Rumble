@@ -116,9 +116,13 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
         } catch (NullPointerException e) {
             throw new NullSocketException();
         } finally {
-            if(registered)
-                RumbleApplication.getContext().unregisterReceiver(mReceiver);
-            registered = false;
+            try {
+                if (registered)
+                    RumbleApplication.getContext().unregisterReceiver(mReceiver);
+                registered = false;
+            } catch(Exception ignore) {
+                Log.d(TAG, "[i] Receiver not registered ?");
+            }
         }
     }
 

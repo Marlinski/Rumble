@@ -72,7 +72,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="5dp"
                         android:layout_gravity="left"
-                        style="@style/Status.Info.ID"/>
+                        style="@style/Status.Info.Group"/>
                 </LinearLayout>
 
                 <LinearLayout

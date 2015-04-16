@@ -81,21 +81,24 @@ public class RumbleBTServer extends BluetoothServer {
                         networkCoordinator.stopWorker(
                                 BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                 connectionState.getWorkerID());
+                        break;
                     }
                 case CONNECTION_SCHEDULED:
                     Log.d(TAG, "[-] cancelling scheduled worker");
                     networkCoordinator.stopWorker(
                             BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                             connectionState.getWorkerID());
+                    break;
                 case NOT_CONNECTED:
-                    // hack to synchronise the client and server
-                    mmConnectedSocket.getOutputStream().write(new byte[]{0},0,1);
-                    Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
-                    connectionState.connectionAccepted(worker.getWorkerIdentifier());
-                    networkCoordinator.addWorker(worker);
                 default:
-                    return;
+                    break;
             }
+
+            // hack to synchronise the client and server
+            mmConnectedSocket.getOutputStream().write(new byte[]{0},0,1);
+            Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
+            connectionState.connectionAccepted(worker.getWorkerIdentifier());
+            networkCoordinator.addWorker(worker);
         } catch(IOException ignore) {
             Log.e(TAG,"[!] Client CON: "+ignore.getMessage());
         } catch (RumbleBTState.StateException e) {
