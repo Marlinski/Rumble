@@ -31,11 +31,23 @@ public class Group {
 
     public static final String TAG = "Group";
 
+    public static final String DEFAULT_PUBLIC_GROUP = "rumble.public";
+
     private String    name;
     private String    gid;
     private SecretKey key;
     private String    desc;
     private boolean   isPrivate;
+
+    public static Group getDefaultGroup() {
+        try {
+            Group defaultGroup =  createNewGroup(DEFAULT_PUBLIC_GROUP, false);
+            defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
+            return defaultGroup;
+        } catch ( NoSuchAlgorithmException impossible ) {
+            return null;
+        }
+    }
 
     public static Group createNewGroup(String name, boolean isPrivate) throws NoSuchAlgorithmException{
         SecretKey key = null;

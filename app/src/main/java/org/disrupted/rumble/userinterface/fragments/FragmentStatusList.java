@@ -22,6 +22,7 @@ package org.disrupted.rumble.userinterface.fragments;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -36,17 +37,19 @@ import android.widget.ListView;
 
 import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.SubscriptionDatabase;
+import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.PopupCompose;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.objects.StatusMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
+import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,19 +66,14 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private View mView;
     private ListView statusList;
     private SwipeRefreshLayout swipeLayout;
-    private StatusListAdapter statusListAdapter;
-    private FilterListAdapter filterListAdapter;
-
+    private StatusListAdapter  statusListAdapter;
+    private FilterListAdapter  filterListAdapter;
     private ListView filters;
-    private List<String> subscriptionList;
 
     private int notif;
 
     public interface OnFilterClick {
-        public void onClick(String filter);
-    }
-    public interface OnSubscriptionClick {
-        public void onClick(String filter);
+        public void onClick(String entry);
     }
 
     @Override
@@ -98,7 +96,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         filterListAdapter = new FilterListAdapter(getActivity());
         filters.setAdapter(filterListAdapter);
         filters.setClickable(false);
-        subscriptionList = new ArrayList<String>();
 
         // the list of status
         swipeLayout = (SwipeRefreshLayout) mView.findViewById(R.id.swipe_container);
@@ -121,7 +118,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         );
         statusList.setAdapter(statusListAdapter);
 
-        getSubscriptions();
         getStatuses();
         EventBus.getDefault().register(this);
 
@@ -157,25 +153,25 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     public void getStatuses() {
-            StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
+            PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
             options.answerLimit = 20;
-            options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
-            options.order_by = StatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
+            options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
+            options.order_by = PushStatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
 
             if (filterListAdapter.getCount() == 0) {
-                DatabaseFactory.getStatusDatabase(getActivity())
+                DatabaseFactory.getPushStatusDatabase(getActivity())
                         .getStatuses(options, onStatusesLoaded);
             } else {
-                options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_TAG;
+                options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;
                 options.hashtagFilters = filterListAdapter.getFilterList();
-                DatabaseFactory.getStatusDatabase(getActivity())
+                DatabaseFactory.getPushStatusDatabase(getActivity())
                         .getStatuses(options, onStatusesLoaded);
             }
     }
     DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(final Object result) {
-            final ArrayList<StatusMessage> answer = (ArrayList<StatusMessage>)result;
+            final ArrayList<PushStatus> answer = (ArrayList<PushStatus>)result;
             if (getActivity() == null)
                 return;
             getActivity().runOnUiThread(new Runnable() {
@@ -198,32 +194,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     /*
-     * Hashtag List and subscription
+     * Hashtag List
      */
-
-    public void getSubscriptions() {
-        DatabaseFactory.getSubscriptionDatabase(getActivity())
-                .getLocalUserSubscriptions(onSubscriptionsLoaded);
-
-    }
-    SubscriptionDatabase.SubscriptionsQueryCallback onSubscriptionsLoaded = new SubscriptionDatabase.SubscriptionsQueryCallback() {
-        @Override
-        public void onSubscriptionsQueryFinished(ArrayList<String> answer) {
-            if (getActivity() == null)
-                return;
-            final ArrayList<String> subscriptions = answer;
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    subscriptionList.clear();
-                    subscriptionList = subscriptions;
-                    filterListAdapter.swapSubscriptions(subscriptions);
-                    filterListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-    };
-
     OnFilterClick onFilterClick = new OnFilterClick() {
         @Override
         public void onClick(String filter) {
@@ -235,25 +207,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         }
     };
 
-
-    // todo should have its own object
-    OnSubscriptionClick onSubscriptionClick = new OnSubscriptionClick() {
-        @Override
-        public void onClick(String filter) {
-            if(subscriptionList.contains(filter.toLowerCase()))
-                DatabaseFactory.getSubscriptionDatabase(getActivity()).unsubscribeLocalUser(filter,onSubscribed);
-            else
-                DatabaseFactory.getSubscriptionDatabase(getActivity()).subscribeLocalUser(filter,onSubscribed);
-        }
-    };
-    DatabaseExecutor.WritableQueryCallback onSubscribed = new DatabaseExecutor.WritableQueryCallback() {
-        @Override
-        public void onWritableQueryFinished(boolean success) {
-            if(success)
-                getSubscriptions();
-        }
-    };
-
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
@@ -261,7 +214,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         FilterListAdapter.FilterEntry entry = new FilterListAdapter.FilterEntry();
         entry.filter = filter;
         entry.filterClick = onFilterClick;
-        entry.subscriptionClick = onSubscriptionClick;
 
         if(filterListAdapter.addFilter(entry)) {
             filterListAdapter.notifyDataSetChanged();
@@ -270,7 +222,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     public void onEvent(UserComposeStatus event) {
-        final StatusMessage message = event.status;
+        final PushStatus message = event.status;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -291,7 +243,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         });
     }
     public void onEvent(StatusUpdatedEvent event) {
-        final StatusMessage message = event.status;
+        final PushStatus message = event.status;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -300,4 +252,15 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             }
         });
     }
+    public void onEvent(ContactUpdatedEvent event) {
+        if (event.contact.isLocal()) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    filterListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    }
+
 }

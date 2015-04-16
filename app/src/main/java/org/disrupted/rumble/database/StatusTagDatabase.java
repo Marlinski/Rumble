@@ -33,45 +33,34 @@ public class StatusTagDatabase extends Database {
     private static final String TAG = "StatusTagDatabase";
 
     public  static final String TABLE_NAME = "statustag";
-    public  static final String HID = "_id";
-    public  static final String SID = "_sid";
+    public  static final String HDBID = "_hdbid";
+    public  static final String SDBID = "_sdbid";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
-            " (" + HID + " INTEGER, "
-                 + SID + " INTEGER, "
-                 + " UNIQUE( " + HID + " , " + SID + "), "
-                 + " FOREIGN KEY ( "+ SID + " ) REFERENCES " + StatusDatabase.TABLE_NAME   + " ( " + StatusDatabase.ID   + " ), "
-                 + " FOREIGN KEY ( "+ HID + " ) REFERENCES " + HashtagDatabase.TABLE_NAME + " ( " + HashtagDatabase.ID + " )"
+            " (" + HDBID + " INTEGER, "
+                 + SDBID + " INTEGER, "
+                 + " UNIQUE( " + HDBID + " , " + SDBID + "), "
+                 + " FOREIGN KEY ( "+ SDBID + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME   + " ( " + PushStatusDatabase.ID   + " ), "
+                 + " FOREIGN KEY ( "+ HDBID + " ) REFERENCES " + HashtagDatabase.TABLE_NAME + " ( " + HashtagDatabase.ID + " )"
           + " );";
 
     public static final String[] CREATE_INDEXS = {
-            "CREATE INDEX IF NOT EXISTS hashtag_status_id_index ON " + TABLE_NAME + " (" + SID + ");"
+            "CREATE INDEX IF NOT EXISTS hashtag_status_id_index ON " + TABLE_NAME + " (" + SDBID + ");"
     };
 
     public StatusTagDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public Cursor getStatusTag() {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
-        return cursor;
-    }
-
-    public void deleteStatusTag(long tagID, long statusID){
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, HID + " = " + String.valueOf(tagID) + " and " + SID + " = " + String.valueOf(statusID) , null);
-    }
-
     public void deleteEntriesMatchingStatusID(long statusID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, SID + " = ?" , new String[] {statusID + ""});
+        db.delete(TABLE_NAME, SDBID + " = ?" , new String[] {Long.valueOf(statusID).toString()});
     }
 
     public long insertStatusTag(long tagID, long statusID){
         ContentValues contentValues = new ContentValues();
-        contentValues.put(HID, tagID);
-        contentValues.put(SID, statusID);
+        contentValues.put(HDBID, tagID);
+        contentValues.put(SDBID, statusID);
 
         return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
     }

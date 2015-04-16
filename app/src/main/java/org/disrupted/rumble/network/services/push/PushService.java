@@ -5,19 +5,17 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.GroupDatabase;
-import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.InterestVector;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
-import org.disrupted.rumble.network.services.exceptions.WorkerAlreadyBinded;
-import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
 import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
@@ -114,7 +112,7 @@ public class PushService {
         }
     }
 
-    private static float computeScore(StatusMessage message, InterestVector interestVector) {
+    private static float computeScore(PushStatus message, InterestVector interestVector) {
         //todo InterestVector for relevance
         float relevance = 0;
         float replicationDensity = rdwatcher.computeMetric(message.getUuid());
@@ -148,7 +146,7 @@ public class PushService {
 
         private boolean running;
 
-        private StatusMessage max;
+        private PushStatus max;
 
         private void fullyLock() {
             putLock.lock();
@@ -177,6 +175,50 @@ public class PushService {
             statuses = new ArrayList<Integer>();
         }
 
+        public void startDispatcher() {
+            running = true;
+            initStatuses();
+        }
+
+        public void stopDispatcher() {
+            running = false;
+            this.interrupt();
+            worker = null;
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
+        }
+
+        private void initStatuses() {
+            PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
+            options.groupIDList = new ArrayList<String>();
+            options.groupIDList.add(Group.getDefaultGroup().getGid());
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NEVER_SEND_TO_USER;
+            options.peerName = HashUtil.computeForwarderHash(
+                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
+                    worker.getProtocolIdentifier());
+            options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
+            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
+        }
+        DatabaseExecutor.ReadableQueryCallback onStatusLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+            @Override
+            public void onReadableQueryFinished(Object result) {
+                if (result != null) {
+                    final ArrayList<Integer> answer = (ArrayList<Integer>)result;
+                    for (Integer s : answer) {
+                        PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
+                                .getStatus(s);
+                        if(message != null) {
+                            add(message);
+                            message.discard();
+                        }
+                    }
+                    EventBus.getDefault().register(MessageDispatcher.this);
+                    start();
+                }
+            }
+        };
+
         @Override
         public void run() {
             try {
@@ -184,8 +226,7 @@ public class PushService {
                 do {
                     // pickup a message and send it to the CommandExecutor
                     if (worker != null) {
-                        StatusMessage message = pickMessage();
-                        Log.d(TAG, "message picked");
+                        PushStatus message = pickMessage();
                         worker.execute(new SendStatusMessageCommand(message));
                         message.discard();
                         //todo just for the sake of debugging
@@ -201,51 +242,6 @@ public class PushService {
             }
         }
 
-        public void startDispatcher() {
-            running = true;
-            initStatuses();
-        }
-
-        public void stopDispatcher() {
-            running = false;
-            this.interrupt();
-            worker = null;
-            if(EventBus.getDefault().isRegistered(this))
-                EventBus.getDefault().unregister(this);
-        }
-
-        private void initStatuses() {
-            StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-            options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_GROUP;
-            options.groupList = new ArrayList<String>();
-            options.groupList.add(GroupDatabase.DEFAULT_PUBLIC_GROUP);
-            options.filterFlags |= StatusDatabase.StatusQueryOption.FILTER_NEVER_SEND;
-            options.peerName = HashUtil.computeForwarderHash(
-                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
-                    worker.getProtocolIdentifier());
-            options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
-            DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
-        }
-        DatabaseExecutor.ReadableQueryCallback onStatusLoaded = new DatabaseExecutor.ReadableQueryCallback() {
-            @Override
-            public void onReadableQueryFinished(Object result) {
-                if (result != null) {
-                    Log.d(TAG, "[+] MessageDispatcher initiated");
-                    final ArrayList<Integer> answer = (ArrayList<Integer>)result;
-                    for (Integer s : answer) {
-                        StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
-                                .getStatus(s);
-                        if(message != null) {
-                            add(message);
-                            message.discard();
-                        }
-                    }
-                    EventBus.getDefault().register(MessageDispatcher.this);
-                    start();
-                }
-            }
-        };
-
         private void clear() {
             fullyLock();
             try {
@@ -257,7 +253,7 @@ public class PushService {
             }
         }
 
-        private boolean add(StatusMessage message){
+        private boolean add(PushStatus message){
             if(message.isForwarder(
                     worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
                     worker.getProtocolIdentifier()))
@@ -306,7 +302,7 @@ public class PushService {
             Iterator<Integer> it = statuses.iterator();
             while(it.hasNext()) {
                 Integer id = it.next();
-                StatusMessage message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext())
+                PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
                         .getStatus(id);
                 float score = computeScore(max, interestVector);
                 if(score <= threshold) {
@@ -340,10 +336,10 @@ public class PushService {
          *  "Roulette-wheel selection via stochastic acceptance"
          *  By Adam Lipowski, Dorota Lipowska
          */
-        private StatusMessage pickMessage() throws InterruptedException {
+        private PushStatus pickMessage() throws InterruptedException {
             final ReentrantLock takelock = this.takeLock;
             final ReentrantLock putlock = this.takeLock;
-            StatusMessage message;
+            PushStatus message;
             boolean pickup = false;
             takelock.lockInterruptibly();
             try {
@@ -351,6 +347,7 @@ public class PushService {
                     while (statuses.size() == 0)
                         notEmpty.await();
 
+                    Log.d(TAG, "pick");
                     for(Integer id:statuses) {
                         Log.d(TAG, ","+id);
                     }
@@ -361,7 +358,7 @@ public class PushService {
                         // randomly pickup an element homogeneously
                         int index = random.nextInt(statuses.size());
                         long id = statuses.get(index);
-                        message = DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatus(id);
+                        message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(id);
                         if(message == null) {
                             //Log.d(TAG, "cannot retrieve statusId: "+id);
                             statuses.remove(new Integer((int)id));
@@ -411,7 +408,7 @@ public class PushService {
         }
 
         public void onEvent(StatusInsertedEvent event) {
-            StatusMessage message = new StatusMessage(event.status);
+            PushStatus message = new PushStatus(event.status);
             add(message);
             message.discard();
         }

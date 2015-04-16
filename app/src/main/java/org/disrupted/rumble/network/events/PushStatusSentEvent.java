@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 import java.util.List;
 
@@ -41,16 +41,16 @@ import java.util.List;
  *
  * @author Marlinski
  */
-public class StatusSentEvent extends NetworkEvent {
+public class PushStatusSentEvent extends NetworkEvent {
 
-    public StatusMessage status;
+    public PushStatus status;
     public List<String> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public StatusSentEvent(StatusMessage status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusSentEvent(PushStatus status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.recipients = recipients;
         this.protocolID = protocolID;

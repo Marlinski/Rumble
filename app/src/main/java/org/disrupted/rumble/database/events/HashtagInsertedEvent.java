@@ -22,7 +22,7 @@ package org.disrupted.rumble.database.events;
 /**
  * @author Marlinski
  */
-public class HashtagInsertedEvent extends ResourceEvent {
+public class HashtagInsertedEvent extends DatabaseEvent {
 
     public final String hashtag;
 

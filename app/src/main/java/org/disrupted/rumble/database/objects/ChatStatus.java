@@ -15,18 +15,29 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
-
-import org.disrupted.rumble.database.objects.PushStatus;
+package org.disrupted.rumble.database.objects;
 
 /**
  * @author Marlinski
  */
-public class UserComposeStatus extends UserInteractionEvent  {
+public class ChatStatus  {
 
-    public final PushStatus status;
+    protected String      author_name;
+    protected String      status;
+    protected String      attachedFile;
+    protected long        fileSize;
+    protected long        timeOfArrival;
 
-    public UserComposeStatus(PushStatus status) {
+    public ChatStatus(String author, String status, long toa) {
+        this.author_name = author;
         this.status = status;
+        this.timeOfArrival = toa;
     }
+
+    public long getFileSize() {       return fileSize;          }
+    public String getAttachedFile() { return this.attachedFile; }
+
+    public void setFileSize(long fileSize) {           this.fileSize = fileSize;         }
+    public void setAttachedFile(String attachedFile) { this.attachedFile = attachedFile; }
+
 }

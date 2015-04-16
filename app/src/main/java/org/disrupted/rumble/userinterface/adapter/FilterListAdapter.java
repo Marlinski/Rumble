@@ -28,11 +28,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -44,19 +48,16 @@ public class FilterListAdapter extends BaseAdapter {
     public static class FilterEntry {
         public String  filter;
         public FragmentStatusList.OnFilterClick filterClick;
-        public FragmentStatusList.OnSubscriptionClick subscriptionClick;
     }
 
     Context context;
     LayoutInflater inflater;
     List<FilterEntry> filterList;
-    List<String>      subscriptionList;
 
     public FilterListAdapter(Context context) {
         this.context = context;
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.filterList = new LinkedList<FilterEntry>();
-        this.subscriptionList = new LinkedList<String>();
     }
 
     @Override
@@ -72,7 +73,10 @@ public class FilterListAdapter extends BaseAdapter {
         if(entry.filterClick != null)
             outerFilterView.setOnClickListener(new OnAdapterFilterClick(entry.filter, entry.filterClick));
 
-        if(subscriptionList.contains(entry.filter.toLowerCase())) {
+        boolean isInterested;
+        Integer interest = Contact.getLocalContact().getHashtagInterests().get(entry.filter);
+        isInterested = ((interest != null) && (interest > 0));
+        if(isInterested) {
             subscriptionTextView.setText(R.string.filter_subscribed);
             subscriptionTextView.setTextColor(context.getResources().getColor(R.color.white));
             subscriptionTextView.setBackgroundColor(context.getResources().getColor(R.color.green));
@@ -81,11 +85,21 @@ public class FilterListAdapter extends BaseAdapter {
             subscriptionTextView.setTextColor(context.getResources().getColor(R.color.black));
             subscriptionTextView.setBackgroundColor(context.getResources().getColor(R.color.white));
         }
-        if(entry.subscriptionClick != null)
-            subscriptionTextView.setOnClickListener(new OnAdapterSubscriptionClick(entry.filter, entry.subscriptionClick));
+        subscriptionTextView.setOnClickListener(new OnAdapterSubscriptionClick(entry.filter, isInterested, onSubscriptionClick));
 
         return filterView;
     }
+
+    // todo should have its own object
+    OnSubscriptionClick onSubscriptionClick = new OnSubscriptionClick() {
+        @Override
+        public void onClick(String filter, boolean interested) {
+            if(interested)
+                EventBus.getDefault().post(new UserSetHashTagInterest(filter, 0));
+            else
+                EventBus.getDefault().post(new UserSetHashTagInterest(filter, 1));
+        }
+    };
 
     @Override
     public long getItemId(int i) {
@@ -135,13 +149,6 @@ public class FilterListAdapter extends BaseAdapter {
         return filters;
     }
 
-    public void swapSubscriptions(List<String> subscriptions) {
-        if(!subscriptionList.isEmpty())
-            subscriptionList.clear();
-        subscriptionList = subscriptions;
-        notifyDataSetChanged();
-    }
-
     public class OnAdapterFilterClick implements View.OnClickListener {
 
         private String filter;
@@ -158,20 +165,26 @@ public class FilterListAdapter extends BaseAdapter {
         }
     }
 
-    public class OnAdapterSubscriptionClick implements View.OnClickListener {
+    private interface OnSubscriptionClick {
+        public void onClick(String filter, boolean interested);
+    }
+    private class OnAdapterSubscriptionClick implements View.OnClickListener {
 
         private String filter;
-        private FragmentStatusList.OnSubscriptionClick callback;
+        private boolean interested;
+        private FilterListAdapter.OnSubscriptionClick callback;
 
-        public OnAdapterSubscriptionClick(String filter, FragmentStatusList.OnSubscriptionClick callback) {
+        public OnAdapterSubscriptionClick(String filter, boolean interested, OnSubscriptionClick callback) {
             this.filter = filter;
+            this.interested = interested;
             this.callback = callback;
         }
 
         @Override
         public void onClick(View view) {
-            callback.onClick(filter);
+            callback.onClick(filter, interested);
         }
     }
+
 
 }

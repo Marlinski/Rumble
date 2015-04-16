@@ -97,7 +97,7 @@ public class HashtagDatabase extends  Database{
 
         try {
             SQLiteDatabase db = databaseHelper.getReadableDatabase();
-            cursor = db.query(TABLE_NAME, new String[]{COUNT}, HASHTAG + " = '"+hashtag+"'", null, null, null, null, null);
+            cursor = db.query(TABLE_NAME, new String[]{COUNT}, HASHTAG + " = ?", new String[]{hashtag.toLowerCase()}, null, null, null, null);
             if (cursor != null && cursor.moveToFirst())
                 count = cursor.getLong(cursor.getColumnIndexOrThrow(COUNT));
         } finally {
@@ -110,7 +110,7 @@ public class HashtagDatabase extends  Database{
 
     public void deleteHashtag(String hashtag){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, HASHTAG + " = ?" , new String[] {hashtag});
+        db.delete(TABLE_NAME, HASHTAG + " = ?" , new String[] {hashtag.toLowerCase()});
     }
 
     public void deleteHashtag(long tagID){
@@ -121,7 +121,7 @@ public class HashtagDatabase extends  Database{
     public long insertHashtag(String hashtag){
         long hashtagCount = this.getHashtagCount(hashtag);
         ContentValues contentValues = new ContentValues();
-        contentValues.put(HASHTAG, hashtag);
+        contentValues.put(HASHTAG, hashtag.toLowerCase());
         contentValues.put(COUNT, hashtagCount+1);
         contentValues.put(LAST_SEEN, SystemClock.currentThreadTimeMillis());
 
@@ -131,8 +131,8 @@ public class HashtagDatabase extends  Database{
         } else {
             Cursor cursor = null;
             try {
-                databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG + " = '" + hashtag + "'", null);
-                cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = '" + hashtag + "'", null, null, null, null, null);
+                databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG+" = ? ", new String[]{hashtag.toLowerCase()});
+                cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = ?", new String[]{hashtag.toLowerCase()}, null, null, null, null);
                 if (cursor != null && cursor.moveToFirst())
                     res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
             } finally {

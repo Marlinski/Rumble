@@ -20,8 +20,11 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.util.FileUtil;
+import org.disrupted.rumble.util.HashUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -39,18 +42,18 @@ public class FirechatMessageParser {
     /*
      * JSON fields for nearby communication
      */
-    private static final String TIMESTAMP = "t";
-    private static final String UUID      = "uuid";
-    private static final String USER      = "user";
-    private static final String MESSAGE   = "msg";
-    private static final String FIRECHAT  = "firechat";
-    private static final String NAME      = "name";
-    private static final String LOCATION  = "loc";
-    private static final String LENGTH    = "length";
-    private static final String URL       = "url";
+    public static final String TIMESTAMP = "t";
+    public static final String UUID      = "uuid";
+    public static final String USER      = "user";
+    public static final String MESSAGE   = "msg";
+    public static final String FIRECHAT  = "firechat";
+    public static final String NAME      = "name";
+    public static final String LOCATION  = "loc";
+    public static final String LENGTH    = "length";
+    public static final String URL       = "url";
 
 
-    public String statusToNetwork(StatusMessage message) {
+    public String statusToNetwork(PushStatus message) {
 
         JSONObject jsonStatus = new JSONObject();
         try {
@@ -84,34 +87,29 @@ public class FirechatMessageParser {
         return jsonStatus.toString()+"\n";
     }
 
-    public StatusMessage networkToStatus(String message) throws JSONException{
-        StatusMessage retMessage = null;
-        JSONObject object = new JSONObject(message);
+    public ChatStatus networkToStatus(JSONObject message) throws JSONException{
+        ChatStatus retMessage = null;
 
         String post = "";
         long   length = 0;
 
-        String uuid      = object.getString(UUID);
-        String author    = object.getString(NAME);
-        String firechat  = object.getString(FIRECHAT);
-        long   timestamp = object.getLong(TIMESTAMP);   // don't know what to do with that
+        String uuid      = message.getString(UUID);      // don't know what to do with that either
+        String author    = message.getString(NAME);
+        String firechat  = message.getString(FIRECHAT);
+        long   timestamp = message.getLong(TIMESTAMP);   // don't know what to do with that
         long   now = (System.currentTimeMillis() / 1000L);
 
-        try { post   = object.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
-        try { length = object.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }
+        try { post   = message.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
+        try { length = message.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }
 
         /*
          * todo: I don't really get how firechat computes its timestamp, it doesn't seem
          * to be seconds since EPOCH so we keep the time of arrival instead
          */
-        retMessage = new StatusMessage(post+" #"+firechat, author, now);
-        retMessage.setTimeOfArrival(now);
+        retMessage = new ChatStatus(author, post+" #"+firechat, now);
         retMessage.setFileSize(length);
-        retMessage.setUuid(uuid);
-        retMessage.setHopCount(1);
 
         return retMessage;
-
     }
 
 

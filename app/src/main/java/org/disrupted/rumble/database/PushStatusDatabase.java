@@ -30,7 +30,7 @@ import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
@@ -46,15 +46,15 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class StatusDatabase extends Database {
+public class PushStatusDatabase extends Database {
 
-    private static final String TAG = "StatusDatabase";
+    private static final String TAG = "PushStatusDatabase";
 
-    public static final String TABLE_NAME       = "status";
+    public static final String TABLE_NAME       = "push_status";
     public static final String ID               = "_id";
     public static final String UUID             = "uuid";        // unique ID 128 bits
-    public static final String AUTHOR           = "author";      // original author of the post
-    public static final String GROUP            = "group_name";  // the name of the group it belongs to
+    public static final String AUTHOR_ID        = "author_id";   // unique ID 64  bits stored in Base64
+    public static final String GROUP_ID         = "group_id";  // the name of the group it belongs to
     public static final String POST             = "post";        // the post itself
     public static final String FILE_NAME        = "filename";    // the name of the attached file
     public static final String TIME_OF_CREATION = "toc";         // time of creation of the post
@@ -72,8 +72,8 @@ public class StatusDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
                  + UUID        + " TEXT, "
-                 + AUTHOR      + " TEXT, "
-                 + GROUP       + " TEXT, "
+                 + AUTHOR_ID   + " TEXT, "
+                 + GROUP_ID    + " TEXT, "
                  + POST        + " TEXT, "
                  + FILE_NAME   + " TEXT, "
                  + TIME_OF_CREATION  + " INTEGER, "
@@ -88,20 +88,21 @@ public class StatusDatabase extends Database {
                  + USERLIKED   + " INTEGER, "
                  + USERSAVED   + " INTEGER, "
                  + "UNIQUE ( " + UUID + " ), "
-                 + "FOREIGN KEY ( "+ GROUP + " ) REFERENCES " + GroupDatabase.TABLE_NAME + " ( " + GroupDatabase.NAME   + " ) "
+                 + "FOREIGN KEY ( "+ AUTHOR_ID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.UID   + " ), "
+                 + "FOREIGN KEY ( "+ GROUP_ID  + " ) REFERENCES " + GroupDatabase.TABLE_NAME   + " ( " + GroupDatabase.GID   + " ) "
           + " );";
 
 
     public static class StatusQueryOption {
-        public static final long FILTER_READ       = 0x0001;
-        public static final long FILTER_GROUP      = 0x0002;
-        public static final long FILTER_HOPS       = 0x0004;
-        public static final long FILTER_LIKE       = 0x0008;
-        public static final long FILTER_TAG        = 0x0010;
-        public static final long FILTER_USER       = 0x0020;
-        public static final long FILTER_TOC_FROM   = 0x0040;
-        public static final long FILTER_TOA_FROM   = 0x0080;
-        public static final long FILTER_NEVER_SEND = 0x0100;
+        public static final long FILTER_READ               = 0x0001;
+        public static final long FILTER_GROUP              = 0x0002;
+        public static final long FILTER_HOPS               = 0x0004;
+        public static final long FILTER_LIKE               = 0x0008;
+        public static final long FILTER_TAG                = 0x0010;
+        public static final long FILTER_USER               = 0x0020;
+        public static final long FILTER_TOC_FROM           = 0x0040;
+        public static final long FILTER_TOA_FROM           = 0x0080;
+        public static final long FILTER_NEVER_SEND_TO_USER = 0x0100;
 
         public enum QUERY_RESULT {
             COUNT,
@@ -119,8 +120,8 @@ public class StatusDatabase extends Database {
         public boolean      like;
         public long         filterFlags;
         public List<String> hashtagFilters;
-        public List<String> groupList;
-        public String       authorName;
+        public List<String> groupIDList;
+        public String       authorID;
         public int          hopLimit;
         public long         from_toc;
         public long         from_toa;
@@ -134,8 +135,8 @@ public class StatusDatabase extends Database {
             read = false;
             like = false;
             hashtagFilters = null;
-            groupList = null;
-            authorName = null;
+            groupIDList = null;
+            authorID = null;
             peerName = null;
             from_toc = 0;
             from_toa = 0;
@@ -145,7 +146,7 @@ public class StatusDatabase extends Database {
         }
     }
 
-    public StatusDatabase(Context context, SQLiteOpenHelper databaseHelper) {
+    public PushStatusDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
@@ -180,7 +181,7 @@ public class StatusDatabase extends Database {
         }
 
         StringBuilder query = new StringBuilder(
-                "SELECT "+select+" FROM "+StatusDatabase.TABLE_NAME+" s");
+                "SELECT "+select+" FROM "+ PushStatusDatabase.TABLE_NAME+" s");
 
         boolean groupby = false;
         boolean firstwhere = true;
@@ -192,16 +193,16 @@ public class StatusDatabase extends Database {
         if (((options.filterFlags & options.FILTER_TAG) == options.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
             query.append(
                     " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
-                    " ON s." + StatusDatabase.ID + " = m." + StatusTagDatabase.SID +
+                    " ON s." + PushStatusDatabase.ID + " = m." + StatusTagDatabase.SDBID +
                     " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
-                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID);
+                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HDBID);
             hashtagJoined = true;
         }
 
-        if (((options.filterFlags & options.FILTER_GROUP) == options.FILTER_GROUP) && (options.groupList != null) && (options.groupList.size() > 0)) {
+        if (((options.filterFlags & options.FILTER_GROUP) == options.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0)) {
             query.append(
                     " JOIN " + GroupDatabase.TABLE_NAME + " g" +
-                    " ON s." + StatusDatabase.GROUP + " = g." + GroupDatabase.NAME);
+                    " ON s." + PushStatusDatabase.GROUP_ID + " = g." + GroupDatabase.GID);
             groupJoined = true;
         }
 
@@ -209,124 +210,116 @@ public class StatusDatabase extends Database {
         if (options.filterFlags > 0) {
             query.append(" WHERE ( ");
         }
-
-
         if(hashtagJoined) {
             firstwhere = false;
-            query.append(" h."+HashtagDatabase.HASHTAG +" IN ( lower(?) ");
+            query.append(" h."+HashtagDatabase.HASHTAG +" IN ( ? ");
             Iterator<String> it = options.hashtagFilters.iterator();
-            argumentList.add(it.next());
+            argumentList.add(it.next().toLowerCase());
             while (it.hasNext()) {
-                argumentList.add(it.next());
-                query.append(" , lower(?) ");
+                argumentList.add(it.next().toLowerCase());
+                query.append(" , ? ");
             }
             query.append(" ) ");
             groupby = true;
         }
-
         if(groupJoined) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" g."+GroupDatabase.NAME +" IN ( lower(?) ");
-            Iterator<String> it = options.groupList.iterator();
+            query.append(" g."+GroupDatabase.GID +" IN ( ? ");
+            Iterator<String> it = options.groupIDList.iterator();
             argumentList.add(it.next());
             while (it.hasNext()) {
                 argumentList.add(it.next());
-                query.append(" , lower(?) ");
+                query.append(" , ? ");
             }
             query.append(" ) ");
         }
-
-        if (((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND) == StatusQueryOption.FILTER_NEVER_SEND) && (options.peerName != null)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.peerName != null)) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s."+StatusDatabase.ID + "  NOT IN ( ");
+            query.append(" s."+ PushStatusDatabase.ID + "  NOT IN ( ");
             query.append("  SELECT f."+ForwarderDatabase.ID+" FROM "+ForwarderDatabase.TABLE_NAME+" f ");
             query.append("  WHERE f."+ForwarderDatabase.RECEIVEDBY+" = ? ");
             argumentList.add(options.peerName);
             query.append(" ) ");
         }
-
-        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorName != null)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" lower(s." + StatusDatabase.AUTHOR + ") = lower(?) ");
-            argumentList.add(options.authorName);
+            query.append(" s." + PushStatusDatabase.AUTHOR_ID + " = ? ");
+            argumentList.add(options.authorID);
         }
-
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + StatusDatabase.TIME_OF_CREATION + " > ? ");
+            query.append(" s." + PushStatusDatabase.TIME_OF_CREATION + " > ? ");
             argumentList.add(Long.toString(options.from_toc));
         }
-
         if ((options.filterFlags & StatusQueryOption.FILTER_TOA_FROM) == StatusQueryOption.FILTER_TOA_FROM) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + StatusDatabase.TIME_OF_ARRIVAL + " > ? ");
+            query.append(" s." + PushStatusDatabase.TIME_OF_ARRIVAL + " > ? ");
             argumentList.add(Long.toString(options.from_toa));
         }
-
         if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + StatusDatabase.HOP_LIMIT + " = ? ");
+            query.append(" s." + PushStatusDatabase.HOP_LIMIT + " = ? ");
             argumentList.add(Integer.toString(options.hopLimit));
         }
-
         if ((options.filterFlags & StatusQueryOption.FILTER_READ) == StatusQueryOption.FILTER_READ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             if(options.read)
-                query.append(" s." + StatusDatabase.USERREAD + " = 1 ");
+                query.append(" s." + PushStatusDatabase.USERREAD + " = 1 ");
             else
-                query.append(" s." + StatusDatabase.USERREAD + " = 0 ");
+                query.append(" s." + PushStatusDatabase.USERREAD + " = 0 ");
         }
-
         if ((options.filterFlags & StatusQueryOption.FILTER_LIKE) == StatusQueryOption.FILTER_LIKE) {
             if(!firstwhere)
                 query.append(" AND ");
             if(options.like)
-                query.append(" s." + StatusDatabase.USERLIKED + " = 1 ");
+                query.append(" s." + PushStatusDatabase.USERLIKED + " = 1 ");
             else
-                query.append(" s." + StatusDatabase.USERLIKED + " = 0 ");
+                query.append(" s." + PushStatusDatabase.USERLIKED + " = 0 ");
         }
-
         if (options.filterFlags > 0)
             query.append(" ) ");
 
+        /* group by if necessary */
         if (groupby)
-            query.append(" GROUP BY " + StatusDatabase.ID);
+            query.append(" GROUP BY " + PushStatusDatabase.ID);
 
+        /* ordering as requested */
         if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
             switch (options.order_by) {
                 case TIME_OF_CREATION:
-                    query.append(" ORDER BY " + StatusDatabase.TIME_OF_CREATION + " DESC ");
+                    query.append(" ORDER BY " + PushStatusDatabase.TIME_OF_CREATION + " DESC ");
                     break;
                 case TIME_OF_ARRIVAL:
-                    query.append(" ORDER BY " + StatusDatabase.TIME_OF_CREATION + " DESC ");
+                    query.append(" ORDER BY " + PushStatusDatabase.TIME_OF_ARRIVAL + " DESC ");
                     break;
             }
         }
 
+        /* limiting the number of answer */
         if(options.answerLimit > 0) {
             query.append(" LIMIT ? ");
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
+        /* perform the query */
         Log.d(TAG, "[Q] query: "+query.toString());
         for(String argument : argumentList) {
             Log.d(TAG, argument+" ");
         }
-
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
         if(cursor == null)
@@ -344,7 +337,7 @@ public class StatusDatabase extends Database {
                     }
                     return listMessages;
                 case LIST_OF_MESSAGE:
-                    ArrayList<StatusMessage> listIds = new ArrayList<StatusMessage>();
+                    ArrayList<PushStatus> listIds = new ArrayList<PushStatus>();
                     for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                         listIds.add(cursorToStatus(cursor));
                     }
@@ -359,7 +352,7 @@ public class StatusDatabase extends Database {
     /*
      * Query only one status per UUID or per Index
      */
-    public StatusMessage getStatus(String  uuid) {
+    public PushStatus getStatus(String  uuid) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, UUID + " = ?", new String[]{ uuid }, null, null, null);
         if(cursor == null)
@@ -374,7 +367,7 @@ public class StatusDatabase extends Database {
                 cursor.close();
         }
     }
-    public StatusMessage getStatus(long id) {
+    public PushStatus getStatus(long id) {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
@@ -444,7 +437,7 @@ public class StatusDatabase extends Database {
     /*
      * Update a single status or insert it if it doesn't exist
      */
-    public boolean updateStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
+    public boolean updateStatus(final PushStatus status, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
                     @Override
@@ -453,7 +446,7 @@ public class StatusDatabase extends Database {
                     }
                 }, callback);
     }
-    private int updateStatus(StatusMessage status){
+    private int updateStatus(PushStatus status){
         ContentValues contentValues = new ContentValues();
         contentValues.put(HOP_COUNT, status.getHopCount());
         contentValues.put(LIKE, status.getLike());
@@ -479,7 +472,7 @@ public class StatusDatabase extends Database {
     /*
      * Insert a single status
      */
-    public boolean insertStatus(final StatusMessage status, final DatabaseExecutor.WritableQueryCallback callback){
+    public boolean insertStatus(final PushStatus status, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
                     @Override
@@ -488,12 +481,12 @@ public class StatusDatabase extends Database {
                     }
                 }, callback);
     }
-    private long insertStatus(StatusMessage status){
+    private long insertStatus(PushStatus status){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UUID, status.getUuid());
-        contentValues.put(AUTHOR, status.getAuthor());
+        contentValues.put(AUTHOR_ID, status.getAuthorID());
+        contentValues.put(GROUP_ID, status.getGroupID());
         contentValues.put(POST, status.getPost());
-        contentValues.put(GROUP, status.getGroup());
         contentValues.put(FILE_NAME, status.getFileName());
         contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
         contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
@@ -506,7 +499,8 @@ public class StatusDatabase extends Database {
         contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
         contentValues.put(USERSAVED, status.hasUserLiked() ? 1 : 0);
 
-        long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        long statusID = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_NONE);
+
         if(statusID >= 0) {
             status.setdbId(statusID);
             for (String hashtag : status.getHashtagSet()) {
@@ -548,26 +542,24 @@ public class StatusDatabase extends Database {
         EventBus.getDefault().post(new StatusDatabaseEvent());
     }
 
-
     /*
      * utility function to transform a row into a StatusMessage
      * ! this method does not close the cursor
      */
-    private StatusMessage cursorToStatus(final Cursor cursor) {
+    private PushStatus cursorToStatus(final Cursor cursor) {
         if(cursor == null)
             return null;
         if(cursor.isAfterLast())
             return null;
 
-        long statusID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        String author = cursor.getString(cursor.getColumnIndexOrThrow(AUTHOR));
-        long toc      = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
-        String post   = cursor.getString(cursor.getColumnIndexOrThrow(POST));
+        long statusDBID   = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        String author_id  = cursor.getString(cursor.getColumnIndexOrThrow(AUTHOR_ID));
+        String group_id   = cursor.getString(cursor.getColumnIndexOrThrow(GROUP_ID));
+        long toc          = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
+        String post       = cursor.getString(cursor.getColumnIndexOrThrow(POST));
 
-        StatusMessage message = new StatusMessage(post, author, toc);
-        message.setdbId(statusID);
-        message.setGroup(cursor.getString(cursor.getColumnIndexOrThrow(GROUP)));
-        message.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(UUID)));
+        PushStatus message = new PushStatus(author_id, group_id, post, toc);
+        message.setdbId(statusDBID);
         message.setTimeOfArrival(cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL)));
         message.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME)));
         message.setHopCount(cursor.getInt(cursor.getColumnIndexOrThrow(HOP_COUNT)));
@@ -578,8 +570,13 @@ public class StatusDatabase extends Database {
         message.setUserRead((cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1));
         message.setUserLike((cursor.getInt(cursor.getColumnIndexOrThrow(USERLIKED)) == 1));
         message.setUserSaved((cursor.getInt(cursor.getColumnIndexOrThrow(USERSAVED)) == 1));
-        message.setHashtagSet(getHashTagList(statusID));
-        message.setForwarderList(getForwarderList(statusID));
+        message.setHashtagSet(getHashTagList(statusDBID));
+        message.setForwarderList(DatabaseFactory.getForwarderDatabase(context).getForwarderList(statusDBID));
+
+        // todo grab them from the SQL Request Directly
+        message.setAuthor(DatabaseFactory.getContactDatabase(context).getContact(author_id));
+        message.setGroup(DatabaseFactory.getGroupDatabase(context).getGroup(group_id));
+
         return message;
     }
 
@@ -588,40 +585,22 @@ public class StatusDatabase extends Database {
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             StringBuilder query = new StringBuilder(
-                    "SELECT h." + HashtagDatabase.ID + " FROM " + StatusDatabase.TABLE_NAME + " s" +
-                            " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
-                            " ON s." + StatusDatabase.ID + " = m." + StatusTagDatabase.SID +
-                            " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
-                            " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HID +
-                            " WHERE s." + StatusDatabase.ID + " = ?");
+                    "SELECT h." + HashtagDatabase.HASHTAG
+                            + " FROM " + HashtagDatabase.TABLE_NAME + " h"
+                            + " JOIN " + StatusTagDatabase.TABLE_NAME + " s"
+                            + " ON s." + StatusTagDatabase.HDBID + " = h." + HashtagDatabase.ID
+                            + " WHERE s." + StatusTagDatabase.HDBID + " = ?");
             hashsetCursor = database.rawQuery(query.toString(), new String[]{Long.toString(statusID)});
             Set<String> hashtagSet = new HashSet<String>();
             if (hashsetCursor != null) {
                 for (hashsetCursor.moveToFirst(); !hashsetCursor.isAfterLast(); hashsetCursor.moveToNext()) {
-                    hashtagSet.add(hashsetCursor.getString(hashsetCursor.getColumnIndexOrThrow(HashtagDatabase.ID)));
+                    hashtagSet.add(hashsetCursor.getString(hashsetCursor.getColumnIndexOrThrow(HashtagDatabase.HASHTAG)));
                 }
             }
             return hashtagSet;
         } finally {
             if(hashsetCursor != null)
                 hashsetCursor.close();
-        }
-    }
-
-    private Set<String> getForwarderList(long statusID) {
-        Cursor cursorForwarders = null;
-        try {
-            cursorForwarders = DatabaseFactory.getForwarderDatabase(context).getForwarderList(statusID);
-            Set<String> forwarders = new HashSet<String>();
-            if (cursorForwarders != null) {
-                for (cursorForwarders.moveToFirst(); !cursorForwarders.isAfterLast(); cursorForwarders.moveToNext()) {
-                    forwarders.add(cursorForwarders.getString(cursorForwarders.getColumnIndexOrThrow(ForwarderDatabase.RECEIVEDBY)));
-                }
-            }
-            return forwarders;
-        } finally {
-            if(cursorForwarders != null)
-                cursorForwarders.close();
         }
     }
 }

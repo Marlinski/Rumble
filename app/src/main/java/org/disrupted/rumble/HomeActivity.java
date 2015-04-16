@@ -21,7 +21,6 @@ package org.disrupted.rumble;
 
 import android.content.Context;
 import android.content.Intent;
-import android.provider.ContactsContract;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -45,7 +44,7 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.StatusDatabase;
+import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
@@ -58,8 +57,6 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureIntera
 import org.disrupted.rumble.util.AESUtil;
 
 import java.nio.ByteBuffer;
-
-import javax.crypto.SecretKey;
 
 import de.greenrobot.event.EventBus;
 
@@ -250,11 +247,11 @@ public class HomeActivity extends ActionBarActivity {
     }
 
     public void refreshNotifications() {
-        StatusDatabase.StatusQueryOption options = new StatusDatabase.StatusQueryOption();
-        options.filterFlags = StatusDatabase.StatusQueryOption.FILTER_READ;
+        PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+        options.filterFlags = PushStatusDatabase.StatusQueryOption.FILTER_READ;
         options.read = false;
-        options.query_result = StatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
-        DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onRefreshPublic);
+        options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onRefreshPublic);
     }
     DatabaseExecutor.ReadableQueryCallback onRefreshPublic = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
@@ -274,7 +271,6 @@ public class HomeActivity extends ActionBarActivity {
             });
         }
     };
-
 
     /*
      * Handling Events coming from outside the activity

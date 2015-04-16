@@ -23,9 +23,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -49,7 +46,7 @@ import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -190,22 +187,6 @@ public class PopupCompose extends Activity {
                         .fit()
                         .centerCrop()
                         .into(compose_background);
-                /*
-                Bitmap image = BitmapFactory.decodeFile(attachedFile.getAbsolutePath());
-                imageBitmap = ThumbnailUtils.extractThumbnail(
-                        image,
-                        512,
-                        384);
-                image.recycle();
-                image = null;
-                BitmapDrawable bitmapDrawable = new BitmapDrawable(getResources(), imageBitmap);
-                bitmapDrawable.setAlpha(100);
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    compose.setBackgroundDrawable(bitmapDrawable);
-                } else {
-                    compose.setBackground(bitmapDrawable);
-                }
-                */
             } catch(IOException ignore){
             }
         }
@@ -225,18 +206,19 @@ public class PopupCompose extends Activity {
                 if (message.equals(""))
                     return;
 
-                Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
-                long now = (System.currentTimeMillis() / 1000L);
-                StatusMessage statusMessage = new StatusMessage(message, localContact.getName(), now);
-                statusMessage.setUserRead(true);
-
-                String group = spinnerArrayAdapter.getSelected();
+                Group group = spinnerArrayAdapter.getSelected();
                 if(group == null)
                     return;
-                statusMessage.setGroup(group);
+
+                Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
+                long now = (System.currentTimeMillis() / 1000L);
+                PushStatus pushStatus = new PushStatus(localContact.getUid(), group.getGid(), message, now);
+                pushStatus.setAuthor(localContact);
+                pushStatus.setGroup(group);
+                pushStatus.setUserRead(true);
 
                 if (mCurrentPhotoFile != null) {
-                    statusMessage.setFileName(mCurrentPhotoFile);
+                    pushStatus.setFileName(mCurrentPhotoFile);
 
                     // add the photo to the media library
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -248,8 +230,8 @@ public class PopupCompose extends Activity {
                     mCurrentPhotoFile = null;
                 }
 
-                EventBus.getDefault().post(new UserComposeStatus(statusMessage));
-                statusMessage.discard();
+                EventBus.getDefault().post(new UserComposeStatus(pushStatus));
+                pushStatus.discard();
             } catch (Exception e) {
                 Log.e(TAG,"[!] "+e.getMessage());
             } finally {
@@ -264,7 +246,7 @@ public class PopupCompose extends Activity {
     public class GroupSpinnerAdapter extends ArrayAdapter<String> implements AdapterView.OnItemSelectedListener{
 
         private ArrayList<Group> groupList;
-        private String selectedItem;
+        private Group selectedItem;
 
         public GroupSpinnerAdapter() {
             super(PopupCompose.this, android.R.layout.simple_spinner_item);
@@ -273,7 +255,7 @@ public class PopupCompose extends Activity {
             selectedItem = null;
         }
 
-        public String getSelected() {
+        public Group getSelected() {
             return selectedItem;
         }
 
@@ -290,7 +272,7 @@ public class PopupCompose extends Activity {
         public void swap(ArrayList<Group> array) {
             this.groupList = array;
             if(array != null)
-                selectedItem = array.get(0).getName();
+                selectedItem = array.get(0);
             else
                 selectedItem = null;
         }
@@ -306,7 +288,7 @@ public class PopupCompose extends Activity {
                         groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
                     else
                         groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
-                    selectedItem = clicked;
+                    selectedItem = item;
                 }
             }
         }

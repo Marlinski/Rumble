@@ -23,8 +23,11 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
@@ -33,11 +36,14 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.LinkedList;
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -131,25 +137,33 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
         try {
             while(true) {
                 con.receive(packet);
-                StatusMessage status;
+                ChatStatus status;
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
-                    status = parser.networkToStatus(jsonString);
-                    if(status.hasAttachedFile()) {
+                    JSONObject message = new JSONObject(jsonString);
+                    status = parser.networkToStatus(message);
+                    if(status.getFileSize() > 0) {
                         Log.d(TAG, "we do not accept attached file yet");
                         continue;
                     }
+
+                    /*
+                     * since we cannot have the mac address of the remote device, we use the IP address
+                     * instead.
+                     */
+                    EventBus.getDefault().post(new ChatStatusReceivedEvent(
+                                    status,
+                                    con.getRemoteLinkLayerAddress(),
+                                    FirechatProtocol.protocolID,
+                                    BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                    status.getFileSize()+jsonString.length(),
+                                    -1)
+                    );
+
                 } catch (JSONException ignore) {
                     Log.d(TAG, "malformed JSON");
                     continue;
                 }
-
-                /*
-                 * since we cannot have the mac address of the remote device, we use the IP address
-                 * instead.
-                 */
-                status.addForwarder(packet.getAddress().getHostAddress(), FirechatProtocol.protocolID);
-                DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
             }
         } catch (IOException e) {
         }

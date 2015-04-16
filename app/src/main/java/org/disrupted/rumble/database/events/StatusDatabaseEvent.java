@@ -20,5 +20,5 @@ package org.disrupted.rumble.database.events;
 /**
  * @author Marlinski
  */
-public class StatusDatabaseEvent extends ResourceEvent {
+public class StatusDatabaseEvent extends DatabaseEvent {
 }

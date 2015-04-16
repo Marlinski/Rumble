@@ -24,8 +24,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.security.acl.Group;
-
 /**
  * @author Marlinski
  */
@@ -39,15 +37,18 @@ public class DatabaseFactory {
 
     private static DatabaseFactory instance;
 
-    private DatabaseHelper             databaseHelper;
-    private final StatusDatabase       statusDatabase;
-    private final HashtagDatabase      hashtagDatabase;
-    private final StatusTagDatabase    statusTagDatabase;
-    private final GroupDatabase        groupDatabase;
-    private final SubscriptionDatabase subscriptionDatabase;
-    private final ContactDatabase      contactDatabase;
-    private final ForwarderDatabase    forwarderDatabase;
-    private DatabaseExecutor           databaseExecutor;
+    private DatabaseHelper                       databaseHelper;
+    private final PushStatusDatabase             pushStatusDatabase;
+    private final ChatStatusDatabase             chatStatusDatabase;
+    private final HashtagDatabase                hashtagDatabase;
+    private final StatusTagDatabase              statusTagDatabase;
+    private final GroupDatabase                  groupDatabase;
+    private final SubscriptionDatabase           subscriptionDatabase;
+    private final ContactDatabase                contactDatabase;
+    private final ContactJoinGroupDatabase       contactJoinGroupDatabase;
+    private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
+    private final ForwarderDatabase              forwarderDatabase;
+    private DatabaseExecutor                     databaseExecutor;
 
     public static DatabaseFactory getInstance(Context context) {
         synchronized (lock) {
@@ -58,8 +59,11 @@ public class DatabaseFactory {
         }
     }
 
-    public static StatusDatabase getStatusDatabase(Context context) {
-            return getInstance(context).statusDatabase;
+    public static PushStatusDatabase getPushStatusDatabase(Context context) {
+            return getInstance(context).pushStatusDatabase;
+    }
+    public static ChatStatusDatabase getChatStatusDatabase(Context context) {
+        return getInstance(context).chatStatusDatabase;
     }
     public static HashtagDatabase getHashtagDatabase(Context context) {
         return getInstance(context).hashtagDatabase;
@@ -76,6 +80,12 @@ public class DatabaseFactory {
     public static ContactDatabase getContactDatabase(Context context) {
         return getInstance(context).contactDatabase;
     }
+    public static ContactJoinGroupDatabase getContactJoinGroupDatabase(Context context) {
+        return getInstance(context).contactJoinGroupDatabase;
+    }
+    public static ContactHashTagInterestDatabase getContactHashTagInterestDatabase(Context context) {
+        return getInstance(context).contactHashTagInterestDatabase;
+    }
     public static ForwarderDatabase getForwarderDatabase(Context context) {
         return getInstance(context).forwarderDatabase;
     }
@@ -85,15 +95,18 @@ public class DatabaseFactory {
 
 
     private DatabaseFactory(Context context) {
-        this.databaseHelper       = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.statusDatabase       = new StatusDatabase(context, databaseHelper);
-        this.hashtagDatabase      = new HashtagDatabase(context, databaseHelper);
-        this.statusTagDatabase    = new StatusTagDatabase(context, databaseHelper);
-        this.groupDatabase        = new GroupDatabase(context, databaseHelper);
-        this.contactDatabase      = new ContactDatabase(context, databaseHelper);
-        this.subscriptionDatabase = new SubscriptionDatabase(context, databaseHelper);
-        this.forwarderDatabase    = new ForwarderDatabase(context, databaseHelper);
-        this.databaseExecutor     = new DatabaseExecutor();
+        this.databaseHelper                 = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.pushStatusDatabase             = new PushStatusDatabase(context, databaseHelper);
+        this.chatStatusDatabase             = new ChatStatusDatabase(context, databaseHelper);
+        this.hashtagDatabase                = new HashtagDatabase(context, databaseHelper);
+        this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
+        this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
+        this.contactDatabase                = new ContactDatabase(context, databaseHelper);
+        this.subscriptionDatabase           = new SubscriptionDatabase(context, databaseHelper);
+        this.forwarderDatabase              = new ForwarderDatabase(context, databaseHelper);
+        this.contactJoinGroupDatabase       = new ContactJoinGroupDatabase(context, databaseHelper);
+        this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
+        this.databaseExecutor               = new DatabaseExecutor();
     }
 
     public void reset(Context context) {
@@ -101,12 +114,15 @@ public class DatabaseFactory {
         this.databaseHelper = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
 
         this.contactDatabase.reset(databaseHelper);
-        this.statusDatabase.reset(databaseHelper);
+        this.pushStatusDatabase.reset(databaseHelper);
+        this.chatStatusDatabase.reset(databaseHelper);
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
         this.subscriptionDatabase.reset(databaseHelper);
         this.forwarderDatabase.reset(databaseHelper);
+        this.contactJoinGroupDatabase.reset(databaseHelper);
+        this.contactHashTagInterestDatabase.reset(databaseHelper);
         old.close();
     }
 
@@ -125,11 +141,14 @@ public class DatabaseFactory {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(ContactDatabase.CREATE_TABLE);
             db.execSQL(GroupDatabase.CREATE_TABLE);
-            db.execSQL(StatusDatabase.CREATE_TABLE);
+            db.execSQL(PushStatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
+            db.execSQL(ChatStatusDatabase.CREATE_TABLE);
             db.execSQL(SubscriptionDatabase.CREATE_TABLE);
             db.execSQL(ForwarderDatabase.CREATE_TABLE);
+            db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);
+            db.execSQL(ContactHashTagInterestDatabase.CREATE_TABLE);
 
             executeStatements(db, StatusTagDatabase.CREATE_INDEXS);
         }

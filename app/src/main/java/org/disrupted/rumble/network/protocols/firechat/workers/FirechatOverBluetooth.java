@@ -24,11 +24,13 @@ import android.net.Uri;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.events.StatusReceivedEvent;
-import org.disrupted.rumble.network.events.StatusSentEvent;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
+import org.disrupted.rumble.network.events.PushStatusSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -44,6 +46,7 @@ import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -208,30 +211,27 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 } else {
                     try {
                         pbin.unread(buffer, i, count - i);
-                        long timeToTransfer = System.currentTimeMillis();
-                        String jsonString = new String(buffer, 0, i - 1);
+                        String jsonString  = new String(buffer, 0, i - 1);
+                        JSONObject message = new JSONObject(jsonString);
 
-                        StatusMessage status = parser.networkToStatus(jsonString);
+                        ChatStatus status = parser.networkToStatus(message);
                         String filename = downloadFile(status.getFileSize());
                         if (filename != null) {
-                            status.setFileName(filename);
+                            status.setAttachedFile(filename);
                         }
 
                         /*
                          * It is very important to post an event as it will be catch by the
                          * CacheManager and will update the database accordingly
                          */
-                        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-                        EventBus.getDefault().post(new StatusReceivedEvent(
+                        EventBus.getDefault().post(new ChatStatusReceivedEvent(
                                         status,
                                         con.getRemoteLinkLayerAddress(),
                                         FirechatProtocol.protocolID,
                                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                         status.getFileSize()+jsonString.length(),
-                                        timeToTransfer)
+                                        -1)
                         );
-                        status.discard();
-
                     } catch (JSONException ignore) {
                         Log.d(TAG, "malformed JSON");
                     } catch (IOException e) {
@@ -308,18 +308,18 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             return false;
 
         if(command instanceof SendStatusMessageCommand) {
-            StatusMessage statusMessage = ((SendStatusMessageCommand)command).getStatus();
-            if(statusMessage.isForwarder(con.getRemoteLinkLayerAddress(), FirechatProtocol.protocolID))
+            PushStatus pushStatus = ((SendStatusMessageCommand)command).getStatus();
+            if(pushStatus.isForwarder(con.getRemoteLinkLayerAddress(), FirechatProtocol.protocolID))
                 return false;
 
-            String jsonStatus = parser.statusToNetwork(statusMessage);
+            String jsonStatus = parser.statusToNetwork(pushStatus);
             try {
                 long timeToTransfer = System.currentTimeMillis();
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
                 con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
 
-                if(statusMessage.hasAttachedFile()) {
-                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),statusMessage.getFileName());
+                if(pushStatus.hasAttachedFile()) {
+                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), pushStatus.getFileName());
                     if(attachedFile.exists() && attachedFile.isFile()) {
                         FileInputStream fis = null;
                         try {
@@ -335,7 +335,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                                 fis.close();
                         }
                     } else {
-                        throw new IOException("File: "+statusMessage.getFileName()+" does not exists");
+                        throw new IOException("File: "+ pushStatus.getFileName()+" does not exists");
                     }
                 }
 
@@ -343,8 +343,8 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
                 recipients.add(con.getRemoteLinkLayerAddress());
-                EventBus.getDefault().post(new StatusSentEvent(
-                        statusMessage,
+                EventBus.getDefault().post(new PushStatusSentEvent(
+                                pushStatus,
                         recipients,
                         FirechatProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,

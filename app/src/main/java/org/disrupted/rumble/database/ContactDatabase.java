@@ -22,13 +22,20 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
+import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -37,8 +44,7 @@ import de.greenrobot.event.EventBus;
  */
 public class ContactDatabase extends Database  {
 
-    private static final String TAG = "StatusDatabase";
-
+    private static final String TAG = "ContactDatabase";
 
     public static final String TABLE_NAME   = "contact";
     public static final String ID           = "_id";
@@ -100,35 +106,163 @@ public class ContactDatabase extends Database  {
         return ret;
     }
 
-    public boolean insertContact(final Contact contact, final DatabaseExecutor.WritableQueryCallback callback){
+    public Contact getContact(String author_id) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, UID+ " = ?", new String[] {author_id}, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToContact(cursor);
+            else
+                return null;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+    public long getContactDBID(String author_id) {
+        long ret = -1;
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[] {ID}, UID+ " = ?", new String[] {author_id}, null, null, null);
+            if(cursor == null)
+                return ret;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            else
+                return -1;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+
+    public boolean insertOrUpdateContact(final Contact contact, final DatabaseExecutor.WritableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.WritableQuery() {
                     @Override
                     public boolean write() {
-                        return (insertContact(contact) >= 0);
+                        return (insertOrUpdateContact(contact) >= 0);
                     }
                 }, callback);
     }
-    private long insertContact(Contact contact){
+    private long insertOrUpdateContact(Contact contact){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UID, contact.getUid());
         contentValues.put(NAME, contact.getName());
         contentValues.put(AVATAR, contact.getAvatar());
         contentValues.put(LOCALUSER, contact.isLocal() ? 1 : 0);
 
-        long contactID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        Cursor cursor = null;
+        long contactDBID = -1;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[]{ID}, UID + " = ?", new String[]{contact.getUid()}, null, null, null);
+            if((cursor != null) && cursor.moveToFirst() && !cursor.isAfterLast())
+                contactDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
 
-        if(contactID > 0)
+        boolean newContact = (contactDBID < 0);
+        if(contactDBID < 0)
+            contactDBID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        else
+            databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
+
+
+        if(contact.getJoinedGroupIDs().size() > 0) {
+            for(String joinedGroupID : contact.getJoinedGroupIDs()) {
+                DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingContactID(contactDBID);
+                long groupDBID = DatabaseFactory.getGroupDatabase(context).getGroupDBID(joinedGroupID);
+                DatabaseFactory.getContactJoinGroupDatabase(context).insertContactGroup(contactDBID, groupDBID);
+            }
+        }
+        if(contact.getHashtagInterests().size() > 0) {
+            for(Map.Entry<String, Integer> entry : contact.getHashtagInterests().entrySet()) {
+                DatabaseFactory.getContactHashTagInterestDatabase(context).deleteEntriesMatchingContactID(contactDBID);
+                long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(entry.getKey().toLowerCase());
+                DatabaseFactory.getContactHashTagInterestDatabase(context).insertContactTagInterest(contactDBID,tagID,entry.getValue());
+            }
+        }
+
+        if(newContact) {
+            Log.d(TAG, "new contact inserted: " + contact.toString());
             EventBus.getDefault().post(new ContactInsertedEvent(contact));
+        } else {
+            Log.d(TAG, "contact updated: " + contact.toString());
+            EventBus.getDefault().post(new ContactUpdatedEvent(contact));
+        }
 
-        return contactID;
+        return contactDBID;
     }
 
     private Contact cursorToContact(final Cursor cursor) {
-        String author = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
-        String uid    = cursor.getString(cursor.getColumnIndexOrThrow(UID));
-        boolean local = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
-        return new Contact(author, uid, local);
+        long contactDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        String author    = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
+        String uid       = cursor.getString(cursor.getColumnIndexOrThrow(UID));
+        boolean local    = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
+        Contact contact  = new Contact(author, uid, local);
+        contact.setDBID(contactDBID);
+        contact.setHashtagInterests(getHashtagsOfInterest(contactDBID));
+        contact.setJoinedGroupIDs(getJoinedGroupIDs(contactDBID));
+        return contact;
+    }
+
+    private Map<String, Integer> getHashtagsOfInterest(long contactDBID) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            StringBuilder query = new StringBuilder(
+                    "SELECT h." + HashtagDatabase.HASHTAG + ", i."+ContactHashTagInterestDatabase.INTEREST +
+                            " FROM " + HashtagDatabase.TABLE_NAME + " h" +
+                            " JOIN " + ContactHashTagInterestDatabase.TABLE_NAME + " i" +
+                            " ON h." + HashtagDatabase.ID + " = i." + ContactHashTagInterestDatabase.HDBID +
+                            " WHERE i." + ContactHashTagInterestDatabase.UDBID + " = ?");
+            cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
+            Map<String, Integer> ret = new HashMap<String, Integer>();
+            if (cursor != null) {
+                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                    ret.put(cursor.getString(cursor.getColumnIndexOrThrow(HashtagDatabase.HASHTAG )),
+                            cursor.getInt(cursor.getColumnIndexOrThrow(ContactHashTagInterestDatabase.INTEREST))
+                    );
+                }
+            }
+            return ret;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+    private Set<String> getJoinedGroupIDs(long contactDBID) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            StringBuilder query = new StringBuilder(
+                    "SELECT g." + GroupDatabase.GID +
+                            " FROM " + ContactJoinGroupDatabase.TABLE_NAME + " c" +
+                            " JOIN " + GroupDatabase.TABLE_NAME + " g" +
+                            " ON c." + ContactJoinGroupDatabase.GDBID + " = g." + GroupDatabase.ID +
+                            " WHERE c." + ContactJoinGroupDatabase.UDBID + " = ?");
+            cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
+            Set<String> ret = new HashSet<String>();
+            if (cursor != null) {
+                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                    ret.add(cursor.getString(cursor.getColumnIndexOrThrow(GroupDatabase.GID)));
+                }
+            }
+            return ret;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
     }
 
 }

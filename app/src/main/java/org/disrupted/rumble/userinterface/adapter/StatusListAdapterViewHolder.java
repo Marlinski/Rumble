@@ -23,7 +23,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -45,7 +44,7 @@ import com.amulyakhare.textdrawable.util.ColorGenerator;
 import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
@@ -77,7 +76,7 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
 
     public class StatusItemViewHolder {
         boolean       refresh;
-        StatusMessage message;
+        PushStatus message;
         View          statusView;
         ImageView     avatarView;
         TextView      authorView;
@@ -89,7 +88,7 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
         ImageView     moreView;
         LinearLayout  box;
 
-        public StatusItemViewHolder(StatusMessage message) {
+        public StatusItemViewHolder(PushStatus message) {
             this.message = message;
             refresh = true;
             statusView = null;
@@ -142,14 +141,14 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
             // we draw the avatar
             ColorGenerator generator = ColorGenerator.DEFAULT;
             viewHolder.avatarView.setImageDrawable(
-                    builder.build(viewHolder.message.getAuthor().substring(0, 1),
+                    builder.build(viewHolder.message.getAuthor().getName().substring(0, 1),
                             generator.getColor(viewHolder.message.getAuthor())));
 
             // we draw the author field
-            viewHolder.authorView.setText(viewHolder.message.getAuthor());
+            viewHolder.authorView.setText(viewHolder.message.getAuthor().getName());
             viewHolder.tocView.setText(new TimeElapsed(viewHolder.message.getTimeOfCreation()).display());
             viewHolder.toaView.setText(new TimeElapsed(viewHolder.message.getTimeOfArrival()).display());
-            viewHolder.groupNameView.setText(viewHolder.message.getGroup());
+            viewHolder.groupNameView.setText(viewHolder.message.getGroup().getName());
             viewHolder.groupNameView.setTextColor(generator.getColor(viewHolder.message.getGroup()));
 
             // we draw the status (with clickable hashtag)
@@ -256,7 +255,7 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
         return viewHolders.size();
     }
 
-    public void swap(List<StatusMessage> statuses) {
+    public void swap(List<PushStatus> statuses) {
         if(this.viewHolders != null) {
             for (StatusItemViewHolder view : this.viewHolders) {
                 view.message.discard();
@@ -265,7 +264,7 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
             this.viewHolders.clear();
         }
         if(statuses != null) {
-            for (StatusMessage message : statuses) {
+            for (PushStatus message : statuses) {
                 StatusItemViewHolder view = new StatusItemViewHolder(message);
                 viewHolders.add(view);
             }
@@ -273,8 +272,8 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
     }
 
 
-    public boolean addStatus(StatusMessage status) {
-        List<StatusMessage> newlist = new ArrayList<StatusMessage>();
+    public boolean addStatus(PushStatus status) {
+        List<PushStatus> newlist = new ArrayList<PushStatus>();
         newlist.add(status);
         for ( StatusItemViewHolder item : viewHolders) {
             newlist.add(item.message);
@@ -293,7 +292,7 @@ public class StatusListAdapterViewHolder extends BaseAdapter{
         }
         return false;
     }
-    public boolean updateStatus(StatusMessage status) {
+    public boolean updateStatus(PushStatus status) {
         Iterator<StatusItemViewHolder> it =viewHolders.iterator();
         while(it.hasNext()) {
             StatusItemViewHolder item = it.next();

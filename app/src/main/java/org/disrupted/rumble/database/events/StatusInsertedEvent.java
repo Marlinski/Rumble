@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 /**
  * NewStatusEvent is posted when a status has been added to the database
@@ -30,9 +30,9 @@ import org.disrupted.rumble.database.objects.StatusMessage;
  */
 public class StatusInsertedEvent extends StatusDatabaseEvent {
 
-    public final StatusMessage status;
+    public final PushStatus status;
 
-    public StatusInsertedEvent(StatusMessage status){
+    public StatusInsertedEvent(PushStatus status){
         this.status = status;
     }
 

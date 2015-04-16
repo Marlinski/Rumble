@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,8 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.disrupted.rumble.userinterface.adapter;
@@ -23,7 +21,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.net.Uri;
+import android.support.v7.widget.PopupMenu;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -38,14 +36,13 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.support.v7.widget.PopupMenu;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
 import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
@@ -65,51 +62,22 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class StatusListAdapter extends BaseAdapter{
+public class StatusListAdapter extends BaseAdapter {
 
-    private static final String TAG = "NeighborListAdapter";
+    private static final String TAG = "StatusListAdapter";
 
     private FragmentStatusList fragment;
-    private Activity           activity;
-    private LayoutInflater     inflater;
-    private List<StatusItemViewHolder> viewHolders;
+    private Activity activity;
+    private LayoutInflater inflater;
+    private List<PushStatus> statuses;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
-    public class StatusItemViewHolder {
-        boolean       refresh;
-        StatusMessage message;
-        View          statusView;
-        ImageView     avatarView;
-        TextView      authorView;
-        TextView      textView;
-        TextView      tocView;
-        TextView      toaView;
-        TextView      groupNameView;
-        ImageView     attachedView;
-        ImageView     moreView;
-        LinearLayout  box;
-
-        public StatusItemViewHolder(StatusMessage message) {
-            this.message = message;
-            refresh = true;
-            statusView = null;
-            avatarView = null;
-            authorView = null;
-            textView = null;
-            tocView = null;
-            toaView = null;
-            groupNameView = null;
-            attachedView = null;
-            moreView = null;
-            box = null;
-        }
-    }
 
     public StatusListAdapter(Activity activity, FragmentStatusList fragment) {
         this.activity = activity;
         this.fragment = fragment;
         this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.viewHolders = new ArrayList<StatusItemViewHolder>();
+        this.statuses = new ArrayList<PushStatus>();
     }
 
     public void clean() {
@@ -122,60 +90,44 @@ public class StatusListAdapter extends BaseAdapter{
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
 
-        StatusItemViewHolder viewHolder = viewHolders.get(i);
-        if(viewHolder.statusView == null) {
-            viewHolder.statusView = inflater.inflate(R.layout.status_item, null);
-            viewHolder.avatarView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_avatar);
-            viewHolder.authorView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_author);
-            viewHolder.textView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_body);
-            viewHolder.tocView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_created);
-            viewHolder.toaView = (TextView) viewHolder.statusView.findViewById(R.id.status_item_received);
-            viewHolder.groupNameView = (TextView) viewHolder.statusView.findViewById(R.id.status_group_name);
-            viewHolder.attachedView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_attached_image);
-            viewHolder.moreView = (ImageView) viewHolder.statusView.findViewById(R.id.status_item_more_options);
-            viewHolder.box = (LinearLayout) viewHolder.statusView.findViewById(R.id.status_item_box);
-            viewHolder.refresh = true;
-        }
+        final PushStatus message = statuses.get(i);
 
-        if(viewHolder.refresh) {
+        View statusView = inflater.inflate(R.layout.status_item, null);
+        ImageView avatarView    = (ImageView)statusView.findViewById(R.id.status_item_avatar);
+        TextView  authorView    = (TextView) statusView.findViewById(R.id.status_item_author);
+        TextView  textView      = (TextView) statusView.findViewById(R.id.status_item_body);
+        TextView  tocView       = (TextView) statusView.findViewById(R.id.status_item_created);
+        TextView  toaView       = (TextView) statusView.findViewById(R.id.status_item_received);
+        TextView  groupNameView = (TextView) statusView.findViewById(R.id.status_group_name);
+        ImageView attachedView  = (ImageView)statusView.findViewById(R.id.status_item_attached_image);
+        ImageView moreView      = (ImageView)statusView.findViewById(R.id.status_item_more_options);
+        LinearLayout box        = (LinearLayout)statusView.findViewById(R.id.status_item_box);
 
-            // we draw the avatar
-            ColorGenerator generator = ColorGenerator.DEFAULT;
-            viewHolder.avatarView.setImageDrawable(
-                    builder.build(viewHolder.message.getAuthor().substring(0, 1),
-                            generator.getColor(viewHolder.message.getAuthor())));
+        // we draw the avatar
+        ColorGenerator generator = ColorGenerator.DEFAULT;
+        avatarView.setImageDrawable(
+                builder.build(message.getAuthor().getName().substring(0, 1),
+                        generator.getColor(message.getAuthor().getUid())));
 
-            // we draw the author field
-            viewHolder.authorView.setText(viewHolder.message.getAuthor());
-            viewHolder.tocView.setText(new TimeElapsed(viewHolder.message.getTimeOfCreation()).display());
-            viewHolder.toaView.setText(new TimeElapsed(viewHolder.message.getTimeOfArrival()).display());
-            viewHolder.groupNameView.setText(viewHolder.message.getGroup());
-            viewHolder.groupNameView.setTextColor(generator.getColor(viewHolder.message.getGroup()));
+        // we draw the author field
+        authorView.setText(message.getAuthor().getName());
+        tocView.setText(new TimeElapsed(message.getTimeOfCreation()).display());
+        toaView.setText(new TimeElapsed(message.getTimeOfArrival()).display());
+        groupNameView.setText(message.getGroup().getName());
+        groupNameView.setTextColor(generator.getColor(message.getGroup().getGid()));
 
-            // we draw the status (with clickable hashtag)
-            if (viewHolder.message.getPost().length() == 0) {
-                viewHolder.statusView.setVisibility(View.GONE);
-            } else {
-                SpannableString ss = new SpannableString(viewHolder.message.getPost());
-                int beginCharPosition = -1;
-                int j;
-                for (j = 0; j < viewHolder.message.getPost().length(); j++) {
-                    if (viewHolder.message.getPost().charAt(j) == '#')
-                        beginCharPosition = j;
-                    if ((viewHolder.message.getPost().charAt(j) == ' ') && (beginCharPosition >= 0)) {
-                        final String word = viewHolder.message.getPost().substring(beginCharPosition, j);
-                        ClickableSpan clickableSpan = new ClickableSpan() {
-                            @Override
-                            public void onClick(View textView) {
-                                fragment.addFilter(word);
-                            }
-                        };
-                        ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                        beginCharPosition = -1;
-                    }
-                }
-                if (beginCharPosition >= 0) {
-                    final String word = viewHolder.message.getPost().substring(beginCharPosition, j);
+        // we draw the status (with clickable hashtag)
+        if (message.getPost().length() == 0) {
+            statusView.setVisibility(View.GONE);
+        } else {
+            SpannableString ss = new SpannableString(message.getPost());
+            int beginCharPosition = -1;
+            int j;
+            for (j = 0; j < message.getPost().length(); j++) {
+                if (message.getPost().charAt(j) == '#')
+                    beginCharPosition = j;
+                if ((message.getPost().charAt(j) == ' ') && (beginCharPosition >= 0)) {
+                    final String word = message.getPost().substring(beginCharPosition, j);
                     ClickableSpan clickableSpan = new ClickableSpan() {
                         @Override
                         public void onClick(View textView) {
@@ -183,58 +135,71 @@ public class StatusListAdapter extends BaseAdapter{
                         }
                     };
                     ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    beginCharPosition = -1;
                 }
-                viewHolder.textView.setText(ss);
-                viewHolder.textView.setMovementMethod(LinkMovementMethod.getInstance());
-
-                // we draw the attached file (if any)
-                if (viewHolder.message.hasAttachedFile()) {
-                    try {
-                        File attachedFile = new File(
-                                FileUtil.getReadableAlbumStorageDir(),
-                                viewHolder.message.getFileName());
-                        if (!attachedFile.isFile() || !attachedFile.exists())
-                            throw new IOException("file does not exists");
-
-                        Picasso.with(activity)
-                                .load("file://"+attachedFile.getAbsolutePath())
-                                .resize(96, 96)
-                                .centerCrop()
-                                .into(viewHolder.attachedView);
-
-                        viewHolder.attachedView.setVisibility(View.VISIBLE);
-
-                        final String name =  viewHolder.message.getFileName();
-                        viewHolder.attachedView.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                Log.d(TAG, "trying to open: " + name);
-                                Intent intent = new Intent(activity, DisplayImage.class);
-                                intent.putExtra("IMAGE_NAME", name);
-                                activity.startActivity(intent);
-                            }
-                        });
-
-
-                    } catch (IOException ignore) {
+            }
+            if (beginCharPosition >= 0) {
+                final String word = message.getPost().substring(beginCharPosition, j);
+                ClickableSpan clickableSpan = new ClickableSpan() {
+                    @Override
+                    public void onClick(View textView) {
+                        fragment.addFilter(word);
                     }
-                }
+                };
+                ss.setSpan(clickableSpan, beginCharPosition, j, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
+            textView.setText(ss);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
 
-            viewHolder.moreView.setOnClickListener(new PopupMenuListener(viewHolder.message.getUuid()));
-            if (!viewHolder.message.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - viewHolder.message.getTimeOfArrival()) < 60)) {
-                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                    viewHolder.box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
-                } else {
-                    viewHolder.box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+            // we draw the attached file (if any)
+            if (message.hasAttachedFile()) {
+                try {
+                    File attachedFile = new File(
+                            FileUtil.getReadableAlbumStorageDir(),
+                            message.getFileName());
+                    if (!attachedFile.isFile() || !attachedFile.exists())
+                        throw new IOException("file does not exists");
+
+                    Picasso.with(activity)
+                            .load("file://"+attachedFile.getAbsolutePath())
+                            .resize(96, 96)
+                            .centerCrop()
+                            .into(attachedView);
+
+                    attachedView.setVisibility(View.VISIBLE);
+
+                    final String name =  message.getFileName();
+                    attachedView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Log.d(TAG, "trying to open: " + name);
+                            Intent intent = new Intent(activity, DisplayImage.class);
+                            intent.putExtra("IMAGE_NAME", name);
+                            activity.startActivity(intent);
+                        }
+                    });
+
+
+                } catch (IOException ignore) {
                 }
-                if (!viewHolder.message.hasUserReadAlready())
-                    EventBus.getDefault().post(new UserReadStatus(viewHolder.message.getUuid()));
             }
-            viewHolder.refresh = false;
+            
+
+            moreView.setOnClickListener(new PopupMenuListener(message.getUuid()));
+            if (!message.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - message.getTimeOfArrival()) < 60)) {
+                if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                    box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+                } else {
+                    box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+                }
+                if (!message.hasUserReadAlready()) {
+                    message.setUserRead(true);
+                    EventBus.getDefault().post(new UserReadStatus(message.getUuid()));
+                }
+            }
         }
 
-        return viewHolder.statusView;
+        return statusView;
     }
 
     @Override
@@ -244,61 +209,59 @@ public class StatusListAdapter extends BaseAdapter{
 
     @Override
     public long getItemId(int i) {
-        if(viewHolders == null)
+        if(statuses == null)
             return 0;
         return i;
     }
 
     @Override
     public int getCount() {
-        if(viewHolders == null)
+        if(statuses == null)
             return 0;
-        return viewHolders.size();
+        return statuses.size();
     }
 
-    public void swap(List<StatusMessage> statuses) {
-        if(this.viewHolders != null) {
-            for (StatusItemViewHolder view : this.viewHolders) {
-                view.message.discard();
-                view.message = null;
+    public void swap(List<PushStatus> statuses) {
+        if(this.statuses != null) {
+            for (PushStatus message : this.statuses) {
+                message.discard();
+                message = null;
             }
-            this.viewHolders.clear();
+            this.statuses.clear();
         }
         if(statuses != null) {
-            for (StatusMessage message : statuses) {
-                StatusItemViewHolder view = new StatusItemViewHolder(message);
-                viewHolders.add(view);
+            for (PushStatus message : statuses) {
+                this.statuses.add(message);
             }
         }
     }
 
-
-    public boolean addStatus(StatusMessage status) {
-        List<StatusMessage> newlist = new ArrayList<StatusMessage>();
+    public boolean addStatus(PushStatus status) {
+        List<PushStatus> newlist = new ArrayList<PushStatus>();
         newlist.add(status);
-        for ( StatusItemViewHolder item : viewHolders) {
-            newlist.add(item.message);
+        for (PushStatus item : statuses) {
+            newlist.add(item);
         }
         swap(newlist);
         return true;
     }
     public boolean deleteStatus(String uuid) {
-        Iterator<StatusItemViewHolder> it =viewHolders.iterator();
+        Iterator<PushStatus> it =statuses.iterator();
         while(it.hasNext()) {
-            StatusItemViewHolder item = it.next();
-            if(item.message.getUuid().equals(uuid)) {
+            PushStatus item = it.next();
+            if(item.getUuid().equals(uuid)) {
                 it.remove();
                 return true;
             }
         }
         return false;
     }
-    public boolean updateStatus(StatusMessage status) {
-        Iterator<StatusItemViewHolder> it =viewHolders.iterator();
+    public boolean updateStatus(PushStatus status) {
+        Iterator<PushStatus> it =statuses.iterator();
         while(it.hasNext()) {
-            StatusItemViewHolder item = it.next();
-            if(item.message.getUuid().equals(status.getUuid())) {
-                item.message = status;
+            PushStatus item = it.next();
+            if(item.getUuid().equals(status.getUuid())) {
+                item = status;
                 return true;
             }
         }

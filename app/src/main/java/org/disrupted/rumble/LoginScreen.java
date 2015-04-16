@@ -68,14 +68,12 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         String username = usernameView.getText().toString();
         if(username != "") {
             try {
-                Group defaultGroup = Group.createNewGroup(GroupDatabase.DEFAULT_PUBLIC_GROUP, false);
-                defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
-                DatabaseFactory.getGroupDatabase(this).insertGroup(defaultGroup);
+                DatabaseFactory.getGroupDatabase(this).insertGroup(Group.getDefaultGroup());
             } catch(Exception impossibleWithPublicGroup){
             }
 
             Contact localContact = Contact.createLocalContact(username);
-            DatabaseFactory.getContactDatabase(this).insertContact(localContact, callback);
+            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact, callback);
         }
     }
 

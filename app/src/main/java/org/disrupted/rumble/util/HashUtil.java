@@ -44,10 +44,11 @@ public class HashUtil {
         }
     }
 
-    public static final String computeStatusUUID(String author, String post, long timeOfCreation) {
+    public static final String computeStatusUUID(String author_id, String group_id, String post, long timeOfCreation) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(author.getBytes());
+            md.update(author_id.getBytes());
+            md.update(group_id.getBytes());
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
             return Base64.encodeToString(md.digest(),0,16,Base64.NO_WRAP);

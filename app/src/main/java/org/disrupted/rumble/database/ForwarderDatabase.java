@@ -25,6 +25,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * ForwarderDatabase keeps track of those who already received or sent a status.
  * Because we may receive status from a neighbour before he actually gives us
@@ -52,17 +55,29 @@ public class ForwarderDatabase extends Database {
             " (" + ID         + " INTEGER, "
                  + RECEIVEDBY + " TEXT, "
                  + " UNIQUE( " + ID + " , " + RECEIVEDBY + "), "
-                 + " FOREIGN KEY ( "+ ID + " ) REFERENCES " + StatusDatabase.TABLE_NAME   + " ( " + StatusDatabase.ID   + " ) "
+                 + " FOREIGN KEY ( "+ ID + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME   + " ( " + PushStatusDatabase.ID   + " ) "
             + " );";
 
     public ForwarderDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public Cursor getForwarderList(long statusID) {
-        SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, new String[] {RECEIVEDBY}, ID+" = "+statusID, null, null, null, null);
-        return cursor;
+    public Set<String> getForwarderList(long statusID) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[] {RECEIVEDBY}, ID+" = "+statusID, null, null, null, null);
+            Set<String> ret = new HashSet<String>();
+            if (cursor != null) {
+                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                    ret.add(cursor.getString(cursor.getColumnIndexOrThrow(ForwarderDatabase.RECEIVEDBY)));
+                }
+            }
+            return ret;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
     }
 
     public void deleteEntriesMatchingStatusID(long statusID){

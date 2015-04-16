@@ -20,7 +20,6 @@
 package org.disrupted.rumble.database.objects;
 
 
-import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.util.HashUtil;
 
 import java.util.HashSet;
@@ -31,15 +30,15 @@ import java.util.regex.Pattern;
 /**
  * @author Marlinski
  */
-public class StatusMessage extends Message{
+public class PushStatus extends Message{
 
     private static final String TAG  = "StatusMessage";
     public  static final String TYPE = "STATUS";
 
     protected long        dbid;
     protected String      uuid;
-    protected String      author;
-    protected String      group;
+    protected String      author_id;
+    protected String      group_id;
     protected String      status;
     protected Set<String> hashtagSet;
     protected String      attachedFile;
@@ -54,24 +53,28 @@ public class StatusMessage extends Message{
     protected int         duplicate;
     protected Set<String> forwarderList;
 
+    protected Contact     author;
+    protected Group       group;
+
     // local user preference for this message
     protected boolean hasUserRead;
     protected boolean hasUserLiked;
     protected boolean hasUserSaved;
 
-    public StatusMessage(StatusMessage message) {
-        this.dbid = message.getdbId();
-        this.uuid = message.getUuid();
-        this.author = message.getAuthor();
-        this.group = message.getGroup();
+    public PushStatus(PushStatus message) {
+        this.author_id = message.getAuthorID();
         this.status = message.getPost();
+        this.timeOfCreation = message.getTimeOfCreation();
+
+        this.uuid = message.getUuid();
+        this.dbid = message.getdbId();
+        this.group_id = message.getGroupID();
         if(message.getHashtagSet() != null)
             this.hashtagSet = new HashSet<String>(message.getHashtagSet());
         else
-            this.hashtagSet = new HashSet<String>();;
+            this.hashtagSet = new HashSet<String>();
         this.attachedFile = message.getFileName();
         this.fileSize = message.getFileSize();
-        this.timeOfCreation = message.getTimeOfCreation();
         this.timeOfArrival = message.getTimeOfArrival();
         this.ttl = message.getTTL();
         this.hopCount = message.getHopCount();
@@ -82,20 +85,19 @@ public class StatusMessage extends Message{
         if(message.getForwarderList() != null)
             this.forwarderList = new HashSet<String>(message.getForwarderList());
         else
-            this.forwarderList = new HashSet<String>();;
+            this.forwarderList = new HashSet<String>();
         this.hasUserRead = message.hasUserReadAlready();
         this.hasUserLiked = message.hasUserLiked();
         this.hasUserSaved = message.hasUserSaved();
     }
 
-
-    public StatusMessage(String post, String author, long timeOfCreation) {
-        this.uuid = HashUtil.computeStatusUUID(post, author, timeOfCreation);
+    public PushStatus(String author_id, String group_id, String post, long timeOfCreation) {
+        this.uuid = HashUtil.computeStatusUUID(author_id, group_id, post, timeOfCreation);
         this.messageType = TYPE;
         this.dbid   = -1;
         this.status = post;
-        this.author = author;
-        this.group  = GroupDatabase.DEFAULT_PUBLIC_GROUP;
+        this.author_id = author_id;
+        this.group_id  = group_id;
         hashtagSet  = new HashSet<String>();
         Pattern hashtagPattern = Pattern.compile("#(\\w+|\\W+)");
         Matcher hashtagMatcher = hashtagPattern.matcher(post);
@@ -121,11 +123,10 @@ public class StatusMessage extends Message{
         hasUserSaved = false;
     }
 
-
     public long    getdbId() {              return this.dbid;                  }
     public String  getUuid() {              return this.uuid;                  }
-    public String  getAuthor(){             return this.author;                }
-    public String  getGroup() {             return this.group;                 }
+    public String  getAuthorID(){           return this.author_id;             }
+    public String  getGroupID() {           return this.group_id;              }
     public String  getPost(){               return this.status;                }
     public Set<String> getHashtagSet(){     return this.hashtagSet;            }
     public long    getTimeOfCreation(){     return this.timeOfCreation;        }
@@ -146,10 +147,10 @@ public class StatusMessage extends Message{
     public boolean isForwarder(String linkLayerAddress, String protocolID) {
         return forwarderList.contains(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
     }
+    public Contact getAuthor() {            return this.author;                }
+    public Group getGroup()  {              return this.group;                 }
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
-    public void setUuid(String uuid) {            this.uuid           = uuid;     }
-    public void setGroup(String group) {          this.group           = group;   }
     public void setFileName(String filename){     this.attachedFile   = filename; }
     public void setFileSize(long fileSize) {      this.fileSize = fileSize;       }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
@@ -160,23 +161,32 @@ public class StatusMessage extends Message{
     public void addLike(){                        this.like++;                    }
     public void setTTL(long ttl){                 this.ttl            = ttl;      }
     public void setHashtagSet(Set<String> hashtagSet) {
-        if(hashtagSet.size() > 0)
-            hashtagSet.clear();
-        this.hashtagSet = hashtagSet;
+        if(this.hashtagSet.size() > 0)
+            this.hashtagSet.clear();
+        if(hashtagSet == null)
+            this.hashtagSet = new HashSet<String>();
+        else
+            this.hashtagSet = hashtagSet;
     }
     public void addReplication(long replication){ this.replication  += replication; }
     public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
     public void setForwarderList(Set<String> forwarderList){
         if(this.forwarderList.size() > 0)
             this.forwarderList.clear();
-        this.forwarderList  = forwarderList;
+        if(forwarderList == null)
+            this.forwarderList = new HashSet<String>();
+        else
+            this.forwarderList  = forwarderList;
     }
     public void addForwarder(String linkLayerAddress, String protocolID) {
         forwarderList.add(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
     }
     public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
-    public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead; }
+    public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead;   }
     public void setUserSaved(boolean hasUserSaved){  this.hasUserSaved = hasUserSaved; }
+    public void setAuthor(Contact author) {       this.author         = author;        }
+    public void setGroup(Group group) {           this.group          = group;         }
+
 
     public void discard() {
         hashtagSet = null;
@@ -185,7 +195,8 @@ public class StatusMessage extends Message{
 
     public String toString() {
         String s = new String();
-        s += "Author: "+this.author+"\n";
+        s += "Author: "+this.author_id+"\n";
+        s += "Group: "+this.group_id+"\n";
         s += "Status:" +this.status+"\n";
         s += "Time:" +this.timeOfCreation+"\n";
         return s;

@@ -15,18 +15,19 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
+package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.database.objects.Contact;
 
 /**
  * @author Marlinski
  */
-public class UserComposeStatus extends UserInteractionEvent  {
+public class ContactUpdatedEvent extends StatusDatabaseEvent {
 
-    public final PushStatus status;
+    public final Contact contact;
 
-    public UserComposeStatus(PushStatus status) {
-        this.status = status;
+    public ContactUpdatedEvent(Contact contact){
+        this.contact = contact;
     }
+
 }

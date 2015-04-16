@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.command;
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 /**
  * @author Marlinski
@@ -28,13 +28,13 @@ public class SendStatusMessageCommand extends Command {
 
     public static final String COMMAND_NAME = "SEND_STATUS_MESSAGE";
 
-    private StatusMessage status;
+    private PushStatus status;
 
-    public SendStatusMessageCommand(StatusMessage status){
+    public SendStatusMessageCommand(PushStatus status){
         this.status = status;
     }
 
-    public StatusMessage getStatus() {
+    public PushStatus getStatus() {
         return status;
     }
 

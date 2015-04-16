@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Base64;
+import android.util.Log;
 
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
@@ -33,8 +34,6 @@ public class GroupDatabase  extends  Database{
     public static final String PRIVATE      = "private";
     public static final String DESC         = "desc";
 
-    public static final String DEFAULT_PUBLIC_GROUP = "rumble.public";
-
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID      + " INTEGER PRIMARY KEY, "
                  + GID     + " TEXT, "
@@ -42,7 +41,7 @@ public class GroupDatabase  extends  Database{
                  + KEY     + " TEXT, "
                  + PRIVATE + " INTEGER, "
                  + DESC    + " TEXT, "
-                 + "UNIQUE( " + NAME + " ,"+ KEY +" ) "
+                 + "UNIQUE( " + GID +" ) "
            + " ); ";
 
     public GroupDatabase(Context context, SQLiteOpenHelper databaseHelper) {
@@ -74,6 +73,41 @@ public class GroupDatabase  extends  Database{
         }
     }
 
+    public Group getGroup(String group_id) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, GID+ " = ?", new String[] {group_id}, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToGroup(cursor);
+            else
+                return null;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+    public long getGroupDBID(String group_id) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[] { ID }, GID+ " = ?", new String[] {group_id}, null, null, null);
+            if(cursor == null)
+                return -1;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            else
+                return -1;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+
     public long insertGroup(Group group){
         if(group == null)
             return 0;
@@ -90,8 +124,10 @@ public class GroupDatabase  extends  Database{
         contentValues.put(DESC, group.getDesc());
 
         long count = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
-        if(count > 0)
+        if(count > 0) {
+            Log.d(TAG, "[+] new Group inserted: name=" + group.getName() + " gid=" + group.getGid() + (group.isIsprivate() ? "private" : "public"));
             EventBus.getDefault().post(new GroupInsertedEvent(group));
+        }
 
         return count;
     }

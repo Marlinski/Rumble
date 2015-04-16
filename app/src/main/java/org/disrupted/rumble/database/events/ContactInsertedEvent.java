@@ -24,7 +24,7 @@ import org.disrupted.rumble.database.objects.Contact;
 /**
  * @author Marlinski
  */
-public class ContactInsertedEvent extends ResourceEvent {
+public class ContactInsertedEvent extends DatabaseEvent {
 
     public final Contact contact;
 

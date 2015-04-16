@@ -21,7 +21,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -36,7 +36,7 @@ import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockStatus;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
@@ -189,7 +189,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                     Block block = null;
                     switch (header.getBlockType()) {
                         case BlockHeader.BLOCKTYPE_STATUS:
-                            block = new BlockStatus(header);
+                            block = new BlockPushStatus(header);
                             break;
                         case BlockHeader.BLOCKTYPE_FILE:
                             block = new BlockFile(header);
@@ -223,9 +223,9 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             return false;
 
         if(command instanceof SendStatusMessageCommand) {
-            StatusMessage statusMessage = ((SendStatusMessageCommand) command).getStatus();
+            PushStatus pushStatus = ((SendStatusMessageCommand) command).getStatus();
             try {
-                Block blockStatus = new BlockStatus(statusMessage);
+                Block blockStatus = new BlockPushStatus(pushStatus);
                 blockStatus.writeBlock(con);
                 blockStatus.dismiss();
             }

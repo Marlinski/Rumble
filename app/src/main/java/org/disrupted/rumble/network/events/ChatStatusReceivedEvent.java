@@ -15,18 +15,30 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
+package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.database.objects.ChatStatus;
 
 /**
  * @author Marlinski
  */
-public class UserComposeStatus extends UserInteractionEvent  {
+public class ChatStatusReceivedEvent extends NetworkEvent {
 
-    public final PushStatus status;
+    public ChatStatus status;
+    public String author_name;
+    public String group_name;
+    public String sender;
+    public String protocolID;
+    public String linkLayerIdentifier;
+    public long size;
+    public long duration;
 
-    public UserComposeStatus(PushStatus status) {
+    public ChatStatusReceivedEvent(ChatStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
+        this.sender = sender;
+        this.protocolID = protocolID;
+        this.linkLayerIdentifier = linkLayerIdentifier;
+        this.size = size;
+        this.duration = duration;
     }
 }

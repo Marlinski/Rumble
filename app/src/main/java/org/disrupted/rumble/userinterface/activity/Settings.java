@@ -78,7 +78,7 @@ public class Settings extends ActionBarActivity implements ListView.OnItemClickL
     public void onItemClick(AdapterView parent, View view, int position, long id) {
         switch(settingsList.get(position).getID()) {
             case 1:
-                DatabaseFactory.getStatusDatabase(RumbleApplication.getContext()).clearStatus(null);
+                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).clearStatus(null);
             default:
         }
     }

@@ -17,16 +17,17 @@
 
 package org.disrupted.rumble.userinterface.events;
 
-import org.disrupted.rumble.database.objects.PushStatus;
-
 /**
  * @author Marlinski
  */
-public class UserComposeStatus extends UserInteractionEvent  {
+public class UserSetHashTagInterest extends UserInteractionEvent {
 
-    public final PushStatus status;
+    public final String hashtag;
+    public final int levelOfInterest;
 
-    public UserComposeStatus(PushStatus status) {
-        this.status = status;
+    public UserSetHashTagInterest(String hashtag, int levelOfInterest) {
+        this.hashtag = hashtag;
+        this.levelOfInterest = levelOfInterest;
     }
+
 }

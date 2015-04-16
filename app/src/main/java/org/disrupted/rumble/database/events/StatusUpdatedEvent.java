@@ -19,16 +19,16 @@
 
 package org.disrupted.rumble.database.events;
 
-import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 /**
  * @author Marlinski
  */
 public class StatusUpdatedEvent extends StatusDatabaseEvent {
 
-    public final StatusMessage status;
+    public final PushStatus status;
 
-    public StatusUpdatedEvent(StatusMessage status){
+    public StatusUpdatedEvent(PushStatus status){
         this.status = status;
     }
 }
