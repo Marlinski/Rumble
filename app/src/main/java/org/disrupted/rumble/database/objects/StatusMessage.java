@@ -68,7 +68,7 @@ public class StatusMessage extends Message{
         if(message.getHashtagSet() != null)
             this.hashtagSet = new HashSet<String>(message.getHashtagSet());
         else
-            this.hashtagSet = null;
+            this.hashtagSet = new HashSet<String>();;
         this.attachedFile = message.getFileName();
         this.fileSize = message.getFileSize();
         this.timeOfCreation = message.getTimeOfCreation();
@@ -82,7 +82,7 @@ public class StatusMessage extends Message{
         if(message.getForwarderList() != null)
             this.forwarderList = new HashSet<String>(message.getForwarderList());
         else
-            this.forwarderList = null;
+            this.forwarderList = new HashSet<String>();;
         this.hasUserRead = message.hasUserReadAlready();
         this.hasUserLiked = message.hasUserLiked();
         this.hasUserSaved = message.hasUserSaved();
