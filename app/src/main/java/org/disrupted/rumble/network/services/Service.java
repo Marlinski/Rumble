@@ -12,7 +12,8 @@ import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
  */
 public interface Service {
 
-    public void bind(ProtocolWorker worker) throws WorkerAlreadyBinded, ServiceNotStarted;
+    public void register(String protocolIdentifier);
 
-    public void unbind(ProtocolWorker worker) throws WorkerNotBinded;
+    public void unregister(String protocolIdentifier);
+
 }

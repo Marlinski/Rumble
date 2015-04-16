@@ -110,8 +110,6 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     @Override
     public void disconnect() throws LinkLayerConnectionException {
         try {
-            if(socketConnected)
-                BluetoothScanner.openedSocket--;
             mmConnectedSocket.close();
         } catch (IOException e) {
             throw new SocketAlreadyClosedException();

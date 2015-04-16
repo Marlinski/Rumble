@@ -94,17 +94,8 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     public void cancelWorker() {
         RumbleBTState connectionState = protocol.getBTState(con.getRemoteLinkLayerAddress());
         if(working) {
-            Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
+            Log.e(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
-            if (connectionState.getState().equals(RumbleBTState.RumbleBluetoothState.CONNECTED)) {
-                connectionState.notConnected();
-                EventBus.getDefault().post(new NeighbourDisconnected(
-                                new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                                getProtocolIdentifier())
-                );
-            } else {
-                connectionState.notConnected();
-            }
         } else
             connectionState.notConnected();
     }
@@ -168,26 +159,23 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             return;
         }
 
-        Log.d(TAG, "[+] connected");
-        EventBus.getDefault().post(new NeighbourConnected(
-                        new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                        getProtocolIdentifier())
-        );
-
         try {
-            // we signal rumble that we are connected and ready to receive commands
-            protocol.workerConnected(this);
+            Log.d(TAG, "[+] connected");
+            EventBus.getDefault().post(new NeighbourConnected(
+                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                            this)
+            );
 
             // we start the command executor  as well as the receiving thread
             onWorkerConnected();
         } finally {
-            protocol.workerDisconnected(this);
-            stopWorker();
-            connectionState.notConnected();
+            Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new NeighbourDisconnected(
                             new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                            getProtocolIdentifier())
+                            this)
             );
+            stopWorker();
+            connectionState.notConnected();
         }
     }
 

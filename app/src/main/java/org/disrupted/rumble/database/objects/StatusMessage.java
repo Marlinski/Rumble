@@ -59,7 +59,6 @@ public class StatusMessage extends Message{
     protected boolean hasUserLiked;
     protected boolean hasUserSaved;
 
-
     public StatusMessage(StatusMessage message) {
         this.dbid = message.getdbId();
         this.uuid = message.getUuid();
@@ -78,6 +77,9 @@ public class StatusMessage extends Message{
         this.replication  = message.getReplication();
         this.duplicate = message.getDuplicate();
         this.forwarderList = new HashSet<String>(message.getForwarderList());
+        this.hasUserRead = message.hasUserReadAlready();
+        this.hasUserLiked = message.hasUserLiked();
+        this.hasUserSaved = message.hasUserSaved();
     }
 
 

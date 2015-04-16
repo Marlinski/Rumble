@@ -409,7 +409,7 @@ public class NetworkCoordinator extends Service {
                 Set<String> protocolSet = connectedProtocols.get(event.neighbour.getLinkLayerAddress());
                 if (protocolSet == null)
                     protocolSet = new HashSet<String>();
-                protocolSet.add(event.protocolIdentifier);
+                protocolSet.add(event.worker.getProtocolIdentifier());
                 connectedProtocols.put(event.neighbour.getLinkLayerAddress(), protocolSet);
             }
             EventBus.getDefault().post(new NeighborhoodChanged());
@@ -418,7 +418,7 @@ public class NetworkCoordinator extends Service {
             synchronized (managerLock) {
                 Set<String> protocolSet = connectedProtocols.get(event.neighbour.getLinkLayerAddress());
                 if (protocolSet != null) {
-                    protocolSet.remove(event.protocolIdentifier);
+                    protocolSet.remove(event.worker.getProtocolIdentifier());
                     connectedProtocols.put(event.neighbour.getLinkLayerAddress(), protocolSet);
                 }
                 physicalNeighbours.remove(event.neighbour.getLinkLayerAddress());

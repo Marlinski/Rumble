@@ -125,15 +125,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
         if(working) {
             Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
-            if (connectionState.getState().equals(FirechatBTState.FirechatBluetoothState.CONNECTED)) {
-                connectionState.notConnected();
-                EventBus.getDefault().post(new NeighbourDisconnected(
-                                new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                                getProtocolIdentifier())
-                );
-            } else {
-                connectionState.notConnected();
-            }
         } else
             connectionState.notConnected();
     }
@@ -155,7 +146,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             connectionState.connected(this.getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
                             new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                            getProtocolIdentifier())
+                            this)
             );
 
             onWorkerConnected();
@@ -163,7 +154,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             connectionState.notConnected();
             EventBus.getDefault().post(new NeighbourDisconnected(
                             new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
-                            getProtocolIdentifier())
+                            this)
             );
         } catch (IOException exception) {
             Log.d(TAG, "[!] FAILED CON: "+ exception.getMessage());

@@ -10,8 +10,11 @@ import org.disrupted.rumble.database.StatusDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.StatusMessage;
+import org.disrupted.rumble.network.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
 import org.disrupted.rumble.network.services.exceptions.WorkerAlreadyBinded;
 import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
@@ -56,6 +59,7 @@ public class PushService {
                 instance = new PushService();
                 rdwatcher.start();
                 workerIdentifierTodispatcher = new HashMap<String, MessageDispatcher>();
+                EventBus.getDefault().register(instance);
             }
         }
     }
@@ -65,6 +69,9 @@ public class PushService {
                 return;
         synchronized (lock) {
             Log.d(TAG, "[-] Stopping PushService");
+            if(EventBus.getDefault().isRegistered(instance))
+                EventBus.getDefault().unregister(instance);
+
             for(Map.Entry<String, MessageDispatcher> entry : instance.workerIdentifierTodispatcher.entrySet()) {
                 MessageDispatcher dispatcher = entry.getValue();
                 dispatcher.interrupt();
@@ -75,32 +82,37 @@ public class PushService {
         }
     }
 
-    public static void bind(ProtocolWorker worker) throws ServiceNotStarted, WorkerAlreadyBinded{
-
-        if(instance == null)
-            throw new ServiceNotStarted();
-        synchronized (lock) {
-            MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(worker.getWorkerIdentifier());
-            if (dispatcher != null)
-                throw new WorkerAlreadyBinded();
-            dispatcher =  new MessageDispatcher(worker);
-            instance.workerIdentifierTodispatcher.put(worker.getWorkerIdentifier(), dispatcher);
-            dispatcher.startDispatcher();
+    // todo: register protocol to service
+    public void onEvent(NeighbourConnected neighbour) {
+        if(instance != null) {
+            if(!neighbour.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+                return;
+            synchronized (lock) {
+                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(neighbour.worker.getWorkerIdentifier());
+                if (dispatcher != null) {
+                    Log.e(TAG, "worker already binded ?!");
+                    return;
+                }
+                dispatcher = new MessageDispatcher(neighbour.worker);
+                instance.workerIdentifierTodispatcher.put(neighbour.worker.getWorkerIdentifier(), dispatcher);
+                dispatcher.startDispatcher();
+            }
         }
     }
 
-    public static void unbind(ProtocolWorker worker) throws ServiceNotStarted, WorkerNotBinded {
-        if(instance == null)
-            throw new ServiceNotStarted();
+    public void onEvent(NeighbourDisconnected neighbour) {
+        if(instance != null) {
+            if(!neighbour.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+                return;
+            synchronized (lock) {
+                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(neighbour.worker.getWorkerIdentifier());
+                if (dispatcher == null)
+                    return;
+                dispatcher.stopDispatcher();
+                instance.workerIdentifierTodispatcher.remove(neighbour.worker.getWorkerIdentifier());
 
-        synchronized (lock) {
-            MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(worker.getWorkerIdentifier());
-            if (dispatcher == null)
-                throw new WorkerNotBinded();
-            dispatcher.stopDispatcher();
-            instance.workerIdentifierTodispatcher.remove(worker.getWorkerIdentifier());
+            }
         }
-
     }
 
     private static float computeScore(StatusMessage message, InterestVector interestVector) {

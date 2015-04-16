@@ -120,22 +120,6 @@ public class RumbleProtocol implements Protocol {
         bluetoothState.clear();
     }
 
-
-    // todo : should be the PushService responsibility to start/stop the dispatcher
-    public void workerConnected(ProtocolWorker worker) {
-        try {
-            PushService.bind(worker);
-        } catch( ServiceException ignore){
-        }
-    }
-
-    public void workerDisconnected(ProtocolWorker worker) {
-        try {
-            PushService.unbind(worker);
-        } catch( ServiceException ignore ) {
-        }
-    }
-
     @Override
     public void onEvent(LinkLayerStarted event) {
         if(!started)

@@ -20,16 +20,18 @@
 package org.disrupted.rumble.network.events;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 
 /**
  * @author Marlinski
  */
 public class NeighbourDisconnected {
-    public final LinkLayerNeighbour neighbour;
-    public final String protocolIdentifier;
 
-    public NeighbourDisconnected(LinkLayerNeighbour neighbour, String protocolIdentifier) {
+    public final LinkLayerNeighbour neighbour;
+    public final ProtocolWorker worker;
+
+    public NeighbourDisconnected(LinkLayerNeighbour neighbour, ProtocolWorker worker) {
         this.neighbour = neighbour;
-        this.protocolIdentifier = protocolIdentifier;
+        this.worker = worker;
     }
 }

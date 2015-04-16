@@ -69,7 +69,6 @@ public class BluetoothServerConnection extends BluetoothConnection {
         }
 
         socketConnected = true;
-        BluetoothScanner.openedSocket++;
 
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
