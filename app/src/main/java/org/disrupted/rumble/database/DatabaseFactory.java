@@ -46,7 +46,8 @@ public class DatabaseFactory {
     private final ContactDatabase                contactDatabase;
     private final ContactJoinGroupDatabase       contactJoinGroupDatabase;
     private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
-    private final ForwarderDatabase              forwarderDatabase;
+    private final InterfaceDatabase              interfaceDatabase;
+    private final StatusInterfaceDatabase        statusInterfaceDatabase;
     private DatabaseExecutor                     databaseExecutor;
 
     public static DatabaseFactory getInstance(Context context) {
@@ -82,23 +83,26 @@ public class DatabaseFactory {
     public static ContactHashTagInterestDatabase getContactHashTagInterestDatabase(Context context) {
         return getInstance(context).contactHashTagInterestDatabase;
     }
-    public static ForwarderDatabase getForwarderDatabase(Context context) {
-        return getInstance(context).forwarderDatabase;
+    public static InterfaceDatabase getInterfaceDatabase(Context context) {
+        return getInstance(context).interfaceDatabase;
+    }
+    public static StatusInterfaceDatabase getStatusInterfaceDatabase(Context context) {
+        return getInstance(context).statusInterfaceDatabase;
     }
     public static DatabaseExecutor getDatabaseExecutor(Context context) {
         return getInstance(context).databaseExecutor;
     }
 
-
     private DatabaseFactory(Context context) {
         this.databaseHelper                 = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.interfaceDatabase              = new InterfaceDatabase(context, databaseHelper);
         this.pushStatusDatabase             = new PushStatusDatabase(context, databaseHelper);
         this.chatStatusDatabase             = new ChatStatusDatabase(context, databaseHelper);
         this.hashtagDatabase                = new HashtagDatabase(context, databaseHelper);
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
         this.contactDatabase                = new ContactDatabase(context, databaseHelper);
-        this.forwarderDatabase              = new ForwarderDatabase(context, databaseHelper);
+        this.statusInterfaceDatabase = new StatusInterfaceDatabase(context, databaseHelper);
         this.contactJoinGroupDatabase       = new ContactJoinGroupDatabase(context, databaseHelper);
         this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
         this.databaseExecutor               = new DatabaseExecutor();
@@ -114,7 +118,8 @@ public class DatabaseFactory {
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
-        this.forwarderDatabase.reset(databaseHelper);
+        this.interfaceDatabase.reset(databaseHelper);
+        this.statusInterfaceDatabase.reset(databaseHelper);
         this.contactJoinGroupDatabase.reset(databaseHelper);
         this.contactHashTagInterestDatabase.reset(databaseHelper);
         old.close();
@@ -139,7 +144,8 @@ public class DatabaseFactory {
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(ChatStatusDatabase.CREATE_TABLE);
-            db.execSQL(ForwarderDatabase.CREATE_TABLE);
+            db.execSQL(InterfaceDatabase.CREATE_TABLE);
+            db.execSQL(StatusInterfaceDatabase.CREATE_TABLE);
             db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);
             db.execSQL(ContactHashTagInterestDatabase.CREATE_TABLE);
 

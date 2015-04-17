@@ -176,15 +176,15 @@ public class PushStatusDatabase extends Database {
                 select = " COUNT(*) ";
                 break;
             case LIST_OF_IDS:
-                select = " s."+ID+" ";
+                select = " ps."+ID+" ";
                 break;
             case LIST_OF_MESSAGE:
-                select = " s.* ";
+                select = " ps.* ";
                 break;
         }
 
         StringBuilder query = new StringBuilder(
-                "SELECT "+select+" FROM "+ PushStatusDatabase.TABLE_NAME+" s"
+                "SELECT "+select+" FROM "+ PushStatusDatabase.TABLE_NAME+" ps"
         );
 
         boolean groupby = false;
@@ -195,24 +195,24 @@ public class PushStatusDatabase extends Database {
         boolean hashtagJoined = false;
         if (((options.filterFlags & StatusQueryOption.FILTER_TAG) == StatusQueryOption.FILTER_TAG) && (options.hashtagFilters != null) && (options.hashtagFilters.size() > 0)) {
             query.append(
-                    " JOIN " + StatusTagDatabase.TABLE_NAME + " m" +
-                    " ON s." + PushStatusDatabase.ID + " = m." + StatusTagDatabase.SDBID +
+                    " JOIN " + StatusTagDatabase.TABLE_NAME + " st" +
+                    " ON ps." + PushStatusDatabase.ID + " = st." + StatusTagDatabase.SDBID +
                     " JOIN " + HashtagDatabase.TABLE_NAME + " h" +
-                    " ON h." + HashtagDatabase.ID + " = m." + StatusTagDatabase.HDBID);
+                    " ON h." + HashtagDatabase.ID + " = st." + StatusTagDatabase.HDBID);
             hashtagJoined = true;
         }
         boolean contactJoined = false;
         if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) {
             query.append(
                     " JOIN " + ContactDatabase.TABLE_NAME + " c" +
-                    " ON s." + PushStatusDatabase.GROUP_DBID + " = c." + ContactDatabase.ID);
+                    " ON ps." + PushStatusDatabase.GROUP_DBID + " = c." + ContactDatabase.ID);
             contactJoined = true;
         }
         boolean groupJoined = false;
         if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0)) {
             query.append(
                     " JOIN " + GroupDatabase.TABLE_NAME + " g" +
-                    " ON s." + PushStatusDatabase.GROUP_DBID + " = g." + GroupDatabase.ID);
+                    " ON ps." + PushStatusDatabase.GROUP_DBID + " = g." + GroupDatabase.ID);
             groupJoined = true;
         }
 
@@ -257,32 +257,35 @@ public class PushStatusDatabase extends Database {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s."+ PushStatusDatabase.ID + "  NOT IN ( ");
-            query.append("  SELECT f."+ForwarderDatabase.ID+" FROM "+ForwarderDatabase.TABLE_NAME+" f ");
-            query.append("  WHERE f."+ForwarderDatabase.RECEIVEDBY+" = ? ");
+            query.append(
+                    " ps."+ PushStatusDatabase.ID + "  NOT IN ( "
+                    + " SELECT si."+ StatusInterfaceDatabase.STATUS_DBID
+                    + " FROM " + StatusInterfaceDatabase.TABLE_NAME + " si "
+                    + " JOIN " + InterfaceDatabase.TABLE_NAME + " i "
+                    + " ON si." + StatusInterfaceDatabase.INTERFACE_DBID + " = i."+InterfaceDatabase.ID
+                    + " WHERE si."+ StatusInterfaceDatabase.STATUS_DBID + " = ? )");
             argumentList.add(options.peerName);
-            query.append(" ) ");
             groupby = true;
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + PushStatusDatabase.TIME_OF_CREATION + " > ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " > ? ");
             argumentList.add(Long.toString(options.from_toc));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_TOA_FROM) == StatusQueryOption.FILTER_TOA_FROM) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + PushStatusDatabase.TIME_OF_ARRIVAL + " > ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " > ? ");
             argumentList.add(Long.toString(options.from_toa));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" s." + PushStatusDatabase.HOP_LIMIT + " = ? ");
+            query.append(" ps." + PushStatusDatabase.HOP_LIMIT + " = ? ");
             argumentList.add(Integer.toString(options.hopLimit));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_READ) == StatusQueryOption.FILTER_READ) {
@@ -290,24 +293,24 @@ public class PushStatusDatabase extends Database {
                 query.append(" AND ");
             firstwhere = false;
             if(options.read)
-                query.append(" s." + PushStatusDatabase.USERREAD + " = 1 ");
+                query.append(" ps." + PushStatusDatabase.USERREAD + " = 1 ");
             else
-                query.append(" s." + PushStatusDatabase.USERREAD + " = 0 ");
+                query.append(" ps." + PushStatusDatabase.USERREAD + " = 0 ");
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_LIKE) == StatusQueryOption.FILTER_LIKE) {
             if(!firstwhere)
                 query.append(" AND ");
             if(options.like)
-                query.append(" s." + PushStatusDatabase.USERLIKED + " = 1 ");
+                query.append(" ps." + PushStatusDatabase.USERLIKED + " = 1 ");
             else
-                query.append(" s." + PushStatusDatabase.USERLIKED + " = 0 ");
+                query.append(" ps." + PushStatusDatabase.USERLIKED + " = 0 ");
         }
         if (options.filterFlags > 0)
             query.append(" ) ");
 
         /* group by if necessary */
         if (groupby)
-            query.append(" GROUP BY s." + PushStatusDatabase.ID);
+            query.append(" GROUP BY ps." + PushStatusDatabase.ID);
 
         /* ordering as requested */
         if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
@@ -425,7 +428,7 @@ public class PushStatusDatabase extends Database {
                 int count = wd.delete(TABLE_NAME, ID_WHERE, new String[]{Long.valueOf(id).toString()});
                 if (count > 0) {
                     DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(id);
-                    DatabaseFactory.getForwarderDatabase(context).deleteEntriesMatchingStatusID(id);
+                    DatabaseFactory.getStatusInterfaceDatabase(context).deleteEntriesMatchingStatusDBID(id);
                 }
                 try {
                     File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(), filename);
@@ -459,6 +462,8 @@ public class PushStatusDatabase extends Database {
                 }, callback);
     }
     private int updateStatus(PushStatus status){
+        if(status.getdbId() < 0)
+            return 0;
         ContentValues contentValues = new ContentValues();
         contentValues.put(HOP_COUNT, status.getHopCount());
         contentValues.put(LIKE, status.getLike());
@@ -471,12 +476,8 @@ public class PushStatusDatabase extends Database {
             contentValues.put(FILE_NAME, status.getFileName());
 
         int count = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, ID + " = " + status.getdbId(), null);
-        if(count > 0) {
-            for (String forwarder : status.getForwarderList()) {
-                DatabaseFactory.getForwarderDatabase(context).insertForwarder(status.getdbId(), forwarder);
-            }
+        if(count > 0)
             EventBus.getDefault().post(new StatusUpdatedEvent(status));
-        }
         return count;
     }
 
@@ -527,9 +528,6 @@ public class PushStatusDatabase extends Database {
                 if(tagID >=0 )
                     DatabaseFactory.getStatusTagDatabase(context).insertStatusTag(tagID, statusID);
             }
-            for (String forwarder : status.getForwarderList()) {
-                DatabaseFactory.getForwarderDatabase(context).insertForwarder(statusID, forwarder);
-            }
             EventBus.getDefault().post(new StatusInsertedEvent(status));
         }
 
@@ -554,8 +552,8 @@ public class PushStatusDatabase extends Database {
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.execSQL("DROP TABLE " + TABLE_NAME + ";");
         db.execSQL(CREATE_TABLE);
-        db.execSQL("DROP TABLE " + ForwarderDatabase.TABLE_NAME + ";");
-        db.execSQL(ForwarderDatabase.CREATE_TABLE);
+        db.execSQL("DROP TABLE " + StatusInterfaceDatabase.TABLE_NAME + ";");
+        db.execSQL(StatusInterfaceDatabase.CREATE_TABLE);
         db.execSQL("DROP TABLE " + StatusTagDatabase.TABLE_NAME + ";");
         db.execSQL(StatusTagDatabase.CREATE_TABLE);
         EventBus.getDefault().post(new StatusDatabaseEvent());
@@ -592,7 +590,6 @@ public class PushStatusDatabase extends Database {
         message.setUserLike((cursor.getInt(cursor.getColumnIndexOrThrow(USERLIKED)) == 1));
         message.setUserSaved((cursor.getInt(cursor.getColumnIndexOrThrow(USERSAVED)) == 1));
         message.setHashtagSet(getHashTagList(statusDBID));
-        message.setForwarderList(DatabaseFactory.getForwarderDatabase(context).getForwarderList(statusDBID));
 
         return message;
     }
@@ -604,9 +601,9 @@ public class PushStatusDatabase extends Database {
             StringBuilder query = new StringBuilder(
                     "SELECT h." + HashtagDatabase.HASHTAG
                             + " FROM " + HashtagDatabase.TABLE_NAME + " h"
-                            + " JOIN " + StatusTagDatabase.TABLE_NAME + " s"
-                            + " ON s." + StatusTagDatabase.HDBID + " = h." + HashtagDatabase.ID
-                            + " WHERE s." + StatusTagDatabase.HDBID + " = ?");
+                            + " JOIN " + StatusTagDatabase.TABLE_NAME + " st"
+                            + " ON st." + StatusTagDatabase.HDBID + " = h." + HashtagDatabase.ID
+                            + " WHERE st." + StatusTagDatabase.HDBID + " = ?");
             hashsetCursor = database.rawQuery(query.toString(), new String[]{Long.toString(statusID)});
             Set<String> hashtagSet = new HashSet<String>();
             if (hashsetCursor != null) {

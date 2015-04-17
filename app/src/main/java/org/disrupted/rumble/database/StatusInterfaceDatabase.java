@@ -41,54 +41,37 @@ import java.util.Set;
  *
  * @author Marlinski
  */
-public class ForwarderDatabase extends Database {
+public class StatusInterfaceDatabase extends Database {
 
 
     private static final String TAG = "ForwarderDatabase";
 
-    public static final String TABLE_NAME       = "forwarder";
-    public static final String ID               = "_id";
-    public static final String RECEIVEDBY       = "receivedby";
+    public static final String TABLE_NAME       = "statusinterface";
+    public static final String STATUS_DBID      = "_sdbid";
+    public static final String INTERFACE_DBID   = "_idbid";
 
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
-            " (" + ID         + " INTEGER, "
-                 + RECEIVEDBY + " TEXT, "
-                 + " UNIQUE( " + ID + " , " + RECEIVEDBY + "), "
-                 + " FOREIGN KEY ( "+ ID + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME   + " ( " + PushStatusDatabase.ID   + " ) "
+            " (" + STATUS_DBID         + " INTEGER, "
+                 + INTERFACE_DBID + " TEXT, "
+                 + " UNIQUE( " + STATUS_DBID + " , " + INTERFACE_DBID + "), "
+                 + " FOREIGN KEY ( "+ STATUS_DBID    + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME  + " ( " + PushStatusDatabase.ID  + " ), "
+                 + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "
             + " );";
 
-    public ForwarderDatabase(Context context, SQLiteOpenHelper databaseHelper) {
+    public StatusInterfaceDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    public Set<String> getForwarderList(long statusID) {
-        Cursor cursor = null;
-        try {
-            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[] {RECEIVEDBY}, ID+" = "+statusID, null, null, null, null);
-            Set<String> ret = new HashSet<String>();
-            if (cursor != null) {
-                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                    ret.add(cursor.getString(cursor.getColumnIndexOrThrow(ForwarderDatabase.RECEIVEDBY)));
-                }
-            }
-            return ret;
-        } finally {
-            if(cursor != null)
-                cursor.close();
-        }
-    }
-
-    public void deleteEntriesMatchingStatusID(long statusID){
+    public void deleteEntriesMatchingStatusDBID(long statusDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, ID + " = ?" , new String[] {statusID + ""});
+        db.delete(TABLE_NAME, STATUS_DBID + " = ?" , new String[] {statusDBID + ""});
     }
 
-    public long insertForwarder(long statusID, String receivedBy){
+    public long insertStatusInterface(long statusDBID, long interfaceDBID){
         ContentValues contentValues = new ContentValues();
-        contentValues.put(ID, statusID);
-        contentValues.put(RECEIVEDBY, receivedBy);
+        contentValues.put(STATUS_DBID, statusDBID);
+        contentValues.put(INTERFACE_DBID, interfaceDBID);
         return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
     }
 }

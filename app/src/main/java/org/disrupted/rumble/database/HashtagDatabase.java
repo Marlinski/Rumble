@@ -54,19 +54,12 @@ public class HashtagDatabase extends  Database{
                  + "UNIQUE( " + HASHTAG + " ) "
           + " );";
 
-    public abstract class HashtagsQueryCallback implements DatabaseExecutor.ReadableQueryCallback {
-        public final void onReadableQueryFinished(Object object) {
-            if(object instanceof ArrayList)
-                onHashtagsQueryFinished((ArrayList<String>)(object));
-        }
-        public abstract void onHashtagsQueryFinished(ArrayList<String> hashtags);
-    }
 
     public HashtagDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
-    private boolean getHashtags(HashtagsQueryCallback callback) {
+    private boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override

@@ -197,7 +197,7 @@ public class PushService {
             options.groupIDList = new ArrayList<String>();
             options.groupIDList.add(Group.getDefaultGroup().getGid());
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NEVER_SEND_TO_USER;
-            options.peerName = HashUtil.computeForwarderHash(
+            options.peerName = HashUtil.computeInterfaceID(
                     worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
                     worker.getProtocolIdentifier());
             options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
@@ -257,11 +257,6 @@ public class PushService {
         }
 
         private boolean add(PushStatus message){
-            if(message.isForwarder(
-                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
-                    worker.getProtocolIdentifier()))
-                return false;
-
             final ReentrantLock putlock = this.putLock;
             try {
                 putlock.lock();

@@ -39,6 +39,7 @@ import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 import org.disrupted.rumble.util.FileUtil;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -96,11 +97,18 @@ public class CacheManager {
             return;
         Log.d(TAG, " [.] status sent: "+event.status.toString());
         PushStatus status = new PushStatus(event.status);
-        Iterator<String> it = event.recipients.iterator();
-        while(it.hasNext())
-            status.addForwarder(it.next(), event.protocolID);
         status.addReplication(event.recipients.size());
+        // first we update the status
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status, null);
+        // then the StatusInterface database
+        if(status.getdbId() > 0) {
+            Iterator<String> it = event.recipients.iterator();
+            while (it.hasNext()) {
+                String interfaceID = HashUtil.computeInterfaceID(it.next(), event.protocolID);
+                long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
+                DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(status.getdbId(), interfaceDBID);
+            }
+        }
     }
 
     public void onEvent(PushStatusReceivedEvent event) {
@@ -108,44 +116,55 @@ public class CacheManager {
             return;
         if((event.status.getAuthor() == null) || (event.status.getGroup() == null))
             return;
+
         Log.d(TAG, " [.] status received: "+event.status.toString());
         Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
         if(group == null) {
-            // we do not accept message for group we never added
-            // group can only be added manually by the user
+            // we do not accept message for group we do not belong to
+            // because a group can only be added manually by the user
             Log.d(TAG, "[!] unknown group: refusing the message");
             return;
         } else {
             if(!group.getName().equals(event.status.getGroup().getName())) {
+                // if we manually added the group, then we refuse the message if the name conflicts
+                // A group cannot change its name
                 Log.d(TAG, "[!] GroupID: "+group.getGid()+ " CONFLICT: db="+group.getName()+" status="+event.status.getGroup().getName());
                 return;
             }
         }
 
+        // we insert/update the contact to the database
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
         if(contact == null) {
             contact = event.status.getAuthor();
         } else if(!contact.getName().equals(event.status.getAuthor().getName())) {
-            // we do not accept message who have a conflict with user name
+            // we do not accept message for which the author has changed since we last known of (UID/name)
             Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.status.getAuthor().getName());
             return;
         }
         DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact, null);
 
+        // we add the status to the database
         PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
             exists = new PushStatus(event.status);
             exists.addDuplicate(1);
-            exists.addForwarder(event.sender, event.protocolID);
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(exists, null);
         } else {
             exists.addDuplicate(1);
-            exists.addForwarder(event.sender, event.protocolID);
             if(event.status.getLike() > 0)
                 exists.addLike();
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists, null);
         }
+
+        // then the StatusInterface database
+        if(exists.getdbId() > 0) {
+            String interfaceID = HashUtil.computeInterfaceID(event.sender, event.protocolID);
+            long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(event.sender);
+            DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(event.status.getdbId(), interfaceDBID);
+        }
     }
+
     public void onEvent(FileReceivedEvent event) {
         if(event.filename == null)
             return;

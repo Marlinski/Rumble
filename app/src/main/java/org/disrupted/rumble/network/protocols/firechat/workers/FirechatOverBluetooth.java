@@ -305,8 +305,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
     protected boolean onCommandReceived(Command command) {
         if(command instanceof CommandSendPushStatus) {
             PushStatus pushStatus = ((CommandSendPushStatus)command).getStatus();
-            if(pushStatus.isForwarder(con.getRemoteLinkLayerAddress(), FirechatProtocol.protocolID))
-                return false;
 
             String jsonStatus = parser.statusToNetwork(pushStatus);
             try {

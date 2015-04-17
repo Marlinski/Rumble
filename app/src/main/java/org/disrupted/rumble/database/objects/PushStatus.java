@@ -51,7 +51,6 @@ public class PushStatus extends Message{
     protected int         like;
     protected int         replication;
     protected int         duplicate;
-    protected Set<String> forwarderList;
 
     // local user preference for this message
     protected boolean hasUserRead;
@@ -79,10 +78,6 @@ public class PushStatus extends Message{
         this.like = message.getLike();
         this.replication  = message.getReplication();
         this.duplicate = message.getDuplicate();
-        if(message.getForwarderList() != null)
-            this.forwarderList = new HashSet<String>(message.getForwarderList());
-        else
-            this.forwarderList = new HashSet<String>();
         this.hasUserRead = message.hasUserReadAlready();
         this.hasUserLiked = message.hasUserLiked();
         this.hasUserSaved = message.hasUserSaved();
@@ -109,7 +104,6 @@ public class PushStatus extends Message{
         timeOfArrival  = (System.currentTimeMillis() / 1000L);
         hopCount       = 0;
         hopLimit       = Integer.MAX_VALUE;
-        forwarderList  = new HashSet<String>();
         ttl            = 0;
         like           = 0;
         replication    = 0;
@@ -130,7 +124,6 @@ public class PushStatus extends Message{
     public long    getTimeOfArrival(){      return this.timeOfArrival;         }
     public int     getHopCount(){           return this.hopCount;              }
     public int     getHopLimit(){           return this.hopLimit;              }
-    public Set<String> getForwarderList(){  return this.forwarderList;         }
     public long    getTTL(){                return this.ttl;                   }
     public String  getFileName(){           return this.attachedFile;          }
     public long    getFileSize() {          return this.fileSize;              }
@@ -141,9 +134,6 @@ public class PushStatus extends Message{
     public boolean hasUserLiked() {         return hasUserLiked;               }
     public boolean hasUserReadAlready() {   return hasUserRead;                }
     public boolean hasUserSaved() {         return hasUserSaved;               }
-    public boolean isForwarder(String linkLayerAddress, String protocolID) {
-        return forwarderList.contains(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
-    }
 
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
@@ -166,17 +156,6 @@ public class PushStatus extends Message{
     }
     public void addReplication(long replication){ this.replication  += replication; }
     public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
-    public void setForwarderList(Set<String> forwarderList){
-        if(this.forwarderList.size() > 0)
-            this.forwarderList.clear();
-        if(forwarderList == null)
-            this.forwarderList = new HashSet<String>();
-        else
-            this.forwarderList  = forwarderList;
-    }
-    public void addForwarder(String linkLayerAddress, String protocolID) {
-        forwarderList.add(HashUtil.computeForwarderHash(linkLayerAddress, protocolID));
-    }
     public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
     public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead;   }
     public void setUserSaved(boolean hasUserSaved){  this.hasUserSaved = hasUserSaved; }
@@ -186,7 +165,6 @@ public class PushStatus extends Message{
 
     public void discard() {
         hashtagSet = null;
-        forwarderList = null;
     }
 
     public String toString() {
