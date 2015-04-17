@@ -105,7 +105,9 @@ public class CacheManager {
             Iterator<String> it = event.recipients.iterator();
             while (it.hasNext()) {
                 String interfaceID = HashUtil.computeInterfaceID(it.next(), event.protocolID);
-                long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
+                long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).getInterfaceDBID(interfaceID);
+                if(interfaceDBID < 0)
+                    interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
                 DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(status.getdbId(), interfaceDBID);
             }
         }
@@ -137,19 +139,19 @@ public class CacheManager {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
         if(contact == null) {
             contact = event.status.getAuthor();
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact, null);
         } else if(!contact.getName().equals(event.status.getAuthor().getName())) {
             // we do not accept message for which the author has changed since we last known of (UID/name)
             Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.status.getAuthor().getName());
             return;
         }
-        DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact, null);
 
         // we add the status to the database
         PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
         if(exists == null) {
             exists = new PushStatus(event.status);
             exists.addDuplicate(1);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(exists, null);
+            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(exists);
         } else {
             exists.addDuplicate(1);
             if(event.status.getLike() > 0)
@@ -160,8 +162,10 @@ public class CacheManager {
         // then the StatusInterface database
         if(exists.getdbId() > 0) {
             String interfaceID = HashUtil.computeInterfaceID(event.sender, event.protocolID);
-            long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(event.sender);
-            DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(event.status.getdbId(), interfaceDBID);
+            long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).getInterfaceDBID(interfaceID);
+            if(interfaceDBID < 0)
+                interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
+            DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(exists.getdbId(), interfaceDBID);
         }
     }
 
@@ -261,7 +265,7 @@ public class CacheManager {
         if(event.uuid == null)
             return;
         Log.d(TAG, " [.] status "+event.uuid+" deleted");
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid, null);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid);
     }
 
     public void onEvent(UserComposeStatus event) {
@@ -269,7 +273,7 @@ public class CacheManager {
             return;
         Log.d(TAG, " [.] user composed status: "+event.status.toString());
         PushStatus status = new PushStatus(event.status);
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status, null);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
     }
     public void onEvent(UserCreateGroup event) {
         if(event.group == null)

@@ -402,16 +402,7 @@ public class PushStatusDatabase extends Database {
     /*
      * Delete a status per ID or UUID
      */
-    public boolean deleteStatus(final String uuid, DatabaseExecutor.WritableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.WritableQuery() {
-                    @Override
-                    public boolean write() {
-                        return deleteStatus(uuid);
-                    }
-                }, callback);
-    }
-    private boolean deleteStatus(String uuid) {
+    public boolean deleteStatus(String uuid) {
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, new String[]{ID, FILE_NAME}, UUID+ " = ?", new String[]{uuid}, null, null, null);
         if(cursor == null) {
@@ -481,20 +472,10 @@ public class PushStatusDatabase extends Database {
         return count;
     }
 
-
     /*
      * Insert a single status
      */
-    public boolean insertStatus(final PushStatus status, final DatabaseExecutor.WritableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.WritableQuery() {
-                    @Override
-                    public boolean write() {
-                        return (insertStatus(status) >= 0);
-                    }
-                }, callback);
-    }
-    private long insertStatus(PushStatus status){
+    public long insertStatus(PushStatus status){
         ContentValues contentValues = new ContentValues();
 
         long contact_DBID = DatabaseFactory.getContactDatabase(context).getContactDBID(status.getAuthor().getUid());
@@ -519,7 +500,7 @@ public class PushStatusDatabase extends Database {
         contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
         contentValues.put(USERSAVED, status.hasUserLiked() ? 1 : 0);
 
-        long statusID = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_NONE);
+        long statusID = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
         if(statusID >= 0) {
             status.setdbId(statusID);

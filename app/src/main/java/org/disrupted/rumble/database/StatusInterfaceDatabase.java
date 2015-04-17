@@ -52,8 +52,8 @@ public class StatusInterfaceDatabase extends Database {
 
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
-            " (" + STATUS_DBID         + " INTEGER, "
-                 + INTERFACE_DBID + " TEXT, "
+            " (" + STATUS_DBID     + " INTEGER, "
+                 + INTERFACE_DBID  + " INTEGER, "
                  + " UNIQUE( " + STATUS_DBID + " , " + INTERFACE_DBID + "), "
                  + " FOREIGN KEY ( "+ STATUS_DBID    + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME  + " ( " + PushStatusDatabase.ID  + " ), "
                  + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "

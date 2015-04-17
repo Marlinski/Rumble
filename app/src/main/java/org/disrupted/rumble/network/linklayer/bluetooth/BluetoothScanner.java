@@ -142,6 +142,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
         betamode     = false;
         openedSocket = 0;
 
+        /*
         mSensorManager = (SensorManager) RumbleApplication.getContext().getSystemService(Context.SENSOR_SERVICE);
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
             mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -152,6 +153,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             gravity[i] = 0;
             linear_acceleration[i] = 0;
         }
+        */
 
         EventBus.getDefault().register(this);
     }
@@ -172,16 +174,14 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
             filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
             RumbleApplication.getContext().registerReceiver(mReceiver, filter);
-
-            if(mAccelerometer != null) {
-                mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-                sensorregistered = true;
-            }
-
-
             registered = true;
         }
-
+        /*
+        if((mAccelerometer != null) && !sensorregistered) {
+            mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorregistered = true;
+        }
+        */
         try{
             BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
 
@@ -225,12 +225,14 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
         handler.removeCallbacksAndMessages(null);
         if(registered) {
             RumbleApplication.getContext().unregisterReceiver(mReceiver);
-            if(mAccelerometer != null) {
-                mSensorManager.unregisterListener(this);
-                sensorregistered = false;
-            }
+            registered = false;
         }
-        registered = false;
+        /*
+        if((mAccelerometer != null) && sensorregistered) {
+            mSensorManager.unregisterListener(this);
+            sensorregistered = false;
+        }
+        */
         synchronized (lock) {
             btNeighborhood.clear();
         }
@@ -448,10 +450,12 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             if(openedSocket == 1) {
                 Log.d(TAG, "[+] entering slow scan beta mode");
                 cancelDiscovery();
+                /*
                 if ((mAccelerometer != null) && sensorregistered) {
                     mSensorManager.unregisterListener(this);
-                    sensorregistered = true;
+                    sensorregistered = false;
                 }
+                */
                 handler.removeCallbacksAndMessages(null);
                 trickleTimer = EXPONENTIAL_THRESHOLD;
                 betamode = true;
@@ -478,10 +482,12 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
                 handler.removeCallbacksAndMessages(null);
                 resetTrickleTimer();
                 betamode = false;
+                /*
                 if((mAccelerometer != null) && !sensorregistered) {
                     mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-                    sensorregistered = false;
+                    sensorregistered = true;
                 }
+                */
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {

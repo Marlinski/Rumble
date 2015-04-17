@@ -19,10 +19,9 @@ package org.disrupted.rumble.database;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-
-import java.util.ArrayList;
 
 /**
  * @author Marlinski
@@ -46,9 +45,23 @@ public class InterfaceDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    public long getInterfaceDBID(String interfaceID) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            cursor = db.query(TABLE_NAME, new String[]{ID}, INTERFACE + " = ?", new String[]{interfaceID}, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return -1;
+    }
     public long insertInterface(String interfaceID) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(INTERFACE, interfaceID);
         return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
     }
+
 }
