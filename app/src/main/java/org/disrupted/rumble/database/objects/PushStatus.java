@@ -191,8 +191,8 @@ public class PushStatus extends Message{
 
     public String toString() {
         String s = new String();
-        s += "Author: "+this.author.getUid()+"\n";
-        s += "Group: "+this.group.getGid()+"\n";
+        s += "Author: "+this.author.getUid()+" ("+this.author.getName()+")\n";
+        s += "Group: "+this.group.getGid()+" ("+this.group.getName()+")\n";
         s += "Status:" +this.status+"\n";
         s += "Time:" +this.timeOfCreation+"\n";
         return s;

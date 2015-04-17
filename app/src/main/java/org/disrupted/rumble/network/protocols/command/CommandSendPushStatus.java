@@ -17,17 +17,27 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions;
+package org.disrupted.rumble.network.protocols.command;
+
+import org.disrupted.rumble.database.objects.PushStatus;
 
 /**
  * @author Marlinski
  */
-public class SubtypeUnknown extends Exception {
+public class CommandSendPushStatus extends Command {
 
-    public int subtype;
+    private PushStatus status;
 
-    public SubtypeUnknown(int subtype) {
-        this.subtype = subtype;
+    public CommandSendPushStatus(PushStatus status){
+        this.status = status;
     }
 
+    public PushStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public CommandID getCommandID() {
+        return CommandID.SEND_PUSH_STATUS;
+    }
 }

@@ -19,7 +19,7 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -88,9 +88,10 @@ public class BlockHeader {
     public static final int TRANSACTION_TYPE_RESPONSE  = 0x02;
     public static final int TRANSACTION_TYPE_PUSH      = 0x03;
 
-    public static final int BLOCKTYPE_HELLO  = 0x00;
-    public static final int BLOCKTYPE_STATUS = 0x01;
-    public static final int BLOCKTYPE_FILE   = 0x02;
+    public static final int BLOCKTYPE_HELLO   = 0x00;
+    public static final int BLOCKTYPE_STATUS  = 0x01;
+    public static final int BLOCKTYPE_FILE    = 0x02;
+    public static final int BLOCKTYPE_CONTACT = 0x03;
 
     public BlockHeader() {
         version = VERSION_ID;
@@ -107,14 +108,13 @@ public class BlockHeader {
         block_length = 0;
     }
 
-
-    public static BlockHeader readBlock(InputStream in) throws MalformedRumblePacket,IOException {
+    public static BlockHeader readBlock(InputStream in) throws MalformedBlockHeader, IOException {
         BlockHeader ret = new BlockHeader();
         byte[] headerBuffer = new byte[BLOCK_HEADER_LENGTH];
 
         int count = in.read(headerBuffer, 0, BLOCK_HEADER_LENGTH);
         if (count < BLOCK_HEADER_LENGTH)
-            throw new MalformedRumblePacket("read less bytes than expected");
+            throw new MalformedBlockHeader("read less bytes than expected", count);
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(headerBuffer);
 
@@ -132,8 +132,6 @@ public class BlockHeader {
         ret.last_block = ((flags & 0x01) == 0x01);
 
         ret.block_type     = ((int) byteBuffer.get() & 0xff);
-        if(ret.block_type > 0x02)
-            throw new MalformedRumblePacket("Wrong block type");
 
         ret.block_length   = byteBuffer.getLong();
 
@@ -194,5 +192,9 @@ public class BlockHeader {
     public void setLastBlock(boolean last_block) {  this.last_block = last_block; }
     public void setBlockHeaderLength(long length) { this.block_length = length; }
 
+    @Override
+    public String toString() {
+        return "type:"+block_type+ " payload:"+block_length;
+    }
 }
 

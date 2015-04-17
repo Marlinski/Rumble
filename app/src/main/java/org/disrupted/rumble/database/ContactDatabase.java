@@ -52,6 +52,8 @@ public class ContactDatabase extends Database  {
     public static final String NAME         = "name";
     public static final String AVATAR       = "avatar";
     public static final String LOCALUSER    = "local";
+    public static final String TRUSTNESS    = "trustness";
+    public static final String PUBKEY       = "pubkey";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID        + " INTEGER PRIMARY KEY, "
@@ -59,6 +61,8 @@ public class ContactDatabase extends Database  {
                  + NAME      + " TEXT, "
                  + AVATAR    + " TEXT, "
                  + LOCALUSER + " INTEGER, "
+                 + TRUSTNESS + " INTEGER, "
+                 + PUBKEY    + " TEXT, "
                  + "UNIQUE( " + UID + " ) "
                  + " );";
 
@@ -192,19 +196,20 @@ public class ContactDatabase extends Database  {
         else
             databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
 
-
         if(contact.getJoinedGroupIDs().size() > 0) {
             for(String joinedGroupID : contact.getJoinedGroupIDs()) {
                 DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingContactID(contactDBID);
                 long groupDBID = DatabaseFactory.getGroupDatabase(context).getGroupDBID(joinedGroupID);
-                DatabaseFactory.getContactJoinGroupDatabase(context).insertContactGroup(contactDBID, groupDBID);
+                if(groupDBID > 0)
+                    DatabaseFactory.getContactJoinGroupDatabase(context).insertContactGroup(contactDBID, groupDBID);
             }
         }
         if(contact.getHashtagInterests().size() > 0) {
             for(Map.Entry<String, Integer> entry : contact.getHashtagInterests().entrySet()) {
                 DatabaseFactory.getContactHashTagInterestDatabase(context).deleteEntriesMatchingContactID(contactDBID);
-                long tagID = DatabaseFactory.getHashtagDatabase(context).insertHashtag(entry.getKey().toLowerCase());
-                DatabaseFactory.getContactHashTagInterestDatabase(context).insertContactTagInterest(contactDBID,tagID,entry.getValue());
+                long tagID = DatabaseFactory.getHashtagDatabase(context).getHashtagDBID(entry.getKey().toLowerCase());
+                if(tagID > 0)
+                    DatabaseFactory.getContactHashTagInterestDatabase(context).insertContactTagInterest(contactDBID,tagID,entry.getValue());
             }
         }
 
@@ -239,7 +244,7 @@ public class ContactDatabase extends Database  {
                             " FROM " + HashtagDatabase.TABLE_NAME + " h" +
                             " JOIN " + ContactHashTagInterestDatabase.TABLE_NAME + " i" +
                             " ON h." + HashtagDatabase.ID + " = i." + ContactHashTagInterestDatabase.HDBID +
-                            " WHERE i." + ContactHashTagInterestDatabase.UDBID + " = ?");
+                            " WHERE i." + ContactHashTagInterestDatabase.UDBID + " = ?;");
             cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
             Map<String, Integer> ret = new HashMap<String, Integer>();
             if (cursor != null) {
@@ -262,9 +267,9 @@ public class ContactDatabase extends Database  {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             StringBuilder query = new StringBuilder(
                     "SELECT g." + GroupDatabase.GID +
-                            " FROM " + ContactJoinGroupDatabase.TABLE_NAME + " c" +
-                            " JOIN " + GroupDatabase.TABLE_NAME + " g" +
-                            " ON c." + ContactJoinGroupDatabase.GDBID + " = g." + GroupDatabase.ID +
+                            " FROM " + GroupDatabase.TABLE_NAME + " g" +
+                            " JOIN " + ContactJoinGroupDatabase.TABLE_NAME + " c" +
+                            " ON g." + GroupDatabase.ID + " = c." + ContactJoinGroupDatabase.GDBID +
                             " WHERE c." + ContactJoinGroupDatabase.UDBID + " = ?");
             cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
             Set<String> ret = new HashSet<String>();

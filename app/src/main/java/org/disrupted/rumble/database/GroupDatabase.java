@@ -112,22 +112,19 @@ public class GroupDatabase  extends  Database{
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             cursor = database.query(TABLE_NAME, new String[] { ID }, GID+ " = ?", new String[] {group_id}, null, null, null);
-            if(cursor == null)
-                return -1;
-            if(cursor.moveToFirst() && !cursor.isAfterLast())
+            if((cursor != null) && cursor.moveToFirst() && !cursor.isAfterLast())
                 return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-            else
-                return -1;
         } finally {
             if(cursor != null)
                 cursor.close();
         }
+        return -1;
     }
 
 
-    public long insertGroup(Group group){
+    public boolean insertGroup(Group group){
         if(group == null)
-            return 0;
+            return false;
 
         String base64EncodedKey = null;
         if(group.isIsprivate())
@@ -146,7 +143,7 @@ public class GroupDatabase  extends  Database{
             EventBus.getDefault().post(new GroupInsertedEvent(group));
         }
 
-        return count;
+        return (count > 0);
     }
 
 

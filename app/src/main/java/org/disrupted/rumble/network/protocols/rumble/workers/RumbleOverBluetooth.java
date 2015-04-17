@@ -31,15 +31,19 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
+import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatus;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.NullBlock;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.network.protocols.command.Command;
-import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
 
 import java.io.IOException;
 
@@ -186,7 +190,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             while (true) {
                 try {
                     BlockHeader header = BlockHeader.readBlock(con.getInputStream());
-                    Block block = null;
+                    Block block;
                     switch (header.getBlockType()) {
                         case BlockHeader.BLOCKTYPE_STATUS:
                             block = new BlockPushStatus(header);
@@ -194,12 +198,33 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                         case BlockHeader.BLOCKTYPE_FILE:
                             block = new BlockFile(header);
                             break;
+                        case BlockHeader.BLOCKTYPE_CONTACT:
+                            block = new BlockContact(header);
+                            break;
+                        default:
+                            block = new NullBlock(header);
+                            break;
                     }
-                    if(block != null) {
-                        block.readBlock(con); // it reads and process the block
-                        block.dismiss();
+
+                    long bytesread = 0;
+                    try {
+                        bytesread = block.readBlock(con);
+                    } catch ( MalformedBlockPayload e ) {
+                        bytesread = e.bytesRead;
                     }
-                } catch (MalformedRumblePacket e) {
+
+                    if(bytesread < header.getBlockLength()) {
+                        byte[] buffer = new byte[1024];
+                        long readleft = header.getBlockLength();
+                        while(readleft > 0) {
+                            long max_read = Math.min((long)1024,readleft);
+                            int read = con.getInputStream().read(buffer, 0, (int)max_read);
+                            readleft -= read;
+                        }
+                    }
+
+                    block.dismiss();
+                } catch (MalformedBlockHeader e) {
                     Log.d(TAG, "[!] malformed packet: "+e.getMessage());
                 }
             }
@@ -211,30 +236,36 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public boolean isCommandSupported(String commandName) {
-        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
-            return true;
-        return false;
+    public boolean isCommandSupported(Command.CommandID commandID) {
+        switch (commandID) {
+            case SEND_LOCAL_INFORMATION:
+            case SEND_PUSH_STATUS:
+                return true;
+            default:
+                return  false;
+        }
     }
 
     @Override
     protected boolean onCommandReceived(Command command) {
-        if(!isCommandSupported(command.getCommandName()))
-            return false;
-
-        if(command instanceof SendStatusMessageCommand) {
-            PushStatus pushStatus = ((SendStatusMessageCommand) command).getStatus();
-            try {
-                Block blockStatus = new BlockPushStatus(pushStatus);
-                blockStatus.writeBlock(con);
-                blockStatus.dismiss();
+        Block block;
+        try {
+            switch (command.getCommandID()) {
+                case SEND_LOCAL_INFORMATION:
+                    block = new BlockContact((CommandSendLocalInformation) command);
+                    break;
+                case SEND_PUSH_STATUS:
+                    block = new BlockPushStatus((CommandSendPushStatus) command);
+                    break;
+                default:
+                    return false;
             }
-            catch(IOException ignore){
-                Log.e(TAG, "[!] error while sending");
-            }
-            catch(InputOutputStreamException ignore) {
-                Log.e(TAG, "[!] error while sending");
-            }
+            block.writeBlock(con);
+            block.dismiss();
+            return true;
+        }
+        catch(Exception ignore){
+            Log.e(TAG, "[!] error while sending");
         }
         return false;
     }

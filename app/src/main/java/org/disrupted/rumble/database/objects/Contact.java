@@ -35,7 +35,11 @@ public class Contact {
     protected String name;
     protected String avatar;
     protected boolean local;
+    protected boolean friend;
 
+    /* used to state wether we should consider or not the following attributes for update */
+    public static final int FLAG_GROUP_LIST   = 0x01;
+    public static final int FLAG_TAG_INTEREST = 0x02;
     protected Set<String> joinedGroupIDs;
     protected Map<String, Integer> hashtagInterests;
 
@@ -62,6 +66,7 @@ public class Contact {
     public boolean isLocal()  { return local;}
     public final Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
     public final Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
+    public boolean isFriend() { return friend; }
 
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
@@ -76,7 +81,7 @@ public class Contact {
         if(hashtagInterests != null)
             this.hashtagInterests = hashtagInterests;
         else
-            hashtagInterests = new HashMap<String, Integer>();
+            this.hashtagInterests = new HashMap<String, Integer>();
     }
     public void setJoinedGroupIDs(Set<String> joinedGroupIDs) {
         if(this.joinedGroupIDs.size() > 0)
@@ -84,12 +89,26 @@ public class Contact {
         if(joinedGroupIDs != null)
             this.joinedGroupIDs = joinedGroupIDs;
         else
-            joinedGroupIDs = new HashSet<String>();
+            this.joinedGroupIDs = new HashSet<String>();
     }
 
     @Override
     public String toString() {
-        return uid+" - "+name+" ("+(local ? "local" : "alien")+")";
+        String string =  uid+" - "+name+" ("+(local ? "local" : "alien")+")  ";
+        string += "Groups=(";
+        if(joinedGroupIDs != null) {
+            for (String group : joinedGroupIDs) {
+                string += group;
+            }
+        }
+        string += ") Tag=(";
+        if(hashtagInterests != null) {
+            for (Map.Entry<String, Integer> entry : hashtagInterests.entrySet()) {
+                string += entry.getKey() + ":" + entry.getValue() + " ";
+            }
+        }
+        string += ")";
+        return string;
     }
 
 }

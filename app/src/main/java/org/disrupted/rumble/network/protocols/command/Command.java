@@ -24,6 +24,12 @@ package org.disrupted.rumble.network.protocols.command;
  */
 public abstract class Command {
 
-    abstract public String getCommandName();
+    public enum CommandID {
+        SEND_PUSH_STATUS,
+        SEND_LOCAL_INFORMATION,
+        SEND_CHAT_STATUS
+    }
+
+    abstract public CommandID getCommandID();
 
 }

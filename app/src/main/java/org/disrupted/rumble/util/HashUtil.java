@@ -32,6 +32,10 @@ import javax.crypto.SecretKey;
  */
 public class HashUtil {
 
+    public static final int STATUS_ID_SIZE = 16;
+    public static final int USER_ID_SIZE   = 8;
+    public static final int GROUP_ID_SIZE  = 8;
+
     public static final String computeForwarderHash(String linkLayerAddress, String protocol) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -51,7 +55,7 @@ public class HashUtil {
             md.update(group_id.getBytes());
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
-            return Base64.encodeToString(md.digest(),0,16,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
@@ -63,7 +67,7 @@ public class HashUtil {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(name.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(time).array());
-            return Base64.encodeToString(md.digest(),0,8,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0,USER_ID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
@@ -76,7 +80,7 @@ public class HashUtil {
             md.update(name.getBytes());
             if(isPrivate)
                 md.update(ByteBuffer.allocate(8).putLong(System.currentTimeMillis()).array());
-            return Base64.encodeToString(md.digest(),0,8,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0,GROUP_ID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;

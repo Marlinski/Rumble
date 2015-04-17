@@ -91,6 +91,20 @@ public class HashtagDatabase extends  Database{
         return ret;
     }
 
+    public long getHashtagDBID(String hashtag) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase db = databaseHelper.getReadableDatabase();
+            cursor = db.query(TABLE_NAME, new String[]{ID}, HASHTAG + " = ?", new String[]{hashtag.toLowerCase()}, null, null, null, null);
+            if (cursor != null && cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return -1;
+    }
+
     public long getHashtagCount(String hashtag) {
         Cursor cursor = null;
         long count = 0;

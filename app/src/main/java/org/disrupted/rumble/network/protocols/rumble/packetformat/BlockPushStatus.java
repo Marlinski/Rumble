@@ -29,8 +29,10 @@ import org.disrupted.rumble.network.events.PushStatusSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,41 +78,41 @@ public class BlockPushStatus extends Block{
     /*
      * Byte size
      */
-    private static final int AUTHOR_ID           = 8;
-    private static final int AUTHOR_LENGTH_FIELD = 1;
-    private static final int GROUP_ID            = 8;
-    private static final int GROUP_LENGTH_FIELD  = 1;
-    private static final int STATUS_LENGTH_FIELD = 2;
-    private static final int TIME_OF_CREATION    = 8;
-    private static final int TTL                 = 8;
-    private static final int HOP_COUNT           = 2;
-    private static final int HOP_LIMIT           = 2;
-    private static final int REPLICATION         = 2;
-    private static final int LIKE                = 1;
+    private static final int FIELD_UID_SIZE             = HashUtil.USER_ID_SIZE;
+    private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
+    private static final int FIELD_GID_SIZE             = HashUtil.GROUP_ID_SIZE;
+    private static final int FIELD_GROUP_LENGTH_SIZE    = 1;
+    private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
+    private static final int FIELD_TOC_SIZE             = 8;
+    private static final int FIELD_TTL_SIZE             = 8;
+    private static final int FIELD_HOPCOUNT_SIZE        = 2;
+    private static final int FIELD_HOPLIMIT_SIZE        = 2;
+    private static final int FIELD_REPLICATION_SIZE     = 2;
+    private static final int FIELD_LIKE_SIZE            = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = (
-            AUTHOR_ID +
-            AUTHOR_LENGTH_FIELD +
-            GROUP_ID +
-            GROUP_LENGTH_FIELD +
-            STATUS_LENGTH_FIELD +
-            TIME_OF_CREATION +
-            TTL +
-            HOP_COUNT +
-            HOP_LIMIT +
-            REPLICATION +
-            LIKE);
+            FIELD_UID_SIZE +
+                    FIELD_AUTHOR_LENGTH_SIZE +
+                    FIELD_GID_SIZE +
+                    FIELD_GROUP_LENGTH_SIZE +
+                    FIELD_STATUS_LENGTH_SIZE +
+                    FIELD_TOC_SIZE +
+                    FIELD_TTL_SIZE +
+                    FIELD_HOPCOUNT_SIZE +
+                    FIELD_HOPLIMIT_SIZE +
+                    FIELD_REPLICATION_SIZE +
+                    FIELD_LIKE_SIZE);
 
     private static final int MAX_STATUS_SIZE = 500; // limiting status to 500 character;
     private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_STATUS_SIZE;
 
     private PushStatus status;
 
-    public BlockPushStatus(PushStatus status) {
+    public BlockPushStatus(CommandSendPushStatus command) {
         super(new BlockHeader());
         this.header.setBlockType(BlockHeader.BLOCKTYPE_STATUS);
         this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
-        this.status = status;
+        this.status = command.getStatus();
     }
 
     public BlockPushStatus(BlockHeader header) {
@@ -119,13 +121,13 @@ public class BlockPushStatus extends Block{
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedRumblePacket, IOException, InputOutputStreamException {
+    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_STATUS)
-            throw new MalformedRumblePacket("Block type BLOCK_FILE expected");
+            throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
 
         long readleft = header.getBlockLength();
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
-            throw new MalformedRumblePacket("wrong header length parameter: "+readleft);
+            throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
 
         long timeToTransfer = System.currentTimeMillis();
 
@@ -133,58 +135,74 @@ public class BlockPushStatus extends Block{
         /* read the block */
         InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
-        if (in.read(blockBuffer, 0, (int)header.getBlockLength()) < (int)header.getBlockLength())
-            throw new MalformedRumblePacket("read less bytes than expected");
+        int count =in.read(blockBuffer, 0, (int)header.getBlockLength());
+        if (count < (int)header.getBlockLength())
+            throw new MalformedBlockPayload("read less bytes than expected", count);
 
         /* process the read buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
 
-            byte[] author_id = new byte[AUTHOR_ID];
-            byteBuffer.get(author_id, 0, AUTHOR_ID);
-            readleft -= AUTHOR_ID;
+            byte[] author_id = new byte[FIELD_UID_SIZE];
+            byteBuffer.get(author_id, 0, FIELD_UID_SIZE);
+            readleft -= FIELD_UID_SIZE;
 
             short authorLength = byteBuffer.get();
-            readleft -= 1;
+            readleft -= FIELD_AUTHOR_LENGTH_SIZE;
             if ((authorLength <= 0) || (authorLength > readleft))
-                throw new MalformedRumblePacket("wrong author length parameter: " + authorLength);
+                throw new MalformedBlockPayload("wrong author.length parameter: " + authorLength, header.getBlockLength()-readleft);
             byte[] author_name = new byte[authorLength];
             byteBuffer.get(author_name, 0, authorLength);
             readleft -= authorLength;
 
-            byte[] group_id = new byte[GROUP_ID];
-            byteBuffer.get(group_id, 0, GROUP_ID);
-            readleft -= GROUP_ID;
+            byte[] group_id = new byte[FIELD_GID_SIZE];
+            byteBuffer.get(group_id, 0, FIELD_GID_SIZE);
+            readleft -= FIELD_GID_SIZE;
 
             short groupLength = byteBuffer.get();
-            readleft -= 1;
+            readleft -= FIELD_GROUP_LENGTH_SIZE;
             if ((groupLength <= 0) || (groupLength > readleft))
-                throw new MalformedRumblePacket("wrong group length parameter: " + groupLength);
+                throw new MalformedBlockPayload("wrong group.length parameter: " + groupLength, header.getBlockLength()-readleft);
             byte[] group_name = new byte[groupLength];
             byteBuffer.get(group_name, 0, groupLength);
             readleft -= groupLength;
 
             short postLength = byteBuffer.getShort();
-            readleft -= 2;
+            readleft -= FIELD_STATUS_LENGTH_SIZE;
             if ((postLength <= 0) || (postLength > readleft))
-                throw new MalformedRumblePacket("wrong status length parameter: " + postLength);
+                throw new MalformedBlockPayload("wrong status.length parameter: " + postLength, header.getBlockLength()-readleft);
             byte[] post = new byte[postLength];
             byteBuffer.get(post, 0, postLength);
+            readleft -= postLength;
 
             long toc = byteBuffer.getLong();
+            readleft -= FIELD_TOC_SIZE;
+
             long ttl = byteBuffer.getLong();
+            readleft -= FIELD_TTL_SIZE;
+
             short hopCount = byteBuffer.getShort();
+            readleft -= FIELD_HOPCOUNT_SIZE;
+
             short hopLimit = byteBuffer.getShort();
+            readleft -= FIELD_HOPLIMIT_SIZE;
+
             short replication = byteBuffer.getShort();
+            readleft -= FIELD_REPLICATION_SIZE;
+
             byte like = byteBuffer.get();
+            readleft -= FIELD_LIKE_SIZE;
+
+            if(readleft > 0)
+                throw new MalformedBlockPayload("wrong header.length parameter, no more data to read: " + (header.getBlockLength()-readleft), header.getBlockLength()-readleft);
 
             /* assemble the status */
-            String author_id_base64 = Base64.encodeToString(author_id,0,AUTHOR_ID,Base64.NO_WRAP);
-            String group_id_base64  = Base64.encodeToString(group_id,0,GROUP_ID,Base64.NO_WRAP);
+            String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_UID_SIZE,Base64.NO_WRAP);
+            String group_id_base64  = Base64.encodeToString(group_id,0, FIELD_GID_SIZE,Base64.NO_WRAP);
 
-            Contact contact  = new Contact(new String(author_name),author_id_base64,false);
-            Group   group = new Group(new String(group_name), group_id_base64, null);
-            status = new PushStatus(contact, group, new String(post), toc);
+            Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
+            Group   group_tmp = new Group(new String(group_name), group_id_base64, null);
+            status = new PushStatus(contact_tmp, group_tmp, new String(post), toc);
 
             status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setTimeOfCreation(toc);
@@ -204,11 +222,11 @@ public class BlockPushStatus extends Block{
                             timeToTransfer)
             );
             status.discard();
-        } catch (BufferUnderflowException exception) {
-            throw new MalformedRumblePacket("buffer too small");
-        }
 
-        return header.getBlockLength();
+            return header.getBlockLength();
+        } catch (BufferUnderflowException exception) {
+            throw new MalformedBlockPayload("buffer too small", header.getBlockLength() - readleft);
+        }
     }
 
     @Override
@@ -218,7 +236,7 @@ public class BlockPushStatus extends Block{
         /* calculate the total block size */
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
         byte[] group_name  = status.getGroup().getName().getBytes(Charset.forName("UTF-8"));
-        byte[] group_id    = Base64.decode(status.getGroup().getName(), Base64.NO_WRAP);
+        byte[] group_id    = Base64.decode(status.getGroup().getGid(), Base64.NO_WRAP);
         byte[] author_name = status.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
         byte[] author_id   = Base64.decode(status.getAuthor().getUid(),Base64.NO_WRAP);
         int length = MIN_PAYLOAD_SIZE +
@@ -235,10 +253,10 @@ public class BlockPushStatus extends Block{
 
         /* prepare the buffer */
         ByteBuffer blockBuffer = ByteBuffer.allocate(length);
-        blockBuffer.put(author_id, 0, AUTHOR_ID);
+        blockBuffer.put(author_id, 0, FIELD_UID_SIZE);
         blockBuffer.put((byte)author_name.length);
         blockBuffer.put(author_name, 0, author_name.length);
-        blockBuffer.put(group_id, 0, GROUP_ID);
+        blockBuffer.put(group_id, 0, FIELD_GID_SIZE);
         blockBuffer.put((byte)group_name.length);
         blockBuffer.put(group_name, 0, group_name.length);
         blockBuffer.putShort((short) post.length);
@@ -268,11 +286,11 @@ public class BlockPushStatus extends Block{
                         recipients,
                         RumbleProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        header.getBlockLength()+header.BLOCK_HEADER_LENGTH,
+                        header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                         timeToTransfer)
         );
 
-        return header.getBlockLength()+header.BLOCK_HEADER_LENGTH;
+        return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
     }
 
     public PushStatus getStatus() {

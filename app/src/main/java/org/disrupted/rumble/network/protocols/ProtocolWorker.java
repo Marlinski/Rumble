@@ -69,11 +69,11 @@ public abstract class ProtocolWorker implements Worker {
 
     public final boolean execute(Command command){
         try {
-            if (isCommandSupported(command.getCommandName())) {
+            if (isCommandSupported(command.getCommandID())) {
                 commandQueue.put(command);
                 return true;
             } else {
-                Log.d(TAG, "[!] command is not supported: " + command.getCommandName());
+                Log.d(TAG, "[!] command is not supported: " + command.getCommandID());
                 return false;
             }
         } catch (InterruptedException ignore) {
@@ -82,7 +82,7 @@ public abstract class ProtocolWorker implements Worker {
     }
 
 
-    abstract public boolean isCommandSupported(String commandName);
+    abstract public boolean isCommandSupported(Command.CommandID commandID);
 
     abstract protected boolean onCommandReceived(Command command);
 

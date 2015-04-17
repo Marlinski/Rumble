@@ -29,7 +29,6 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
 import org.disrupted.rumble.network.events.PushStatusSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
@@ -39,7 +38,7 @@ import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamExcepti
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
-import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.firechat.FirechatBTState;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
@@ -296,19 +295,16 @@ public class FirechatOverBluetooth extends ProtocolWorker {
 
 
     @Override
-    public boolean isCommandSupported(String commandName) {
-        if(commandName.equals(SendStatusMessageCommand.COMMAND_NAME))
+    public boolean isCommandSupported(Command.CommandID commandID) {
+        if(commandID.equals(Command.CommandID.SEND_CHAT_STATUS))
             return true;
         return false;
     }
 
     @Override
     protected boolean onCommandReceived(Command command) {
-        if(!isCommandSupported(command.getCommandName()))
-            return false;
-
-        if(command instanceof SendStatusMessageCommand) {
-            PushStatus pushStatus = ((SendStatusMessageCommand)command).getStatus();
+        if(command instanceof CommandSendPushStatus) {
+            PushStatus pushStatus = ((CommandSendPushStatus)command).getStatus();
             if(pushStatus.isForwarder(con.getRemoteLinkLayerAddress(), FirechatProtocol.protocolID))
                 return false;
 

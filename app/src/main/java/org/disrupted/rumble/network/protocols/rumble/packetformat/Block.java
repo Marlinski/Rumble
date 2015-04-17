@@ -21,8 +21,8 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.BufferMismatchBlockSize;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +43,7 @@ public abstract class Block {
         return header;
     }
 
-    public abstract long readBlock(LinkLayerConnection con) throws MalformedRumblePacket, IOException, InputOutputStreamException;
+    public abstract long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException;
 
     public abstract long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException;
 

@@ -19,8 +19,14 @@
 
 package org.disrupted.rumble.network.events;
 
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.PushStatus;
+
+import java.util.List;
+
 /**
  * @author Marlinski
  */
 public abstract class NetworkEvent {
+
 }

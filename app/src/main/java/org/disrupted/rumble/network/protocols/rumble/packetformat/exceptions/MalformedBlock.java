@@ -23,4 +23,12 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions;
  * @author Marlinski
  */
 public class MalformedBlock extends Exception {
+
+    public long bytesRead;
+    public String reason;
+
+    public MalformedBlock(String reason, long bytesRead) {
+        this.bytesRead = bytesRead;
+        this.reason = reason;
+    }
 }

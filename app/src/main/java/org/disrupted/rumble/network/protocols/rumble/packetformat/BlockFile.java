@@ -29,8 +29,9 @@ import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedRumblePacket;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.FileUtil;
+import org.disrupted.rumble.util.HashUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -52,7 +53,7 @@ import de.greenrobot.event.EventBus;
  *
  * +-------------------------------------------+
  * |                                           |
- * |       UID = Hash(author, post, toc)       |  24 bytes (Base64 of 128 bits UID)
+ * |            Attached Status  UID           |  16 bytes
  * |                                           |
  * |                                           |
  * +-----------+-------------------------------+
@@ -73,35 +74,35 @@ public class BlockFile extends Block {
     /*
      * Byte size
      */
-    private static final int UID_SIZE             = 24;
-    private static final int MIME_TYPE_SIZE        = 1;
+    private static final int STATUS_ID_SIZE   = HashUtil.STATUS_ID_SIZE;
+    private static final int MIME_TYPE_SIZE   = 1;
 
-    private  static final int MIN_PAYLOAD_SIZE = ( UID_SIZE + MIME_TYPE_SIZE);
+    private  static final int MIN_PAYLOAD_SIZE = ( STATUS_ID_SIZE + MIME_TYPE_SIZE);
 
     public final static int MIME_TYPE_IMAGE = 0x01;
 
     public String filename;
-    public String UUID;
+    public String statud_id_base64;
 
     public BlockFile(BlockHeader header) {
         super(header);
     }
 
-    public BlockFile(String filename, String UUID) {
+    public BlockFile(String filename, String statud_id_base64) {
         super(new BlockHeader());
         header.setBlockType(BlockHeader.BLOCKTYPE_FILE);
         this.filename = filename;
-        this.UUID = UUID;
+        this.statud_id_base64 = statud_id_base64;
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedRumblePacket, IOException, InputOutputStreamException {
+    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
-            throw new MalformedRumblePacket("Block type BLOCK_FILE expected");
+            throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
 
         long readleft = header.getBlockLength();
         if(readleft < 0)
-            throw new MalformedRumblePacket("Header length is < 0 in BlockFile");
+            throw new MalformedBlockPayload("Header.length is < 0 in BlockFile", 0);
 
         long timeToTransfer = System.currentTimeMillis();
 
@@ -110,13 +111,12 @@ public class BlockFile extends Block {
         byte[] pseudoHeaderBuffer = new byte[MIN_PAYLOAD_SIZE];
         int count = in.read(pseudoHeaderBuffer, 0, MIN_PAYLOAD_SIZE);
         if (count < MIN_PAYLOAD_SIZE)
-            throw new MalformedRumblePacket("read less bytes than expected: "+count);
-        readleft -= MIN_PAYLOAD_SIZE;
+            throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(pseudoHeaderBuffer);
-        byte[] uid = new byte[UID_SIZE];
-        byteBuffer.get(uid, 0, UID_SIZE);
-        readleft -= UID_SIZE;
+        byte[] uid = new byte[STATUS_ID_SIZE];
+        byteBuffer.get(uid, 0, STATUS_ID_SIZE);
+        readleft -= STATUS_ID_SIZE;
 
         int mime = byteBuffer.get();
         readleft -= MIME_TYPE_SIZE;
@@ -162,10 +162,11 @@ public class BlockFile extends Block {
 
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 // update the database
+                String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
                 Log.e(TAG, "[+] "+(header.getBlockLength()+header.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
                 EventBus.getDefault().post(new FileReceivedEvent(
                                 attachedFile.getName(),
-                                new String(uid),
+                                status_id_base64,
                                 con.getRemoteLinkLayerAddress(),
                                 RumbleProtocol.protocolID,
                                 con.getLinkLayerIdentifier(),
@@ -194,6 +195,8 @@ public class BlockFile extends Block {
         if(filename == null)
             throw new IOException("filename is null");
 
+        byte[] status_id    = Base64.decode(statud_id_base64, Base64.NO_WRAP);
+
         File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), filename);
         if(!attachedFile.exists() || !attachedFile.isFile())
             throw new IOException(filename+" is not a file or does not exists");
@@ -204,13 +207,13 @@ public class BlockFile extends Block {
         long size = attachedFile.length();
         this.header.setBlockHeaderLength(size + MIN_PAYLOAD_SIZE);
 
-        ByteBuffer bufferBlockHeader = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
-        bufferBlockHeader.put(UUID.getBytes(), 0, UID_SIZE);
-        bufferBlockHeader.put((byte) MIME_TYPE_IMAGE);
+        ByteBuffer bufferBlockFilePseudoHeader = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
+        bufferBlockFilePseudoHeader.put(status_id, 0, STATUS_ID_SIZE);
+        bufferBlockFilePseudoHeader.put((byte) MIME_TYPE_IMAGE);
 
-    /* send the header, the pseudo-header and the attached file */
+        /* send the header, the pseudo-header and the attached file */
         header.writeBlock(con.getOutputStream());
-        con.getOutputStream().write(bufferBlockHeader.array());
+        con.getOutputStream().write(bufferBlockFilePseudoHeader.array());
 
         BufferedInputStream fis = null;
         try {

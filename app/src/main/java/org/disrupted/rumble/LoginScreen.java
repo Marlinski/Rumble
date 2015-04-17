@@ -73,6 +73,7 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             }
 
             Contact localContact = Contact.createLocalContact(username);
+            localContact.addGroup(Group.getDefaultGroup().getGid());
             DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact, callback);
         }
     }

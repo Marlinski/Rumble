@@ -8,13 +8,15 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.InterestVector;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
-import org.disrupted.rumble.network.protocols.command.SendStatusMessageCommand;
+import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
+import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.util.HashUtil;
 
@@ -177,6 +179,7 @@ public class PushService {
 
         public void startDispatcher() {
             running = true;
+            sendLocalPreferences();
             initStatuses();
         }
 
@@ -227,7 +230,7 @@ public class PushService {
                     // pickup a message and send it to the CommandExecutor
                     if (worker != null) {
                         PushStatus message = pickMessage();
-                        worker.execute(new SendStatusMessageCommand(message));
+                        worker.execute(new CommandSendPushStatus(message));
                         message.discard();
                         //todo just for the sake of debugging
                         sleep(1000, 0);
@@ -398,6 +401,13 @@ public class PushService {
             return message;
         }
 
+        public void sendLocalPreferences() {
+            Contact local = Contact.getLocalContact();
+            int flags = Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST;
+            CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
+            local.toString();
+            worker.execute(command);
+        }
         public void onEvent(StatusDeletedEvent event) {
             fullyLock();
             try {
@@ -406,7 +416,6 @@ public class PushService {
                 fullyUnlock();
             }
         }
-
         public void onEvent(StatusInsertedEvent event) {
             PushStatus message = new PushStatus(event.status);
             add(message);

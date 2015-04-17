@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,33 +11,38 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 package org.disrupted.rumble.network.protocols.command;
 
-import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.database.objects.Contact;
 
 /**
  * @author Marlinski
  */
-public class SendStatusMessageCommand extends Command {
+public class CommandSendLocalInformation extends Command {
 
-    public static final String COMMAND_NAME = "SEND_STATUS_MESSAGE";
+    private Contact local;
+    private int     flags;
 
-    private PushStatus status;
-
-    public SendStatusMessageCommand(PushStatus status){
-        this.status = status;
+    public CommandSendLocalInformation(Contact local, int flags){
+        this.local = local;
+        this.flags = flags;
     }
 
-    public PushStatus getStatus() {
-        return status;
+    public Contact getContact() {
+        return local;
+    }
+
+    public int getFlags() {
+        return flags;
     }
 
     @Override
-    public String getCommandName() {
-        return COMMAND_NAME;
+    public CommandID getCommandID() {
+        return CommandID.SEND_LOCAL_INFORMATION;
     }
+
 }

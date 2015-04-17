@@ -279,18 +279,12 @@ public class PopupCompose extends Activity {
 
         @Override
         public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-            String clicked = (String)adapterView.getItemAtPosition(i);
-            Iterator<Group> it = groupList.iterator();
-            while(it.hasNext()) {
-                Group item = it.next();
-                if(item.getName().equals(clicked)) {
-                    if(!item.isIsprivate())
-                        groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
-                    else
-                        groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
-                    selectedItem = item;
-                }
-            }
+            Group clicked = groupList.get(i);
+            if(!clicked.isIsprivate())
+                groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
+            else
+                groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
+            selectedItem = clicked;
         }
 
         @Override

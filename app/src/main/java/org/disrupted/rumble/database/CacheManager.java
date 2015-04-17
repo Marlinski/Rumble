@@ -25,6 +25,8 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.ContactInformationReceived;
+import org.disrupted.rumble.network.events.ContactInformationSent;
 import org.disrupted.rumble.network.events.FileReceivedEvent;
 import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
 import org.disrupted.rumble.network.events.PushStatusSentEvent;
@@ -162,6 +164,37 @@ public class CacheManager {
         }catch(IOException ignore){
         }
     }
+    public void onEvent(ContactInformationSent event) {
+        Log.d(TAG, "[.] local preferences sent: "+event.contact.toString());
+    }
+    public void onEvent(ContactInformationReceived event) {
+        Log.d(TAG, "[.] receive contact update: "+event.contact.toString());
+        Contact exists = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.contact.getUid());
+        if(exists == null) {
+            exists = event.contact;
+        } else if((exists.isFriend()) && (!event.authenticated)) {
+            // we do not accept unauthenticated update from friends
+            Log.d(TAG, "[!] receive contact update for a friend but content was not authenticated");
+            return;
+        } else  if(!exists.getName().equals(event.contact.getName())) {
+            // we do not accept conflicting name/uid  (we cannot change name)
+            Log.d(TAG, "[!] AuthorID: "+exists.getUid()+ " CONFLICT: db="+exists.getName()+" status="+event.contact.getName());
+            return;
+        } else if(exists.isLocal()) {
+            // of course, we do not accept receiving update for our own self
+            Log.d(TAG, "[!] receive contact information for ourself");
+            return;
+        } else {
+            // ok, we only update the affected attributes
+            if ((event.flags & Contact.FLAG_GROUP_LIST) == Contact.FLAG_GROUP_LIST) {
+                exists.setJoinedGroupIDs(event.contact.getJoinedGroupIDs());
+            }
+            if ((event.flags & Contact.FLAG_TAG_INTEREST) == Contact.FLAG_TAG_INTEREST) {
+                exists.setHashtagInterests(event.contact.getHashtagInterests());
+            }
+        }
+        DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(exists, null);
+    }
 
 
     /*
@@ -223,12 +256,21 @@ public class CacheManager {
         if(event.group == null)
             return;
         Log.d(TAG, " [.] user created group: "+event.group.getName());
-        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group);
+        if(DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group)) {
+            Contact local = Contact.getLocalContact();
+            local.addGroup(event.group.getGid());
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(local, null);
+        }
     }
     public void onEvent(UserJoinGroup event) {
         if(event.group == null)
             return;
         Log.d(TAG, " [.] user joined group: "+event.group.getName());
-        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group);
+        if(DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group)) {
+            Contact local = Contact.getLocalContact();
+            local.addGroup(event.group.getGid());
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(local, null);
+        }
+
     }
 }
