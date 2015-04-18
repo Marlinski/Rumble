@@ -70,7 +70,7 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
             return;
 
         Log.d(TAG, "[+] Starting Bluetooth");
-        btScanner.startDiscovery();
+        btScanner.startScanner();
         networkCoordinator.addScanner(btScanner);
 
         IntentFilter filter = new IntentFilter();
@@ -90,7 +90,7 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
 
         Log.d(TAG, "[+] Stopping Bluetooth");
         networkCoordinator.delScanner(btScanner);
-        btScanner.destroy();
+        btScanner.stopScanner();
 
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
 
@@ -108,10 +108,10 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
                 Log.d(TAG, "[!] BT State Changed");
                 switch (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)){
                     case BluetoothAdapter.STATE_ON:
-                        btScanner.startDiscovery();
+                        btScanner.startScanner();
                         break;
                     case BluetoothAdapter.STATE_OFF:
-                        btScanner.stopDiscovery();
+                        btScanner.stopScanner();
                         linkStop();
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:

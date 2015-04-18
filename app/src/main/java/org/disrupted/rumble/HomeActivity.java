@@ -175,6 +175,9 @@ public class HomeActivity extends ActionBarActivity {
         mNetworkDrawerFragment.onForceScanClicked(view);
     }
 
+    /*
+     * Receive QR CODE or Bluetooth Enable/Disable
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);

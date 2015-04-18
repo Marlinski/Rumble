@@ -57,9 +57,27 @@ public class BluetoothNeighbour implements LinkLayerNeighbour {
             if(remote != null)
                 return remote.getName();
             else
-                return "#no name#";
+                return bluetoothMacAddress;
         } else {
-            return "#no name#";
+            return bluetoothMacAddress;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+
+        if(o instanceof  BluetoothNeighbour) {
+            BluetoothNeighbour neighbour = (BluetoothNeighbour) o;
+            return bluetoothMacAddress.equals(neighbour.bluetoothMacAddress);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return bluetoothMacAddress.hashCode();
     }
 }

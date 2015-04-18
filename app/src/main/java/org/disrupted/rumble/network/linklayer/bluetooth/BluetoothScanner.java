@@ -32,7 +32,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.*;
 
-import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -47,6 +46,7 @@ import org.disrupted.rumble.network.linklayer.Scanner;
 
 import java.util.HashSet;
 import java.lang.Math;
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
 
@@ -57,13 +57,13 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
 
     private static final String TAG = "BluetoothScanner";
 
-    private static final Object lock = new Object();
+    private static final ReentrantLock lock = new ReentrantLock();
     private static BluetoothScanner instance;
     private static int openedSocket;
 
     private enum ScanningState {
-        SCANNING_ON, SCANNING_OFF
-    };
+        SCANNING_OFF, SCANNING_IDLE, SCANNING_SCHEDULED, SCANNING_IN_PROGRESS
+    }
     private ScanningState scanningState;
 
     private HashSet<BluetoothNeighbour>  btNeighborhood;
@@ -71,7 +71,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
     /*
      * If another application is using the bluetooth (like Firechat) we have
      * to take extra care not to conflict with our discovery procedures.
-     * waitingForDiscovery is used to trigger unsollicited DISCOVERY and in that case
+     * hasCallback is used to trigger unsollicited DISCOVERY and in that case
      * will also listen for the result of this procedure.
      * todo: they might be race condition issues whenever a DISCOVERY starts at the same time
      */
@@ -91,16 +91,25 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
      *    - Slow Start  mode: in which we increase linearly the trickle timer
      *    - Exponential mode: in which we increase the timer exponentially
      *    - Beta Mode: in which we only scan rarely when connected to a device
+     *
+     *  Whenever the neighborhood change between to scan, a change is the detection of a new
+     *  neighbour or a previous neighbour being unreachable. If the number of such inconsistency
+     *  is more than a certain threshold, we reset the trickle timer.
      */
-    private static final double START_TRICKLE_TIMER   = 10000; // 10 seconds
-    private static final double LINEAR_STEP           = 5000;  // 5 seconds
-    private static final double EXPONENTIAL_THRESHOLD = 60000; // 1 minute
-    private static final double IMAX_TRICKLE_TIMER    = 4;     // 2^4 = 16 minutes
-    private int                 consistency = 1;
+    private static final double SCANNING_TIMEOUT        = 15000; // max scanning time 15 seconds
+    private static final double START_TRICKLE_TIMER     = 10000; // 10 seconds
+    private static final double BETA_TRICKLE_TIMER      = 60000; // 1 minute
+    private static final double LINEAR_STEP             = 5000;  // 5 seconds
+    private static final double EXPONENTIAL_THRESHOLD   = 60000; // 1 minute
+    private static final double IMAX_TRICKLE_TIMER      = 4;     // 2^4 = 16 minutes
+    private static final int    INCONSISTENCY_THRESHOLD = 2;
+
     private double              trickleTimer = START_TRICKLE_TIMER;
     private HashSet<BluetoothNeighbour>  lastTrickleState;
-    private Handler             handler;
     private boolean             betamode;
+
+    private Handler             scanSchedule;   // to schedule a new scan
+    private Handler             scanTimeout;    // to avoid scanning for too long
     /*
      * reset the trickle timer when phone is moving only if the timer is already long enough
      */
@@ -115,7 +124,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
 
     /*
      * little hack to prevent multiple unsollicited DISCOVERY_FINISH out of nowhere to
-     * increase our trickle timer
+     * increase our trickle timer. yes. it happens.
      */
     private boolean             lastscan = false;
 
@@ -123,11 +132,14 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
     private boolean sensorregistered;
 
     public static BluetoothScanner getInstance() {
-        synchronized (lock) {
+        try {
+            lock.lock();
             if(instance == null)
                 return new BluetoothScanner();
 
             return instance;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -135,7 +147,8 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
         btNeighborhood     = new HashSet<BluetoothNeighbour>();
         lastTrickleState = new HashSet<BluetoothNeighbour>();
         trickleTimer     = START_TRICKLE_TIMER;
-        handler          = new Handler();
+        scanSchedule     = new Handler();
+        scanTimeout      = new Handler();
         scanningState    = ScanningState.SCANNING_OFF;
         hasCallback  = false;
         registered   = false;
@@ -143,6 +156,8 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
         openedSocket = 0;
 
         /*
+         * using the sensor on google nexus s has supposedly broken the bluetooth stack, stucking it
+         * in a while loop at boot, had to factory reset
         mSensorManager = (SensorManager) RumbleApplication.getContext().getSystemService(Context.SENSOR_SERVICE);
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
             mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -154,35 +169,109 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             linear_acceleration[i] = 0;
         }
         */
-
-        EventBus.getDefault().register(this);
     }
 
-    public void startDiscovery () {
-        boolean force = false;
-        if(scanningState == ScanningState.SCANNING_OFF) {
-            scanningState = ScanningState.SCANNING_ON;
-            force = true;
-        }
-        hasCallback = false;
+    public void startScanner() {
+        try {
+            lock.lock();
+            if (!scanningState.equals(ScanningState.SCANNING_OFF))
+                return;
+            scanningState = ScanningState.SCANNING_IDLE;
 
-        if(!registered) {
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(BluetoothDevice.ACTION_FOUND);
-            filter.addAction(BluetoothDevice.ACTION_UUID);
-            filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-            filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-            filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-            RumbleApplication.getContext().registerReceiver(mReceiver, filter);
-            registered = true;
+            Log.d(TAG, "--- Bluetooth Scanner started ---");
+
+            if (!registered) {
+                IntentFilter filter = new IntentFilter();
+                filter.addAction(BluetoothDevice.ACTION_FOUND);
+                filter.addAction(BluetoothDevice.ACTION_UUID);
+                filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+                filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+                filter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
+                RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+                registered = true;
+            }
+            EventBus.getDefault().register(this);
+        } finally {
+            lock.unlock();
         }
-        /*
-        if((mAccelerometer != null) && !sensorregistered) {
-            mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-            sensorregistered = true;
+        performScan(true);
+    }
+
+    public void stopScanner() {
+        try {
+            lock.lock();
+
+            if (scanningState.equals(ScanningState.SCANNING_OFF))
+                return;
+
+            BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+            if (mBluetoothAdapter != null) {
+                if (mBluetoothAdapter.isEnabled() && mBluetoothAdapter.isDiscovering())
+                    mBluetoothAdapter.cancelDiscovery();
+            }
+
+            switch (scanningState) {
+                case SCANNING_IDLE:
+                    break;
+                case SCANNING_SCHEDULED:
+                    scanSchedule.removeCallbacksAndMessages(null);
+                    break;
+                case SCANNING_IN_PROGRESS:
+                    scanTimeout.removeCallbacksAndMessages(null);
+                    EventBus.getDefault().post(new BluetoothScanEnded());
+                    break;
+            }
+            scanningState = ScanningState.SCANNING_OFF;
+
+            Log.d(TAG, "--- Bluetooth Scanner stopped ---");
+
+            if (EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
+
+            if (registered) {
+                RumbleApplication.getContext().unregisterReceiver(mReceiver);
+                registered = false;
+            }
+
+            btNeighborhood.clear();
+            resetTrickleTimer();
+            /*
+            if((mAccelerometer != null) && sensorregistered) {
+                mSensorManager.unregisterListener(this);
+                sensorregistered = false;
+            }
+            */
+        } finally {
+            lock.unlock();
         }
-        */
-        try{
+    }
+
+    private void performScan(boolean force) {
+        try {
+            lock.lock();
+
+            switch (scanningState) {
+                case SCANNING_OFF:
+                    return;
+                case SCANNING_IN_PROGRESS:
+                    return;
+                case SCANNING_SCHEDULED:
+                    if(!force)
+                        return;
+                    else {
+                        scanSchedule.removeCallbacksAndMessages(null);
+                        scanningState = ScanningState.SCANNING_IDLE;
+                    }
+                case SCANNING_IDLE:
+                    break;
+            }
+
+            /*
+            if((mAccelerometer != null) && !sensorregistered) {
+                mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                sensorregistered = true;
+            }
+            */
             BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
 
             if (mBluetoothAdapter == null) {
@@ -191,71 +280,98 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
             }
 
             if( mBluetoothAdapter.isEnabled() ){
-                if (mBluetoothAdapter.isDiscovering()) {
-                    if(force) {
-                        Log.d(TAG, "[!] we force our scanning for the first one");
-                        mBluetoothAdapter.cancelDiscovery();
-                        mBluetoothAdapter.startDiscovery();
-                    }else {
-                        Log.d(TAG, "[!] Scanning should start but we do nothing instead");
-                        EventBus.getDefault().post(new BluetoothScanStarted());
-                    }
-                } else {
+                btNeighborhood.clear();
+
+                /*
+                 * it is possible that the device is already discovering if another app
+                 * ran a discovery procedure
+                 */
+                if (!mBluetoothAdapter.isDiscovering())
                     mBluetoothAdapter.startDiscovery();
-                }
+                Log.d(TAG, "[+] bluetooth scan procedure started");
+                scanningState = ScanningState.SCANNING_IN_PROGRESS;
+                EventBus.getDefault().post(new BluetoothScanStarted());
+
+                /*
+                 * we set a timeout in case the scanning discovery procedure doesn't stop by itself
+                 * (yes. it does happen too.)
+                 */
+                scanTimeout.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        scanTimeoutFires();
+                    }
+                },(long)SCANNING_TIMEOUT);
             }
         }
         catch (Exception e) {
             Log.d(TAG, "Exception:"+e.toString());
+        } finally {
+            lock.unlock();
         }
     }
 
-    public void cancelDiscovery() {
-        BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
-        if (mBluetoothAdapter.isDiscovering()) {
-            mBluetoothAdapter.cancelDiscovery();
+    private void scanTimeoutFires() {
+        try {
+            lock.lock();
+
+            switch (scanningState) {
+                case SCANNING_OFF:
+                case SCANNING_IDLE:
+                case SCANNING_SCHEDULED:
+                    return;
+                case SCANNING_IN_PROGRESS:
+                    break;
+            }
+
+            Log.d(TAG, "[-] timeout expires: force scan procedure to stop");
+            BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+            if (mBluetoothAdapter.isDiscovering())
+                mBluetoothAdapter.cancelDiscovery();
+
+            EventBus.getDefault().post(new BluetoothScanEnded());
+
+            recomputeTrickleTimer();
+            scanSchedule.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    scanScheduleFires();
+                }
+            }, (long) trickleTimer);
+            scanningState = ScanningState.SCANNING_SCHEDULED;
+
+        } finally {
+            lock.unlock();
         }
     }
 
-    public void stopDiscovery () {
-        if(scanningState == ScanningState.SCANNING_OFF)
-            return;
-
-        Log.d(TAG, "[-] stop scanning procedure");
-        handler.removeCallbacksAndMessages(null);
-        if(registered) {
-            RumbleApplication.getContext().unregisterReceiver(mReceiver);
-            registered = false;
+    private void scanScheduleFires() {
+        try {
+            lock.lock();
+            switch (scanningState) {
+                case SCANNING_OFF:
+                case SCANNING_IDLE:
+                case SCANNING_IN_PROGRESS:
+                    return;
+                case SCANNING_SCHEDULED:
+                    scanningState = ScanningState.SCANNING_IDLE;
+            }
+            /*
+             * just in case a neighbour connect while we were in this critical section
+             * in which case the state would be SCANNING_SCHEDULE with the callback attached
+             */
+            scanSchedule.removeCallbacksAndMessages(null);
+        } finally {
+            lock.unlock();
         }
-        /*
-        if((mAccelerometer != null) && sensorregistered) {
-            mSensorManager.unregisterListener(this);
-            sensorregistered = false;
-        }
-        */
-        synchronized (lock) {
-            btNeighborhood.clear();
-        }
-        lastTrickleState.clear();
-        trickleTimer = START_TRICKLE_TIMER;
-        scanningState    = ScanningState.SCANNING_OFF;
-        EventBus.getDefault().post(new BluetoothScanEnded());
+        performScan(false);
     }
+
 
     @Override
     public void forceDiscovery() {
         resetTrickleTimer();
-        if(hasCallback)
-            startDiscovery();
-    }
-
-    public void destroy() {
-        stopDiscovery();
-    }
-
-    private void resetTrickleTimer() {
-        lastTrickleState.clear();
-        trickleTimer = START_TRICKLE_TIMER;
+        performScan(true);
     }
 
     /*
@@ -263,93 +379,74 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
      * It is resetted if the neighborhood is inconsistant
      */
     private void recomputeTrickleTimer() {
-        synchronized (lock) {
-            Log.d(TAG, "[+] recompute Trickle Timer");
-            int inconsistency = 0;
-            HashSet<BluetoothNeighbour> tmp = new HashSet<BluetoothNeighbour>();
+        int inconsistency = 0;
+        HashSet<BluetoothNeighbour> tmp = new HashSet<BluetoothNeighbour>();
 
-            /*
-             * first we detect for new neighbour inconsistency
-             */
-            for (BluetoothNeighbour neighbor : btNeighborhood) {
-                tmp.add(neighbor);
-                if (!lastTrickleState.remove(neighbor))
-                    inconsistency++;
-            }
-
-            /*
-             * Then we detect for neighbour that disappeared inconsistency
-             */
-            for (BluetoothNeighbour neighbor : lastTrickleState) {
-                EventBus.getDefault().post(new NeighbourUnreachable(neighbor));
+        /*
+         * first we detect for new neighbour inconsistency
+         */
+        for (BluetoothNeighbour neighbor : btNeighborhood) {
+            tmp.add(neighbor);
+            // the neighbour reachable event has already been sent ACTION_DEVICE_FOUND
+            if (!lastTrickleState.remove(neighbor))
                 inconsistency++;
-            }
-            lastTrickleState.clear();
+        }
 
-            /*
-             * then we save the state for the next trickle recomputation
-             */
-            lastTrickleState = tmp;
+        /*
+         * Then we detect for neighbour that disappeared inconsistency
+         */
+        for (BluetoothNeighbour neighbor : lastTrickleState) {
+            EventBus.getDefault().post(new NeighbourUnreachable(neighbor));
+            inconsistency++;
+        }
 
-            if(betamode) {
-                trickleTimer = EXPONENTIAL_THRESHOLD;
+        /*
+         * then we save the state for the next trickle recomputation
+         */
+        lastTrickleState.clear();
+        lastTrickleState = tmp;
+
+        if(betamode) {
+            trickleTimer = BETA_TRICKLE_TIMER;
+        } else {
+            if (inconsistency < INCONSISTENCY_THRESHOLD) {
+                if (trickleTimer > EXPONENTIAL_THRESHOLD)
+                    trickleTimer = (((trickleTimer * 2) > (START_TRICKLE_TIMER * (Math.pow(2, IMAX_TRICKLE_TIMER)))) ? Math.pow(2, IMAX_TRICKLE_TIMER) : (trickleTimer * 2));
+                else
+                    trickleTimer += LINEAR_STEP;
             } else {
-                if (inconsistency < consistency) {
-                    if (trickleTimer > EXPONENTIAL_THRESHOLD)
-                        trickleTimer = (((trickleTimer * 2) > (START_TRICKLE_TIMER * (Math.pow(2, IMAX_TRICKLE_TIMER)))) ? Math.pow(2, IMAX_TRICKLE_TIMER) : (trickleTimer * 2));
-                    else
-                        trickleTimer += LINEAR_STEP;
-                } else {
-                    trickleTimer = START_TRICKLE_TIMER;
-                }
+                trickleTimer = START_TRICKLE_TIMER;
             }
         }
-        //todo: should we post a neighborhoodchange event when trickle is reset ?
+    }
+    private void resetTrickleTimer() {
+        lastTrickleState.clear();
+        trickleTimer = START_TRICKLE_TIMER;
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(scanningState == ScanningState.SCANNING_OFF)
+            if(scanningState.equals(ScanningState.SCANNING_OFF))
                 return;
 
             String action = intent.getAction();
 
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                if(scanningState == ScanningState.SCANNING_OFF)
-                    return;
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (device.getAddress() == null)
                     return;
                 BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
-                boolean add;
-                synchronized (lock) {
-                    add = btNeighborhood.add(btPeerDevice);
-                }
-                if (add) {
-                    Log.d(TAG, "[+] device " + device.getName() + " [" + device.getAddress() + "] discovered");
-                    EventBus.getDefault().post(new NeighbourReachable(btPeerDevice));
-                }
-            }
-
-            if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
-                if(scanningState == ScanningState.SCANNING_OFF)
-                    return;
-                if(!lastscan)
-                    return;
-
-                recomputeTrickleTimer();
-                EventBus.getDefault().post(new BluetoothScanEnded());
-
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        startDiscovery();
+                try {
+                    lock.lock();
+                    if(btNeighborhood.add(btPeerDevice)) {
+                        Log.d(TAG, "[+] device " + device.getName() + " [" + device.getAddress() + "] discovered");
+                        EventBus.getDefault().post(new NeighbourReachable(btPeerDevice));
                     }
-                }, (long) trickleTimer);
-                lastscan = false;
-                hasCallback = true;
+                } finally {
+                    lock.unlock();
+                }
             }
 
             /*
@@ -358,21 +455,59 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
              * of these one
              */
             if(BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)){
-                if(hasCallback) {
-                    Log.d(TAG, "[!] started unsollicited Discovery");
-                } else {
-                    Log.d(TAG, "[+] started sollicited Discovery");
-                }
+                try {
+                    lock.lock();
+                    switch (scanningState) {
+                        case SCANNING_OFF:
+                            return;
+                        case SCANNING_IDLE:
+                            Log.d(TAG, "another app has triggered a scan, ignoring");
+                            return;
+                        case SCANNING_SCHEDULED:
+                            Log.d(TAG, "another app has triggered a scan before our scheduled one");
+                            scanSchedule.removeCallbacksAndMessages(null);
+                            scanningState = ScanningState.SCANNING_IDLE;
+                            break;
+                        case SCANNING_IN_PROGRESS:
+                            return;
 
-                scanningState    = ScanningState.SCANNING_ON;
-                synchronized (lock) {
-                    btNeighborhood.clear();
+                    }
+                } finally {
+                    lock.unlock();
                 }
-                handler.removeCallbacksAndMessages(null);
-                lastscan = true;
-                hasCallback = false;
+                performScan(true);
+            }
 
-                EventBus.getDefault().post(new BluetoothScanStarted());
+
+            if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
+                try {
+                    lock.lock();
+
+                    switch (scanningState) {
+                        case SCANNING_OFF:
+                        case SCANNING_SCHEDULED:
+                        case SCANNING_IDLE:
+                            return;
+                        case SCANNING_IN_PROGRESS:
+                            break;
+                    }
+
+                    Log.d(TAG, "[-] bluetooth scan procedure has finished");
+                    scanTimeout.removeCallbacksAndMessages(null);
+                    EventBus.getDefault().post(new BluetoothScanEnded());
+
+                    recomputeTrickleTimer();
+                    scanSchedule.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            scanScheduleFires();
+                        }
+                    }, (long) trickleTimer);
+                    scanningState = ScanningState.SCANNING_SCHEDULED;
+                    Log.d(TAG, "[->] next scan in: "+trickleTimer/1000L+" seconds");
+                } finally {
+                    lock.unlock();
+                }
             }
 
             if(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED.equals(action)){
@@ -420,24 +555,22 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
 
     @Override
     public boolean isScanning() {
-        BluetoothAdapter adapter =  BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
-        if(adapter != null)
-            return adapter.isDiscovering();
-
-        return false;
+        return scanningState.equals(ScanningState.SCANNING_IN_PROGRESS);
     }
 
     @Override
     public HashSet<LinkLayerNeighbour> getNeighbourList() {
-        HashSet<LinkLayerNeighbour> set = new HashSet<LinkLayerNeighbour>();
-        synchronized (lock) {
+        try {
+            lock.lock();
+            HashSet<LinkLayerNeighbour> neighbourSet = new HashSet<LinkLayerNeighbour>();
             for (BluetoothNeighbour bn : btNeighborhood) {
-                set.add(bn);
+                neighbourSet.add(bn);
             }
+            return neighbourSet;
+        } finally {
+            lock.unlock();
         }
-        return set;
     }
-
 
     /*
      * discovering node disrupt connections...
@@ -445,56 +578,98 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
      */
 
     public void onEvent(NeighbourConnected event) {
-        if(event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+        if (!event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            return;
+        try {
+            lock.lock();
             openedSocket++;
+
             if(openedSocket == 1) {
-                Log.d(TAG, "[+] entering slow scan beta mode");
-                cancelDiscovery();
-                /*
-                if ((mAccelerometer != null) && sensorregistered) {
-                    mSensorManager.unregisterListener(this);
-                    sensorregistered = false;
-                }
-                */
-                handler.removeCallbacksAndMessages(null);
-                trickleTimer = EXPONENTIAL_THRESHOLD;
+                Log.d(TAG, "[+] entering slow scan mode ");
                 betamode = true;
-                handler.postDelayed(new Runnable() {
+
+                switch (scanningState) {
+                    case SCANNING_OFF:
+                        return;
+                    case SCANNING_IDLE:
+                        /*
+                         * most probably we are in between a call to performScan(false)
+                         * out from scanScheduleFires(). or for some reason the scanner stopped scanning
+                         */
+                        break;
+                    case SCANNING_IN_PROGRESS:
+                        Log.d(TAG, "[-] cancelling current scan");
+                        scanTimeout.removeCallbacksAndMessages(null);
+                        BluetoothAdapter mBluetoothAdapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+                        if (mBluetoothAdapter.isDiscovering())
+                            mBluetoothAdapter.cancelDiscovery();
+                        EventBus.getDefault().post(new BluetoothScanEnded());
+                        break;
+                    case SCANNING_SCHEDULED:
+                        Log.d(TAG, "[-] cancelling previous scan scheduling");
+                        scanSchedule.removeCallbacksAndMessages(null);
+                        break;
+                }
+
+                scanSchedule.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        startDiscovery();
+                        scanScheduleFires();
                     }
-                }, (long) trickleTimer);
+                }, (long) BETA_TRICKLE_TIMER);
+                Log.d(TAG, "[->] next scan in: "+BETA_TRICKLE_TIMER/1000L+" seconds");
+                scanningState = ScanningState.SCANNING_SCHEDULED;
             }
+        } finally {
+            lock.unlock();
         }
     }
+
+
     public void onEvent(NeighbourDisconnected event) {
-        if(event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+        if (!event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            return;
+        try {
+            lock.lock();
             openedSocket--;
             if(openedSocket < 0) {
-                Log.e(TAG, "[!] opened socket < 0 !"+openedSocket);
+                Log.e(TAG, "[!] opened socket cannot be below zero: "+openedSocket);
                 openedSocket = 0;
             }
 
             if (openedSocket == 0) {
-                Log.d(TAG, "[+] reentering trickle scan mode");
-                cancelDiscovery();
-                handler.removeCallbacksAndMessages(null);
-                resetTrickleTimer();
+                Log.d(TAG, "[+] leaving slow scan mode, entering trickle strategy ");
                 betamode = false;
-                /*
-                if((mAccelerometer != null) && !sensorregistered) {
-                    mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-                    sensorregistered = true;
+
+                switch (scanningState) {
+                    case SCANNING_OFF:         // we do nothing
+                    case SCANNING_IDLE:        // most probably a scan will start shortly
+                    case SCANNING_IN_PROGRESS: // it will reschedule a new scan by itself
+                        return;
+                    case SCANNING_SCHEDULED:   // that is the slow scan mode scheduled
+                        scanSchedule.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "[-] cancelling previous scan scheduling");
+                        break;
                 }
-                */
-                handler.postDelayed(new Runnable() {
+
+                resetTrickleTimer();
+                scanSchedule.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        startDiscovery();
+                        scanScheduleFires();
                     }
                 }, (long) trickleTimer);
+                scanningState = ScanningState.SCANNING_SCHEDULED;
+                Log.d(TAG, "[->] next scan in: "+trickleTimer/1000L+" seconds");
+                /*
+                    if((mAccelerometer != null) && !sensorregistered) {
+                        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                        sensorregistered = true;
+                    }
+                */
             }
+        } finally {
+            lock.unlock();
         }
     }
 }

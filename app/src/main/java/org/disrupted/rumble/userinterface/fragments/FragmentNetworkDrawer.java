@@ -128,6 +128,9 @@ public class FragmentNetworkDrawer extends Fragment {
         }
     }
 
+    public void onEvent(NeighborhoodChanged event) {
+        refreshNeighborhood();
+    }
     public void onEvent(LinkLayerStarted event) {
         refreshInterfaces();
     }
@@ -135,18 +138,23 @@ public class FragmentNetworkDrawer extends Fragment {
         refreshInterfaces();
     }
     public void onEvent(BluetoothScanStarted event) {
-        ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
-        ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
+                ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
+            }
+        });
     }
     public void onEvent(BluetoothScanEnded event) {
-        ((ImageButton)mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.VISIBLE);
-        ((ProgressBar)mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.GONE);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.VISIBLE);
+                ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.GONE);
+            }
+        });
     }
-    public void onEvent(NeighborhoodChanged event) {
-        refreshNeighborhood();
-    }
-
-
     private void refreshInterfaces() {
         getActivity().runOnUiThread(new Runnable() {
             @Override

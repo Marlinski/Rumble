@@ -263,7 +263,7 @@ public class PushStatusDatabase extends Database {
                     + " FROM " + StatusInterfaceDatabase.TABLE_NAME + " si "
                     + " JOIN " + InterfaceDatabase.TABLE_NAME + " i "
                     + " ON si." + StatusInterfaceDatabase.INTERFACE_DBID + " = i."+InterfaceDatabase.ID
-                    + " WHERE si."+ StatusInterfaceDatabase.STATUS_DBID + " = ? )");
+                    + " WHERE i."+ InterfaceDatabase.INTERFACE + " = ? )");
             argumentList.add(options.peerName);
             groupby = true;
         }
