@@ -31,17 +31,21 @@ import java.util.Set;
  */
 public class Contact {
 
-    protected String uid;
-    protected String name;
-    protected String avatar;
-    protected boolean local;
-    protected boolean friend;
+    /* core attributes */
+    protected String                uid;
+    protected String                name;
+    protected String                avatar;
+    protected boolean               local;
+    protected boolean               friend;
+
+    /* dynamic attributes */
+    protected Set<String>           joinedGroupIDs;
+    protected Map<String, Integer>  hashtagInterests;
+    protected Set<String>           interfaces;
 
     /* used to state wether we should consider or not the following attributes for update */
     public static final int FLAG_GROUP_LIST   = 0x01;
     public static final int FLAG_TAG_INTEREST = 0x02;
-    protected Set<String> joinedGroupIDs;
-    protected Map<String, Integer> hashtagInterests;
 
     public static Contact createLocalContact(String name) {
         String uid = HashUtil.computeContactUid(name,System.currentTimeMillis());
@@ -53,27 +57,33 @@ public class Contact {
     }
 
     public Contact(String name, String uid, boolean local) {
-        this.name = name;
-        this.uid = uid;
-        this.local = local;
-        joinedGroupIDs = new HashSet<String>();
+        this.name        = name;
+        this.uid         = uid;
+        this.local       = local;
+        joinedGroupIDs   = new HashSet<String>();
         hashtagInterests = new HashMap<String, Integer>();
+        interfaces       = new HashSet<String>();
     }
 
     public String getUid()    { return uid;}
     public String getName()   { return name;}
     public String getAvatar() { return avatar;}
     public boolean isLocal()  { return local;}
-    public final Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
-    public final Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
     public boolean isFriend() { return friend; }
+    public Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
+    public Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
+    public Set<String> getInterfaces() {                 return interfaces;       }
 
-    public void setAvatar(String avatar) { this.avatar = avatar; }
+
+    public void setAvatar(String avatar) {       this.avatar = avatar; }
     public void addGroup(String groupID) {
         joinedGroupIDs.add(groupID);
     }
     public void addTagInterest(String hashtag, int levelOfInterest) {
         hashtagInterests.put(hashtag, levelOfInterest);
+    }
+    public void addInterface(String interfaceID) {
+        interfaces.add(interfaceID);
     }
     public void setHashtagInterests(Map<String, Integer> hashtagInterests) {
         if(this.hashtagInterests.size() > 0)
@@ -90,6 +100,14 @@ public class Contact {
             this.joinedGroupIDs = joinedGroupIDs;
         else
             this.joinedGroupIDs = new HashSet<String>();
+    }
+    public void setInterfaces(Set<String> interfaces) {
+        if(this.interfaces.size() > 0)
+            this.interfaces.clear();
+        if(interfaces != null)
+            this.interfaces = interfaces;
+        else
+            this.interfaces = new HashSet<String>();
     }
 
     @Override

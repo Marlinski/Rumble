@@ -443,16 +443,7 @@ public class PushStatusDatabase extends Database {
     /*
      * Update a single status or insert it if it doesn't exist
      */
-    public boolean updateStatus(final PushStatus status, final DatabaseExecutor.WritableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.WritableQuery() {
-                    @Override
-                    public boolean write() {
-                        return (updateStatus(status) >= 0);
-                    }
-                }, callback);
-    }
-    private int updateStatus(PushStatus status){
+    public int updateStatus(PushStatus status){
         if(status.getdbId() < 0)
             return 0;
         ContentValues contentValues = new ContentValues();

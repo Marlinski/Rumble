@@ -38,6 +38,7 @@ import android.widget.ListView;
 import org.disrupted.rumble.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
+import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
@@ -250,7 +251,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             }
         });
     }
-    public void onEvent(ContactUpdatedEvent event) {
+    public void onEvent(ContactTagInterestUpdatedEvent event) {
         if (event.contact.isLocal()) {
             getActivity().runOnUiThread(new Runnable() {
                 @Override

@@ -53,6 +53,14 @@ public class ContactHashTagInterestDatabase extends Database {
         db.delete(TABLE_NAME, UDBID + " = ?" , new String[] {Long.valueOf(contactID).toString()});
     }
 
+    public void deleteContactTagInterest(long contactDBID, long hashtagDBID){
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        db.delete(TABLE_NAME, UDBID + " = ? AND "+HDBID + " = ? " ,
+                new String[] {Long.valueOf(contactDBID).toString(), Long.valueOf(hashtagDBID).toString()});
+    }
+
+
+
     public long insertContactTagInterest(long contactID, long hashtagID, int value){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UDBID, contactID);

@@ -93,6 +93,7 @@ public class StatusListAdapter extends BaseAdapter {
         final PushStatus message = statuses.get(i);
 
         View statusView = inflater.inflate(R.layout.status_item, null);
+        LinearLayout itemInfo   = (LinearLayout) statusView.findViewById(R.id.status_item_info);
         ImageView avatarView    = (ImageView)statusView.findViewById(R.id.status_item_avatar);
         TextView  authorView    = (TextView) statusView.findViewById(R.id.status_item_author);
         TextView  textView      = (TextView) statusView.findViewById(R.id.status_item_body);
@@ -115,6 +116,7 @@ public class StatusListAdapter extends BaseAdapter {
         toaView.setText(new TimeElapsed(message.getTimeOfArrival()).display());
         groupNameView.setText(message.getGroup().getName());
         groupNameView.setTextColor(generator.getColor(message.getGroup().getGid()));
+
 
         // we draw the status (with clickable hashtag)
         if (message.getPost().length() == 0) {

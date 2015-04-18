@@ -162,61 +162,21 @@ public class ContactDatabase extends Database  {
         }
     }
 
-    public boolean insertOrUpdateContact(final Contact contact, final DatabaseExecutor.WritableQueryCallback callback){
-        return DatabaseFactory.getDatabaseExecutor(context).addQuery(
-                new DatabaseExecutor.WritableQuery() {
-                    @Override
-                    public boolean write() {
-                        return (insertOrUpdateContact(contact) >= 0);
-                    }
-                }, callback);
-    }
-    private long insertOrUpdateContact(Contact contact){
+    public long insertOrUpdateContact(Contact contact){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UID, contact.getUid());
         contentValues.put(NAME, contact.getName());
         contentValues.put(AVATAR, contact.getAvatar());
         contentValues.put(LOCALUSER, contact.isLocal() ? 1 : 0);
 
-        Cursor cursor = null;
-        long contactDBID = -1;
-        try {
-            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[]{ID}, UID + " = ?", new String[]{contact.getUid()}, null, null, null);
-            if((cursor != null) && cursor.moveToFirst() && !cursor.isAfterLast())
-                contactDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        } finally {
-            if(cursor != null)
-                cursor.close();
-        }
+        long contactDBID = getContactDBID(contact.getUid());
 
-        boolean newContact = (contactDBID < 0);
-        if(contactDBID < 0)
+        if(contactDBID < 0) {
             contactDBID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-        else
-            databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
-
-        if(contact.getJoinedGroupIDs().size() > 0) {
-            for(String joinedGroupID : contact.getJoinedGroupIDs()) {
-                DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingContactID(contactDBID);
-                long groupDBID = DatabaseFactory.getGroupDatabase(context).getGroupDBID(joinedGroupID);
-                if(groupDBID > 0)
-                    DatabaseFactory.getContactJoinGroupDatabase(context).insertContactGroup(contactDBID, groupDBID);
-            }
-        }
-        if(contact.getHashtagInterests().size() > 0) {
-            for(Map.Entry<String, Integer> entry : contact.getHashtagInterests().entrySet()) {
-                DatabaseFactory.getContactHashTagInterestDatabase(context).deleteEntriesMatchingContactID(contactDBID);
-                long tagID = DatabaseFactory.getHashtagDatabase(context).getHashtagDBID(entry.getKey().toLowerCase());
-                if(tagID > 0)
-                    DatabaseFactory.getContactHashTagInterestDatabase(context).insertContactTagInterest(contactDBID,tagID,entry.getValue());
-            }
-        }
-
-        if(newContact) {
             Log.d(TAG, "new contact inserted: " + contact.toString());
             EventBus.getDefault().post(new ContactInsertedEvent(contact));
         } else {
+            databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
             Log.d(TAG, "contact updated: " + contact.toString());
             EventBus.getDefault().post(new ContactUpdatedEvent(contact));
         }

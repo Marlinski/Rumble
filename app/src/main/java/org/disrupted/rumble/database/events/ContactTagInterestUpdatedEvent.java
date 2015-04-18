@@ -15,35 +15,21 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.database.events;
 
 import org.disrupted.rumble.database.objects.Contact;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marlinski
  */
-public class ContactInformationReceived {
+public class ContactTagInterestUpdatedEvent extends DatabaseEvent {
 
-    public Contact contact;
-    public int     flags;   // see class Contact
-    public String  sender;
-    public String  protocolID;
-    public String  linkLayerIdentifier;
-    public boolean authenticated;
-    public long    size;
-    public long    duration;
+    public final Contact contact;
 
-    public ContactInformationReceived(Contact contact, int flags, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ContactTagInterestUpdatedEvent(Contact contact) {
         this.contact = contact;
-        this.flags = flags;
-        this.sender = sender;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
-        this.authenticated = false;
     }
 
 }

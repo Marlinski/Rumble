@@ -142,7 +142,6 @@ public class GroupDatabase  extends  Database{
             Log.d(TAG, "[+] new Group inserted: name=" + group.getName() + " gid=" + group.getGid() + (group.isIsprivate() ? "private" : "public"));
             EventBus.getDefault().post(new GroupInsertedEvent(group));
         }
-
         return (count > 0);
     }
 
