@@ -27,11 +27,11 @@ import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.events.ContactInformationReceived;
-import org.disrupted.rumble.network.events.ContactInformationSent;
-import org.disrupted.rumble.network.events.FileReceivedEvent;
-import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
-import org.disrupted.rumble.network.events.PushStatusSentEvent;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
+import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
+import org.disrupted.rumble.network.protocols.events.FileReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
@@ -132,7 +132,7 @@ public class CacheManager {
             if(!group.getName().equals(event.status.getGroup().getName())) {
                 // if we manually added the group, then we refuse the message if the name conflicts
                 // A group cannot change its name
-                Log.d(TAG, "[!] GroupID: "+group.getGid()+ " CONFLICT: db="+group.getName()+" status="+event.status.getGroup().getName());
+                Log.d(TAG, "[!] GroupID: " + group.getGid() + " CONFLICT: db=" + group.getName() + " status=" + event.status.getGroup().getName());
                 return;
             }
         }
@@ -216,7 +216,7 @@ public class CacheManager {
                 return;
             }
         }
-        
+
         // should we update and remember the interface which correspond to this user ?
         // not necessary and would also be a cause for potential attacks based on corruption
         // of MAC address cache
@@ -320,7 +320,7 @@ public class CacheManager {
             local.addGroup(event.group.getGid());
             long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(local.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.group.getGid());
-            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID,groupDBID);
+            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID, groupDBID);
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
     }

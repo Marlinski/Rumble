@@ -59,9 +59,13 @@ public class InterfaceDatabase extends Database {
         return -1;
     }
     public long insertInterface(String interfaceID) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(INTERFACE, interfaceID);
-        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
+        long rowid = getInterfaceDBID(interfaceID);
+        if(rowid < 0) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(INTERFACE, interfaceID);
+            databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        }
+        return rowid;
     }
 
 }

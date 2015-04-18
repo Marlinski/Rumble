@@ -19,12 +19,6 @@
 
 package org.disrupted.rumble.network.linklayer;
 
-import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.LinkLayerStarted;
-import org.disrupted.rumble.network.events.LinkLayerStopped;
-
-import de.greenrobot.event.EventBus;
-
 /**
  * LinkLayerAdapter is an Interface that is responsible of managing a LinkLayer interface such
  * as Bluetooth or Wifi. It is directly under the responsibility of NetworkCoordinator and

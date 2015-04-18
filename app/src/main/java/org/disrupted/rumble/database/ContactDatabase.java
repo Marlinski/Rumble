@@ -22,7 +22,6 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -114,7 +113,7 @@ public class ContactDatabase extends Database  {
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.valueOf(contact_dbid).toString()}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.toString(contact_dbid)}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -204,7 +203,7 @@ public class ContactDatabase extends Database  {
                             " FROM " + HashtagDatabase.TABLE_NAME + " h" +
                             " JOIN " + ContactHashTagInterestDatabase.TABLE_NAME + " i" +
                             " ON h." + HashtagDatabase.ID + " = i." + ContactHashTagInterestDatabase.HDBID +
-                            " WHERE i." + ContactHashTagInterestDatabase.UDBID + " = ?;");
+                            " WHERE i." + ContactHashTagInterestDatabase.CDBID + " = ?;");
             cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
             Map<String, Integer> ret = new HashMap<String, Integer>();
             if (cursor != null) {

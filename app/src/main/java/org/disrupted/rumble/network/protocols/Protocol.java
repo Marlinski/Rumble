@@ -20,13 +20,10 @@
 package org.disrupted.rumble.network.protocols;
 
 
-import org.disrupted.rumble.network.NeighbourInfo;
-import org.disrupted.rumble.network.events.LinkLayerStarted;
-import org.disrupted.rumble.network.events.LinkLayerStopped;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.events.NeighbourUnreachable;
-
-import java.util.List;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
+import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 
 /**
  * @author Marlinski

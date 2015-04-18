@@ -409,13 +409,13 @@ public class PushStatusDatabase extends Database {
             return false;
         }
         try {
-            SQLiteDatabase wd = databaseHelper.getReadableDatabase();
+            SQLiteDatabase wd = databaseHelper.getWritableDatabase();
             if(cursor.moveToFirst() && !cursor.isAfterLast()) {
 
                 long id = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
                 String filename = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
 
-                int count = wd.delete(TABLE_NAME, ID_WHERE, new String[]{Long.valueOf(id).toString()});
+                int count = wd.delete(TABLE_NAME, ID_WHERE, new String[]{Long.toString(id)});
                 if (count > 0) {
                     DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(id);
                     DatabaseFactory.getStatusInterfaceDatabase(context).deleteEntriesMatchingStatusDBID(id);

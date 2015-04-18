@@ -19,14 +19,11 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
-import android.util.Log;
-
-import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.LinkLayerStarted;
-import org.disrupted.rumble.network.events.LinkLayerStopped;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
+import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
@@ -35,21 +32,12 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverUDPMulticast;
-import org.disrupted.rumble.network.services.exceptions.ServiceException;
-import org.disrupted.rumble.network.services.exceptions.ServiceNotStarted;
-import org.disrupted.rumble.network.services.exceptions.WorkerNotBinded;
-import org.disrupted.rumble.network.services.push.PushService;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 

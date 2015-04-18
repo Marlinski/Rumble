@@ -3,20 +3,18 @@ package org.disrupted.rumble.network.services.push;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.ContactJoinGroupDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
-import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.events.ContactInformationReceived;
-import org.disrupted.rumble.network.events.NeighbourConnected;
-import org.disrupted.rumble.network.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
@@ -25,7 +23,6 @@ import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.locks.Condition;
@@ -199,7 +196,7 @@ public class PushService {
         public void startDispatcher() {
             running = true;
             EventBus.getDefault().register(MessageDispatcher.this);
-            sendLocalPreferences();
+            sendLocalPreferences(Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST);
             start();
         }
 
@@ -427,13 +424,6 @@ public class PushService {
             return pickedUpMessage;
         }
 
-        public void sendLocalPreferences() {
-            Contact local = Contact.getLocalContact();
-            int flags = Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST;
-            CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
-            worker.execute(command);
-        }
-
         /*
          * Event management
          */
@@ -452,7 +442,7 @@ public class PushService {
         }
 
         /*
-         * this event only bind the contact with the interface
+         * this event only bind the contact uid with the interface
          * we wait for the related DatabaseEvent (if any) for updating the status list
          */
         public void onEvent(ContactInformationReceived info) {
@@ -469,7 +459,7 @@ public class PushService {
                 updateStatusList();
             }
             if(event.contact.isLocal()) {
-                sendLocalPreferences();
+                sendLocalPreferences(Contact.FLAG_GROUP_LIST);
             }
         }
         public void onEvent(ContactTagInterestUpdatedEvent event) {
@@ -479,8 +469,14 @@ public class PushService {
                 this.contact.setHashtagInterests(event.contact.getHashtagInterests());
             }
             if(event.contact.isLocal()) {
-                sendLocalPreferences();
+                sendLocalPreferences(Contact.FLAG_TAG_INTEREST);
             }
+        }
+
+        public void sendLocalPreferences(int flags) {
+            Contact local = Contact.getLocalContact();
+            CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
+            worker.execute(command);
         }
     }
 }

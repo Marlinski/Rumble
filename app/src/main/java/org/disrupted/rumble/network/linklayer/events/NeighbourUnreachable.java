@@ -17,16 +17,19 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.linklayer.events;
+
+import org.disrupted.rumble.network.events.NetworkEvent;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
  * @author Marlinski
  */
-public class LinkLayerStarted extends NetworkEvent {
+public class NeighbourUnreachable extends NetworkEvent {
 
-    public String linkLayerIdentifier;
-    public LinkLayerStarted(String linkLayerIdentifier) {
-        this.linkLayerIdentifier = linkLayerIdentifier;
+    public final LinkLayerNeighbour neighbour;
+
+    public NeighbourUnreachable(LinkLayerNeighbour neighbour) {
+        this.neighbour = neighbour;
     }
-
 }

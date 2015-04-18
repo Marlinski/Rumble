@@ -23,7 +23,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.IntentFilter;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.events.BluetoothScanEnded;
+import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.linklayer.exception.ConnectionFailedException;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.InterruptedLinkLayerConnection;

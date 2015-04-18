@@ -21,11 +21,8 @@ package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.ChatStatus;
-import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.events.ChatStatusReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;

@@ -1,6 +1,6 @@
 package org.disrupted.rumble.network.services.push;
 
-import org.disrupted.rumble.network.events.PushStatusReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
 
 import java.util.HashMap;
 import java.util.Map;

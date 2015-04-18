@@ -17,18 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
-
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+package org.disrupted.rumble.network.linklayer.events;
 
 /**
  * @author Marlinski
  */
-public class NeighbourReachable extends NetworkEvent {
-
-    public final LinkLayerNeighbour neighbour;
-
-    public NeighbourReachable(LinkLayerNeighbour neighbour) {
-        this.neighbour = neighbour;
-    }
+public class BluetoothScanEnded {
 }

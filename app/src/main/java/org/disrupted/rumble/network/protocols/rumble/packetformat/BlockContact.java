@@ -21,8 +21,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.events.ContactInformationReceived;
-import org.disrupted.rumble.network.events.ContactInformationSent;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
+import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -157,8 +157,8 @@ public class BlockContact extends Block {
             Contact tempcontact = new Contact(new String(author_name),user_id_base64,false);
 
             while(readleft > 0) {
-                int entryType = byteBuffer.get(); // FIELD_TYPE_SIZE
-                int entrySize = byteBuffer.get(); // FIELD_LENGTH_SIZE
+                int entryType = byteBuffer.get();          // FIELD_TYPE_SIZE
+                int entrySize = (byteBuffer.get() & 0xff); // FIELD_LENGTH_SIZE
                 Entry entry;
                 switch (entryType) {
                     case Entry.ENTRY_TYPE_GROUP:
@@ -288,7 +288,7 @@ public class BlockContact extends Block {
         public static final int ENTRY_TYPE_TAG     = 0x02;
         public static final int ENTRY_TYPE_PUB_KEY = 0x03;
 
-        /* Entry payload size (without header) */
+        /* Entry payload size (without EntryHeader) */
         int entrySize;
 
         public Entry(int entrySize) {
@@ -324,6 +324,14 @@ public class BlockContact extends Block {
         }
     }
 
+
+    /*
+     * ENTRY TYPE GROUP: (Header + Payload)
+     * +-------+--------+-------------------------------------------+
+     * | TYPE  | length |        Group ID                           |
+     * +-------+--------+-------------------------------------------+
+     *     1       1                      8
+     */
     private class GroupEntry  extends Entry {
 
         public static final int GROUP_GID_SIZE = HashUtil.GROUP_ID_SIZE;
@@ -357,13 +365,22 @@ public class BlockContact extends Block {
             /* write entry payload */
             byte[] gid = Base64.decode(group_id_base64, Base64.NO_WRAP);
             buffer.put(gid,0,GROUP_GID_SIZE);
-            return (FIELD_TYPE_SIZE+entrySize);
+            return (HEADER_SIZE+entrySize);
         }
     }
 
+
+
+
+    /*
+     * ENTRY TYPE TAG INTEREST (Header + Payload)
+     * +-------+--------+----------+--------------------------------+
+     * | TYPE  | length | Interest |           hashtag              |
+     * +-------+--------+----------+--------------------------------+
+     *     1       1         1                   8
+     */
     private class TagInterestEntry extends Entry {
         public static final int  TAG_INTEREST_SIZE = 1;
-        public static final int  TAG_LENGTH_SIZE   = 1;
 
         private int    levelOfInterest;
         private String hashtag;
@@ -375,19 +392,19 @@ public class BlockContact extends Block {
         }
 
         public TagInterestEntry(String hashtag, byte levelOfInterest) {
-            super(TAG_INTEREST_SIZE + TAG_LENGTH_SIZE + hashtag.getBytes(Charset.forName("UTF-8")).length);
+            super(TAG_INTEREST_SIZE + hashtag.getBytes(Charset.forName("UTF-8")).length);
             this.hashtag = hashtag;
             this.levelOfInterest = levelOfInterest;
         }
 
         @Override
         public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException{
-            this.levelOfInterest = buffer.get();
-            int hashtagsize = buffer.get();
+            this.levelOfInterest = (buffer.get() & 0xFF);
+            int hashtagsize = entrySize-1;
             byte[] hashtagbytes = new byte[hashtagsize];
             buffer.get(hashtagbytes,0,hashtagsize);
             this.hashtag = new String(hashtagbytes);
-            return (TAG_INTEREST_SIZE+TAG_LENGTH_SIZE+hashtagsize);
+            return (TAG_INTEREST_SIZE+hashtagsize);
         }
 
         @Override
@@ -396,12 +413,12 @@ public class BlockContact extends Block {
             buffer.put((byte)ENTRY_TYPE_TAG);
             buffer.put((byte)entrySize);
 
+            byte[] hashtagBytes = hashtag.getBytes(Charset.forName("UTF-8"));
+
             /* write entry payload */
             buffer.put((byte)levelOfInterest);
-            buffer.put((byte)hashtag.length());
-            byte[] hashtagbytes  = hashtag.getBytes(Charset.forName("UTF-8"));
-            buffer.put(hashtagbytes, 0, (byte)hashtagbytes.length);
-            return (FIELD_TYPE_SIZE+TAG_INTEREST_SIZE+TAG_LENGTH_SIZE+(byte)hashtagbytes.length);
+            buffer.put(hashtagBytes, 0, (byte)hashtagBytes.length);
+            return (HEADER_SIZE+TAG_INTEREST_SIZE+(byte)hashtagBytes.length);
         }
     }
 }

@@ -77,7 +77,7 @@ public class GroupDatabase  extends  Database{
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.valueOf(group_dbid).toString()}, null, null, null);
+            cursor = database.query(TABLE_NAME, null, ID+ " = ?", new String[] {Long.toString(group_dbid)}, null, null, null);
             if(cursor == null)
                 return null;
             if(cursor.moveToFirst() && !cursor.isAfterLast())

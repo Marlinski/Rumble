@@ -19,7 +19,6 @@ package org.disrupted.rumble.database;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -30,16 +29,16 @@ public class ContactHashTagInterestDatabase extends Database {
     private static final String TAG = "ContactInterestTagDatabase";
 
     public  static final String TABLE_NAME = "contact_hashtag_interest";
-    public  static final String UDBID = "_udbid";
+    public  static final String CDBID = "_udbid";
     public  static final String HDBID = "_hdbid";
     public  static final String INTEREST = "interest";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
-            " (" + UDBID + " INTEGER, "
+            " (" + CDBID + " INTEGER, "
                  + HDBID + " INTEGER, "
                  + INTEREST + " INTEGER, "
-                 + " UNIQUE( " + UDBID + " , " + HDBID + "), "
-                 + " FOREIGN KEY ( "+ UDBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME   + " ( " + ContactDatabase.ID   + " ), "
+                 + " UNIQUE( " + CDBID + " , " + HDBID + "), "
+                 + " FOREIGN KEY ( "+ CDBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME   + " ( " + ContactDatabase.ID   + " ), "
                  + " FOREIGN KEY ( "+ HDBID + " ) REFERENCES " + GroupDatabase.TABLE_NAME + " ( " + HashtagDatabase.ID + " )"
             + " );";
 
@@ -50,20 +49,20 @@ public class ContactHashTagInterestDatabase extends Database {
 
     public void deleteEntriesMatchingContactID(long contactID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, UDBID + " = ?" , new String[] {Long.valueOf(contactID).toString()});
+        db.delete(TABLE_NAME, CDBID + " = ?" , new String[] {Long.toString(contactID)});
     }
 
     public void deleteContactTagInterest(long contactDBID, long hashtagDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, UDBID + " = ? AND "+HDBID + " = ? " ,
-                new String[] {Long.valueOf(contactDBID).toString(), Long.valueOf(hashtagDBID).toString()});
+        db.delete(TABLE_NAME, CDBID + " = ? AND "+HDBID + " = ? " ,
+                new String[] {Long.toString(contactDBID), Long.toString(hashtagDBID)});
     }
 
 
 
     public long insertContactTagInterest(long contactID, long hashtagID, int value){
         ContentValues contentValues = new ContentValues();
-        contentValues.put(UDBID, contactID);
+        contentValues.put(CDBID, contactID);
         contentValues.put(HDBID, hashtagID);
         contentValues.put(INTEREST, value);
         SQLiteDatabase db = databaseHelper.getWritableDatabase();

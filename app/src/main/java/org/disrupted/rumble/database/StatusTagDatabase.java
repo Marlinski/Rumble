@@ -54,7 +54,7 @@ public class StatusTagDatabase extends Database {
 
     public void deleteEntriesMatchingStatusID(long statusID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, SDBID + " = ?" , new String[] {Long.valueOf(statusID).toString()});
+        db.delete(TABLE_NAME, SDBID + " = ?" , new String[] {Long.toString(statusID)});
     }
 
     public long insertStatusTag(long tagID, long statusID){

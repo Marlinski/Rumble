@@ -17,10 +17,21 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.events;
+
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.protocols.ProtocolWorker;
 
 /**
  * @author Marlinski
  */
-public class BluetoothScanEnded {
+public class NeighbourConnected {
+
+    public final LinkLayerNeighbour neighbour;
+    public final ProtocolWorker worker;
+
+    public NeighbourConnected(LinkLayerNeighbour neighbour, ProtocolWorker worker) {
+        this.neighbour = neighbour;
+        this.worker = worker;
+    }
 }

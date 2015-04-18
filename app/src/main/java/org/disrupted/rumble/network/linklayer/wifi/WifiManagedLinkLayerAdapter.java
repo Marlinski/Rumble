@@ -31,8 +31,8 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.LinkLayerStarted;
-import org.disrupted.rumble.network.events.LinkLayerStopped;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 
 import de.greenrobot.event.EventBus;

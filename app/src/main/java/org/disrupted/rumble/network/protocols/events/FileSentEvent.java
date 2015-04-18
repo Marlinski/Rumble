@@ -15,35 +15,31 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.events;
 
-import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class ContactInformationReceived {
+public class FileSentEvent extends NetworkEvent {
 
-    public Contact contact;
-    public int     flags;   // see class Contact
-    public String  sender;
-    public String  protocolID;
-    public String  linkLayerIdentifier;
-    public boolean authenticated;
-    public long    size;
-    public long    duration;
+    public String filepath;
+    public List<String> recipients;
+    public String protocolID;
+    public String linkLayerIdentifier;
+    public long size;
+    public long duration;
 
-    public ContactInformationReceived(Contact contact, int flags, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.contact = contact;
-        this.flags = flags;
-        this.sender = sender;
+    public FileSentEvent(String filepath, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+        this.filepath = filepath;
+        this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;
         this.duration = duration;
-        this.authenticated = false;
     }
 
 }

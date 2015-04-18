@@ -49,8 +49,6 @@ public class HashtagDatabase extends  Database{
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID        + " INTEGER PRIMARY KEY, "
                  + HASHTAG   + " TEXT, "
-                 + COUNT     + " INTEGER, "
-                 + LAST_SEEN + " INTEGER NOT NULL DEFAULT 1, "
                  + "UNIQUE( " + HASHTAG + " ) "
           + " );";
 
@@ -98,60 +96,16 @@ public class HashtagDatabase extends  Database{
         return -1;
     }
 
-    public long getHashtagCount(String hashtag) {
-        Cursor cursor = null;
-        long count = 0;
-
-        try {
-            SQLiteDatabase db = databaseHelper.getReadableDatabase();
-            cursor = db.query(TABLE_NAME, new String[]{COUNT}, HASHTAG + " = ?", new String[]{hashtag.toLowerCase()}, null, null, null, null);
-            if (cursor != null && cursor.moveToFirst())
-                count = cursor.getLong(cursor.getColumnIndexOrThrow(COUNT));
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-
-        return count;
-    }
-
-    public void deleteHashtag(String hashtag){
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, HASHTAG + " = ?" , new String[] {hashtag.toLowerCase()});
-    }
-
-    public void deleteHashtag(long tagID){
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, ID_WHERE, new String[] {tagID + ""} );
-    }
-
     public long insertHashtag(String hashtag){
-        long hashtagCount = this.getHashtagCount(hashtag);
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(HASHTAG, hashtag.toLowerCase());
-        contentValues.put(COUNT, hashtagCount+1);
-        contentValues.put(LAST_SEEN, SystemClock.currentThreadTimeMillis());
-
-        long res = -1;
-        if (hashtagCount == 0) {
-            res = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-        } else {
-            Cursor cursor = null;
-            try {
-                databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, HASHTAG+" = ? ", new String[]{hashtag.toLowerCase()});
-                cursor = databaseHelper.getReadableDatabase().query(TABLE_NAME, new String[]{this.ID}, HASHTAG + " = ?", new String[]{hashtag.toLowerCase()}, null, null, null, null);
-                if (cursor != null && cursor.moveToFirst())
-                    res = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-            } finally {
-                if(cursor != null)
-                    cursor.close();
-            }
+        long rowid = getHashtagDBID(hashtag);
+        if(rowid < 0) {
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(HASHTAG, hashtag.toLowerCase());
+            rowid = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+            EventBus.getDefault().post(new HashtagInsertedEvent(hashtag));
         }
 
-        if(res >= 0)
-            EventBus.getDefault().post(new HashtagInsertedEvent(hashtag));
-
-        return res;
+        return rowid;
     }
 
 }

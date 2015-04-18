@@ -15,30 +15,31 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.events;
 
-import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
  * @author Marlinski
  */
-public class ChatStatusReceivedEvent extends NetworkEvent {
+public class FileReceivedEvent extends NetworkEvent {
 
-    public ChatStatus status;
-    public String author_name;
-    public String group_name;
+    public String filename;
+    public String uuid;
     public String sender;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public ChatStatusReceivedEvent(ChatStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.status = status;
+    public FileReceivedEvent(String filename, String uuid, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+        this.filename = filename;
+        this.uuid = uuid;
         this.sender = sender;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;
         this.duration = duration;
     }
+
 }

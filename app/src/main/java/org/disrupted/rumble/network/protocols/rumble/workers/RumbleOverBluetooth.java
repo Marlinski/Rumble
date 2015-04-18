@@ -21,9 +21,8 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.events.NeighbourConnected;
-import org.disrupted.rumble.network.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;

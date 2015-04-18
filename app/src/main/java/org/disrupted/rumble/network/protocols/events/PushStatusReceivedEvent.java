@@ -1,4 +1,4 @@
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.PushStatus;
 

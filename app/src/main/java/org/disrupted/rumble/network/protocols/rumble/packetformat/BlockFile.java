@@ -23,8 +23,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.events.FileReceivedEvent;
-import org.disrupted.rumble.network.events.FileSentEvent;
+import org.disrupted.rumble.network.protocols.events.FileReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.FileSentEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;

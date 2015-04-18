@@ -22,10 +22,10 @@ package org.disrupted.rumble.network.protocols.firechat;
 import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
-import org.disrupted.rumble.network.events.LinkLayerStarted;
-import org.disrupted.rumble.network.events.LinkLayerStopped;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
+import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
@@ -34,16 +34,12 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatBTServer;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverBluetooth;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverUDPMulticast;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 

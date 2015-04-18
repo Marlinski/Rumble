@@ -35,12 +35,12 @@ import android.os.*;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.events.BluetoothScanEnded;
-import org.disrupted.rumble.network.events.BluetoothScanStarted;
-import org.disrupted.rumble.network.events.NeighbourConnected;
-import org.disrupted.rumble.network.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
+import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
 

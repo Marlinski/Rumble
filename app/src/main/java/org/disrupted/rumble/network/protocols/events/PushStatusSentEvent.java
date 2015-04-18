@@ -17,9 +17,10 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.events;
+package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 import java.util.List;
 
