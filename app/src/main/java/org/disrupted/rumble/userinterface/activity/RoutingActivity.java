@@ -17,13 +17,15 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble;
+package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+
+import org.disrupted.rumble.R;
 
 /**
  * @author Marlinski

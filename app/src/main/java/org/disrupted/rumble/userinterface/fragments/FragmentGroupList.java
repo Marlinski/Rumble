@@ -38,6 +38,7 @@ import com.google.zxing.integration.android.IntentResult;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.PopupCreateGroup;
@@ -125,6 +126,9 @@ public class FragmentGroupList extends Fragment {
     };
 
     public void onEvent(GroupInsertedEvent event) {
+        getGroupList();
+    }
+    public void onEvent(GroupDeletedEvent event) {
         getGroupList();
     }
 }

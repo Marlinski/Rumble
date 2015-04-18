@@ -17,8 +17,9 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
@@ -31,6 +32,7 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
 import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
+import org.disrupted.rumble.userinterface.fragments.FragmentGroupList;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -38,49 +40,30 @@ import java.util.List;
 /**
  * @author Marlinski
  */
-public class Settings extends ActionBarActivity implements ListView.OnItemClickListener {
+public class GroupsActivity extends ActionBarActivity {
 
-    private static final String TAG = "Settings";
+    private static final String TAG = "GroupsActivity";
 
-    private ListView settingsListView;
-    private IconTextListAdapter listAdapter;
-    List<IconTextItem> settingsList;
 
     @Override
     protected void onDestroy() {
-        settingsList.clear();
         super.onDestroy();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings);
-        setTitle("Settings");
+        setContentView(R.layout.fragment_activity);
+        setTitle(R.string.navigation_drawer_group);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayUseLogoEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
 
-        settingsList = new LinkedList<IconTextItem>();
-        settingsList.add(new IconTextItem(
-                R.drawable.ic_delete_white_24dp,
-                getResources().getString(R.string.settings_action_delete),
-                1));
-
-        listAdapter = new IconTextListAdapter(this, settingsList);
-        settingsListView = (ListView) findViewById(R.id.settings_list);
-        settingsListView.setAdapter(listAdapter);
-        settingsListView.setOnItemClickListener(this);
-    }
-
-    @Override
-    public void onItemClick(AdapterView parent, View view, int position, long id) {
-        switch(settingsList.get(position).getID()) {
-            case 1:
-                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).clearStatus(null);
-            default:
-        }
+        Fragment fragmentGroupList = new FragmentGroupList();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, fragmentGroupList)
+                .commit();
     }
 
     @Override
@@ -90,12 +73,14 @@ public class Settings extends ActionBarActivity implements ListView.OnItemClickL
             finish();
             //overridePendingTransition(0, R.anim.right_slide_out);
         }
-        return true;
+        return false;
     }
+
 
     @Override
     public void onBackPressed() {
         finish();
         //overridePendingTransition(0, R.anim.right_slide_out);
     }
+
 }

@@ -26,10 +26,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
+import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
@@ -109,13 +111,14 @@ public class PushStatusDatabase extends Database {
         public enum QUERY_RESULT {
             COUNT,
             LIST_OF_MESSAGE,
-            LIST_OF_IDS;
+            LIST_OF_DBIDS,
+            LIST_OF_UUIDS
         }
 
         public enum ORDER_BY {
             NO_ORDERING,
             TIME_OF_CREATION,
-            TIME_OF_ARRIVAL;
+            TIME_OF_ARRIVAL
         }
 
         public boolean      read;
@@ -174,8 +177,11 @@ public class PushStatusDatabase extends Database {
             case COUNT:
                 select = " COUNT(*) ";
                 break;
-            case LIST_OF_IDS:
+            case LIST_OF_DBIDS:
                 select = " ps."+ID+" ";
+                break;
+            case LIST_OF_UUIDS:
+                select = " ps."+UUID+" ";
                 break;
             case LIST_OF_MESSAGE:
                 select = " ps.* ";
@@ -344,12 +350,18 @@ public class PushStatusDatabase extends Database {
                 case COUNT:
                     cursor.moveToFirst();
                     return cursor.getInt(0);
-                case LIST_OF_IDS:
-                    ArrayList<Integer> listMessages = new ArrayList<Integer>();
+                case LIST_OF_DBIDS:
+                    ArrayList<Integer> listMessagesID = new ArrayList<Integer>();
                     for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                        listMessages.add(cursor.getInt(cursor.getColumnIndexOrThrow(ID)));
+                        listMessagesID.add(cursor.getInt(cursor.getColumnIndexOrThrow(ID)));
                     }
-                    return listMessages;
+                    return listMessagesID;
+                case LIST_OF_UUIDS:
+                    ArrayList<String> listMessagesUUID = new ArrayList<String>();
+                    for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                        listMessagesUUID.add(cursor.getString(cursor.getColumnIndexOrThrow(UUID)));
+                    }
+                    return listMessagesUUID;
                 case LIST_OF_MESSAGE:
                     ArrayList<PushStatus> listIds = new ArrayList<PushStatus>();
                     for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
@@ -426,8 +438,6 @@ public class PushStatusDatabase extends Database {
                         attachedFile.delete();
                 } catch (IOException ignore) {
                 }
-
-                EventBus.getDefault().post(new StatusDeletedEvent(uuid, id));
                 return true;
 
             } else {
@@ -505,30 +515,23 @@ public class PushStatusDatabase extends Database {
         return statusID;
     }
 
-
-    /*
-     * Clear the status database, todo: should add options
-     */
-    public void clearStatus(final DatabaseExecutor.WritableQueryCallback callback) {
-        DatabaseFactory.getDatabaseExecutor(context).addQuery(
-            new DatabaseExecutor.WritableQuery() {
-                @Override
-                public boolean write() {
-                    clearStatus();
-                    return true;
+    public void wipe() {
+        PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+        options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_UUIDS;
+        DatabaseFactory.getPushStatusDatabase(context).getStatuses(options, onWipeCallback);
+    }
+    DatabaseExecutor.ReadableQueryCallback onWipeCallback = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(Object object) {
+            if(object != null) {
+                ArrayList<String> statuses = (ArrayList<String>) object;
+                for(String uuid : statuses) {
+                    DatabaseFactory.getPushStatusDatabase(context).deleteStatus(uuid);
                 }
-            }, callback);
-    }
-    public void clearStatus() {
-        SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.execSQL("DROP TABLE " + TABLE_NAME + ";");
-        db.execSQL(CREATE_TABLE);
-        db.execSQL("DROP TABLE " + StatusInterfaceDatabase.TABLE_NAME + ";");
-        db.execSQL(StatusInterfaceDatabase.CREATE_TABLE);
-        db.execSQL("DROP TABLE " + StatusTagDatabase.TABLE_NAME + ";");
-        db.execSQL(StatusTagDatabase.CREATE_TABLE);
-        EventBus.getDefault().post(new StatusDatabaseEvent());
-    }
+            }
+            EventBus.getDefault().post(new StatusWipedEvent());
+        }
+    };
 
     /*
      * utility function to transform a row into a StatusMessage

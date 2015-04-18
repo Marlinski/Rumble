@@ -32,7 +32,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.userinterface.activity.Settings;
+import org.disrupted.rumble.userinterface.activity.ContactsActivity;
+import org.disrupted.rumble.userinterface.activity.GroupsActivity;
+import org.disrupted.rumble.userinterface.activity.SettingsActivity;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
 import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
@@ -68,8 +70,10 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
         Resources res = getActivity().getResources();
         mFirstListView   = (ListView) mDrawerFragmentLayout.findViewById(R.id.navigation_first_item_list);
         firstList = new LinkedList<IconTextItem>();
-        firstList.add(new IconTextItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 1));
-        firstList.add(new IconTextItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 2));
+        firstList.add(new IconTextItem(R.drawable.ic_group_white_24dp, res.getString(R.string.navigation_drawer_group), 1));
+        firstList.add(new IconTextItem(R.drawable.ic_person_white_24dp, res.getString(R.string.navigation_drawer_contacts), 2));
+        firstList.add(new IconTextItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 3));
+        firstList.add(new IconTextItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 4));
 
         mFirstListAdapter = new IconTextListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);
@@ -92,11 +96,19 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
     public void onItemClick(AdapterView parent, View view, int position, long id) {
         switch(firstList.get(position).getID()) {
             case 1:
-                Intent settings = new Intent(getActivity(), Settings.class );
+                Intent groupActivity = new Intent(getActivity(), GroupsActivity.class );
+                startActivity(groupActivity);
+                break;
+            case 2:
+                Intent contactActivity = new Intent(getActivity(), ContactsActivity.class );
+                startActivity(contactActivity);
+                break;
+            case 3:
+                Intent settings = new Intent(getActivity(), SettingsActivity.class );
                 startActivity(settings);
                 //getActivity().overridePendingTransition(R.anim.right_slide_in, 0);
                 break;
-            case 2:
+            case 4:
                 Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
                 stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
                 getActivity().stopService(stopIntent);

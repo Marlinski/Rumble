@@ -30,7 +30,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.RoutingActivity;
+import org.disrupted.rumble.userinterface.activity.RoutingActivity;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;

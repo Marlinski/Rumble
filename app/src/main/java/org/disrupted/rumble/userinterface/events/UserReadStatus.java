@@ -20,6 +20,8 @@
 package org.disrupted.rumble.userinterface.events;
 
 
+import org.disrupted.rumble.database.objects.PushStatus;
+
 import java.util.UUID;
 
 /**
@@ -27,10 +29,10 @@ import java.util.UUID;
  */
 public class UserReadStatus extends UserInteractionEvent {
 
-    public String uuid;
+    public PushStatus status;
 
-    public UserReadStatus(String uuid) {
-        this.uuid = uuid;
+    public UserReadStatus(PushStatus status) {
+        this.status = status;
     }
 
 }

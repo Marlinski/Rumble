@@ -8,11 +8,13 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Base64;
 import android.util.Log;
 
+import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.util.AESUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.crypto.SecretKey;
 
@@ -145,6 +147,39 @@ public class GroupDatabase  extends  Database{
         return (count > 0);
     }
 
+    public void deleteGroup(String gid) {
+        if(gid == null)
+            return;
+
+        PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+        options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
+        options.groupIDFilters = new HashSet<String>();
+        options.groupIDFilters.add(gid);
+        options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_UUIDS;
+        DatabaseFactory.getPushStatusDatabase(context).getStatuses(options, new deleteGroupStatusCallback(gid));
+    }
+    private class deleteGroupStatusCallback implements DatabaseExecutor.ReadableQueryCallback {
+
+        private String gid;
+
+        public deleteGroupStatusCallback(String gid) {
+            this.gid = gid;
+        }
+
+        @Override
+        public void onReadableQueryFinished(Object object) {
+            if(object != null) {
+                ArrayList<String> statuses = (ArrayList<String>) object;
+                for(String uuid : statuses) {
+                    DatabaseFactory.getPushStatusDatabase(context).deleteStatus(uuid);
+                }
+            }
+            long groupDBID = getGroupDBID(gid);
+            DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingGroupID(groupDBID);
+            if(databaseHelper.getWritableDatabase().delete(TABLE_NAME, ID+" = ?",new String[] {Long.toString(groupDBID)}) > 0)
+                EventBus.getDefault().post(new GroupDeletedEvent(gid));
+        }
+    }
 
     private Group cursorToGroup(Cursor cursor) {
         if(cursor == null)

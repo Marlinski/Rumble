@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble;
+package org.disrupted.rumble.userinterface.activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -28,7 +28,6 @@ import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
 import android.util.Base64;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,6 +40,7 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
+import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -49,7 +49,6 @@ import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.fragments.FragmentDirectMessage;
-import org.disrupted.rumble.userinterface.fragments.FragmentGroupList;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
@@ -74,7 +73,7 @@ public class HomeActivity extends ActionBarActivity {
     private SlidingMenu slidingMenu;
 
     private Fragment fragmentStatusList = new FragmentStatusList();
-    private Fragment fragmentGroupStatus = new FragmentGroupList();
+    //private Fragment fragmentGroupStatus = new FragmentGroupList();
     private Fragment fragmentTchat = new FragmentDirectMessage();
     private View notifPublic;
     private View notifGroup;
@@ -84,7 +83,7 @@ public class HomeActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.home_activity);
+        setContentView(R.layout.fragment_activity);
 
         mTitle = getTitle();
         actionBar = getSupportActionBar();
@@ -123,9 +122,9 @@ public class HomeActivity extends ActionBarActivity {
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifPublic)
                 .setTabListener(new HomeTabListener(fragmentStatusList)));
-        actionBar.addTab(actionBar.newTab()
-                .setCustomView(notifGroup)
-                .setTabListener(new HomeTabListener(fragmentGroupStatus)));
+        //actionBar.addTab(actionBar.newTab()
+        //        .setCustomView(notifGroup)
+        //        .setTabListener(new HomeTabListener(fragmentGroupStatus)));
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifChat)
                 .setTabListener(new HomeTabListener(fragmentTchat)));

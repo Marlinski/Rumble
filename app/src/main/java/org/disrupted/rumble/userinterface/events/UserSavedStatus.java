@@ -20,15 +20,17 @@
 package org.disrupted.rumble.userinterface.events;
 
 
+import org.disrupted.rumble.database.objects.PushStatus;
+
 /**
  * @author Marlinski
  */
 public class UserSavedStatus extends UserInteractionEvent {
 
-    public String uuid;
+    public PushStatus status;
 
-    public UserSavedStatus(String uuid) {
-        this.uuid = uuid;
+    public UserSavedStatus(PushStatus status) {
+        this.status = status;
     }
 
 }

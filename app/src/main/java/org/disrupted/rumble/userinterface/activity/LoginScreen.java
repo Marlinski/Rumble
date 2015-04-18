@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble;
+package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -29,13 +29,10 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.disrupted.rumble.database.DatabaseExecutor;
+import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski

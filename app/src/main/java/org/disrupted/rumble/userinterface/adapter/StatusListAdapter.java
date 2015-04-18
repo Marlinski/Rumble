@@ -187,7 +187,7 @@ public class StatusListAdapter extends BaseAdapter {
             }
             
 
-            moreView.setOnClickListener(new PopupMenuListener(message.getUuid()));
+            moreView.setOnClickListener(new PopupMenuListener(message));
             if (!message.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - message.getTimeOfArrival()) < 60)) {
                 if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
                     box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
@@ -196,7 +196,7 @@ public class StatusListAdapter extends BaseAdapter {
                 }
                 if (!message.hasUserReadAlready()) {
                     message.setUserRead(true);
-                    EventBus.getDefault().post(new UserReadStatus(message.getUuid()));
+                    EventBus.getDefault().post(new UserReadStatus(message));
                 }
             }
         }
@@ -341,9 +341,9 @@ public class StatusListAdapter extends BaseAdapter {
     private class PopupMenuListener implements View.OnClickListener
     {
 
-        String uuid;
-        public PopupMenuListener(String uuid) {
-            this.uuid = uuid;
+        PushStatus status;
+        public PopupMenuListener(PushStatus status) {
+            this.status = status;
         }
 
         @Override
@@ -358,13 +358,13 @@ public class StatusListAdapter extends BaseAdapter {
                 public boolean onMenuItemClick(MenuItem menuItem) {
                     switch (menuItem.getItemId()) {
                         case 1:
-                            EventBus.getDefault().post(new UserLikedStatus(uuid));
+                            EventBus.getDefault().post(new UserLikedStatus(status));
                             return true;
                         case 2:
-                            EventBus.getDefault().post(new UserSavedStatus(uuid));
+                            EventBus.getDefault().post(new UserSavedStatus(status));
                             return true;
                         case 3:
-                            EventBus.getDefault().post(new UserDeleteStatus(uuid));
+                            EventBus.getDefault().post(new UserDeleteStatus(status));
                             return true;
                         default:
                             return false;

@@ -218,7 +218,7 @@ public class PushService {
             options.interfaceID = HashUtil.computeInterfaceID(
                     worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
                     worker.getProtocolIdentifier());
-            options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
+            options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_DBIDS;
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
         }
         DatabaseExecutor.ReadableQueryCallback onStatusLoaded = new DatabaseExecutor.ReadableQueryCallback() {
@@ -255,7 +255,7 @@ public class PushService {
                         worker.execute(new CommandSendPushStatus(message));
                         message.discard();
                         //todo just for the sake of debugging
-                        sleep(1000, 0);
+                        //sleep(1000, 0);
                     }
 
                 } while (running);

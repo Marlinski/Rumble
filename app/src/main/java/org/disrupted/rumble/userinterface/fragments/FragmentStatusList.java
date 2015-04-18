@@ -22,7 +22,6 @@ package org.disrupted.rumble.userinterface.fragments;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -35,13 +34,14 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 
-import org.disrupted.rumble.HomeActivity;
+import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
-import org.disrupted.rumble.database.events.ContactUpdatedEvent;
+import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
+import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.PopupCompose;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
@@ -51,7 +51,6 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import de.greenrobot.event.EventBus;
 
@@ -117,7 +116,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         );
         statusList.setAdapter(statusListAdapter);
 
-        getStatuses();
+        refreshStatuses();
         EventBus.getDefault().register(this);
 
         return mView;
@@ -151,7 +150,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         return super.onOptionsItemSelected(item);
     }
 
-    public void getStatuses() {
+    public void refreshStatuses() {
             PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
             options.answerLimit = 20;
             options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
@@ -189,7 +188,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     @Override
     public void onRefresh() {
         swipeLayout.setRefreshing(true);
-        getStatuses();
+        refreshStatuses();
     }
 
     /*
@@ -202,10 +201,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             filterListAdapter.notifyDataSetChanged();
             if(filterListAdapter.getCount() == 0)
                 filters.setVisibility(View.GONE);
-            getStatuses();
+            refreshStatuses();
         }
     };
-
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
@@ -216,10 +214,16 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
         if(filterListAdapter.addFilter(entry)) {
             filterListAdapter.notifyDataSetChanged();
-            getStatuses();
+            refreshStatuses();
         }
     }
 
+    public void onEvent(GroupDeletedEvent event) {
+        refreshStatuses();
+    }
+    public void onEvent(StatusWipedEvent event) {
+        refreshStatuses();
+    }
     public void onEvent(UserComposeStatus event) {
         final PushStatus message = event.status;
         getActivity().runOnUiThread(new Runnable() {

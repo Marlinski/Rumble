@@ -52,6 +52,11 @@ public class ContactJoinGroupDatabase extends Database {
         db.delete(TABLE_NAME, UDBID + " = ?" , new String[] {Long.toString(contactID)});
     }
 
+    public void deleteEntriesMatchingGroupID(long groupID){
+        SQLiteDatabase db = databaseHelper.getWritableDatabase();
+        db.delete(TABLE_NAME, GDBID + " = ?" , new String[] {Long.toString(groupID)});
+    }
+
     public long insertContactGroup(long contactID, long groupID){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UDBID, contactID);

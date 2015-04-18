@@ -48,10 +48,15 @@ import com.squareup.picasso.Picasso;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.DisplayQRCode;
+import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Hashtable;
+
+import javax.crypto.SecretKey;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -80,7 +85,8 @@ public class GroupListAdapter extends BaseAdapter {
         TextView  group_name  = (TextView)  layout.findViewById(R.id.group_name);
         TextView  group_gid   = (TextView)  layout.findViewById(R.id.group_gid);
         TextView  group_desc   = (TextView)  layout.findViewById(R.id.group_desc);
-        TextView  unread_messages  = (TextView)  layout.findViewById(R.id.group_unread_messages);
+        //TextView  unread_messages  = (TextView)  layout.findViewById(R.id.group_unread_messages);
+        ImageView group_delete  = (ImageView) layout.findViewById(R.id.group_delete);
         ImageView group_invite  = (ImageView) layout.findViewById(R.id.group_invite);
 
         //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
@@ -95,56 +101,73 @@ public class GroupListAdapter extends BaseAdapter {
 
         group_name.setText(groupList.get(i).getName());
         group_gid.setText("Group ID: "+groupList.get(i).getGid());
-        group_desc.setText("Description: "+groupList.get(i).getDesc());
+        if(groupList.get(i).getDesc().equals(""))
+            group_desc.setVisibility(View.GONE);
+        else
+            group_desc.setText("Description: "+groupList.get(i).getDesc());
 
         title.setOnClickListener(onGroupClicked);
 
-        if(groupList.get(i).isIsprivate()) {
-            final byte[] key = groupList.get(i).getGroupKey().getEncoded();
-            final String gid = groupList.get(i).getGid();
-            final String name = groupList.get(i).getName();
-            group_invite.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    ByteBuffer byteBuffer = ByteBuffer.allocate(2+name.length()+gid.length()+key.length);
-                    byteBuffer.put((byte)name.length());
-                    byteBuffer.put(name.getBytes(),0,name.length());
-                    byteBuffer.put((byte)gid.length());
-                    byteBuffer.put(gid.getBytes());
-                    byteBuffer.put(key);
-                    String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
+        final String gid = groupList.get(i).getGid();
 
+        final boolean   privateGroup = groupList.get(i).isIsprivate();
+        final SecretKey key          = groupList.get(i).getGroupKey();
+        final String    name         = groupList.get(i).getName();
+        group_invite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ByteBuffer byteBuffer;
+                byte[] keybytes;
+                if(privateGroup)
+                    keybytes = key.getEncoded();
+                else
+                    keybytes = new byte[0];
+                byteBuffer = ByteBuffer.allocate(2 + name.length() + gid.length() + keybytes.length);
+                byteBuffer.put((byte)name.length());
+                byteBuffer.put(name.getBytes(),0,name.length());
+                byteBuffer.put((byte)gid.length());
+                byteBuffer.put(gid.getBytes());
+                byteBuffer.put(keybytes);
+                String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
+
+                try {
+                    IntentIntegrator.shareText(activity, buffer);
+                } catch(ActivityNotFoundException notexists) {
+                    Log.d(TAG, "Barcode scanner is not installed on this device");
+                    int size = 200;
+                    Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
+                    hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+                    QRCodeWriter qrCodeWriter = new QRCodeWriter();
                     try {
-                        IntentIntegrator.shareText(activity, buffer);
-                    } catch(ActivityNotFoundException notexists) {
-                        Log.d(TAG, "Barcode scanner is not installed on this device");
-                        int size = 200;
-                        Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
-                        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-                        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-                        try {
-                            BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
-                            Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+                        BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
+                        Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
 
-                            if(image != null) {
-                                for (int i = 0; i < size; i++) {
-                                    for (int j = 0; j < size; j++) {
-                                        image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
-                                    }
+                        if(image != null) {
+                            for (int i = 0; i < size; i++) {
+                                for (int j = 0; j < size; j++) {
+                                    image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
                                 }
-                                Intent intent = new Intent(activity, DisplayQRCode.class);
-                                intent.putExtra("EXTRA_GROUP_NAME", name);
-                                intent.putExtra("EXTRA_BUFFER", buffer);
-                                intent.putExtra("EXTRA_QRCODE", image);
-                                activity.startActivity(intent);
                             }
-                        }catch(WriterException ignore) {
+                            Intent intent = new Intent(activity, DisplayQRCode.class);
+                            intent.putExtra("EXTRA_GROUP_NAME", name);
+                            intent.putExtra("EXTRA_BUFFER", buffer);
+                            intent.putExtra("EXTRA_QRCODE", image);
+                            activity.startActivity(intent);
                         }
+                    }catch(WriterException ignore) {
                     }
-
                 }
-            });
-        }
+
+            }
+        });
+
+
+        group_delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EventBus.getDefault().post(new UserDeleteGroup(gid));
+            }
+        });
 
         return layout;
     }

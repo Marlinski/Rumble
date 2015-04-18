@@ -79,11 +79,11 @@
         android:theme="@style/AppTheme" >
 
         <activity
-            android:name=".LoginScreen">
+            android:name=".userinterface.activity.LoginScreen">
         </activity>
 
         <activity
-            android:name=".RoutingActivity" >
+            android:name=".userinterface.activity.RoutingActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -91,7 +91,7 @@
         </activity>
 
         <activity
-            android:name=".HomeActivity"
+            android:name=".userinterface.activity.HomeActivity"
             android:screenOrientation="portrait"
             android:label="@string/app_name"
             android:windowSoftInputMode="adjustPan|adjustResize|stateHidden"
@@ -101,7 +101,21 @@
         </activity>
 
         <activity
-            android:name=".userinterface.activity.Settings">
+            android:name=".userinterface.activity.SettingsActivity">
+        </activity>
+
+        <activity
+            android:name=".userinterface.activity.GroupsActivity"
+            android:uiOptions="splitActionBarWhenNarrow">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                android:value="splitActionBarWhenNarrow" />
+        </activity>
+
+        <activity
+            android:name=".userinterface.activity.ContactsActivity"
+            android:uiOptions="splitActionBarWhenNarrow">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                android:value="splitActionBarWhenNarrow" />
         </activity>
 
         <activity

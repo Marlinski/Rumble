@@ -24,6 +24,8 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
+import org.disrupted.rumble.database.events.GroupDeletedEvent;
+import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
@@ -34,12 +36,14 @@ import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
 import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
+import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
+import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.HashUtil;
 
@@ -269,40 +273,34 @@ public class CacheManager {
 
     }
     public void onEvent(UserReadStatus event) {
-        if(event.uuid == null)
+        if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.uuid+" read");
-        PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if(message != null) {
-            message.setUserRead(true);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(message);
-        }
+        Log.d(TAG, " [.] status "+event.status.getUuid()+" read");
+        event.status.setUserRead(true);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus( event.status);
+        //todo trow an event
     }
     public void onEvent(UserLikedStatus event) {
-        if(event.uuid == null)
+        if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.uuid+" liked");
-        PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if(message != null) {
-            message.setUserRead(true);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(message);
-        }
+        Log.d(TAG, " [.] status "+event.status.getUuid()+" liked");
+        event.status.setUserLike(true);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status);
+        //todo trow an event
     }
     public void onEvent(UserSavedStatus event) {
-        if(event.uuid == null)
+        if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.uuid+" saved");
-        PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if(message != null) {
-            message.setUserRead(true);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(message);
-        }
+        Log.d(TAG, " [.] status "+event.status.getUuid()+" saved");
+        event.status.setUserSaved(true);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status);
+        //todo trow an event
     }
     public void onEvent(UserDeleteStatus event) {
-        if(event.uuid == null)
+        if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.uuid+" deleted");
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.uuid);
+        if(DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.status.getUuid()))
+            EventBus.getDefault().post(new StatusDeletedEvent(event.status.getUuid(), event.status.getdbId()));
     }
     public void onEvent(UserComposeStatus event) {
         if(event.status == null)
@@ -337,5 +335,13 @@ public class CacheManager {
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
 
+    }
+    public void onEvent(UserDeleteGroup event) {
+        if(event.gid == null)
+            return;
+        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).deleteGroup(event.gid);
+    }
+    public void onEvent(UserWipeStatuses event) {
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
     }
 }

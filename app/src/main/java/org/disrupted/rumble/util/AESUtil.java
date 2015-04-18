@@ -46,7 +46,10 @@ public class AESUtil {
     }
 
     public static SecretKey getSecretKeyFromByteArray(byte[] keyBlob) {
-        return new SecretKeySpec(keyBlob, "AES");
+        if(keyBlob.length == 0)
+            return null;
+        else
+            return new SecretKeySpec(keyBlob, "AES");
     }
 
     public static String encryptText(String plainText, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {

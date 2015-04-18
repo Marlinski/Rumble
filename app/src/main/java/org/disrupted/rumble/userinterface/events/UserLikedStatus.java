@@ -19,15 +19,17 @@
 
 package org.disrupted.rumble.userinterface.events;
 
+import org.disrupted.rumble.database.objects.PushStatus;
+
 /**
  * @author Marlinski
  */
 public class UserLikedStatus extends UserInteractionEvent {
 
-    public String uuid;
+    public PushStatus status;
 
-    public UserLikedStatus(String uuid) {
-        this.uuid = uuid;
+    public UserLikedStatus(PushStatus status) {
+        this.status = status;
     }
 
 }
