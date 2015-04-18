@@ -121,13 +121,13 @@ public class PushStatusDatabase extends Database {
         public boolean      read;
         public boolean      like;
         public long         filterFlags;
-        public List<String> hashtagFilters;
-        public List<String> groupIDList;
+        public Set<String>  hashtagFilters;
+        public Set<String>  groupIDFilters;
         public String       authorID;
         public int          hopLimit;
         public long         from_toc;
         public long         from_toa;
-        public String       peerName;
+        public String       interfaceID;
         public int          answerLimit;
         public ORDER_BY     order_by;
         public QUERY_RESULT query_result;
@@ -137,9 +137,9 @@ public class PushStatusDatabase extends Database {
             read = false;
             like = false;
             hashtagFilters = null;
-            groupIDList = null;
+            groupIDFilters = null;
             authorID = null;
-            peerName = null;
+            interfaceID = null;
             from_toc = 0;
             from_toa = 0;
             answerLimit = 0;
@@ -165,7 +165,6 @@ public class PushStatusDatabase extends Database {
                 }, callback);
     }
     private Object getStatuses(StatusQueryOption options) {
-
         if(options == null)
             options = new StatusQueryOption();
 
@@ -209,7 +208,7 @@ public class PushStatusDatabase extends Database {
             contactJoined = true;
         }
         boolean groupJoined = false;
-        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDFilters != null) && (options.groupIDFilters.size() > 0)) {
             query.append(
                     " JOIN " + GroupDatabase.TABLE_NAME + " g" +
                     " ON ps." + PushStatusDatabase.GROUP_DBID + " = g." + GroupDatabase.ID);
@@ -239,12 +238,12 @@ public class PushStatusDatabase extends Database {
             query.append(" c." + ContactDatabase.UID + " = ? ");
             argumentList.add(options.authorID);
         }
-        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDList != null) && (options.groupIDList.size() > 0) ) {
+        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDFilters != null) && (options.groupIDFilters.size() > 0) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" g."+GroupDatabase.GID +" IN ( ? ");
-            Iterator<String> it = options.groupIDList.iterator();
+            Iterator<String> it = options.groupIDFilters.iterator();
             argumentList.add(it.next());
             while (it.hasNext()) {
                 argumentList.add(it.next());
@@ -253,7 +252,7 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.peerName != null) ) {
+        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.interfaceID != null) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -264,7 +263,7 @@ public class PushStatusDatabase extends Database {
                     + " JOIN " + InterfaceDatabase.TABLE_NAME + " i "
                     + " ON si." + StatusInterfaceDatabase.INTERFACE_DBID + " = i."+InterfaceDatabase.ID
                     + " WHERE i."+ InterfaceDatabase.INTERFACE + " = ? )");
-            argumentList.add(options.peerName);
+            argumentList.add(options.interfaceID);
             groupby = true;
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {

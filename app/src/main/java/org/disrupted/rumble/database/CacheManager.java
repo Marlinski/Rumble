@@ -216,10 +216,10 @@ public class CacheManager {
                 return;
             }
         }
-        // should we update the contact interface ?
-        // not necessary
-
-
+        
+        // should we update and remember the interface which correspond to this user ?
+        // not necessary and would also be a cause for potential attacks based on corruption
+        // of MAC address cache
         long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                 .getContactDBID(contact.getUid());
         // We only update the affected attributes
@@ -319,7 +319,7 @@ public class CacheManager {
             Contact local = Contact.getLocalContact();
             local.addGroup(event.group.getGid());
             long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(local.getUid());
-            long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(local.getUid());
+            long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.group.getGid());
             DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID,groupDBID);
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
@@ -332,7 +332,7 @@ public class CacheManager {
             Contact local = Contact.getLocalContact();
             local.addGroup(event.group.getGid());
             long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(local.getUid());
-            long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(local.getUid());
+            long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.group.getGid());
             DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID,groupDBID);
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }

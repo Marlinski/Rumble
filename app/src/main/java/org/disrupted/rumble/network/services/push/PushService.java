@@ -3,15 +3,18 @@ package org.disrupted.rumble.network.services.push;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.ContactJoinGroupDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.PushStatusDatabase;
+import org.disrupted.rumble.database.events.ContactGroupListUpdated;
+import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
+import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.database.objects.InterestVector;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.ContactInformationReceived;
 import org.disrupted.rumble.network.events.NeighbourConnected;
 import org.disrupted.rumble.network.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
@@ -83,40 +86,55 @@ public class PushService {
     }
 
     // todo: register protocol to service
-    public void onEvent(NeighbourConnected neighbour) {
+    public void onEvent(NeighbourConnected event) {
         if(instance != null) {
-            if(!neighbour.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+            if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
                 return;
             synchronized (lock) {
-                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(neighbour.worker.getWorkerIdentifier());
+                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
                 if (dispatcher != null) {
                     Log.e(TAG, "worker already binded ?!");
                     return;
                 }
-                dispatcher = new MessageDispatcher(neighbour.worker);
-                instance.workerIdentifierTodispatcher.put(neighbour.worker.getWorkerIdentifier(), dispatcher);
+                dispatcher = new MessageDispatcher(event.worker);
+                instance.workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
                 dispatcher.startDispatcher();
             }
         }
     }
 
-    public void onEvent(NeighbourDisconnected neighbour) {
+    public void onEvent(NeighbourDisconnected event) {
         if(instance != null) {
-            if(!neighbour.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+            if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
                 return;
             synchronized (lock) {
-                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(neighbour.worker.getWorkerIdentifier());
+                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
                 if (dispatcher == null)
                     return;
                 dispatcher.stopDispatcher();
-                instance.workerIdentifierTodispatcher.remove(neighbour.worker.getWorkerIdentifier());
+                instance.workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
             }
         }
     }
 
-    private static float computeScore(PushStatus message, InterestVector interestVector) {
-        //todo InterestVector for relevance
-        float relevance = 0;
+    private static float computeScore(PushStatus message, Contact contact) {
+        if(!contact.getJoinedGroupIDs().contains(message.getGroup().getGid()))
+            return 0;
+
+        float relevance;
+        int totalInterest  = 0;
+        int totalHashtag   = 0;
+        for(String hashtag : message.getHashtagSet()) {
+            Integer value = contact.getHashtagInterests().get(hashtag);
+            if(value != null) {
+                totalInterest += value;
+                totalHashtag++;
+            }
+        }
+        if(totalHashtag > 0)
+            relevance = totalInterest/(totalHashtag*Contact.MAX_INTEREST_TAG_VALUE);
+        else
+            relevance = 0;
         float replicationDensity = rdwatcher.computeMetric(message.getUuid());
         float quality =  (message.getDuplicate() == 0) ? 0 : (float)message.getLike()/(float)message.getDuplicate();
         float age = (message.getTTL() <= 0) ? 1 : (1- (System.currentTimeMillis() - message.getTimeOfCreation())/message.getTTL());
@@ -136,8 +154,9 @@ public class PushService {
 
         private static final String TAG = "MessageDispatcher";
 
-        private ProtocolWorker worker;
-        private InterestVector interestVector;
+        private ProtocolWorker     worker;
+        private Contact            contact;
+
         private ArrayList<Integer> statuses;
         private float threshold;
 
@@ -171,16 +190,17 @@ public class PushService {
         public MessageDispatcher(ProtocolWorker worker) {
             this.running = false;
             this.worker = worker;
+            this.contact = null;
             this.max = null;
             this.threshold = 0;
-            this.interestVector = null;
             statuses = new ArrayList<Integer>();
         }
 
         public void startDispatcher() {
             running = true;
+            EventBus.getDefault().register(MessageDispatcher.this);
             sendLocalPreferences();
-            initStatuses();
+            start();
         }
 
         public void stopDispatcher() {
@@ -191,13 +211,14 @@ public class PushService {
                 EventBus.getDefault().unregister(this);
         }
 
-        private void initStatuses() {
+        private void updateStatusList() {
+            if(contact == null)
+                return;
             PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
-            options.groupIDList = new ArrayList<String>();
-            options.groupIDList.add(Group.getDefaultGroup().getGid());
+            options.groupIDFilters = contact.getJoinedGroupIDs();
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NEVER_SEND_TO_USER;
-            options.peerName = HashUtil.computeInterfaceID(
+            options.interfaceID = HashUtil.computeInterfaceID(
                     worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
                     worker.getProtocolIdentifier());
             options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_IDS;
@@ -207,17 +228,21 @@ public class PushService {
             @Override
             public void onReadableQueryFinished(Object result) {
                 if (result != null) {
-                    final ArrayList<Integer> answer = (ArrayList<Integer>)result;
-                    for (Integer s : answer) {
-                        PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
-                                .getStatus(s);
-                        if(message != null) {
-                            add(message);
-                            message.discard();
+                    try {
+                        takeLock.lock();
+                        Log.d(TAG, "[+] update status list");
+                        statuses.clear();
+                        final ArrayList<Integer> answer = (ArrayList<Integer>)result;
+                        for (Integer s : answer) {
+                            PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
+                                    .getStatus(s);
+                            if(message != null)
+                                add(message);
                         }
+                        // the "max" has been automatically updated while we were adding items
+                    } finally {
+                        takeLock.unlock();
                     }
-                    EventBus.getDefault().register(MessageDispatcher.this);
-                    start();
                 }
             }
         };
@@ -257,22 +282,26 @@ public class PushService {
         }
 
         private boolean add(PushStatus message){
+            if(this.contact == null)
+                return false;
             final ReentrantLock putlock = this.putLock;
             try {
                 putlock.lock();
 
-                float score = computeScore(message, interestVector);
+                float score = computeScore(message, contact);
 
                 if (score <= threshold) {
                     message.discard();
                     return false;
                 }
+
                 statuses.add((int)message.getdbId());
 
+                /* we update the max value */
                 if (max == null) {
                     max = message;
                 } else {
-                    float maxScore = computeScore(max, interestVector);
+                    float maxScore = computeScore(max, contact);
                     if (score > maxScore) {
                         max.discard();
                         max = message;
@@ -287,46 +316,54 @@ public class PushService {
             }
         }
 
-        // todo: iterating over the entire array, the complexity is DAMN TOO HIGH !!
+        // /!\  carefull, it does not lock thread
         private void updateMax() {
             float maxScore = 0;
+
+            /*
+             * we only update the max if it has been sent (max == null) or it is no longer valid
+             */
             if(max != null) {
-                maxScore = computeScore(max, interestVector);
+                maxScore = computeScore(max, contact);
                 if(maxScore > threshold)
                     return;
+                max.discard();
+                max = null;
             }
 
             ArrayList<Integer> toDelete = new ArrayList<Integer>();
-            Iterator<Integer> it = statuses.iterator();
-            while(it.hasNext()) {
-                Integer id = it.next();
+            for(Integer id : statuses) {
                 PushStatus message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
                         .getStatus(id);
-                float score = computeScore(max, interestVector);
+                float score = computeScore(message, contact);
+
+                // we delete the message if it is no longer valid (for instance it expired)
                 if(score <= threshold) {
                     message.discard();
                     toDelete.add((int)message.getdbId());
                     continue;
                 }
 
+                // item becomes the new max if max was null
                 if(max == null) {
                     max = message;
                     maxScore = score;
                     continue;
                 }
 
+                // if we have better score than the max, we replace it
                 if(score > maxScore) {
                     max.discard();
                     max = message;
                     maxScore = score;
-                } else
+                } else {
+                    // we get rid of the message as we only stores message ids
                     message.discard();
+                }
             }
-
             for(Integer i : toDelete) {
                 statuses.remove(new Integer(i));
             }
-
         }
 
         /*
@@ -337,18 +374,15 @@ public class PushService {
         private PushStatus pickMessage() throws InterruptedException {
             final ReentrantLock takelock = this.takeLock;
             final ReentrantLock putlock = this.takeLock;
-            PushStatus message;
+
             boolean pickup = false;
+            PushStatus pickedUpMessage;
             takelock.lockInterruptibly();
             try {
                 do {
                     while (statuses.size() == 0)
                         notEmpty.await();
 
-                    Log.d(TAG, "pick");
-                    for(Integer id:statuses) {
-                        Log.d(TAG, ","+id);
-                    }
                     putlock.lock();
                     try {
                         updateMax();
@@ -356,35 +390,32 @@ public class PushService {
                         // randomly pickup an element homogeneously
                         int index = random.nextInt(statuses.size());
                         long id = statuses.get(index);
-                        message = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(id);
-                        if(message == null) {
+                        pickedUpMessage = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(id);
+                        if(pickedUpMessage == null) {
                             //Log.d(TAG, "cannot retrieve statusId: "+id);
                             statuses.remove(new Integer((int)id));
                             continue;
                         }
 
                         // get max probability Pmax
-                        float maxScore = computeScore(max, interestVector);
+                        float maxScore = computeScore(max, contact);
+
                         // get element probability Pu
-                        float score = computeScore(message, interestVector);
+                        float score = computeScore(pickedUpMessage, contact);
 
                         if (score <= threshold) {
-                            //Log.d(TAG, "score too low: "+score);
                             statuses.remove(new Integer((int)id));
-                            message.discard();
-                            message = null;
+                            pickedUpMessage.discard();
+                            pickedUpMessage = null;
                             continue;
                         }
 
                         int shallwepick = random.nextInt((int) (maxScore * 1000));
                         if (shallwepick <= (score * 1000)) {
-                            //Log.d(TAG, "we picked up: "+id);
-                            // we keep this status with probability Pu/Pmax
-                            statuses.remove(new Integer((int)message.getdbId()));
+                            statuses.remove(new Integer((int)pickedUpMessage.getdbId()));
                             pickup = true;
                         } else {
-                            // else we pick another one
-                            message.discard();
+                            pickedUpMessage.discard();
                         }
                     } finally {
                         putlock.unlock();
@@ -393,16 +424,19 @@ public class PushService {
             } finally {
                 takelock.unlock();
             }
-            return message;
+            return pickedUpMessage;
         }
 
         public void sendLocalPreferences() {
             Contact local = Contact.getLocalContact();
             int flags = Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST;
             CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
-            local.toString();
             worker.execute(command);
         }
+
+        /*
+         * Event management
+         */
         public void onEvent(StatusDeletedEvent event) {
             fullyLock();
             try {
@@ -415,6 +449,38 @@ public class PushService {
             PushStatus message = new PushStatus(event.status);
             add(message);
             message.discard();
+        }
+
+        /*
+         * this event only bind the contact with the interface
+         * we wait for the related DatabaseEvent (if any) for updating the status list
+         */
+        public void onEvent(ContactInformationReceived info) {
+            if(info.sender.equals(worker.getLinkLayerConnection().getRemoteLinkLayerAddress())) {
+                if(this.contact == null)
+                    this.contact = new Contact(info.contact);
+            }
+        }
+        public void onEvent(ContactGroupListUpdated event) {
+            if(this.contact == null)
+                return;
+            if(event.contact.equals(this.contact)) {
+                this.contact.setJoinedGroupIDs(event.contact.getJoinedGroupIDs());
+                updateStatusList();
+            }
+            if(event.contact.isLocal()) {
+                sendLocalPreferences();
+            }
+        }
+        public void onEvent(ContactTagInterestUpdatedEvent event) {
+            if(this.contact == null)
+                return;
+            if(event.contact.equals(this.contact)) {
+                this.contact.setHashtagInterests(event.contact.getHashtagInterests());
+            }
+            if(event.contact.isLocal()) {
+                sendLocalPreferences();
+            }
         }
     }
 }

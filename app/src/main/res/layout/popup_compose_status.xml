@@ -93,22 +93,28 @@
                 android:layout_height="1dp"
                 android:background="@color/black"/>
 
-            <LinearLayout
+            <FrameLayout
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/popup_user_attached_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
                 <EditText
                     android:id="@+id/popup_user_status"
-                    android:layout_marginBottom="5dp"
-                    android:layout_marginTop="5dp"
-                    android:layout_marginRight="5dp"
-                    android:layout_marginLeft="5dp"
+                    android:paddingBottom="5dp"
+                    android:paddingTop="5dp"
+                    android:paddingRight="5dp"
+                    android:paddingLeft="5dp"
+                    android:background="#88000000"
+                    android:gravity="top"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minLines="4"
+                    android:minLines="5"
                     android:textColor="@color/pure_white"
                     android:hint="What's happening?"/>
-            </LinearLayout>
+            </FrameLayout>
 
             <View
                 android:layout_width="match_parent"

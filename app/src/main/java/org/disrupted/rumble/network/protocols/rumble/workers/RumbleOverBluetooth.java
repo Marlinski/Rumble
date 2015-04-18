@@ -170,8 +170,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                             new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
                             this)
             );
-
-            // we start the command executor  as well as the receiving thread
             onWorkerConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");

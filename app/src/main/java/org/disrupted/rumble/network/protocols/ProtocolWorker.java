@@ -27,6 +27,7 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+
 /**
  * The GenericProtocol implements a generic protocol where one thread take care
  * of receiving and processing packet from the network while another one take

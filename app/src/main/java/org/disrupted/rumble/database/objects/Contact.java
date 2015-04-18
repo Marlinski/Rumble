@@ -43,9 +43,13 @@ public class Contact {
     protected Map<String, Integer>  hashtagInterests;
     protected Set<String>           interfaces;
 
+    public static final int MAX_INTEREST_TAG_VALUE = 255;
+    public static final int MIN_INTEREST_TAG_VALUE = 0;
+
     /* used to state wether we should consider or not the following attributes for update */
     public static final int FLAG_GROUP_LIST   = 0x01;
     public static final int FLAG_TAG_INTEREST = 0x02;
+
 
     public static Contact createLocalContact(String name) {
         String uid = HashUtil.computeContactUid(name,System.currentTimeMillis());
@@ -54,6 +58,15 @@ public class Contact {
 
     public static Contact getLocalContact() {
         return DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
+    }
+
+    public Contact(Contact contact) {
+        this.name             = contact.name;
+        this.uid              = contact.uid;
+        this.local            = contact.local;
+        this.joinedGroupIDs   = new HashSet<String>(contact.joinedGroupIDs);
+        this.hashtagInterests = new HashMap<String, Integer>(contact.hashtagInterests);
+        this.interfaces       = new HashSet<String>(contact.interfaces);
     }
 
     public Contact(String name, String uid, boolean local) {
@@ -89,7 +102,7 @@ public class Contact {
         if(this.hashtagInterests.size() > 0)
             this.hashtagInterests.clear();
         if(hashtagInterests != null)
-            this.hashtagInterests = hashtagInterests;
+            this.hashtagInterests = new HashMap<String, Integer>(hashtagInterests);
         else
             this.hashtagInterests = new HashMap<String, Integer>();
     }
@@ -97,7 +110,7 @@ public class Contact {
         if(this.joinedGroupIDs.size() > 0)
             this.joinedGroupIDs.clear();
         if(joinedGroupIDs != null)
-            this.joinedGroupIDs = joinedGroupIDs;
+            this.joinedGroupIDs = new HashSet<String>(joinedGroupIDs);
         else
             this.joinedGroupIDs = new HashSet<String>();
     }
@@ -110,13 +123,30 @@ public class Contact {
             this.interfaces = new HashSet<String>();
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+        if(o instanceof Contact) {
+            Contact contact = (Contact)o;
+            return this.uid.equals(contact.uid);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.uid.hashCode();
+    }
+
     @Override
     public String toString() {
         String string =  uid+" - "+name+" ("+(local ? "local" : "alien")+")  ";
         string += "Groups=(";
         if(joinedGroupIDs != null) {
             for (String group : joinedGroupIDs) {
-                string += group;
+                string += group+", ";
             }
         }
         string += ") Tag=(";

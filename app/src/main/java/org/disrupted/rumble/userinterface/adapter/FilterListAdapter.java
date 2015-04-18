@@ -32,9 +32,11 @@ import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -95,9 +97,9 @@ public class FilterListAdapter extends BaseAdapter {
         @Override
         public void onClick(String filter, boolean interested) {
             if(interested)
-                EventBus.getDefault().post(new UserSetHashTagInterest(filter, 0));
+                EventBus.getDefault().post(new UserSetHashTagInterest(filter, Contact.MIN_INTEREST_TAG_VALUE));
             else
-                EventBus.getDefault().post(new UserSetHashTagInterest(filter, 1));
+                EventBus.getDefault().post(new UserSetHashTagInterest(filter, Contact.MAX_INTEREST_TAG_VALUE));
         }
     };
 
@@ -141,8 +143,8 @@ public class FilterListAdapter extends BaseAdapter {
         return true;
     }
 
-    public List<String> getFilterList() {
-        List<String> filters = new LinkedList<String>();
+    public Set<String> getFilterList() {
+        Set<String> filters = new HashSet<String>();
         for(FilterEntry entry : filterList) {
             filters.add(entry.filter);
         }

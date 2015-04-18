@@ -30,10 +30,9 @@ import java.util.regex.Pattern;
 /**
  * @author Marlinski
  */
-public class PushStatus extends Message{
+public class PushStatus {
 
     private static final String TAG  = "StatusMessage";
-    public  static final String TYPE = "STATUS";
 
     protected long        dbid;
     protected String      uuid;
@@ -85,7 +84,6 @@ public class PushStatus extends Message{
 
     public PushStatus(Contact author, Group group, String post, long timeOfCreation) {
         this.uuid = HashUtil.computeStatusUUID(author.getUid(), group.getGid(), post, timeOfCreation);
-        this.messageType = TYPE;
         this.dbid   = -1;
         this.status = post;
         this.author = author;
@@ -152,7 +150,7 @@ public class PushStatus extends Message{
         if(hashtagSet == null)
             this.hashtagSet = new HashSet<String>();
         else
-            this.hashtagSet = hashtagSet;
+            this.hashtagSet = new HashSet<String>(hashtagSet);
     }
     public void addReplication(long replication){ this.replication  += replication; }
     public void addDuplicate(long duplicate){     this.duplicate  += duplicate; }
@@ -162,9 +160,8 @@ public class PushStatus extends Message{
     public void setAuthor(Contact author) {       this.author         = author;        }
     public void setGroup(Group group) {           this.group          = group;         }
 
-
     public void discard() {
-        hashtagSet = null;
+        hashtagSet.clear();
     }
 
     public String toString() {

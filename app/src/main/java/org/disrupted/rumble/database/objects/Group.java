@@ -73,4 +73,25 @@ public class Group {
 
     public void setDesc(String desc) {     this.desc = desc; }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+        if(o instanceof Group) {
+            Group group = (Group)o;
+            return this.gid.equals(group.gid);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.gid.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "Group Name="+name+" GID="+gid;
+    }
 }

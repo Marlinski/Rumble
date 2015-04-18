@@ -35,6 +35,8 @@ import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 
+import de.greenrobot.event.EventBus;
+
 /**
  * @author Marlinski
  */
@@ -66,38 +68,30 @@ public class LoginScreen extends Activity implements View.OnClickListener{
     @Override
     public void onClick(View view) {
         String username = usernameView.getText().toString();
-        if(username != "") {
-            try {
-                DatabaseFactory.getGroupDatabase(this).insertGroup(Group.getDefaultGroup());
-            } catch(Exception impossibleWithPublicGroup){
-            }
-
+        if(!username.equals("")) {
+            // create user
             Contact localContact = Contact.createLocalContact(username);
-            localContact.addGroup(Group.getDefaultGroup().getGid());
-            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact, callback);
+            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact);
+
+            // create default public group
+            Group defaultPublicGroup = Group.getDefaultGroup();
+            DatabaseFactory.getGroupDatabase(this).insertGroup(defaultPublicGroup);
+
+            // user join default group
+            long contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(localContact.getUid());
+            long groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
+            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID);
+
+            // do not show loginscreen next time
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+            SharedPreferences.Editor ed = prefs.edit();
+            ed.putBoolean(getString(R.string.pref_previously_started), true);
+            ed.commit();
+
+            // start activity
+            Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
+            startActivity(routingActivity);
+            finish();
         }
     }
-
-    private DatabaseExecutor.WritableQueryCallback callback = new DatabaseExecutor.WritableQueryCallback() {
-        @Override
-        public void onWritableQueryFinished(boolean success) {
-            if(success)
-                runOnUiThread(new Runnable() {
-                      @Override
-                      public void run() {
-                          // do not show loginscreen next time
-                          SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-                          SharedPreferences.Editor ed = prefs.edit();
-                          ed.putBoolean(getString(R.string.pref_previously_started), true);
-                          ed.commit();
-
-                          // start activity
-                          Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
-                          startActivity(routingActivity);
-                          finish();
-                      }
-                  });
-        }
-    };
-
 }
