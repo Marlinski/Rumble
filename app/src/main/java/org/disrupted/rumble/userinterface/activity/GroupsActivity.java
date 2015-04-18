@@ -71,7 +71,7 @@ public class GroupsActivity extends ActionBarActivity {
         int id = item.getItemId();
         if (id==android.R.id.home) {
             finish();
-            //overridePendingTransition(0, R.anim.right_slide_out);
+            overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
         }
         return false;
     }
@@ -80,7 +80,7 @@ public class GroupsActivity extends ActionBarActivity {
     @Override
     public void onBackPressed() {
         finish();
-        //overridePendingTransition(0, R.anim.right_slide_out);
+        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
     }
 
 }

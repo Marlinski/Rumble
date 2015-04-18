@@ -64,6 +64,7 @@ public class SettingsActivity extends ActionBarActivity implements ListView.OnIt
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayUseLogoEnabled(false);
+        actionBar.setDisplayShowHomeEnabled(false);
 
         settingsList = new LinkedList<IconTextItem>();
         settingsList.add(new IconTextItem(

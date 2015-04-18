@@ -34,6 +34,7 @@ import android.widget.ListView;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.activity.ContactsActivity;
 import org.disrupted.rumble.userinterface.activity.GroupsActivity;
+import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.userinterface.activity.SettingsActivity;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
 import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
@@ -94,19 +95,22 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
 
     @Override
     public void onItemClick(AdapterView parent, View view, int position, long id) {
+        ((HomeActivity)getActivity()).slidingMenu.toggle();
         switch(firstList.get(position).getID()) {
             case 1:
                 Intent groupActivity = new Intent(getActivity(), GroupsActivity.class );
                 startActivity(groupActivity);
+                getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
             case 2:
                 Intent contactActivity = new Intent(getActivity(), ContactsActivity.class );
                 startActivity(contactActivity);
+                getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
             case 3:
                 Intent settings = new Intent(getActivity(), SettingsActivity.class );
                 startActivity(settings);
-                //getActivity().overridePendingTransition(R.anim.right_slide_in, 0);
+                getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
             case 4:
                 Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);

@@ -70,13 +70,11 @@ public class HomeActivity extends ActionBarActivity {
     private ActionBar actionBar;
     private FragmentNavigationDrawer mNavigationDrawerFragment;
     private FragmentNetworkDrawer mNetworkDrawerFragment;
-    private SlidingMenu slidingMenu;
+    public SlidingMenu slidingMenu;
 
     private Fragment fragmentStatusList = new FragmentStatusList();
-    //private Fragment fragmentGroupStatus = new FragmentGroupList();
     private Fragment fragmentTchat = new FragmentDirectMessage();
     private View notifPublic;
-    private View notifGroup;
     private View notifChat;
 
     @Override
@@ -116,15 +114,11 @@ public class HomeActivity extends ActionBarActivity {
         /* three tabs with notification icons */
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         notifPublic = renderTabView(this, R.drawable.ic_world);
-        notifGroup  = renderTabView(this, R.drawable.ic_group_white_24dp);
         notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
 
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifPublic)
                 .setTabListener(new HomeTabListener(fragmentStatusList)));
-        //actionBar.addTab(actionBar.newTab()
-        //        .setCustomView(notifGroup)
-        //        .setTabListener(new HomeTabListener(fragmentGroupStatus)));
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifChat)
                 .setTabListener(new HomeTabListener(fragmentTchat)));
