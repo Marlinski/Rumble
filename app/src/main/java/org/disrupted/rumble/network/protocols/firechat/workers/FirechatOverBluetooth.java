@@ -24,7 +24,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.protocols.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
@@ -213,7 +213,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                         String jsonString  = new String(buffer, 0, i - 1);
                         JSONObject message = new JSONObject(jsonString);
 
-                        ChatStatus status = parser.networkToStatus(message);
+                        ChatMessage status = parser.networkToStatus(message);
                         String filename = downloadFile(status.getFileSize());
                         if (filename != null) {
                             status.setAttachedFile(filename);

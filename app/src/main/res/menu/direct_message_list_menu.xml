@@ -24,12 +24,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".HomeActivity" >
 
+    <!--
     <item android:id="@+id/action_search_chat"
         android:title="@string/action_search"
         android:icon="@drawable/ic_search_white_24dp"
         android:orderInCategory="100"
         app:showAsAction="always" />
-
+    -->
 
     <item android:id="@+id/action_new_discussion"
         android:title="@string/action_new_discussion"

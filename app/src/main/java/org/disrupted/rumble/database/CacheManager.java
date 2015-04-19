@@ -22,10 +22,12 @@ package org.disrupted.rumble.database;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
@@ -34,6 +36,7 @@ import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.protocols.events.FileReceivedEvent;
 import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
 import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
+import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
 import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
@@ -343,5 +346,14 @@ public class CacheManager {
     }
     public void onEvent(UserWipeStatuses event) {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
+    }
+
+    public void onEvent(UserComposeChatMessage event) {
+        if(event.chatMessage == null)
+            return;
+        Log.d(TAG, " [.] user composed chat message: "+event.chatMessage.toString());
+        ChatMessage chatMessage = new ChatMessage(event.chatMessage);
+        if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
+            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
     }
 }

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (C) 2014 Disrupted Systems
+  ~ This file is part of Rumble.
+  ~ Rumble is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ Rumble is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent" android:layout_height="wrap_content"
+    android:id="@+id/layoutContainer" android:orientation="horizontal">
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="45">
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+
+            <ImageView android:id="@+id/chat_sender_avatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:contentDescription="Contact Avatar"
+                android:gravity="start"
+                android:src="@drawable/ic_contact_picture" />
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/chat_message_author"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="5dp"
+                    android:gravity="start"
+                    style="@style/Status.Info.Author"/>
+
+                <TextView
+                    android:id="@+id/chat_message_item_body"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="5dp"
+                    android:paddingBottom="5dp"
+                    android:gravity="start"
+                    style="@style/Status.Body"/>
+
+                <ImageView
+                    android:id="@+id/chat_message_attached_image"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_marginLeft="5dp"
+                    android:scaleType="fitXY"
+                    android:gravity="start"
+                    android:visibility="gone"/>
+            </LinearLayout>
+
+            <ImageView android:id="@+id/chat_local_avatar"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:contentDescription="Local Avatar"
+                android:gravity="end"
+                android:visibility="visible"
+                android:src="@drawable/ic_contact_picture" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+    </RelativeLayout>
+</LinearLayout>

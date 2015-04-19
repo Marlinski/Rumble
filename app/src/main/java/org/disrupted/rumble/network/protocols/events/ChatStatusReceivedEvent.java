@@ -17,7 +17,7 @@
 
 package org.disrupted.rumble.network.protocols.events;
 
-import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
@@ -25,7 +25,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
  */
 public class ChatStatusReceivedEvent extends NetworkEvent {
 
-    public ChatStatus status;
+    public ChatMessage status;
     public String author_name;
     public String group_name;
     public String sender;
@@ -34,7 +34,7 @@ public class ChatStatusReceivedEvent extends NetworkEvent {
     public long size;
     public long duration;
 
-    public ChatStatusReceivedEvent(ChatStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ChatStatusReceivedEvent(ChatMessage status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.sender = sender;
         this.protocolID = protocolID;

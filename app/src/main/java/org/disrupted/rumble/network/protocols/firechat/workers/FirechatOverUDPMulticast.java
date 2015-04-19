@@ -21,7 +21,7 @@ package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.objects.ChatStatus;
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -134,7 +134,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
         try {
             while(true) {
                 con.receive(packet);
-                ChatStatus status;
+                ChatMessage status;
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
                     JSONObject message = new JSONObject(jsonString);

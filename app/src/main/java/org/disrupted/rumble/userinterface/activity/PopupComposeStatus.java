@@ -55,14 +55,13 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 
 import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class PopupCompose extends Activity {
+public class PopupComposeStatus extends Activity {
 
     private static final String TAG = "PopupCompose";
     public static final int REQUEST_IMAGE_CAPTURE = 42;
@@ -149,7 +148,7 @@ public class PopupCompose extends Activity {
     View.OnClickListener onTakePictureClick = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            final Activity activity = PopupCompose.this;
+            final Activity activity = PopupComposeStatus.this;
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
                 File photoFile;
@@ -213,8 +212,6 @@ public class PopupCompose extends Activity {
                 Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
                 long now = (System.currentTimeMillis() / 1000L);
                 PushStatus pushStatus = new PushStatus(localContact, group, message, now);
-                pushStatus.setAuthor(localContact);
-                pushStatus.setGroup(group);
                 pushStatus.setUserRead(true);
 
                 if (mCurrentPhotoFile != null) {
@@ -249,7 +246,7 @@ public class PopupCompose extends Activity {
         private Group selectedItem;
 
         public GroupSpinnerAdapter() {
-            super(PopupCompose.this, android.R.layout.simple_spinner_item);
+            super(PopupComposeStatus.this, android.R.layout.simple_spinner_item);
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             groupList = new ArrayList<Group>();
             selectedItem = null;

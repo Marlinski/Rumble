@@ -65,21 +65,13 @@
                         android:textColor="@color/pure_white"
                         android:textSize="20dp"
                         android:layout_gravity="center_vertical"
-                        android:text="@string/popup_compose_title"/>
+                        android:text="@string/popup_compose_chat_title"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="10"/>
-                <ImageView
-                    android:id="@+id/group_lock_image"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginRight="5dp"
-                    android:gravity="right"
-                    android:layout_gravity="center_vertical"/>
-
             </LinearLayout>
 
             <View
@@ -136,12 +128,6 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="10"/>
-                <Spinner
-                    android:id="@+id/group_list_spinner"
-                    android:layout_gravity="center_vertical"
-                    android:minWidth="100dp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
                 <ImageButton android:id="@+id/popup_button_send"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

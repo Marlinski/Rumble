@@ -20,8 +20,8 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
-import org.disrupted.rumble.database.objects.ChatStatus;
-import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.HashUtil;
@@ -87,8 +87,8 @@ public class FirechatMessageParser {
         return jsonStatus.toString()+"\n";
     }
 
-    public ChatStatus networkToStatus(JSONObject message) throws JSONException{
-        ChatStatus retMessage = null;
+    public ChatMessage networkToStatus(JSONObject message) throws JSONException{
+        ChatMessage retMessage = null;
 
         String post = "";
         long   length = 0;
@@ -106,7 +106,9 @@ public class FirechatMessageParser {
          * todo: I don't really get how firechat computes its timestamp, it doesn't seem
          * to be seconds since EPOCH so we keep the time of arrival instead
          */
-        retMessage = new ChatStatus(author, post+" #"+firechat, now);
+        String author_uid = HashUtil.computeContactUid(author+"firechatauthor",0);
+        Contact contact = new Contact(author, author_uid, false);
+        retMessage = new ChatMessage(contact, post+" #"+firechat, now);
         retMessage.setFileSize(length);
 
         return retMessage;

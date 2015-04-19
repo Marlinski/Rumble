@@ -119,10 +119,17 @@
         </activity>
 
         <activity
-            android:name=".userinterface.activity.PopupCompose"
+            android:name=".userinterface.activity.PopupComposeStatus"
             android:screenOrientation="portrait"
             android:theme="@style/PopupActivity"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
+
+        <activity
+            android:name=".userinterface.activity.PopupComposeChat"
+            android:screenOrientation="portrait"
+            android:theme="@style/PopupActivity"
+            android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
+
 
         <activity
             android:name=".userinterface.activity.PopupCreateGroup"

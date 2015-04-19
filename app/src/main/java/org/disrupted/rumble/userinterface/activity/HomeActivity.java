@@ -48,7 +48,7 @@ import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
-import org.disrupted.rumble.userinterface.fragments.FragmentDirectMessage;
+import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
@@ -73,7 +73,7 @@ public class HomeActivity extends ActionBarActivity {
     public SlidingMenu slidingMenu;
 
     private Fragment fragmentStatusList = new FragmentStatusList();
-    private Fragment fragmentTchat = new FragmentDirectMessage();
+    private Fragment fragmentTchat = new FragmentChatMessage();
     private View notifPublic;
     private View notifChat;
 

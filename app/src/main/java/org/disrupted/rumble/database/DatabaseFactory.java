@@ -39,7 +39,7 @@ public class DatabaseFactory {
 
     private DatabaseHelper                       databaseHelper;
     private final PushStatusDatabase             pushStatusDatabase;
-    private final ChatStatusDatabase             chatStatusDatabase;
+    private final ChatMessageDatabase chatMessageDatabase;
     private final HashtagDatabase                hashtagDatabase;
     private final StatusTagDatabase              statusTagDatabase;
     private final GroupDatabase                  groupDatabase;
@@ -62,8 +62,8 @@ public class DatabaseFactory {
     public static PushStatusDatabase getPushStatusDatabase(Context context) {
             return getInstance(context).pushStatusDatabase;
     }
-    public static ChatStatusDatabase getChatStatusDatabase(Context context) {
-        return getInstance(context).chatStatusDatabase;
+    public static ChatMessageDatabase getChatMessageDatabase(Context context) {
+        return getInstance(context).chatMessageDatabase;
     }
     public static HashtagDatabase getHashtagDatabase(Context context) {
         return getInstance(context).hashtagDatabase;
@@ -97,7 +97,7 @@ public class DatabaseFactory {
         this.databaseHelper                 = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.interfaceDatabase              = new InterfaceDatabase(context, databaseHelper);
         this.pushStatusDatabase             = new PushStatusDatabase(context, databaseHelper);
-        this.chatStatusDatabase             = new ChatStatusDatabase(context, databaseHelper);
+        this.chatMessageDatabase = new ChatMessageDatabase(context, databaseHelper);
         this.hashtagDatabase                = new HashtagDatabase(context, databaseHelper);
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
@@ -114,7 +114,7 @@ public class DatabaseFactory {
 
         this.contactDatabase.reset(databaseHelper);
         this.pushStatusDatabase.reset(databaseHelper);
-        this.chatStatusDatabase.reset(databaseHelper);
+        this.chatMessageDatabase.reset(databaseHelper);
         this.hashtagDatabase.reset(databaseHelper);
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
@@ -143,7 +143,7 @@ public class DatabaseFactory {
             db.execSQL(PushStatusDatabase.CREATE_TABLE);
             db.execSQL(HashtagDatabase.CREATE_TABLE);
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
-            db.execSQL(ChatStatusDatabase.CREATE_TABLE);
+            db.execSQL(ChatMessageDatabase.CREATE_TABLE);
             db.execSQL(InterfaceDatabase.CREATE_TABLE);
             db.execSQL(StatusInterfaceDatabase.CREATE_TABLE);
             db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);

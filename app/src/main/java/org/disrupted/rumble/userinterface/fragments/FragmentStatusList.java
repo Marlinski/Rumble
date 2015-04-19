@@ -43,7 +43,7 @@ import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.userinterface.activity.PopupCompose;
+import org.disrupted.rumble.userinterface.activity.PopupComposeStatus;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
@@ -68,8 +68,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private FilterListAdapter  filterListAdapter;
     private ListView filters;
 
-    private int notif;
-
     public interface OnFilterClick {
         public void onClick(String entry);
     }
@@ -87,7 +85,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         super.onCreateView(inflater, container, savedInstanceState);
 
         mView = inflater.inflate(R.layout.status_list, container, false);
-        notif = 0;
 
         // the filters
         filters = (ListView) (mView.findViewById(R.id.filter_list));
@@ -104,7 +101,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         final int swipeDistance = Math.round(64 * density);
         swipeLayout.setProgressViewOffset(true, 10, 10+swipeDistance);
         */
-
         statusList = (ListView) mView.findViewById(R.id.status_list);
         statusListAdapter = new StatusListAdapter(getActivity(), this);
         statusListAdapter.registerDataSetObserver(new DataSetObserver() {
@@ -143,7 +139,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                 //do something
                 return true;
             case R.id.action_compose:
-                Intent compose = new Intent(getActivity(), PopupCompose.class );
+                Intent compose = new Intent(getActivity(), PopupComposeStatus.class );
                 startActivity(compose);
                 return true;
         }

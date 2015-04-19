@@ -222,9 +222,9 @@ public class PushStatusDatabase extends Database {
         }
 
         /* 3rd:  Add the constraints */
-        if (options.filterFlags > 0) {
+        if (options.filterFlags > 0)
             query.append(" WHERE ( ");
-        }
+
         if(hashtagJoined) {
             firstwhere = false;
             query.append(" h."+HashtagDatabase.HASHTAG +" IN ( ? ");
