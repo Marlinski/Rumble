@@ -122,11 +122,18 @@ public class GroupListAdapter extends BaseAdapter {
                     keybytes = key.getEncoded();
                 else
                     keybytes = new byte[0];
+
                 byteBuffer = ByteBuffer.allocate(2 + name.length() + gid.length() + keybytes.length);
+
+                // send group name
                 byteBuffer.put((byte)name.length());
                 byteBuffer.put(name.getBytes(),0,name.length());
+
+                // send group ID
                 byteBuffer.put((byte)gid.length());
                 byteBuffer.put(gid.getBytes());
+
+                // send key
                 byteBuffer.put(keybytes);
                 String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
 
