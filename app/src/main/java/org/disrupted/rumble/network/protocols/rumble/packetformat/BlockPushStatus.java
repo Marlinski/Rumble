@@ -24,8 +24,8 @@ import android.util.Base64;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
-import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
+import org.disrupted.rumble.network.protocols.events.PushStatusSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -103,14 +103,14 @@ public class BlockPushStatus extends Block{
                     FIELD_REPLICATION_SIZE +
                     FIELD_LIKE_SIZE);
 
-    private static final int MAX_STATUS_SIZE = 500; // limiting status to 500 character;
+    private static final int MAX_STATUS_SIZE = 255; // limiting status to 500 character;
     private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_STATUS_SIZE;
 
     private PushStatus status;
 
     public BlockPushStatus(CommandSendPushStatus command) {
         super(new BlockHeader());
-        this.header.setBlockType(BlockHeader.BLOCKTYPE_STATUS);
+        this.header.setBlockType(BlockHeader.BLOCKTYPE_PUSH_STATUS);
         this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.status = command.getStatus();
     }
@@ -122,8 +122,8 @@ public class BlockPushStatus extends Block{
 
     @Override
     public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        if(header.getBlockType() != BlockHeader.BLOCKTYPE_STATUS)
-            throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
+        if(header.getBlockType() != BlockHeader.BLOCKTYPE_PUSH_STATUS)
+            throw new MalformedBlockPayload("Block type BLOCK_STATUS expected", 0);
 
         long readleft = header.getBlockLength();
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
@@ -213,7 +213,7 @@ public class BlockPushStatus extends Block{
             status.setLike((int) like);
 
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
-            EventBus.getDefault().post(new PushStatusReceivedEvent(
+            EventBus.getDefault().post(new PushStatusReceived(
                             status,
                             con.getRemoteLinkLayerAddress(),
                             RumbleProtocol.protocolID,
@@ -281,7 +281,7 @@ public class BlockPushStatus extends Block{
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
-        EventBus.getDefault().post(new PushStatusSentEvent(
+        EventBus.getDefault().post(new PushStatusSent(
                         status,
                         recipients,
                         RumbleProtocol.protocolID,

@@ -1,6 +1,6 @@
 package org.disrupted.rumble.network.services.push;
 
-import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -70,7 +70,7 @@ public class ReplicationDensityWatcher {
         return (1-(nbOfCopies / messageReceived));
     }
 
-    public void onEvent(PushStatusReceivedEvent event) {
+    public void onEvent(PushStatusReceived event) {
         final String uuid = event.status.getUuid();
         Integer nbOfCopies = copiesReceived.get(uuid);
         if(nbOfCopies == null)

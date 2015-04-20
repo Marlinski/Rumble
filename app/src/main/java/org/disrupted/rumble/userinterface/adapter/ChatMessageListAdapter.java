@@ -22,11 +22,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.amulyakhare.textdrawable.TextDrawable;
@@ -81,23 +84,31 @@ public class ChatMessageListAdapter extends BaseAdapter {
         final ChatMessage message = chatMessageList.get(i);
 
         View chatMessageView = inflater.inflate(R.layout.chat_message_item, null);
+        FrameLayout senderBox   =  (FrameLayout) chatMessageView.findViewById(R.id.chat_sender_avatar_box);
         ImageView senderAvatar  = (ImageView)chatMessageView.findViewById(R.id.chat_sender_avatar);
+        FrameLayout localBox    =  (FrameLayout) chatMessageView.findViewById(R.id.chat_local_avatar_box);
         ImageView localAvatar   = (ImageView)chatMessageView.findViewById(R.id.chat_local_avatar);
+        LinearLayout messageBox = (LinearLayout)chatMessageView.findViewById(R.id.chat_message_box);
         TextView  authorView    = (TextView) chatMessageView.findViewById(R.id.chat_message_author);
-        TextView  textView      = (TextView) chatMessageView.findViewById(R.id.chat_message_item_body);
+        TextView  textView      = (TextView) chatMessageView.findViewById(R.id.chat_message_text);
         ImageView attachedView  = (ImageView)chatMessageView.findViewById(R.id.chat_message_attached_image);
 
         ImageView avatar;
         Contact author = Contact.getLocalContact();
-        if(message.getContact().equals(author)) {
-            senderAvatar.setVisibility(View.GONE);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        if(message.getAuthor().equals(author)) {
+            senderBox.setVisibility(View.INVISIBLE);
             avatar = localAvatar;
+            params.gravity = Gravity.RIGHT;
         } else {
-            localAvatar.setVisibility(View.GONE);
+            localBox.setVisibility(View.INVISIBLE);
             avatar = senderAvatar;
-            author = message.getContact();
+            author = message.getAuthor();
+            params.gravity = Gravity.LEFT;
         }
-        avatar.setVisibility(View.VISIBLE);
+        messageBox.setLayoutParams(params);
+        authorView.setLayoutParams(params);
+
 
         // we draw the avatar
         ColorGenerator generator = ColorGenerator.DEFAULT;
@@ -109,45 +120,39 @@ public class ChatMessageListAdapter extends BaseAdapter {
         authorView.setText(author.getName());
 
         // we draw the status (with clickable hashtag)
-        if (message.getMessage().length() > 0) {
-            attachedView.setVisibility(View.GONE);
+        if (message.getMessage().length() > 0)
             textView.setText(message.getMessage());
-            return chatMessageView;
-        } else {
-            textView.setVisibility(View.GONE);
-            if (message.hasAttachedFile()) {
-                try {
-                    File attachedFile = new File(
-                            FileUtil.getReadableAlbumStorageDir(),
-                            message.getAttachedFile());
-                    if (!attachedFile.isFile() || !attachedFile.exists())
-                        throw new IOException("file does not exists");
 
-                    Picasso.with(activity)
-                            .load("file://" + attachedFile.getAbsolutePath())
-                            .resize(96, 96)
-                            .centerCrop()
-                            .into(attachedView);
+        //textView.setVisibility(View.GONE);
+        if (message.hasAttachedFile()) {
+            try {
+                File attachedFile = new File(
+                        FileUtil.getReadableAlbumStorageDir(),
+                        message.getAttachedFile());
+                if (!attachedFile.isFile() || !attachedFile.exists())
+                    throw new IOException("file does not exists");
 
-                    attachedView.setVisibility(View.VISIBLE);
+                Picasso.with(activity)
+                        .load("file://" + attachedFile.getAbsolutePath())
+                        .resize(96, 96)
+                        .centerCrop()
+                        .into(attachedView);
 
-                    final String name = message.getAttachedFile();
-                    attachedView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Log.d(TAG, "trying to open: " + name);
-                            Intent intent = new Intent(activity, DisplayImage.class);
-                            intent.putExtra("IMAGE_NAME", name);
-                            activity.startActivity(intent);
-                        }
-                    });
-                } catch (IOException ignore) {
-                }
-            } else {
-                attachedView.setVisibility(View.GONE);
+                final String name = message.getAttachedFile();
+                attachedView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Log.d(TAG, "trying to open: " + name);
+                        Intent intent = new Intent(activity, DisplayImage.class);
+                        intent.putExtra("IMAGE_NAME", name);
+                        activity.startActivity(intent);
+                    }
+                });
+                attachedView.setVisibility(View.VISIBLE);
+            } catch (IOException ignore) {
             }
-            return chatMessageView;
         }
+        return chatMessageView;
     }
 
     @Override

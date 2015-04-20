@@ -15,31 +15,27 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.network.protocols.command;
 
-import org.disrupted.rumble.network.events.NetworkEvent;
-
-import java.util.List;
+import org.disrupted.rumble.database.objects.ChatMessage;
 
 /**
  * @author Marlinski
  */
-public class FileSentEvent extends NetworkEvent {
+public class CommandSendChatMessage extends Command {
 
-    public String filepath;
-    public List<String> recipients;
-    public String protocolID;
-    public String linkLayerIdentifier;
-    public long size;
-    public long duration;
+    private ChatMessage chatMessage;
 
-    public FileSentEvent(String filepath, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.filepath = filepath;
-        this.recipients = recipients;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
+    public CommandSendChatMessage(ChatMessage chatMessage){
+        this.chatMessage = chatMessage;
     }
 
+    public ChatMessage getChatMessage() {
+        return chatMessage;
+    }
+
+    @Override
+    public CommandID getCommandID() {
+        return CommandID.SEND_CHAT_MESSAGE;
+    }
 }

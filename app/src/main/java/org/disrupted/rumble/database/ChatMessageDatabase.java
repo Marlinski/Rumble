@@ -146,7 +146,7 @@ public class ChatMessageDatabase extends Database {
     public long insertMessage(ChatMessage chatMessage){
         ContentValues contentValues = new ContentValues();
 
-        long contact_DBID = DatabaseFactory.getContactDatabase(context).getContactDBID(chatMessage.getContact().getUid());
+        long contact_DBID = DatabaseFactory.getContactDatabase(context).getContactDBID(chatMessage.getAuthor().getUid());
         if(contact_DBID <0)
             return -1;
 
@@ -175,10 +175,17 @@ public class ChatMessageDatabase extends Database {
         Contact contact  = DatabaseFactory.getContactDatabase(context).getContact(contact_dbid);
         long toa         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL));
         String message   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
+        String filename  = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
 
         ChatMessage chatMessage = new ChatMessage(contact, message, toa);
         chatMessage.setUserRead(cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1);
+        chatMessage.setAttachedFile(filename);
 
         return chatMessage;
+    }
+
+    public void wipe() {
+        SQLiteDatabase database = databaseHelper.getWritableDatabase();
+        database.delete(TABLE_NAME, null, null);
     }
 }

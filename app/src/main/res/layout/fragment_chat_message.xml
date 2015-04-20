@@ -36,6 +36,7 @@
         android:clipToPadding="false"
         android:focusable="false"
         android:focusableInTouchMode="false"
+        android:transcriptMode="alwaysScroll"
         android:clickable="false"
         android:smoothScrollbar="true"
         android:scrollingCache="false"

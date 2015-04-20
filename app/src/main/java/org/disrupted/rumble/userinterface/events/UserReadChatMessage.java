@@ -15,31 +15,18 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.userinterface.events;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
-import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
  * @author Marlinski
  */
-public class ChatStatusReceivedEvent extends NetworkEvent {
+public class UserReadChatMessage extends UserInteractionEvent {
 
-    public ChatMessage status;
-    public String author_name;
-    public String group_name;
-    public String sender;
-    public String protocolID;
-    public String linkLayerIdentifier;
-    public long size;
-    public long duration;
+    public ChatMessage chatMessage;
 
-    public ChatStatusReceivedEvent(ChatMessage status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.status = status;
-        this.sender = sender;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
+    public UserReadChatMessage(ChatMessage status) {
+        this.chatMessage = chatMessage;
     }
 }

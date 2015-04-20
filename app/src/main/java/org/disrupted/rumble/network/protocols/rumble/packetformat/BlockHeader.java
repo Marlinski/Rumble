@@ -88,10 +88,11 @@ public class BlockHeader {
     public static final int TRANSACTION_TYPE_RESPONSE  = 0x02;
     public static final int TRANSACTION_TYPE_PUSH      = 0x03;
 
-    public static final int BLOCKTYPE_HELLO   = 0x00;
-    public static final int BLOCKTYPE_STATUS  = 0x01;
-    public static final int BLOCKTYPE_FILE    = 0x02;
-    public static final int BLOCKTYPE_CONTACT = 0x03;
+    public static final int BLOCKTYPE_HELLO         = 0x00;
+    public static final int BLOCKTYPE_PUSH_STATUS   = 0x01;
+    public static final int BLOCKTYPE_FILE          = 0x02;
+    public static final int BLOCKTYPE_CONTACT       = 0x03;
+    public static final int BLOCKTYPE_CHAT_MESSAGE  = 0x04;
 
     public BlockHeader() {
         version = VERSION_ID;

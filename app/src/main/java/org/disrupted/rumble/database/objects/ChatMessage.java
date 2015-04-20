@@ -49,7 +49,7 @@ public class ChatMessage {
         this.fileSize = message.fileSize;
     }
 
-    public Contact getContact() {         return contact;                  }
+    public Contact getAuthor() {          return contact;                  }
     public String  getMessage() {         return message;                  }
     public long    getTimeOfArrival() {   return timeOfArrival;            }
     public long    getFileSize() {        return fileSize;                 }

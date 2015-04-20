@@ -25,17 +25,17 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
-import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
-import org.disrupted.rumble.network.protocols.events.FileReceivedEvent;
-import org.disrupted.rumble.network.protocols.events.PushStatusReceivedEvent;
-import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
+import org.disrupted.rumble.network.protocols.events.FileReceived;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
+import org.disrupted.rumble.network.protocols.events.PushStatusSent;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.userinterface.events.UserCreateGroup;
@@ -46,6 +46,7 @@ import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
+import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.HashUtil;
@@ -102,7 +103,7 @@ public class CacheManager {
     /*
      * Managing Network Interaction
      */
-    public void onEvent(PushStatusSentEvent event) {
+    public void onEvent(PushStatusSent event) {
         if(event.status == null)
             return;
         Log.d(TAG, " [.] status sent: "+event.status.toString());
@@ -122,7 +123,7 @@ public class CacheManager {
             }
         }
     }
-    public void onEvent(PushStatusReceivedEvent event) {
+    public void onEvent(PushStatusReceived event) {
         if(event.status == null)
             return;
         if((event.status.getAuthor() == null) || (event.status.getGroup() == null))
@@ -177,7 +178,7 @@ public class CacheManager {
             DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(exists.getdbId(), interfaceDBID);
         }
     }
-    public void onEvent(FileReceivedEvent event) {
+    public void onEvent(FileReceived event) {
         if(event.filename == null)
             return;
         Log.d(TAG, " [.] file received: "+event.filename);
@@ -253,7 +254,25 @@ public class CacheManager {
             EventBus.getDefault().post(new ContactTagInterestUpdatedEvent(contact));
         }
     }
+    public void onEvent(ChatMessageReceived event) {
+        if(event.chatMessage == null)
+            return;
+        Log.d(TAG, " [.] chat message received: "+event.chatMessage.toString());
 
+        // we insert/update the contact to the database
+        Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.chatMessage.getAuthor().getUid());
+        if(contact == null) {
+            contact = event.chatMessage.getAuthor();
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
+        } else if(!contact.getName().equals(event.chatMessage.getAuthor().getName())) {
+            // we do not accept message for which the author has changed since we last known of (UID/name)
+            Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.chatMessage.getAuthor().getName());
+            return;
+        }
+        ChatMessage chatMessage = new ChatMessage(event.chatMessage);
+        if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
+        EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+    }
 
     /*
      * Managing User Interaction
@@ -347,7 +366,6 @@ public class CacheManager {
     public void onEvent(UserWipeStatuses event) {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
     }
-
     public void onEvent(UserComposeChatMessage event) {
         if(event.chatMessage == null)
             return;
@@ -355,5 +373,8 @@ public class CacheManager {
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
             EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+    }
+    public void onEvent(UserWipeChatMessages event) {
+        DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();
     }
 }

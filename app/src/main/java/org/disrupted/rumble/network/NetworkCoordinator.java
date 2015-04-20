@@ -30,6 +30,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.network.services.chat.ChatService;
 import org.disrupted.rumble.userinterface.activity.RoutingActivity;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
@@ -125,6 +126,7 @@ public class NetworkCoordinator extends Service {
 
             // start services
             PushService.startService();
+            ChatService.startService();
             EventBus.getDefault().register(this);
         }
     }
@@ -142,6 +144,7 @@ public class NetworkCoordinator extends Service {
 
             // stop services
             PushService.stopService();
+            ChatService.stopService();
 
             // destroy protocols
             for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {

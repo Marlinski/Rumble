@@ -23,8 +23,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.protocols.events.FileReceivedEvent;
-import org.disrupted.rumble.network.protocols.events.FileSentEvent;
+import org.disrupted.rumble.network.protocols.events.FileReceived;
+import org.disrupted.rumble.network.protocols.events.FileSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -164,7 +164,7 @@ public class BlockFile extends Block {
                 // update the database
                 String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
                 Log.e(TAG, "[+] "+(header.getBlockLength()+header.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
-                EventBus.getDefault().post(new FileReceivedEvent(
+                EventBus.getDefault().post(new FileReceived(
                                 attachedFile.getName(),
                                 status_id_base64,
                                 con.getRemoteLinkLayerAddress(),
@@ -234,7 +234,7 @@ public class BlockFile extends Block {
         timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
-        EventBus.getDefault().post(new FileSentEvent(
+        EventBus.getDefault().post(new FileSent(
                         filename,
                         recipients,
                         RumbleProtocol.protocolID,

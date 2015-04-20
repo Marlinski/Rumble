@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 /**
  * @author Marlinski
  */
-public class ChatReceivedEvent extends NetworkEvent {
+public class ChatMessageReceived extends NetworkEvent {
 
     public ChatMessage chatMessage;
     public String sender;
@@ -32,7 +32,7 @@ public class ChatReceivedEvent extends NetworkEvent {
     public long size;
     public long duration;
 
-    public ChatReceivedEvent(ChatMessage chatMessage, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ChatMessageReceived(ChatMessage chatMessage, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.chatMessage = chatMessage;
         this.sender = sender;
         this.protocolID = protocolID;

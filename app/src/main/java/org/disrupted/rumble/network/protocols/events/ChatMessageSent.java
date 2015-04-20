@@ -17,25 +17,26 @@
 
 package org.disrupted.rumble.network.protocols.events;
 
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.events.NetworkEvent;
+
+import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class FileReceivedEvent extends NetworkEvent {
+public class ChatMessageSent extends NetworkEvent {
 
-    public String filename;
-    public String uuid;
-    public String sender;
+    public ChatMessage chatMessage;
+    public List<String> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public FileReceivedEvent(String filename, String uuid, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
-        this.filename = filename;
-        this.uuid = uuid;
-        this.sender = sender;
+    public ChatMessageSent(ChatMessage chatMessage, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+        this.chatMessage = chatMessage;
+        this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;

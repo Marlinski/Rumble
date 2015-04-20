@@ -26,10 +26,10 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.protocols.events.ChatStatusReceivedEvent;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.protocols.events.PushStatusSentEvent;
+import org.disrupted.rumble.network.protocols.events.PushStatusSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -223,7 +223,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                          * It is very important to post an event as it will be catch by the
                          * CacheManager and will update the database accordingly
                          */
-                        EventBus.getDefault().post(new ChatStatusReceivedEvent(
+                        EventBus.getDefault().post(new ChatMessageReceived(
                                         status,
                                         con.getRemoteLinkLayerAddress(),
                                         FirechatProtocol.protocolID,
@@ -293,14 +293,6 @@ public class FirechatOverBluetooth extends ProtocolWorker {
         }
     }
 
-
-    @Override
-    public boolean isCommandSupported(Command.CommandID commandID) {
-        if(commandID.equals(Command.CommandID.SEND_CHAT_STATUS))
-            return true;
-        return false;
-    }
-
     @Override
     protected boolean onCommandReceived(Command command) {
         if(command instanceof CommandSendPushStatus) {
@@ -337,7 +329,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
                 recipients.add(con.getRemoteLinkLayerAddress());
-                EventBus.getDefault().post(new PushStatusSentEvent(
+                EventBus.getDefault().post(new PushStatusSent(
                                 pushStatus,
                         recipients,
                         FirechatProtocol.protocolID,

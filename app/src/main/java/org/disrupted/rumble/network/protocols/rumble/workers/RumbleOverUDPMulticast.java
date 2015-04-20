@@ -127,11 +127,6 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     }
 
     @Override
-    public boolean isCommandSupported(Command.CommandID commandID) {
-        return false;
-    }
-
-    @Override
     protected boolean onCommandReceived(Command command) {
         return false;
     }

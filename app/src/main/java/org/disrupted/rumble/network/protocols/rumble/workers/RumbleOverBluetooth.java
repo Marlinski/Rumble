@@ -21,6 +21,8 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
+import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
+import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -35,6 +37,7 @@ import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
@@ -189,7 +192,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                     BlockHeader header = BlockHeader.readBlock(con.getInputStream());
                     Block block;
                     switch (header.getBlockType()) {
-                        case BlockHeader.BLOCKTYPE_STATUS:
+                        case BlockHeader.BLOCKTYPE_PUSH_STATUS:
                             block = new BlockPushStatus(header);
                             break;
                         case BlockHeader.BLOCKTYPE_FILE:
@@ -197,6 +200,9 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                             break;
                         case BlockHeader.BLOCKTYPE_CONTACT:
                             block = new BlockContact(header);
+                            break;
+                        case BlockHeader.BLOCKTYPE_CHAT_MESSAGE:
+                            block = new BlockChatMessage(header);
                             break;
                         default:
                             block = new NullBlock(header);
@@ -233,17 +239,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public boolean isCommandSupported(Command.CommandID commandID) {
-        switch (commandID) {
-            case SEND_LOCAL_INFORMATION:
-            case SEND_PUSH_STATUS:
-                return true;
-            default:
-                return  false;
-        }
-    }
-
-    @Override
     protected boolean onCommandReceived(Command command) {
         Block block;
         try {
@@ -254,15 +249,20 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 case SEND_PUSH_STATUS:
                     block = new BlockPushStatus((CommandSendPushStatus) command);
                     break;
+                case SEND_CHAT_MESSAGE:
+                    block = new BlockChatMessage((CommandSendChatMessage) command);
+                    break;
                 default:
                     return false;
             }
             block.writeBlock(con);
             block.dismiss();
+            EventBus.getDefault().post(new CommandExecuted(this, command, true));
             return true;
         }
         catch(Exception ignore){
             Log.e(TAG, "[!] error while sending");
+            EventBus.getDefault().post(new CommandExecuted(this, command, false));
         }
         return false;
     }

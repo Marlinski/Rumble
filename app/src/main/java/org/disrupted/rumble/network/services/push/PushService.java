@@ -12,6 +12,8 @@ import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -54,7 +57,7 @@ public class PushService {
             return;
 
         synchronized (lock) {
-            Log.d(TAG, "[.] Starting PushService");
+            Log.d(TAG, "[+] Starting PushService");
             if (instance == null) {
                 instance = new PushService();
                 rdwatcher.start();
@@ -162,6 +165,9 @@ public class PushService {
         private final ReentrantLock takeLock = new ReentrantLock(true);
         private final Condition notEmpty = takeLock.newCondition();
 
+        // flow control
+        CountDownLatch latch;
+        Command lastPush;
         private boolean running;
 
         private PushStatus max;
@@ -252,10 +258,15 @@ public class PushService {
                     // pickup a message and send it to the CommandExecutor
                     if (worker != null) {
                         PushStatus message = pickMessage();
-                        worker.execute(new CommandSendPushStatus(message));
+                        lastPush = new CommandSendPushStatus(message);
+                        latch = new CountDownLatch(1);
+                        worker.execute(lastPush);
+
+                        // wait for the command to be executed
+                        if(latch.getCount() > 0)
+                            latch.await();
+                        lastPush = null;
                         message.discard();
-                        //todo just for the sake of debugging
-                        //sleep(1000, 0);
                     }
 
                 } while (running);
@@ -424,8 +435,26 @@ public class PushService {
             return pickedUpMessage;
         }
 
+        public void sendLocalPreferences(int flags) {
+            Contact local = Contact.getLocalContact();
+            CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
+            worker.execute(command);
+        }
+
+
+        // ====================== Event management ==========================
+
         /*
-         * Event management
+         * signalling that status has been pushed
+         */
+        public void onEvent(CommandExecuted event) {
+            if(event.worker.equals(this.worker) && event.command.equals(this.lastPush))
+                this.latch.countDown();
+        }
+
+
+        /*
+         * Keeping the list of status to push up-to-date
          */
         public void onEvent(StatusDeletedEvent event) {
             fullyLock();
@@ -442,6 +471,9 @@ public class PushService {
         }
 
         /*
+         * we don't send any status until we received an Interest Vector and thus, until
+         * we bound the interface with a contact.
+         *
          * this event only bind the contact uid with the interface
          * we wait for the related DatabaseEvent (if any) for updating the status list
          */
@@ -473,10 +505,5 @@ public class PushService {
             }
         }
 
-        public void sendLocalPreferences(int flags) {
-            Contact local = Contact.getLocalContact();
-            CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
-            worker.execute(command);
-        }
     }
 }

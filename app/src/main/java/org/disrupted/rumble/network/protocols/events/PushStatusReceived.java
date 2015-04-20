@@ -22,7 +22,7 @@ import org.disrupted.rumble.database.objects.PushStatus;
  *
  * @author Marlinski
  */
-public class PushStatusReceivedEvent {
+public class PushStatusReceived {
 
     public PushStatus status;
     public String sender;
@@ -31,7 +31,7 @@ public class PushStatusReceivedEvent {
     public long size;
     public long duration;
 
-    public PushStatusReceivedEvent(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusReceived(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.sender = sender;
         this.protocolID = protocolID;

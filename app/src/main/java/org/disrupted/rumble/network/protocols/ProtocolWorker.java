@@ -19,13 +19,17 @@
 
 package org.disrupted.rumble.network.protocols;
 
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import de.greenrobot.event.EventBus;
 
 
 /**
@@ -41,7 +45,7 @@ public abstract class ProtocolWorker implements Worker {
     private BlockingQueue<Command> commandQueue;
 
     public ProtocolWorker() {
-        commandQueue = new LinkedBlockingQueue<Command>(1);
+        commandQueue = new LinkedBlockingQueue<Command>();
     }
 
     protected final void onWorkerConnected() {
@@ -70,24 +74,32 @@ public abstract class ProtocolWorker implements Worker {
 
     public final boolean execute(Command command){
         try {
-            if (isCommandSupported(command.getCommandID())) {
-                commandQueue.put(command);
-                return true;
-            } else {
-                Log.d(TAG, "[!] command is not supported: " + command.getCommandID());
-                return false;
-            }
+            commandQueue.put(command);
+            return true;
         } catch (InterruptedException ignore) {
             return false;
         }
     }
-
-
-    abstract public boolean isCommandSupported(Command.CommandID commandID);
 
     abstract protected boolean onCommandReceived(Command command);
 
     abstract public LinkLayerConnection getLinkLayerConnection();
 
     abstract protected void processingPacketFromNetwork();
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+        if(o instanceof ProtocolWorker) {
+            ProtocolWorker worker = (ProtocolWorker)o;
+            return this.getWorkerIdentifier().equals(worker.getWorkerIdentifier());
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getProtocolIdentifier().hashCode();
+    }
 }

@@ -42,7 +42,7 @@ import java.util.List;
  *
  * @author Marlinski
  */
-public class PushStatusSentEvent extends NetworkEvent {
+public class PushStatusSent extends NetworkEvent {
 
     public PushStatus status;
     public List<String> recipients;
@@ -51,7 +51,7 @@ public class PushStatusSentEvent extends NetworkEvent {
     public long size;
     public long duration;
 
-    public PushStatusSentEvent(PushStatus status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusSent(PushStatus status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.recipients = recipients;
         this.protocolID = protocolID;

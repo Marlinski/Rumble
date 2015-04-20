@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,32 +11,14 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.command;
-
-import org.disrupted.rumble.database.objects.PushStatus;
+package org.disrupted.rumble.userinterface.events;
 
 /**
  * @author Marlinski
  */
-public class CommandSendPushStatus extends Command {
-
-    private PushStatus status;
-
-    public CommandSendPushStatus(PushStatus status){
-        this.status = status;
-    }
-
-    public PushStatus getStatus() {
-        return status;
-    }
-
-    @Override
-    public CommandID getCommandID() {
-        return CommandID.SEND_PUSH_STATUS;
-    }
-
+public class UserWipeChatMessages extends UserInteractionEvent {
 }

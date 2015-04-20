@@ -145,6 +145,7 @@
                     android:layout_weight="1"
                     style="@style/Status.Body"/>
                 <ImageView
+
                     android:id="@+id/status_item_attached_image"
                     android:layout_width="100dp"
                     android:layout_height="100dp"

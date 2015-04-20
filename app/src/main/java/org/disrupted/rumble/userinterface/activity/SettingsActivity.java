@@ -31,6 +31,7 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
 import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
+import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
 
 import java.util.LinkedList;
@@ -69,8 +70,12 @@ public class SettingsActivity extends ActionBarActivity implements ListView.OnIt
         settingsList = new LinkedList<IconTextItem>();
         settingsList.add(new IconTextItem(
                 R.drawable.ic_delete_white_24dp,
-                getResources().getString(R.string.settings_action_delete),
+                getResources().getString(R.string.settings_action_wipe_status),
                 1));
+        settingsList.add(new IconTextItem(
+                R.drawable.ic_delete_white_24dp,
+                getResources().getString(R.string.settings_action_wipe_chat),
+                2));
 
         listAdapter = new IconTextListAdapter(this, settingsList);
         settingsListView = (ListView) findViewById(R.id.settings_list);
@@ -83,6 +88,8 @@ public class SettingsActivity extends ActionBarActivity implements ListView.OnIt
         switch(settingsList.get(position).getID()) {
             case 1:
                 EventBus.getDefault().post(new UserWipeStatuses());
+            case 2:
+                EventBus.getDefault().post(new UserWipeChatMessages());
             default:
         }
     }

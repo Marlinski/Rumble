@@ -22,7 +22,6 @@ package org.disrupted.rumble.network.protocols.firechat.workers;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
-import org.disrupted.rumble.network.protocols.events.ChatStatusReceivedEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
@@ -30,6 +29,7 @@ import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.json.JSONException;
@@ -134,12 +134,12 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
         try {
             while(true) {
                 con.receive(packet);
-                ChatMessage status;
+                ChatMessage chatMessage;
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
                     JSONObject message = new JSONObject(jsonString);
-                    status = parser.networkToStatus(message);
-                    if(status.getFileSize() > 0) {
+                    chatMessage = parser.networkToStatus(message);
+                    if(chatMessage.getFileSize() > 0) {
                         Log.d(TAG, "we do not accept attached file yet");
                         continue;
                     }
@@ -148,12 +148,12 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
                      * since we cannot have the mac address of the remote device, we use the IP address
                      * instead.
                      */
-                    EventBus.getDefault().post(new ChatStatusReceivedEvent(
-                                    status,
+                    EventBus.getDefault().post(new ChatMessageReceived(
+                                    chatMessage,
                                     con.getRemoteLinkLayerAddress(),
                                     FirechatProtocol.protocolID,
                                     BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                                    status.getFileSize()+jsonString.length(),
+                                    chatMessage.getFileSize()+jsonString.length(),
                                     -1)
                     );
 
@@ -164,11 +164,6 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
             }
         } catch (IOException e) {
         }
-    }
-
-    @Override
-    public boolean isCommandSupported(Command.CommandID commandID) {
-        return false;
     }
 
     @Override
