@@ -39,9 +39,12 @@ import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.ChatMessageDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.PushStatusDatabase;
+import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
+import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
@@ -66,8 +69,9 @@ public class HomeActivity extends ActionBarActivity {
 
     private Fragment fragmentStatusList = new FragmentStatusList();
     private Fragment fragmentTchat = new FragmentChatMessage();
-    private View notifPublic;
+    private View notifStatus;
     private View notifChat;
+    private boolean chatHasFocus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,11 +109,11 @@ public class HomeActivity extends ActionBarActivity {
 
         /* three tabs with notification icons */
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        notifPublic = renderTabView(this, R.drawable.ic_world);
+        notifStatus = renderTabView(this, R.drawable.ic_world);
         notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
 
         actionBar.addTab(actionBar.newTab()
-                .setCustomView(notifPublic)
+                .setCustomView(notifStatus)
                 .setTabListener(new HomeTabListener(fragmentStatusList)));
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifChat)
@@ -122,7 +126,8 @@ public class HomeActivity extends ActionBarActivity {
         actionBar.setDisplayShowHomeEnabled(false);
 
         // for notification
-        refreshNotifications();
+        refreshStatusNotifications();
+        refreshChatNotifications();
         EventBus.getDefault().register(this);
     }
 
@@ -187,6 +192,11 @@ public class HomeActivity extends ActionBarActivity {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.container, fragment)
                         .commit();
+
+                if(fragment instanceof FragmentChatMessage)
+                    chatHasFocus = true;
+                else
+                    chatHasFocus = false;
             }
         }
 
@@ -211,21 +221,21 @@ public class HomeActivity extends ActionBarActivity {
         return view;
     }
 
-    public void refreshNotifications() {
-        PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
-        options.filterFlags = PushStatusDatabase.StatusQueryOption.FILTER_READ;
-        options.read = false;
-        options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onRefreshPublic);
+    public void refreshStatusNotifications() {
+        PushStatusDatabase.StatusQueryOption statusQueryOption = new PushStatusDatabase.StatusQueryOption();
+        statusQueryOption.filterFlags = PushStatusDatabase.StatusQueryOption.FILTER_READ;
+        statusQueryOption.read = false;
+        statusQueryOption.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(statusQueryOption, onRefreshStatuses);
     }
-    DatabaseExecutor.ReadableQueryCallback onRefreshPublic = new DatabaseExecutor.ReadableQueryCallback() {
+    DatabaseExecutor.ReadableQueryCallback onRefreshStatuses = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(Object object) {
             final Integer count = (Integer)object;
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    TextView view = (TextView)notifPublic.findViewById(R.id.tab_badge);
+                    TextView view = (TextView) notifStatus.findViewById(R.id.tab_badge);
                     if (count > 0) {
                         view.setText(count.toString());
                         view.setVisibility(View.VISIBLE);
@@ -237,11 +247,47 @@ public class HomeActivity extends ActionBarActivity {
         }
     };
 
+    public void refreshChatNotifications() {
+        ChatMessageDatabase.ChatMessageQueryOption messageQueryOptions = new ChatMessageDatabase.ChatMessageQueryOption();
+        messageQueryOptions.filterFlags = ChatMessageDatabase.ChatMessageQueryOption.FILTER_READ;
+        messageQueryOptions.read = false;
+        messageQueryOptions.query_result = ChatMessageDatabase.ChatMessageQueryOption.QUERY_RESULT.COUNT;
+        DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getChatMessage(messageQueryOptions, onRefreshChatMessages);
+    }
+    DatabaseExecutor.ReadableQueryCallback onRefreshChatMessages = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(Object object) {
+            final Integer count = (Integer)object;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    TextView view = (TextView)notifChat.findViewById(R.id.tab_badge);
+                    if (count > 0) {
+                        view.setText(count.toString());
+                        view.setVisibility(View.VISIBLE);
+                    } else {
+                        view.setVisibility(View.INVISIBLE);
+                    }
+                }
+            });
+        }
+    };
+
+    public boolean isChatHasFocus() {
+        return chatHasFocus;
+    }
+
     /*
      * Handling Events coming from outside the activity
      */
     public void onEvent(StatusDatabaseEvent event) {
-        refreshNotifications();
+        refreshStatusNotifications();
+    }
+    public void onEvent(ChatMessageInsertedEvent event) {
+        refreshChatNotifications();
+    }
+    public void onEvent(ChatMessageUpdatedEvent event) {
+        refreshChatNotifications();
     }
 
 }

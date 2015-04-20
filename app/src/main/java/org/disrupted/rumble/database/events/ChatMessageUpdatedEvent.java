@@ -15,18 +15,21 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.events;
+package org.disrupted.rumble.database.events;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
  * @author Marlinski
  */
-public class UserReadChatMessage extends UserInteractionEvent {
+public class ChatMessageUpdatedEvent extends NetworkEvent {
 
-    public ChatMessage chatMessage;
+    public final ChatMessage chatMessage;
 
-    public UserReadChatMessage(ChatMessage chatMessage) {
+    public ChatMessageUpdatedEvent(ChatMessage chatMessage){
         this.chatMessage = chatMessage;
     }
+
+
 }

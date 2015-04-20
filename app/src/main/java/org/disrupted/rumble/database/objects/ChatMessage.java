@@ -17,12 +17,15 @@
 
 package org.disrupted.rumble.database.objects;
 
+import org.disrupted.rumble.util.HashUtil;
+
 /**
  * @author Marlinski
  */
 public class ChatMessage {
 
     protected Contact     contact;
+    protected String      uuid;
     protected String      message;
     protected String      attachedFile;
     protected long        fileSize;
@@ -30,6 +33,7 @@ public class ChatMessage {
     protected boolean     read;
 
     public ChatMessage(Contact contact, String message, long timeOfArrival) {
+        this.uuid = HashUtil.computeChatMessageUUID(contact.getUid(), message, timeOfArrival);
         this.contact = contact;
         this.message = message;
         this.timeOfArrival = timeOfArrival;
@@ -43,12 +47,14 @@ public class ChatMessage {
         this.contact = message.contact;
         this.message = message.message;
         this.timeOfArrival = message.timeOfArrival;
+        this.uuid = HashUtil.computeChatMessageUUID(this.contact.getUid(), this.message, timeOfArrival);
 
         this.read = message.read;
         this.attachedFile = message.attachedFile;
         this.fileSize = message.fileSize;
     }
 
+    public String  getUUID() {            return uuid;                     }
     public Contact getAuthor() {          return contact;                  }
     public String  getMessage() {         return message;                  }
     public long    getTimeOfArrival() {   return timeOfArrival;            }

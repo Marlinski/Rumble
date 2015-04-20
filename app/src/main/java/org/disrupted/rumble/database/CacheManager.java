@@ -43,6 +43,7 @@ import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
+import org.disrupted.rumble.userinterface.events.UserReadChatMessage;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
@@ -366,6 +367,7 @@ public class CacheManager {
     public void onEvent(UserWipeStatuses event) {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
     }
+
     public void onEvent(UserComposeChatMessage event) {
         if(event.chatMessage == null)
             return;
@@ -373,6 +375,14 @@ public class CacheManager {
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
             EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+    }
+    public void onEvent(UserReadChatMessage event) {
+        if(event.chatMessage == null)
+            return;
+        Log.d(TAG, " [.] user read chat message: "+event.chatMessage.toString());
+        event.chatMessage.setUserRead(true);
+        DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).updateMessage(event.chatMessage);
+        //todo throw an event
     }
     public void onEvent(UserWipeChatMessages event) {
         DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();

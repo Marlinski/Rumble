@@ -35,7 +35,9 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.ChatMessageDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.userinterface.activity.PopupComposeChat;
 import org.disrupted.rumble.userinterface.adapter.ChatMessageListAdapter;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
@@ -87,6 +89,8 @@ public class FragmentChatMessage extends Fragment {
         return mView;
     }
 
+
+
     @Override
     public void onDestroy() {
         if(EventBus.getDefault().isRegistered(this))
@@ -136,11 +140,12 @@ public class FragmentChatMessage extends Fragment {
         }
     };
 
-    public void onEvent(UserComposeChatMessage event) {
+    public void onEvent(ChatMessageInsertedEvent event) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                refreshChatMessages();
+                if(((HomeActivity)getActivity()).isChatHasFocus())
+                    refreshChatMessages();
             }
         });
     }

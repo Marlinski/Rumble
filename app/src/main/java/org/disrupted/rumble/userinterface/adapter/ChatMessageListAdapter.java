@@ -40,6 +40,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
+import org.disrupted.rumble.userinterface.events.UserReadChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
@@ -48,6 +49,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -152,6 +155,10 @@ public class ChatMessageListAdapter extends BaseAdapter {
             } catch (IOException ignore) {
             }
         }
+
+        if(!message.hasUserReadAlready())
+            EventBus.getDefault().post(new UserReadChatMessage(message));
+
         return chatMessageView;
     }
 

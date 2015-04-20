@@ -368,8 +368,9 @@ public class PushStatusDatabase extends Database {
                         listIds.add(cursorToStatus(cursor));
                     }
                     return listIds;
+                default:
+                    return null;
             }
-            return null;
         }finally {
             cursor.close();
         }

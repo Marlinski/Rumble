@@ -25,13 +25,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
-import org.disrupted.rumble.database.events.StatusInsertedEvent;
+import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -44,6 +43,7 @@ public class ChatMessageDatabase extends Database {
 
     public static final String TABLE_NAME        = "chat_message";
     public static final  String ID               = "_id";
+    public static final  String UUID             = "uuid";
     public static final  String AUTHOR_DBID      = "cdbid";       // author foreign key
     public static final  String MESSAGE          = "message";     // the post itself
     public static final  String FILE_NAME        = "filename";    // the name of the attached file
@@ -52,6 +52,7 @@ public class ChatMessageDatabase extends Database {
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
+                 + UUID        + " TEXT, "
                  + AUTHOR_DBID + " INTEGER, "
                  + MESSAGE     + " TEXT, "
                  + FILE_NAME   + " TEXT, "
@@ -68,17 +69,27 @@ public class ChatMessageDatabase extends Database {
     public static class ChatMessageQueryOption {
         public static final long FILTER_TOA_FROM   = 0x0001;
         public static final long FILTER_TOA_TO     = 0x0002;
+        public static final long FILTER_READ       = 0x0004;
+
+        public enum QUERY_RESULT {
+            COUNT,
+            LIST_OF_MESSAGE
+        }
 
         public long         filterFlags;
         public long         to_toa;
         public long         from_toa;
         public int          answerLimit;
+        public boolean      read;
+        public QUERY_RESULT query_result;
 
         public ChatMessageQueryOption() {
             filterFlags = 0x00;
             to_toa = 0;
             from_toa = 0;
             answerLimit = 0;
+            read = true;
+            query_result = QUERY_RESULT.LIST_OF_MESSAGE;
         }
     }
 
@@ -93,28 +104,55 @@ public class ChatMessageDatabase extends Database {
                     }
                 }, callback);
     }
-    private ArrayList<ChatMessage> getChatMessage(ChatMessageQueryOption options) {
+    private Object getChatMessage(ChatMessageQueryOption options) {
         if(options == null)
             options = new ChatMessageQueryOption();
 
-        /* first we build the select */
+
+        /* 1st:  configure what the query will return */
+        String select = " * ";
+        switch (options.query_result) {
+            case COUNT:
+                select = " COUNT(*) ";
+                break;
+            case LIST_OF_MESSAGE:
+                select = " cm.* ";
+                break;
+        }
+
         StringBuilder query = new StringBuilder(
-                "SELECT * FROM "+ ChatMessageDatabase.TABLE_NAME+" cm " +
+                "SELECT "+select+" FROM "+ ChatMessageDatabase.TABLE_NAME+" cm " +
                 " JOIN "+ContactDatabase.TABLE_NAME + " c" +
                 " ON cm."+ChatMessageDatabase.AUTHOR_DBID+" = c."+ContactDatabase.ID
         );
 
+
+        /* 2nd: we add the constraints */
         List<String> argumentList = new ArrayList<String>();
+        boolean firstwhere = true;
         if(options.filterFlags > 0)
             query.append(" WHERE ( ");
-        /* then the constraints */
+
         if ((options.filterFlags & ChatMessageQueryOption.FILTER_TOA_FROM) == ChatMessageQueryOption.FILTER_TOA_FROM) {
+            firstwhere = false;
             query.append(" cm." + ChatMessageDatabase.TIME_OF_ARRIVAL + " > ? ");
             argumentList.add(Long.toString(options.from_toa));
         }
         if ((options.filterFlags & ChatMessageQueryOption.FILTER_TOA_TO) == ChatMessageQueryOption.FILTER_TOA_TO) {
-            query.append(" AND cm." + ChatMessageDatabase.TIME_OF_ARRIVAL + " < ? ");
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" cm." + ChatMessageDatabase.TIME_OF_ARRIVAL + " < ? ");
             argumentList.add(Long.toString(options.to_toa));
+        }
+        if((options.filterFlags & ChatMessageQueryOption.FILTER_READ) == ChatMessageQueryOption.FILTER_READ) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            if(options.read)
+                query.append(" cm." + ChatMessageDatabase.USERREAD + " =  1");
+            else
+                query.append(" cm." + ChatMessageDatabase.USERREAD + " =  0");
         }
         if(options.filterFlags > 0)
             query.append(" ) ");
@@ -136,11 +174,23 @@ public class ChatMessageDatabase extends Database {
         if(cursor == null)
             return null;
 
-        ArrayList<ChatMessage> listChatMessage = new ArrayList<ChatMessage>();
-        for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-            listChatMessage.add(cursorToChatMessage(cursor));
-        }
-        return listChatMessage;
+        try {
+            switch (options.query_result) {
+                case COUNT:
+                    cursor.moveToFirst();
+                    return cursor.getInt(0);
+                case LIST_OF_MESSAGE:
+                    ArrayList<ChatMessage> listChatMessage = new ArrayList<ChatMessage>();
+                    for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                        listChatMessage.add(cursorToChatMessage(cursor));
+                    }
+                    return listChatMessage;
+                default:
+                    return null;
+            }
+        } finally {
+            cursor.close();
+       }
     }
 
     public long insertMessage(ChatMessage chatMessage){
@@ -151,6 +201,7 @@ public class ChatMessageDatabase extends Database {
             return -1;
 
         contentValues.put(AUTHOR_DBID,     contact_DBID);
+        contentValues.put(UUID,            chatMessage.getUUID());
         contentValues.put(MESSAGE,         chatMessage.getMessage());
         contentValues.put(FILE_NAME,       chatMessage.getAttachedFile());
         contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimeOfArrival());
@@ -162,6 +213,19 @@ public class ChatMessageDatabase extends Database {
             EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
 
         return statusID;
+    }
+
+    public long updateMessage(ChatMessage chatMessage){
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(UUID,            chatMessage.getUUID());
+        contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
+
+        long chatMessageID = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UUID + " = ? ", new String[]{chatMessage.getUUID()});
+
+        if(chatMessageID >= 0)
+            EventBus.getDefault().post(new ChatMessageUpdatedEvent(chatMessage));
+
+        return chatMessageID;
     }
 
 

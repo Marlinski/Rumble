@@ -48,13 +48,26 @@ public class HashUtil {
         }
     }
 
-    public static final String computeStatusUUID(String author_id, String group_id, String post, long timeOfCreation) {
+    public static final String computeStatusUUID(String author_uid, String group_gid, String post, long timeOfCreation) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(author_id.getBytes());
-            md.update(group_id.getBytes());
+            md.update(author_uid.getBytes());
+            md.update(group_gid.getBytes());
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
+            return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
+        }
+        catch (NoSuchAlgorithmException ignore) {
+            return null;
+        }
+    }
+
+    public static final String computeChatMessageUUID(String author_uid, String message, long timeOfArrival) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(author_uid.getBytes());
+            md.update(message.getBytes());
+            md.update(ByteBuffer.allocate(8).putLong(timeOfArrival).array());
             return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {

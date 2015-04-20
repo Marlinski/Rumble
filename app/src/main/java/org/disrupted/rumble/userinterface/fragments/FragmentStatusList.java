@@ -175,7 +175,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     statusListAdapter.notifyDataSetChanged();
                     swipeLayout.setRefreshing(false);
                     if (getActivity() != null)
-                        ((HomeActivity)getActivity()).refreshNotifications();
+                        ((HomeActivity)getActivity()).refreshChatNotifications();
                 }
             });
         }

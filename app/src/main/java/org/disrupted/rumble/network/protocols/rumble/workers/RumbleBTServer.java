@@ -71,6 +71,12 @@ public class RumbleBTServer extends BluetoothServer {
                     Log.d(TAG, "[-] refusing client connection");
                     mmConnectedSocket.close();
                     return;
+                case CONNECTION_SCHEDULED:
+                    Log.d(TAG, "[-] cancelling scheduled worker");
+                    networkCoordinator.stopWorker(
+                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                            connectionState.getWorkerID());
+                    break;
                 case CONNECTION_INITIATED:
                     if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
                         Log.d(TAG, "[-] refusing client connection");
@@ -83,12 +89,6 @@ public class RumbleBTServer extends BluetoothServer {
                                 connectionState.getWorkerID());
                         break;
                     }
-                case CONNECTION_SCHEDULED:
-                    Log.d(TAG, "[-] cancelling scheduled worker");
-                    networkCoordinator.stopWorker(
-                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                            connectionState.getWorkerID());
-                    break;
                 case NOT_CONNECTED:
                 default:
                     break;
