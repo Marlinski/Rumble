@@ -114,9 +114,8 @@ public class CacheManager {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
         // then the StatusInterface database
         if(status.getdbId() > 0) {
-            Iterator<String> it = event.recipients.iterator();
-            while (it.hasNext()) {
-                String interfaceID = HashUtil.computeInterfaceID(it.next(), event.protocolID);
+            for(String recipient : event.recipients) {
+                String interfaceID = HashUtil.computeInterfaceID(recipient, event.protocolID);
                 long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).getInterfaceDBID(interfaceID);
                 if(interfaceDBID < 0)
                     interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
@@ -272,7 +271,7 @@ public class CacheManager {
         }
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
-        EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
     }
 
     /*

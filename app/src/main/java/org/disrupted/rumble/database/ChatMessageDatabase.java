@@ -24,7 +24,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
@@ -58,7 +57,8 @@ public class ChatMessageDatabase extends Database {
                  + FILE_NAME   + " TEXT, "
                  + TIME_OF_ARRIVAL   + " INTEGER, "
                  + USERREAD          + " INTEGER, "
-                 + "FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ) "
+                 + " UNIQUE ( "+UUID+" ), "
+                 + " FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ) "
             + " );";
 
     public ChatMessageDatabase(Context context, SQLiteOpenHelper databaseHelper) {
@@ -148,7 +148,6 @@ public class ChatMessageDatabase extends Database {
         if((options.filterFlags & ChatMessageQueryOption.FILTER_READ) == ChatMessageQueryOption.FILTER_READ) {
             if(!firstwhere)
                 query.append(" AND ");
-            firstwhere = false;
             if(options.read)
                 query.append(" cm." + ChatMessageDatabase.USERREAD + " =  1");
             else
@@ -207,12 +206,7 @@ public class ChatMessageDatabase extends Database {
         contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimeOfArrival());
         contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
 
-        long statusID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-
-        if(statusID >= 0)
-            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
-
-        return statusID;
+        return  databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     public long updateMessage(ChatMessage chatMessage){
