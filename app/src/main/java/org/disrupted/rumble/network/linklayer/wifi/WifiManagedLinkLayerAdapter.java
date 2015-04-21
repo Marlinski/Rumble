@@ -81,6 +81,14 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
         Log.d(TAG, "[+] Starting Wifi Managed");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
+        if (wifiMan.isWifiEnabled()) {
+            activated = true;
+            linkConnected();
+        } else {
+            // we could enable wifi but better to let the user decide
+            // instead we will listen to intent and start the link whenever the wifi is ready
+            // wifiMan.setWifiEnabled(true);
+        }
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
         multicastLock = wifiMan.createMulticastLock("org.disruptedsystems.rumble");
@@ -91,13 +99,6 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         register = true;
-
-        if (!wifiMan.isWifiEnabled()) {
-            wifiMan.setWifiEnabled(true);
-        } else {
-            linkConnected();
-            activated = true;
-        }
     }
 
     @Override
@@ -107,9 +108,8 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         register = false;
 
         Log.d(TAG, "[-] Stopping Wifi Managed");
-        linkDisconnected();
-
         RumbleApplication.getContext().unregisterReceiver(mReceiver);
+        linkDisconnected();
 
         wifiInf = null;
         wifiMan = null;
@@ -119,7 +119,7 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         if(activated)
             return;
         activated = true;
-
+        Log.d(TAG, "[+] Wifi Activated");
         /*
          * we enable multicast packet over WiFi, it is usually disabled to save battery but we
          * need it to send/receive message
@@ -134,8 +134,8 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
             return;
         activated = false;
 
+        Log.d(TAG, "[-] Wifi De-activated");
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
-
         multicastLock.release();
     }
 

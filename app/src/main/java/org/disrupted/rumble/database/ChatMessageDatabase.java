@@ -47,6 +47,7 @@ public class ChatMessageDatabase extends Database {
     public static final  String MESSAGE          = "message";     // the post itself
     public static final  String FILE_NAME        = "filename";    // the name of the attached file
     public static final  String TIME_OF_ARRIVAL  = "toa";         // time of arrival at current node
+    public static final  String PROTOCOL         = "protocol";    // the protocol from which we receive the message
     public static final  String USERREAD         = "read";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
@@ -57,6 +58,7 @@ public class ChatMessageDatabase extends Database {
                  + FILE_NAME   + " TEXT, "
                  + TIME_OF_ARRIVAL   + " INTEGER, "
                  + USERREAD          + " INTEGER, "
+                 + PROTOCOL          + " TEXT, "
                  + " UNIQUE ( "+UUID+" ), "
                  + " FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ) "
             + " );";
@@ -92,8 +94,6 @@ public class ChatMessageDatabase extends Database {
             query_result = QUERY_RESULT.LIST_OF_MESSAGE;
         }
     }
-
-
 
     public boolean getChatMessage(final ChatMessageQueryOption options, DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
@@ -163,11 +163,12 @@ public class ChatMessageDatabase extends Database {
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
-        /* perform the query */
+        /* perform the query
         Log.d(TAG, "[Q] query: " + query.toString());
         for(String argument : argumentList) {
             Log.d(TAG, argument+" ");
         }
+        */
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
         if(cursor == null)
@@ -192,6 +193,23 @@ public class ChatMessageDatabase extends Database {
        }
     }
 
+    public long getChatMessageDBID(String uuid) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, new String[] {ID}, UUID+" = ?",new String[]{uuid}, null, null, null);
+            if(cursor == null)
+                return -1;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+            else
+                return -1;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
     public long insertMessage(ChatMessage chatMessage){
         ContentValues contentValues = new ContentValues();
 
@@ -205,21 +223,16 @@ public class ChatMessageDatabase extends Database {
         contentValues.put(FILE_NAME,       chatMessage.getAttachedFile());
         contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimeOfArrival());
         contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(PROTOCOL,        chatMessage.getProtocolID());
 
         return  databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     public long updateMessage(ChatMessage chatMessage){
-        ContentValues contentValues = new ContentValues();
+        ContentValues contentValues  = new ContentValues();
         contentValues.put(UUID,            chatMessage.getUUID());
         contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
-
-        long chatMessageID = databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UUID + " = ? ", new String[]{chatMessage.getUUID()});
-
-        if(chatMessageID >= 0)
-            EventBus.getDefault().post(new ChatMessageUpdatedEvent(chatMessage));
-
-        return chatMessageID;
+        return databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UUID + " = ? ", new String[]{chatMessage.getUUID()});
     }
 
 
@@ -234,10 +247,13 @@ public class ChatMessageDatabase extends Database {
         long toa         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL));
         String message   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
         String filename  = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
+        String protocol  = cursor.getString(cursor.getColumnIndexOrThrow(PROTOCOL));
+        String uuid      = cursor.getString(cursor.getColumnIndexOrThrow(UUID));
 
-        ChatMessage chatMessage = new ChatMessage(contact, message, toa);
+        ChatMessage chatMessage = new ChatMessage(contact, message, toa, protocol);
         chatMessage.setUserRead(cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1);
         chatMessage.setAttachedFile(filename);
+        chatMessage.setUUID(uuid);
 
         return chatMessage;
     }

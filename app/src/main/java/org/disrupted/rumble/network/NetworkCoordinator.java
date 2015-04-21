@@ -129,6 +129,10 @@ public class NetworkCoordinator extends Service {
             PushService.startService();
             ChatService.startService();
             EventBus.getDefault().register(this);
+
+            // start the link layers if interfaces are already up
+            bluetoothAdapter.linkStart();
+            wifiAdapter.linkStart();
         }
     }
 
@@ -250,10 +254,7 @@ public class NetworkCoordinator extends Service {
             if (adapters == null)
                 return false;
             LinkLayerAdapter linkLayer = adapters.get(linkLayerIdentifier);
-            if (linkLayer == null)
-                return false;
-            else
-                return linkLayer.isActivated();
+            return ((linkLayer != null) && linkLayer.isActivated());
         }
     }
     public boolean isScanning() {

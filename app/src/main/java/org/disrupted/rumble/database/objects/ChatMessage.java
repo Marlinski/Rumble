@@ -31,12 +31,14 @@ public class ChatMessage {
     protected long        fileSize;
     protected long        timeOfArrival;
     protected boolean     read;
+    protected String      protocolID;
 
-    public ChatMessage(Contact contact, String message, long timeOfArrival) {
+    public ChatMessage(Contact contact, String message, long timeOfArrival, String protocolID) {
         this.uuid = HashUtil.computeChatMessageUUID(contact.getUid(), message, timeOfArrival);
         this.contact = contact;
         this.message = message;
         this.timeOfArrival = timeOfArrival;
+        this.protocolID = protocolID;
 
         this.read = false;
         this.attachedFile = "";
@@ -47,7 +49,8 @@ public class ChatMessage {
         this.contact = message.contact;
         this.message = message.message;
         this.timeOfArrival = message.timeOfArrival;
-        this.uuid = HashUtil.computeChatMessageUUID(this.contact.getUid(), this.message, timeOfArrival);
+        this.uuid = message.uuid;
+        this.protocolID = message.protocolID;
 
         this.read = message.read;
         this.attachedFile = message.attachedFile;
@@ -62,6 +65,7 @@ public class ChatMessage {
     public String  getAttachedFile() {    return this.attachedFile;        }
     public boolean hasUserReadAlready() { return read;                     }
     public boolean hasAttachedFile()    { return !attachedFile.equals(""); }
+    public String  getProtocolID() {      return protocolID;               }
 
     public void setUUID(String UUID) {                 this.uuid = UUID;                 }
     public void setFileSize(long fileSize) {           this.fileSize = fileSize;         }

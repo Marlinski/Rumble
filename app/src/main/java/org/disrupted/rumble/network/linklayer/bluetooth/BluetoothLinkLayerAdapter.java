@@ -66,38 +66,49 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
     }
 
     public void linkStart() {
-        if(activated)
+        if(register)
             return;
 
         Log.d(TAG, "[+] Starting Bluetooth");
-        btScanner.startScanner();
-        networkCoordinator.addScanner(btScanner);
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         register = true;
-        activated = true;
 
-        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
+        if(BluetoothUtil.isEnabled())
+            linkStarted();
     }
 
     public void linkStop() {
+        if(!register)
+            return;
+        register = false;
+
+        Log.d(TAG, "[-] Stopping Bluetooth");
+        RumbleApplication.getContext().unregisterReceiver(mReceiver);
+        linkStopped();
+    }
+
+    private void linkStarted() {
+        if(activated)
+            return;
+        activated = true;
+        Log.d(TAG, "[+] Bluetooth Activated");
+        btScanner.startScanner();
+        networkCoordinator.addScanner(btScanner);
+        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
+    }
+    private void linkStopped() {
         if(!activated)
             return;
         activated = false;
-
-        Log.d(TAG, "[+] Stopping Bluetooth");
-        networkCoordinator.delScanner(btScanner);
-        btScanner.stopScanner();
-
+        Log.d(TAG, "[-] Bluetooth De-activated");
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
-
-        if(register)
-            RumbleApplication.getContext().unregisterReceiver(mReceiver);
-        register = false;
+        btScanner.stopScanner();
+        networkCoordinator.delScanner(btScanner);
     }
+
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -108,11 +119,10 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
                 Log.d(TAG, "[!] BT State Changed");
                 switch (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)){
                     case BluetoothAdapter.STATE_ON:
-                        btScanner.startScanner();
+                        linkStarted();
                         break;
                     case BluetoothAdapter.STATE_OFF:
-                        btScanner.stopScanner();
-                        linkStop();
+                        linkStopped();
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
                     case BluetoothAdapter.STATE_TURNING_ON:

@@ -137,7 +137,7 @@ public class BlockChatMessage extends Block {
             String author_id_base64 = Base64.encodeToString(author_id, 0, FIELD_UID_SIZE, Base64.NO_WRAP);
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
-            chatMessage = new ChatMessage(contact_tmp, new String(message), System.currentTimeMillis() / 1000L);
+            chatMessage = new ChatMessage(contact_tmp, new String(message), System.currentTimeMillis() / 1000L, RumbleProtocol.protocolID);
 
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new ChatMessageReceived(

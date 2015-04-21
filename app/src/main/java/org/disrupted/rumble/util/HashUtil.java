@@ -99,4 +99,16 @@ public class HashUtil {
             return null;
         }
     }
+
+    public static boolean isBase64Encoded(String str)
+    {
+        try
+        {
+            byte[] data = Base64.decode(str,Base64.NO_WRAP);
+            return true;
+        } catch(Exception e)
+        {
+            return false;
+        }
+    }
 }

@@ -23,6 +23,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
+import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
@@ -259,6 +260,10 @@ public class CacheManager {
             return;
         Log.d(TAG, " [.] chat message received: "+event.chatMessage.toString());
 
+        long existsDBID = DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getChatMessageDBID(event.chatMessage.getUUID());
+        if(existsDBID > 0)
+            return;
+
         // we insert/update the contact to the database
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.chatMessage.getAuthor().getUid());
         if(contact == null) {
@@ -380,8 +385,8 @@ public class CacheManager {
             return;
         Log.d(TAG, " [.] user read chat message: "+event.chatMessage.toString());
         event.chatMessage.setUserRead(true);
-        DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).updateMessage(event.chatMessage);
-        //todo throw an event
+        if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).updateMessage(event.chatMessage) > 0)
+            EventBus.getDefault().post(new ChatMessageUpdatedEvent(event.chatMessage));
     }
     public void onEvent(UserWipeChatMessages event) {
         DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();

@@ -19,11 +19,15 @@
 
 package org.disrupted.rumble.network.linklayer.bluetooth;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
+
+import org.disrupted.rumble.app.RumbleApplication;
 
 /**
  * @author Marlinski
@@ -32,12 +36,65 @@ public class BluetoothUtil {
 
     private static final String TAG = "BluetoothUtil";
 
+
+    public static final int REQUEST_ENABLE_BT = 1;
+    public static final int REQUEST_ENABLE_DISCOVERABLE = 2;
+
     public static BluetoothAdapter getBluetoothAdapter(Context context) {
+        BluetoothAdapter adapter = null;
         if( Build.VERSION.SDK_INT  <= Build.VERSION_CODES.JELLY_BEAN_MR1)
-            return BluetoothAdapter.getDefaultAdapter();
+            adapter = BluetoothAdapter.getDefaultAdapter();
         else {
             BluetoothManager btManager = (BluetoothManager) (context.getSystemService(Context.BLUETOOTH_SERVICE));
-            return btManager.getAdapter();
+            adapter = btManager.getAdapter();
+        }
+        if(adapter == null)
+            Log.d(TAG, "mBluetoothAdapter is null");
+        return adapter;
+    }
+
+    public static boolean isEnabled() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if(adapter == null)
+            return false;
+        return adapter.isEnabled();
+    }
+
+    public static void disableBT() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if ( adapter == null)
+            return;
+        if (isEnabled())
+            adapter.disable();
+    }
+
+    public static boolean isDiscoverable() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if ( adapter == null)
+            return false;
+        return (adapter.getScanMode() == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE);
+    }
+
+    /*
+     * Interaction that requires an activity
+     */
+    public static void enableBT(Activity activity) {
+        if (!isEnabled()) {
+            Intent enableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            activity.startActivityForResult(enableBTIntent, REQUEST_ENABLE_BT);
+        }
+    }
+
+    public static void discoverableBT(Activity activity) {
+        if (!isEnabled()) {
+            Log.d(TAG, "cannot request discoverable: enable Bluetooth first");
+            return;
+        }
+
+        if (!isDiscoverable()) {
+            Intent discoverableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+            discoverableBTIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3600);
+            activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
         }
     }
 

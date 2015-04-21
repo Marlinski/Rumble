@@ -46,11 +46,13 @@ import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
+import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConfigureInteraction;
 
 import de.greenrobot.event.EventBus;
 
@@ -153,32 +155,18 @@ public class HomeActivity extends ActionBarActivity {
         return super.onKeyUp(keyCode, event);
     }
 
-    public void onBluetoothToggleClicked(View view) {
-        mNetworkDrawerFragment.onBluetoothToggleClicked(view);
-    }
-
-    public void onWifiToggleClicked(View view) {
-        mNetworkDrawerFragment.onWifiToggleClicked(view);
-    }
-
-    public void onForceScanClicked(View view) {
-        mNetworkDrawerFragment.onForceScanClicked(view);
-    }
-
     /*
-     * Receive QR CODE or Bluetooth Enable/Disable
+     * Receive Bluetooth Enable/Disable
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case BluetoothConfigureInteraction.REQUEST_ENABLE_BT:
-            case BluetoothConfigureInteraction.REQUEST_ENABLE_DISCOVERABLE:
+            case BluetoothUtil.REQUEST_ENABLE_BT:
+            case BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE:
                 mNetworkDrawerFragment.manageBTCode(requestCode, resultCode, data);
                 break;
         }
     }
-
-
 
     /*
      * TABS + Notification management

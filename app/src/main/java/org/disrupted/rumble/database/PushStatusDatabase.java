@@ -335,11 +335,12 @@ public class PushStatusDatabase extends Database {
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
-        /* perform the query */
+        /* perform the query
         Log.d(TAG, "[Q] query: "+query.toString());
         for(String argument : argumentList) {
             Log.d(TAG, argument+" ");
         }
+        */
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
         if(cursor == null)

@@ -94,23 +94,29 @@ public class ChatMessageListAdapter extends BaseAdapter {
         LinearLayout messageBox = (LinearLayout)chatMessageView.findViewById(R.id.chat_message_box);
         TextView  authorView    = (TextView) chatMessageView.findViewById(R.id.chat_message_author);
         TextView  textView      = (TextView) chatMessageView.findViewById(R.id.chat_message_text);
+        TextView  dateView      = (TextView)chatMessageView.findViewById(R.id.chat_message_date);
         ImageView attachedView  = (ImageView)chatMessageView.findViewById(R.id.chat_message_attached_image);
 
         ImageView avatar;
         Contact author = Contact.getLocalContact();
+        String receivedOrSent = "";
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         if(message.getAuthor().equals(author)) {
             senderBox.setVisibility(View.INVISIBLE);
             avatar = localAvatar;
             params.gravity = Gravity.RIGHT;
+            receivedOrSent = "sent: ";
         } else {
             localBox.setVisibility(View.INVISIBLE);
             avatar = senderAvatar;
             author = message.getAuthor();
             params.gravity = Gravity.LEFT;
+            receivedOrSent = "received: ";
         }
         messageBox.setLayoutParams(params);
         authorView.setLayoutParams(params);
+        dateView.setLayoutParams(params);
+
 
 
         // we draw the avatar
@@ -120,7 +126,7 @@ public class ChatMessageListAdapter extends BaseAdapter {
                         generator.getColor(author.getUid())));
 
         // we draw the author field
-        authorView.setText(author.getName());
+        authorView.setText("@"+author.getName());
 
         // we draw the status (with clickable hashtag)
         if (message.getMessage().length() > 0)
@@ -155,6 +161,8 @@ public class ChatMessageListAdapter extends BaseAdapter {
             } catch (IOException ignore) {
             }
         }
+
+        dateView.setText(receivedOrSent+new TimeElapsed(message.getTimeOfArrival()).display());
 
         if(!message.hasUserReadAlready())
             EventBus.getDefault().post(new UserReadChatMessage(message));

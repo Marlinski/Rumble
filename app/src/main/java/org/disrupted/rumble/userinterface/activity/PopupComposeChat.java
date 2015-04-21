@@ -46,6 +46,7 @@ import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.util.FileUtil;
@@ -174,7 +175,7 @@ public class PopupComposeChat extends Activity {
 
                 Contact localContact = Contact.getLocalContact();
                 long now = (System.currentTimeMillis() / 1000L);
-                ChatMessage chatMessage = new ChatMessage(localContact, message, now);
+                ChatMessage chatMessage = new ChatMessage(localContact, message, now, RumbleProtocol.protocolID);
                 chatMessage.setUserRead(true);
 
                 if (mCurrentPhotoFile != null) {

@@ -20,6 +20,7 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
+import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
@@ -32,6 +33,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Random;
 
 /**
@@ -45,6 +48,7 @@ public class FirechatMessageParser {
      * JSON fields for nearby communication
      */
     public static final String TIMESTAMP = "t";
+    public static final String UTC       = "st";
     public static final String UUID      = "uuid";
     public static final String USER      = "user";
     public static final String MESSAGE   = "msg";
@@ -59,17 +63,16 @@ public class FirechatMessageParser {
 
         JSONObject jsonStatus = new JSONObject();
         try {
-            jsonStatus.put(TIMESTAMP, message.getTimeOfArrival());
-            jsonStatus.put(UUID, HashUtil.computeChatMessageUUID(
-                    message.getAuthor().getUid(),
-                    message.getMessage(),
-                    message.getTimeOfArrival()
-            ));
-            jsonStatus.put(USER, message.getAuthor().getName());
+            NumberFormat formatter = new DecimalFormat("0.############E0");
+            String timeScientificNotation = formatter.format(message.getTimeOfArrival());
+            jsonStatus.put(TIMESTAMP, timeScientificNotation);
+            jsonStatus.put(UTC,       timeScientificNotation);
+            jsonStatus.put(UUID,      message.getUUID());
+            jsonStatus.put(USER,      message.getAuthor().getName());
 
-            if(!message.hasAttachedFile())
+            if(!message.hasAttachedFile()) {
                 jsonStatus.put(MESSAGE, message.getMessage());
-            else {
+            } else {
                 try {
                     File file = new File(FileUtil.getReadableAlbumStorageDir(), message.getAttachedFile());
                     if (file.exists() && !file.isDirectory()) {
@@ -97,21 +100,21 @@ public class FirechatMessageParser {
         String firechatid = message.getString(UUID);
         String author     = message.getString(NAME);
         String firechat   = message.getString(FIRECHAT);
-        long   timestamp  = message.getLong(TIMESTAMP);
-        long   now = (System.currentTimeMillis() / 1000L);
+        String timeScientificNotation  = message.getString(TIMESTAMP);
+        long   timestamp = Double.valueOf(timeScientificNotation).longValue();
 
         try { post   = message.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
         try { length = message.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }
 
-        /*
-         * todo: I don't really get how firechat computes its timestamp, it doesn't seem
-         * to be seconds since EPOCH so we keep the time of arrival instead
-         */
-        String author_uid = HashUtil.computeContactUid(author+"firechatauthor",0);
+        String author_uid = HashUtil.computeContactUid(author+"FireChat",0);
         Contact contact = new Contact(author, author_uid, false);
-        retMessage = new ChatMessage(contact, post+" #"+firechat, now);
-        String uuid = HashUtil.computeChatMessageUUID(author_uid, retMessage.getMessage(), timestamp);
-        retMessage.setUUID(uuid);
+        retMessage = new ChatMessage(contact, post, timestamp, FirechatProtocol.protocolID);
+
+        // we store the message in Base64 because it is more readable
+        if(HashUtil.isBase64Encoded(firechatid))
+            retMessage.setUUID(firechatid);
+        else
+            retMessage.setUUID(Base64.encodeToString(firechatid.getBytes(), Base64.NO_WRAP));
         retMessage.setFileSize(length);
 
         return retMessage;
