@@ -52,16 +52,16 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
     private WifiManager wifiMan;
     private WifiInfo wifiInf;
     WifiManager.MulticastLock multicastLock;
-    private boolean register;
-    private boolean activated;
 
+    public boolean register;
+    public boolean activated;
 
     public WifiManagedLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         macAddress = null;
-        wifiMan = null;
-        wifiInf = null;
-        activated = false;
+        wifiMan    = null;
+        wifiInf    = null;
+        register   = false;
     }
 
     @Override
@@ -76,21 +76,49 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
     @Override
     public void linkStart() {
-        if(activated)
+        if(register)
             return;
+
         Log.d(TAG, "[+] Starting Wifi Managed");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
-        multicastLock = wifiMan.createMulticastLock("rumble");
+        multicastLock = wifiMan.createMulticastLock("org.disruptedsystems.rumble");
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         register = true;
+
+        if (!wifiMan.isWifiEnabled()) {
+            wifiMan.setWifiEnabled(true);
+        } else {
+            linkConnected();
+            activated = true;
+        }
+    }
+
+    @Override
+    public void linkStop() {
+        if(!register)
+            return;
+        register = false;
+
+        Log.d(TAG, "[-] Stopping Wifi Managed");
+        linkDisconnected();
+
+        RumbleApplication.getContext().unregisterReceiver(mReceiver);
+
+        wifiInf = null;
+        wifiMan = null;
+    }
+
+    private void linkConnected() {
+        if(activated)
+            return;
+        activated = true;
 
         /*
          * we enable multicast packet over WiFi, it is usually disabled to save battery but we
@@ -98,39 +126,44 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
          */
         multicastLock.acquire();
 
-        activated = true;
         EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
 
-    @Override
-    public void linkStop() {
+    private void linkDisconnected() {
         if(!activated)
             return;
-
-        Log.d(TAG, "[-] Stopping Wifi Managed");
-        if(register)
-            RumbleApplication.getContext().unregisterReceiver(mReceiver);
+        activated = false;
 
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
+
         multicastLock.release();
-
-        wifiInf = null;
-        wifiMan = null;
-
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
             if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
                 Log.d(TAG, intent.toString());
-                NetworkInfo info = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-                if(info != null) {
-                    if(info.isConnected()) {
-                        Log.d(TAG, "[+] connected to the network");
-                        EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
+                NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+                NetworkInfo.State state = networkInfo.getState();
+
+                if(state == NetworkInfo.State.CONNECTED){
+                    if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                        if(activated)
+                            return;
+
+                        Log.d(TAG, "[+] connected to a wifi access point");
+                        linkConnected();
+                    }
+                }
+                if(state == NetworkInfo.State.DISCONNECTED) {
+                    if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                        if(!activated)
+                            return;
+
+                        Log.d(TAG, "[-] disconnected from a wifi access point");
+                        linkDisconnected();
                     }
                 }
             }

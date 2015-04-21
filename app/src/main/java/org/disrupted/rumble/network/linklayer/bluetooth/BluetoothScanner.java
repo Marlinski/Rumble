@@ -110,6 +110,7 @@ public class BluetoothScanner implements SensorEventListener, Scanner {
 
     private Handler             scanSchedule;   // to schedule a new scan
     private Handler             scanTimeout;    // to avoid scanning for too long
+
     /*
      * reset the trickle timer when phone is moving only if the timer is already long enough
      */

@@ -30,6 +30,7 @@ import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.network.services.chat.ChatService;
 import org.disrupted.rumble.userinterface.activity.RoutingActivity;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
@@ -106,23 +107,23 @@ public class NetworkCoordinator extends Service {
             // register link layers
             adapters = new HashMap<String, LinkLayerAdapter>();
             LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
-            LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
             adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
+            LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
             adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
 
             // create worker pools
             workerPools = new HashMap<String, WorkerPool>();
             WorkerPool bluetoothWorkers = new WorkerPool(5);
-            WorkerPool wifiManagedWorkers = new WorkerPool(5);
             workerPools.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothWorkers);
+            WorkerPool wifiManagedWorkers = new WorkerPool(5);
             workerPools.put(wifiAdapter.getLinkLayerIdentifier(), wifiManagedWorkers);
 
             // register protocols
             protocols = new HashMap<String, Protocol>();
             Protocol rumbleProtocol = new RumbleProtocol(this);
-            //Protocol firechatProtocol = new FirechatProtocol(this);
             protocols.put(rumbleProtocol.getProtocolIdentifier(), rumbleProtocol);
-            //protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
+            Protocol firechatProtocol = new FirechatProtocol(this);
+            protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
 
             // start services
             PushService.startService();

@@ -26,10 +26,13 @@ import java.util.HashSet;
  */
 public interface Scanner {
 
-    public HashSet<LinkLayerNeighbour> getNeighbourList();
-
-    public void forceDiscovery();
+    public void startScanner();
 
     public boolean isScanning();
 
+    public void stopScanner();
+
+    public void forceDiscovery();
+
+    public HashSet<LinkLayerNeighbour> getNeighbourList();
 }

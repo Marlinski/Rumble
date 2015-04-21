@@ -178,6 +178,11 @@ public class HomeActivity extends ActionBarActivity {
         }
     }
 
+
+
+    /*
+     * TABS + Notification management
+     */
     private class HomeTabListener implements ActionBar.TabListener {
 
         private Fragment fragment;

@@ -26,7 +26,9 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
+import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.events.PushStatusSent;
@@ -213,7 +215,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                         String jsonString  = new String(buffer, 0, i - 1);
                         JSONObject message = new JSONObject(jsonString);
 
-                        ChatMessage status = parser.networkToStatus(message);
+                        ChatMessage status = parser.networkToChatMessage(message);
                         String filename = downloadFile(status.getFileSize());
                         if (filename != null) {
                             status.setAttachedFile(filename);
@@ -296,16 +298,16 @@ public class FirechatOverBluetooth extends ProtocolWorker {
     @Override
     protected boolean onCommandReceived(Command command) {
         if(command instanceof CommandSendPushStatus) {
-            PushStatus pushStatus = ((CommandSendPushStatus)command).getStatus();
+            ChatMessage chatMessage = ((CommandSendChatMessage)command).getChatMessage();
 
-            String jsonStatus = parser.statusToNetwork(pushStatus);
+            String jsonStatus = parser.chatMessageToNetwork(chatMessage);
             try {
                 long timeToTransfer = System.currentTimeMillis();
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
                 con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
 
-                if(pushStatus.hasAttachedFile()) {
-                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), pushStatus.getFileName());
+                if(chatMessage.hasAttachedFile()) {
+                    File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), chatMessage.getAttachedFile());
                     if(attachedFile.exists() && attachedFile.isFile()) {
                         FileInputStream fis = null;
                         try {
@@ -321,7 +323,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                                 fis.close();
                         }
                     } else {
-                        throw new IOException("File: "+ pushStatus.getFileName()+" does not exists");
+                        throw new IOException("File: "+ chatMessage.getAttachedFile()+" does not exists");
                     }
                 }
 
@@ -329,13 +331,13 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
                 recipients.add(con.getRemoteLinkLayerAddress());
-                EventBus.getDefault().post(new PushStatusSent(
-                                pushStatus,
-                        recipients,
-                        FirechatProtocol.protocolID,
-                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        bytesTransfered,
-                        timeToTransfer)
+                EventBus.getDefault().post(new ChatMessageSent(
+                                chatMessage,
+                                recipients,
+                                FirechatProtocol.protocolID,
+                                BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                bytesTransfered,
+                                timeToTransfer)
                 );
             } catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending: "+ignore.getMessage());

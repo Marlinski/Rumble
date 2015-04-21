@@ -115,8 +115,8 @@ public class FirechatProtocol implements Protocol {
             return;
 
         if(event.linkLayerIdentifier.equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
-            Worker BTServer = new FirechatBTServer(this, networkCoordinator);
-            networkCoordinator.addWorker(BTServer);
+            //Worker BTServer = new FirechatBTServer(this, networkCoordinator);
+            //networkCoordinator.addWorker(BTServer);
         }
 
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
@@ -139,6 +139,7 @@ public class FirechatProtocol implements Protocol {
             return;
 
         LinkLayerNeighbour neighbour = event.neighbour;
+        /*
         if(neighbour instanceof BluetoothNeighbour) {
             try {
                 getBTState(neighbour.getLinkLayerAddress()).connectionInitiated();
@@ -154,6 +155,7 @@ public class FirechatProtocol implements Protocol {
             }
 
         }
+        */
 
         if(neighbour instanceof UDPNeighbour) {
           /**

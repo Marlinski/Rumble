@@ -20,8 +20,10 @@
 package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.content.Context;
+import android.net.DhcpInfo;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.util.Log;
 
@@ -36,8 +38,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 /**
  * An UDP Multicast Connection is not a one-to-one connection but a one-to-many connection
@@ -54,8 +62,10 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
     private int udpPort;
     private String address;
-    InetAddress multicastAddr;
-    private MulticastSocket mMulticastSocket;
+    private InetAddress multicastAddr;
+    private SocketAddress socketAddress;
+    private MulticastSocket mReceiveMulticastSocket;
+    private MulticastSocket mSendMulticastSocket;
 
     /*
      * only compatible with API 16 !
@@ -85,7 +95,7 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
     @Override
     public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return null;
+        return new UDPMulticastNeighbour("Multicast", udpPort, address);
     }
 
     @Override
@@ -109,21 +119,32 @@ public class UDPMulticastConnection implements LinkLayerConnection {
     @Override
     public void connect() throws LinkLayerConnectionException {
 
-        MulticastSocket tmp = null;
+        MulticastSocket tmpReceive = null;
+        MulticastSocket tmpSend    = null;
 
         try {
             multicastAddr = InetAddress.getByName(address);
-            tmp = new MulticastSocket(udpPort);
-            tmp.joinGroup(multicastAddr);
+            socketAddress = new InetSocketAddress(multicastAddr, udpPort);
+            tmpReceive = new MulticastSocket(udpPort);
+            tmpReceive.joinGroup(multicastAddr);
+            tmpReceive.setReuseAddress(true);
+
+            tmpSend = new MulticastSocket(udpPort);
+            tmpSend.setReuseAddress(true);
+            tmpSend.setTimeToLive(10);
+            tmpSend.connect(socketAddress);
         } catch(Exception e){
             throw new UDPMulticastSocketException(udpPort);
         }
 
-        if(tmp == null){
+        if((tmpReceive == null) || (tmpSend == null)){
             throw new UDPMulticastSocketException(udpPort);
         }
 
-        mMulticastSocket = tmp;
+        mReceiveMulticastSocket = tmpReceive;
+        mSendMulticastSocket = tmpSend;
+
+
 
         if(registerService && (nsdServiceName!=null) && (nsdServiceType != null)) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
@@ -131,20 +152,28 @@ public class UDPMulticastConnection implements LinkLayerConnection {
                 registered = true;
             }
         }
+
     }
 
     public DatagramPacket receive(DatagramPacket packet) throws IOException {
-        mMulticastSocket.receive(packet);
+        mReceiveMulticastSocket.receive(packet);
         if(packet == null)
             throw new IOException();
         return packet;
     }
 
+    public void send(byte[] bytes) throws IOException {
+        DatagramPacket packet = new DatagramPacket(bytes, bytes.length, socketAddress);
+        mSendMulticastSocket.send(packet);
+    }
+
     @Override
     public void disconnect() throws LinkLayerConnectionException {
         try {
-            mMulticastSocket.leaveGroup(multicastAddr);
-            mMulticastSocket.close();
+            mReceiveMulticastSocket.leaveGroup(multicastAddr);
+            mReceiveMulticastSocket.close();
+            mSendMulticastSocket.disconnect();
+            mSendMulticastSocket.close();
         } catch(IOException e) {
             throw new UDPMulticastSocketException();
         }
@@ -153,12 +182,11 @@ public class UDPMulticastConnection implements LinkLayerConnection {
             return;
 
         if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mNsdManager.unregisterService(mRegistrationListener);
+            //mNsdManager.unregisterService(mRegistrationListener);
         }
     }
 
-
-    /*
+    /*override
      * The following code only deals with DNS-SD registration / discovery
      * and requires API level 16 to works.
      *

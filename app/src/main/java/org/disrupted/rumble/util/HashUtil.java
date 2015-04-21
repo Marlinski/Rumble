@@ -62,12 +62,12 @@ public class HashUtil {
         }
     }
 
-    public static final String computeChatMessageUUID(String author_uid, String message, long timeOfArrival) {
+    public static final String computeChatMessageUUID(String author_uid, String message, long timeOfCreation) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(author_uid.getBytes());
             md.update(message.getBytes());
-            md.update(ByteBuffer.allocate(8).putLong(timeOfArrival).array());
+            md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
             return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {

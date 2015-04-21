@@ -21,6 +21,7 @@ package org.disrupted.rumble.network.linklayer.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.IntentFilter;
+import android.os.SystemClock;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
@@ -32,6 +33,7 @@ import org.disrupted.rumble.network.linklayer.exception.NoRemoteBluetoothDevice;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
 
 import java.io.IOException;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
@@ -74,6 +76,8 @@ public class BluetoothClientConnection extends BluetoothConnection {
             EventBus.getDefault().register(this);
             try {
                 latch.await();
+                Random random = new Random();
+                SystemClock.sleep(random.nextInt(2) * 1000);
             } catch(InterruptedException e) {
                 throw new InterruptedLinkLayerConnection();
             }

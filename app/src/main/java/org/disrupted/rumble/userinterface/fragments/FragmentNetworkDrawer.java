@@ -280,8 +280,6 @@ public class FragmentNetworkDrawer extends Fragment {
         prefs.edit().putBoolean(
                 RumbleApplication.getContext().getString(R.string.wifi_state_on_openning),
                 wifiMan.isWifiEnabled()).commit();
-        if (!wifiMan.isWifiEnabled())
-            wifiMan.setWifiEnabled(true);
 
         mNetworkCoordinator.startLinkLayer(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
     }

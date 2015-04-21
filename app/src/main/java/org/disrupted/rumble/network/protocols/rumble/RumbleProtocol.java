@@ -58,6 +58,10 @@ public class RumbleProtocol implements Protocol {
     public static final UUID RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
     public static final String RUMBLE_BT_STR    = "org.disrupted.rumble";
 
+    /*
+     * Wifi Configuration
+     */
+
     private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
@@ -119,8 +123,8 @@ public class RumbleProtocol implements Protocol {
         }
 
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
-            Worker rumbleOverUDP = new RumbleOverUDPMulticast();
-            networkCoordinator.addWorker(rumbleOverUDP);
+            //Worker rumbleOverUDP = new RumbleOverUDPMulticast();
+            //networkCoordinator.addWorker(rumbleOverUDP);
         }
     }
 

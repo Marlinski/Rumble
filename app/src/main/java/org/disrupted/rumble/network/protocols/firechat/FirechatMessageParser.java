@@ -20,6 +20,8 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
 
+import android.util.Log;
+
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
@@ -53,19 +55,23 @@ public class FirechatMessageParser {
     public static final String URL       = "url";
 
 
-    public String statusToNetwork(PushStatus message) {
+    public String chatMessageToNetwork(ChatMessage message) {
 
         JSONObject jsonStatus = new JSONObject();
         try {
-            jsonStatus.put(TIMESTAMP, message.getTimeOfCreation());
-            jsonStatus.put(UUID, this.generateRandomUUID());
-            jsonStatus.put(USER, message.getAuthor());
+            jsonStatus.put(TIMESTAMP, message.getTimeOfArrival());
+            jsonStatus.put(UUID, HashUtil.computeChatMessageUUID(
+                    message.getAuthor().getUid(),
+                    message.getMessage(),
+                    message.getTimeOfArrival()
+            ));
+            jsonStatus.put(USER, message.getAuthor().getName());
 
             if(!message.hasAttachedFile())
-                jsonStatus.put(MESSAGE, message.getPost());
+                jsonStatus.put(MESSAGE, message.getMessage());
             else {
                 try {
-                    File file = new File(FileUtil.getReadableAlbumStorageDir(), message.getFileName());
+                    File file = new File(FileUtil.getReadableAlbumStorageDir(), message.getAttachedFile());
                     if (file.exists() && !file.isDirectory()) {
                         jsonStatus.put(LENGTH, file.length());
                         jsonStatus.put(URL, "image");
@@ -74,29 +80,24 @@ public class FirechatMessageParser {
                 }
             }
 
-            String firechat = "#Nearby";
-            if(message.getHashtagSet().size() > 0)
-                firechat = message.getHashtagSet().iterator().next();
-            firechat = firechat.substring(1);
-
-            jsonStatus.put(FIRECHAT, firechat);
-            jsonStatus.put(NAME, message.getAuthor());
+            jsonStatus.put(FIRECHAT, "Nearby");
+            jsonStatus.put(NAME, message.getAuthor().getName());
         } catch ( JSONException e ) {
         }
 
         return jsonStatus.toString()+"\n";
     }
 
-    public ChatMessage networkToStatus(JSONObject message) throws JSONException{
+    public ChatMessage networkToChatMessage(JSONObject message) throws JSONException{
         ChatMessage retMessage = null;
 
         String post = "";
         long   length = 0;
 
-        String uuid      = message.getString(UUID);      // don't know what to do with that either
-        String author    = message.getString(NAME);
-        String firechat  = message.getString(FIRECHAT);
-        long   timestamp = message.getLong(TIMESTAMP);   // don't know what to do with that
+        String firechatid = message.getString(UUID);
+        String author     = message.getString(NAME);
+        String firechat   = message.getString(FIRECHAT);
+        long   timestamp  = message.getLong(TIMESTAMP);
         long   now = (System.currentTimeMillis() / 1000L);
 
         try { post   = message.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
@@ -109,6 +110,8 @@ public class FirechatMessageParser {
         String author_uid = HashUtil.computeContactUid(author+"firechatauthor",0);
         Contact contact = new Contact(author, author_uid, false);
         retMessage = new ChatMessage(contact, post+" #"+firechat, now);
+        String uuid = HashUtil.computeChatMessageUUID(author_uid, retMessage.getMessage(), timestamp);
+        retMessage.setUUID(uuid);
         retMessage.setFileSize(length);
 
         return retMessage;

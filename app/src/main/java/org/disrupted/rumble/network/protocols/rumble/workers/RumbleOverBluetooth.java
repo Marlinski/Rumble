@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
+import android.os.SystemClock;
 import android.util.Log;
 
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
@@ -48,6 +49,7 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.io.IOException;
+import java.util.Random;
 
 import de.greenrobot.event.EventBus;
 
@@ -134,7 +136,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 }
             }
 
-            // maybe implement a form of randomized delay ?
             con.connect();
 
             try {
@@ -169,14 +170,14 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         try {
             Log.d(TAG, "[+] connected");
             EventBus.getDefault().post(new NeighbourConnected(
-                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                            con.getLinkLayerNeighbour(),
                             this)
             );
             onWorkerConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new NeighbourDisconnected(
-                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                            con.getLinkLayerNeighbour(),
                             this)
             );
             stopWorker();
@@ -262,8 +263,8 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         }
         catch(Exception ignore){
             Log.e(TAG, "[!] error while sending");
-            EventBus.getDefault().post(new CommandExecuted(this, command, false));
         }
+        EventBus.getDefault().post(new CommandExecuted(this, command, false));
         return false;
     }
 

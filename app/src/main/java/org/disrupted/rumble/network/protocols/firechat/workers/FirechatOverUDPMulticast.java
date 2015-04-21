@@ -23,13 +23,15 @@ import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
+import org.disrupted.rumble.network.protocols.events.CommandExecuted;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.json.JSONException;
@@ -37,8 +39,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.util.LinkedList;
-import java.util.List;
 
 import de.greenrobot.event.EventBus;
 
@@ -64,12 +64,6 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         working = false;
-    }
-
-    // todo: a implementer
-    public List<ProtocolNeighbour> getUDPNeighbourList() {
-        List<ProtocolNeighbour> ret = new LinkedList<ProtocolNeighbour>();
-        return ret;
     }
 
     @Override
@@ -117,14 +111,17 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
 
         try {
             Log.d(TAG, "[+] CONNECTED: " + getWorkerIdentifier());
-
-            /*
-             * this one automatically creates two thread, one for processing the command
-             * and one for processing the network
-             */
+            EventBus.getDefault().post(new NeighbourConnected(
+                            con.getLinkLayerNeighbour(),
+                            this)
+            );
             onWorkerConnected();
 
         } finally {
+            EventBus.getDefault().post(new NeighbourDisconnected(
+                            con.getLinkLayerNeighbour(),
+                            this)
+            );
             stopWorker();
         }
     }
@@ -138,7 +135,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
                     JSONObject message = new JSONObject(jsonString);
-                    chatMessage = parser.networkToStatus(message);
+                    chatMessage = parser.networkToChatMessage(message);
                     if(chatMessage.getFileSize() > 0) {
                         Log.d(TAG, "we do not accept attached file yet");
                         continue;
@@ -148,11 +145,12 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
                      * since we cannot have the mac address of the remote device, we use the IP address
                      * instead.
                      */
+                    String senderIP = packet.getAddress().getHostAddress();
                     EventBus.getDefault().post(new ChatMessageReceived(
                                     chatMessage,
-                                    con.getRemoteLinkLayerAddress(),
+                                    senderIP,
                                     FirechatProtocol.protocolID,
-                                    BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                    con.getLinkLayerIdentifier(),
                                     chatMessage.getFileSize()+jsonString.length(),
                                     -1)
                     );
@@ -168,6 +166,20 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
 
     @Override
     protected boolean onCommandReceived(Command command) {
+        try {
+            switch (command.getCommandID()) {
+                case SEND_CHAT_MESSAGE:
+                    String json = parser.chatMessageToNetwork(((CommandSendChatMessage) command).getChatMessage());
+                    con.send(json.getBytes());
+                    EventBus.getDefault().post(new CommandExecuted(this, command, true));
+                    break;
+                default:
+                    return false;
+            }
+        } catch (IOException ignore) {
+            Log.d(TAG, "Fail to send message:",ignore);
+        }
+        EventBus.getDefault().post(new CommandExecuted(this, command, false));
         return false;
     }
 
