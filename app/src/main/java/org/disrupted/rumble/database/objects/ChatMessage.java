@@ -63,6 +63,7 @@ public class ChatMessage {
     public boolean hasUserReadAlready() { return read;                     }
     public boolean hasAttachedFile()    { return !attachedFile.equals(""); }
 
+    public void setUUID(String UUID) {                 this.uuid = UUID;                 }
     public void setFileSize(long fileSize) {           this.fileSize = fileSize;         }
     public void setAttachedFile(String attachedFile) { this.attachedFile = attachedFile; }
     public void setUserRead(boolean read) {            this.read = read;                 }
