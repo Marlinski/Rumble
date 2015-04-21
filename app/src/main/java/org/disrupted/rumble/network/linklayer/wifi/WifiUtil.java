@@ -22,6 +22,8 @@ import android.net.wifi.WifiManager;
 
 import org.disrupted.rumble.app.RumbleApplication;
 
+import java.lang.reflect.Method;
+
 /**
  * @author Marlinski
  */
@@ -32,12 +34,25 @@ public class WifiUtil {
     }
 
     public static boolean isEnabled() {
-       return getWifiManager().isWifiEnabled();
+       return (getWifiManager().isWifiEnabled() || isWiFiApEnabled());
     }
 
     public static void enableWifi() {
         getWifiManager().setWifiEnabled(true);
     }
 
+    public static boolean isWiFiApEnabled()
+    {
+        try
+        {
+            final Method method = getWifiManager().getClass().getDeclaredMethod("isWifiApEnabled");
+            method.setAccessible(true);
+            return (Boolean) method.invoke(getWifiManager());
+        }
+        catch (final Throwable ignored)
+        {
+        }
+        return false;
+    }
 
 }

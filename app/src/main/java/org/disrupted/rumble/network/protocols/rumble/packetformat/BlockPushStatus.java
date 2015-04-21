@@ -58,11 +58,9 @@ import de.greenrobot.event.EventBus;
  * +--------+---------+------------------------+
  * |      Length      |     Status (String)    |  2 bytes + VARIABLE
  * +------------------+------------------------+
- * |             Time of Creation              |
- * +                                           |  8 bytes
+ * |             Time of Creation              |  8 bytes
  * +-------------------------------------------+
- * |              Time to Live                 |
- * |                                           |  8 bytes
+ * |              Time to Live                 |  8 bytes
  * +-------------------+-----------------------+
  * |   Hop Count       |      Hop Limit        |  2 bytes + 2 bytes
  * +-------------------+-----------------------+

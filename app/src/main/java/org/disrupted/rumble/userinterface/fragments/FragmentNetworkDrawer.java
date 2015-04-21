@@ -189,18 +189,21 @@ public class FragmentNetworkDrawer extends Fragment {
         });
     }
 
-
     /*
      *         User Interactions
      */
     View.OnClickListener onBluetoothToggleClicked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (!BluetoothUtil.isEnabled() && !BluetoothUtil.isDiscoverable()) {
+            if (!BluetoothUtil.isEnabled() || !BluetoothUtil.isDiscoverable()) {
                 if(!BluetoothUtil.isEnabled())
                     BluetoothUtil.enableBT(getActivity());
                 if(!BluetoothUtil.isDiscoverable())
                     BluetoothUtil.discoverableBT(getActivity());
+            }
+            if(BluetoothUtil.isEnabled() && BluetoothUtil.isDiscoverable() &&
+               mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+                mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
             }
         }
     };
@@ -230,6 +233,9 @@ public class FragmentNetworkDrawer extends Fragment {
         public void onClick(View view) {
             if (!WifiUtil.isEnabled()) {
                 WifiUtil.enableWifi();
+            }
+            if(WifiUtil.isEnabled() && mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+                mNetworkCoordinator.linkLayerStop(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
             }
         }
     };

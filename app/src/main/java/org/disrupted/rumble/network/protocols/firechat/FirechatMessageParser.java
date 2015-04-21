@@ -21,11 +21,9 @@ package org.disrupted.rumble.network.protocols.firechat;
 
 
 import android.util.Base64;
-import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.HashUtil;
 import org.json.JSONException;
@@ -57,6 +55,7 @@ public class FirechatMessageParser {
     public static final String LOCATION  = "loc";
     public static final String LENGTH    = "length";
     public static final String URL       = "url";
+    public static final String RUMBLEID  = "rumbleID";
 
 
     public String chatMessageToNetwork(ChatMessage message) {
@@ -64,11 +63,12 @@ public class FirechatMessageParser {
         JSONObject jsonStatus = new JSONObject();
         try {
             NumberFormat formatter = new DecimalFormat("0.############E0");
-            String timeScientificNotation = formatter.format(message.getTimeOfArrival());
+            String timeScientificNotation = formatter.format(message.getTimestamp());
             jsonStatus.put(TIMESTAMP, timeScientificNotation);
             jsonStatus.put(UTC,       timeScientificNotation);
             jsonStatus.put(UUID,      message.getUUID());
             jsonStatus.put(USER,      message.getAuthor().getName());
+            jsonStatus.put(RUMBLEID,  message.getAuthor().getUid());
 
             if(!message.hasAttachedFile()) {
                 jsonStatus.put(MESSAGE, message.getMessage());
@@ -100,14 +100,17 @@ public class FirechatMessageParser {
         String firechatid = message.getString(UUID);
         String author     = message.getString(NAME);
         String firechat   = message.getString(FIRECHAT);
+        String author_id  = message.getString(RUMBLEID);
         String timeScientificNotation  = message.getString(TIMESTAMP);
         long   timestamp = Double.valueOf(timeScientificNotation).longValue();
 
         try { post   = message.getString(MESSAGE); } catch(JSONException ignore){ post = "";}
         try { length = message.getLong(LENGTH);    } catch(JSONException ignore){ length = 0; }
 
-        String author_uid = HashUtil.computeContactUid(author+"FireChat",0);
-        Contact contact = new Contact(author, author_uid, false);
+        if(author_id.equals(""))
+            author_id = HashUtil.computeContactUid(author+"FireChat",0);
+
+        Contact contact = new Contact(author, author_id, false);
         retMessage = new ChatMessage(contact, post, timestamp, FirechatProtocol.protocolID);
 
         // we store the message in Base64 because it is more readable

@@ -22,9 +22,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
-import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
+import org.disrupted.rumble.database.events.ChatWipedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 
@@ -221,7 +220,7 @@ public class ChatMessageDatabase extends Database {
         contentValues.put(UUID,            chatMessage.getUUID());
         contentValues.put(MESSAGE,         chatMessage.getMessage());
         contentValues.put(FILE_NAME,       chatMessage.getAttachedFile());
-        contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimeOfArrival());
+        contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimestamp());
         contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
         contentValues.put(PROTOCOL,        chatMessage.getProtocolID());
 
@@ -261,5 +260,6 @@ public class ChatMessageDatabase extends Database {
     public void wipe() {
         SQLiteDatabase database = databaseHelper.getWritableDatabase();
         database.delete(TABLE_NAME, null, null);
+        EventBus.getDefault().post(new ChatWipedEvent());
     }
 }

@@ -42,7 +42,6 @@ import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
 import org.disrupted.rumble.userinterface.events.UserReadChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
-import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
@@ -162,7 +161,7 @@ public class ChatMessageListAdapter extends BaseAdapter {
             }
         }
 
-        dateView.setText(receivedOrSent+new TimeElapsed(message.getTimeOfArrival()).display());
+        dateView.setText(receivedOrSent+new TimeElapsed(message.getTimestamp()).display());
 
         if(!message.hasUserReadAlready())
             EventBus.getDefault().post(new UserReadChatMessage(message));

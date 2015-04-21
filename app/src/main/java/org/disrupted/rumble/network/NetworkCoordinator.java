@@ -248,6 +248,25 @@ public class NetworkCoordinator extends Service {
         }
     }
 
+    public void linkLayerStop(String linkLayerIdentifier) {
+        for (LinkLayerAdapter adapter : adapters) {
+            if(adapter.getLinkLayerIdentifier().equals(linkLayerIdentifier)) {
+                WorkerPool pool = workerPools.get(linkLayerIdentifier);
+                pool.stopPool();
+                adapter.linkStop();
+            }
+        }
+    }
+
+    public void linkLayerStart(String linkLayerIdentifier) {
+        for (LinkLayerAdapter adapter : adapters) {
+            if(adapter.getLinkLayerIdentifier().equals(linkLayerIdentifier)) {
+                WorkerPool pool = workerPools.get(linkLayerIdentifier);
+                pool.startPool();
+                adapter.linkStart();
+            }
+        }
+    }
 
     public boolean isLinkLayerEnabled(String linkLayerIdentifier) {
         synchronized (lock) {

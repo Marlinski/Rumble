@@ -62,7 +62,7 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
 
     @Override
     public boolean isActivated() {
-        return activated;
+        return (register && activated);
     }
 
     public void linkStart() {
