@@ -59,6 +59,10 @@
     <string name="popup_create_group">Create new group</string>
     <string name="popup_create_group_checkbox">Private Group</string>
 
+    <string name="popup_question_yes">Yes</string>
+    <string name="popup_question_no">No</string>
+    <string name="popup_question_remember">remember my choice</string>
+
     <string name="menu_interfaces_title">Interfaces</string>
     <string name="menu_neighbors_title">Neighborhood</string>
     <string name="interface_bluetooth">Bluetooth</string>

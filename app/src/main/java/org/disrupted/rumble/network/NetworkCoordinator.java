@@ -31,7 +31,9 @@ import android.util.Log;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
+import org.disrupted.rumble.network.services.ServiceLayer;
 import org.disrupted.rumble.network.services.chat.ChatService;
+import org.disrupted.rumble.network.services.push.PushService;
 import org.disrupted.rumble.userinterface.activity.RoutingActivity;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
@@ -45,9 +47,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.Worker;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.services.push.PushService;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,11 +81,15 @@ public class NetworkCoordinator extends Service {
 
     private static final Object lock = new Object();
 
-    private Map<String, LinkLayerAdapter> adapters;
+    private List<LinkLayerAdapter>  adapters;
     private Map<String, WorkerPool> workerPools;
-    private Map<String, Protocol> protocols;
+    private List<Protocol>          protocols;
+    private List<ServiceLayer>      services;
+
     private List<Scanner> scannerList;
     public NeighbourManager neighbourManager;
+
+    public boolean networkingStarted;
 
     private final IBinder mBinder = new LocalBinder();
     public class LocalBinder extends Binder {
@@ -105,11 +109,11 @@ public class NetworkCoordinator extends Service {
             scannerList = new LinkedList<Scanner>();
 
             // register link layers
-            adapters = new HashMap<String, LinkLayerAdapter>();
+            adapters = new LinkedList<LinkLayerAdapter>();
             LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
-            adapters.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothAdapter);
+            adapters.add(bluetoothAdapter);
             LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
-            adapters.put(wifiAdapter.getLinkLayerIdentifier(), wifiAdapter);
+            adapters.add(wifiAdapter);
 
             // create worker pools
             workerPools = new HashMap<String, WorkerPool>();
@@ -119,20 +123,17 @@ public class NetworkCoordinator extends Service {
             workerPools.put(wifiAdapter.getLinkLayerIdentifier(), wifiManagedWorkers);
 
             // register protocols
-            protocols = new HashMap<String, Protocol>();
-            Protocol rumbleProtocol = new RumbleProtocol(this);
-            protocols.put(rumbleProtocol.getProtocolIdentifier(), rumbleProtocol);
-            Protocol firechatProtocol = new FirechatProtocol(this);
-            protocols.put(firechatProtocol.getProtocolIdentifier(), firechatProtocol);
+            protocols = new LinkedList<Protocol>();
+            protocols.add(new RumbleProtocol(this));
+            protocols.add(new FirechatProtocol(this));
 
-            // start services
-            PushService.startService();
-            ChatService.startService();
+            // register services
+            services = new LinkedList<ServiceLayer>();
+            services.add(PushService.getInstance());
+            services.add(ChatService.getInstance());
+
+            networkingStarted = false;
             EventBus.getDefault().register(this);
-
-            // start the link layers if interfaces are already up
-            bluetoothAdapter.linkStart();
-            wifiAdapter.linkStart();
         }
     }
 
@@ -147,34 +148,17 @@ public class NetworkCoordinator extends Service {
         synchronized (lock) {
             Log.d(TAG, "[-] Destroy NetworkCoordinator");
 
-            // stop services
-            PushService.stopService();
-            ChatService.stopService();
-
-            // destroy protocols
-            for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {
-                entry.getValue().protocolStop();
-                entry.setValue(null);
-            }
+            services.clear();
+            services = null;
             protocols.clear();
             protocols = null;
-
-            // destroy worker pools
-            for (Map.Entry<String, WorkerPool> entry : workerPools.entrySet()) {
-                entry.getValue().stopPool();
-                entry.setValue(null);
-            }
             workerPools.clear();
             workerPools = null;
-
-            // stop link layers
-            for (Map.Entry<String, LinkLayerAdapter> entry : adapters.entrySet()) {
-                entry.getValue().linkStop();
-                entry.setValue(null);
-            }
             adapters.clear();
             adapters = null;
+
             neighbourManager.stopMonitoring();
+
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
         }
@@ -189,9 +173,7 @@ public class NetworkCoordinator extends Service {
             if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
                 Log.d(TAG, "Received Start Foreground Intent ");
 
-                for (Map.Entry<String, Protocol> entry : protocols.entrySet()) {
-                    entry.getValue().protocolStart();
-                }
+                startNetworking();
 
                 Intent notificationIntent = new Intent(this, RoutingActivity.class);
                 notificationIntent.setAction(ACTION_MAIN_ACTION);
@@ -208,53 +190,74 @@ public class NetworkCoordinator extends Service {
                         .setOngoing(true).build();
 
                 startForeground(FOREGROUND_SERVICE_ID, notification);
+            }
 
+            if(intent.getAction().equals(ACTION_STOP_NETWORKING)) {
+                Log.d(TAG, "STOP ?");
+                stopNetworking();
             }
         }
 
         return START_STICKY;
     }
 
-    public void    startLinkLayer(String linkLayerIdentifier) {
-        synchronized (lock) {
-            if (adapters == null)
-                return;
-            if (workerPools == null)
-                return;
+    public void startNetworking() {
+        if(networkingStarted)
+            return;
+        networkingStarted = true;
 
-            WorkerPool pool = workerPools.get(linkLayerIdentifier);
-            if(pool == null)
-                return;
+        // start the services
+        for (ServiceLayer service : services) {
+            service.startService();
+        }
+
+        // start the protocol
+        for (Protocol protocol : protocols) {
+            protocol.protocolStart();
+        }
+
+        // start the link layers and worker pools
+        for (LinkLayerAdapter adapter : adapters) {
+            WorkerPool pool = workerPools.get(adapter.getLinkLayerIdentifier());
             pool.startPool();
-
-            LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
-            if (adapter == null)
-                return;
             adapter.linkStart();
         }
+
     }
-    public void    stopLinkLayer(String linkLayerIdentifier)  {
-        synchronized (lock) {
-            if (adapters == null)
-                return;
 
-            LinkLayerAdapter adapter = adapters.get(linkLayerIdentifier);
-            if (adapter == null)
-                return;
+    public void stopNetworking() {
+        if(!networkingStarted)
+            return;
+        networkingStarted = false;
+        // stop services
+        for(ServiceLayer service : services) {
+            service.stopService();
+        }
+        // destroy protocols
+        for (Protocol protocol : protocols) {
+            protocol.protocolStop();
+        }
+        // destroy worker pools
+        for (Map.Entry<String, WorkerPool> entry : workerPools.entrySet()) {
+            entry.getValue().stopPool();
+            entry.setValue(null);
+        }
+        // stop link layers
+        for (LinkLayerAdapter adapter : adapters) {
             adapter.linkStop();
-
-            WorkerPool pool = workerPools.get(linkLayerIdentifier);
-            if(pool == null)
-                return;
-            pool.stopPool();
         }
     }
+
+
     public boolean isLinkLayerEnabled(String linkLayerIdentifier) {
         synchronized (lock) {
             if (adapters == null)
                 return false;
-            LinkLayerAdapter linkLayer = adapters.get(linkLayerIdentifier);
-            return ((linkLayer != null) && linkLayer.isActivated());
+            for (LinkLayerAdapter adapter : adapters) {
+                if(adapter.getLinkLayerIdentifier().equals(linkLayerIdentifier))
+                    return ((adapter != null) && adapter.isActivated());
+            }
+            return false;
         }
     }
     public boolean isScanning() {

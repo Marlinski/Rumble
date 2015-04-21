@@ -29,9 +29,10 @@ import android.util.Log;
 public class RumblePreferences {
 
     public  static final String IDENTITY_PREF            = "pref_choose_identity";
-    public  static final String ENABLE_BLUETOOTH_PREF    = "pref_use_bluetooth";
-    public  static final String ENABLE_WIFI_PREF         = "pref_use_wifi";
-    public  static final String ENABLE_FIRECHAT_PREF     = "pref_enable_firechat";
+    public  static final String STOP_BLUETOOTH_ON_CLICK  = "stop_bluetooth_on_click";
+    public  static final String STOP_BLUETOOTH_ON_CLICK_REMEMBER = "stop_wifi_on_click";
+    public  static final String STOP_WIFI_ON_CLICK       = "stop_wifi_on_click";
+    public  static final String STOP_WIFI_ON_CLICK_REMEMBER     = "stop_wifi_on_click";
     public  static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
 
     public static String getIdentityContactUri(Context context) {
@@ -42,36 +43,28 @@ public class RumblePreferences {
                setStringPreference(context, IDENTITY_PREF, identityUri);
     }
 
-    public static Boolean isBluetoothEnable(Context context) {
-        return getBooleanPreference(context, ENABLE_BLUETOOTH_PREF, false);
-    }
-
-    public static void setBluetoothDisable(Context context, Boolean disable) {
-               setBooleanPreference(context, ENABLE_BLUETOOTH_PREF, disable);
-    }
-
-    public static Boolean isWifiEnable(Context context) {
-        return getBooleanPreference(context, ENABLE_WIFI_PREF, false);
-    }
-
-    public static void setWifiDisable(Context context, Boolean disable) {
-               setBooleanPreference(context, ENABLE_WIFI_PREF, disable);
-    }
-
-    public static Boolean isFirechatEnable(Context context) {
-        return getBooleanPreference(context, ENABLE_FIRECHAT_PREF, true);
-    }
-
-    public static void setFirechatDisable(Context context, Boolean disable) {
-               setBooleanPreference(context, ENABLE_WIFI_PREF, disable);
-    }
-
     public static boolean hasUserLearnedDrawer(Context context) {
         return getBooleanPreference(context, PREF_USER_LEARNED_DRAWER, false);
     }
 
     public static void setUserLearnedDrawer(Context context, Boolean bool) {
         setBooleanPreference(context, PREF_USER_LEARNED_DRAWER, bool);
+    }
+
+    public static void setStopBluetoothOnClick(Context context, Boolean bool) {
+        setBooleanPreference(context, STOP_BLUETOOTH_ON_CLICK, bool);
+    }
+
+    public static boolean stopBluetoothOnClick(Context context) {
+        return getBooleanPreference(context, STOP_BLUETOOTH_ON_CLICK, false);
+    }
+
+    public static boolean stopWifiOnClick(Context context) {
+        return getBooleanPreference(context, STOP_WIFI_ON_CLICK, false);
+    }
+
+    public static void setStopWifiOnClick(Context context, Boolean bool) {
+        setBooleanPreference(context, STOP_WIFI_ON_CLICK, bool);
     }
 
     private static void setBooleanPreference(Context context, String key, boolean value) {

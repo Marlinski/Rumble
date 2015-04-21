@@ -137,6 +137,10 @@
             android:theme="@style/PopupActivity"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
+        <activity
+            android:name=".userinterface.activity.PopupQuestion"
+            android:theme="@style/PopupActivity"/>
+
         <activity android:name=".userinterface.activity.DisplayQRCode">
             <intent-filter>
                 <action android:name="org.disrupted.rumble.userinterface.activity.DisplayQRCode">

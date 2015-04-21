@@ -28,7 +28,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
-import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 

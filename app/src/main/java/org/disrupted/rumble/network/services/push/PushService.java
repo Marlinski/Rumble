@@ -21,6 +21,7 @@ import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.services.ServiceLayer;
 import org.disrupted.rumble.util.HashUtil;
 
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class PushService {
+public class PushService implements ServiceLayer {
 
     private static final String TAG = "PushService";
 
@@ -52,68 +53,69 @@ public class PushService {
         rdwatcher = new ReplicationDensityWatcher(1000*3600);
     }
 
-    public static void startService() {
-        if(instance != null)
-            return;
-
+    public static PushService getInstance() {
         synchronized (lock) {
-            Log.d(TAG, "[+] Starting PushService");
-            if (instance == null) {
+            if(instance == null)
                 instance = new PushService();
-                rdwatcher.start();
-                workerIdentifierTodispatcher = new HashMap<String, MessageDispatcher>();
-                EventBus.getDefault().register(instance);
-            }
+
+            return instance;
         }
     }
 
-    public static void stopService() {
-        if(instance == null)
-                return;
+    @Override
+    public String getServiceIdentifier() {
+        return TAG;
+    }
+
+    public void startService() {
+        synchronized (lock) {
+            Log.d(TAG, "[+] Starting PushService");
+            rdwatcher.start();
+            workerIdentifierTodispatcher = new HashMap<String, MessageDispatcher>();
+            EventBus.getDefault().register(this);
+        }
+    }
+
+    public void stopService() {
         synchronized (lock) {
             Log.d(TAG, "[-] Stopping PushService");
-            if(EventBus.getDefault().isRegistered(instance))
-                EventBus.getDefault().unregister(instance);
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
 
-            for(Map.Entry<String, MessageDispatcher> entry : instance.workerIdentifierTodispatcher.entrySet()) {
+            for(Map.Entry<String, MessageDispatcher> entry : workerIdentifierTodispatcher.entrySet()) {
                 MessageDispatcher dispatcher = entry.getValue();
                 dispatcher.interrupt();
             }
-            instance.workerIdentifierTodispatcher.clear();
+            workerIdentifierTodispatcher.clear();
             rdwatcher.stop();
-            instance = null;
         }
     }
 
     // todo: register protocol to service
     public void onEvent(NeighbourConnected event) {
-        if(instance != null) {
-            if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+            return;
+        synchronized (lock) {
+            MessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            if (dispatcher != null) {
+                Log.e(TAG, "worker already binded ?!");
                 return;
-            synchronized (lock) {
-                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
-                if (dispatcher != null) {
-                    Log.e(TAG, "worker already binded ?!");
-                    return;
-                }
-                dispatcher = new MessageDispatcher(event.worker);
-                instance.workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
-                dispatcher.startDispatcher();
             }
+            dispatcher = new MessageDispatcher(event.worker);
+            workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
+            dispatcher.startDispatcher();
         }
     }
 
     public void onEvent(NeighbourDisconnected event) {
-        if(instance != null) {
-            if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+            return;
+        synchronized (lock) {
+            MessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            if (dispatcher == null)
                 return;
-            synchronized (lock) {
-                MessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
-                if (dispatcher == null)
-                    return;
-                dispatcher.stopDispatcher();
-                instance.workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
-            }
+            dispatcher.stopDispatcher();
+            workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
         }
     }
 

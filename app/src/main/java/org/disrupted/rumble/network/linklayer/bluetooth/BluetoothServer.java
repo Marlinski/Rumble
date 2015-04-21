@@ -27,7 +27,7 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.Worker;
 
 import java.io.IOException;
 import java.util.UUID;

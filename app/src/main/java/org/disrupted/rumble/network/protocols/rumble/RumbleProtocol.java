@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
+import android.util.Log;
+
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
@@ -32,10 +34,9 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
-import org.disrupted.rumble.network.protocols.Worker;
+import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
-import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverUDPMulticast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -94,8 +95,10 @@ public class RumbleProtocol implements Protocol {
     public void protocolStart() {
         if(started)
             return;
-
         started = true;
+
+        Log.d(TAG, "[+] Rumble Protocol started");
+
         EventBus.getDefault().register(this);
     }
 
@@ -104,6 +107,9 @@ public class RumbleProtocol implements Protocol {
         if(!started)
             return;
         started = false;
+
+        Log.d(TAG, "[+] Rumble Protocol stopped");
+
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
 

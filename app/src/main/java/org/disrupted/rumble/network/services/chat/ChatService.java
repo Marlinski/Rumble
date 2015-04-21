@@ -23,6 +23,7 @@ import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.services.ServiceLayer;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
 
 import java.util.HashMap;
@@ -33,7 +34,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class ChatService {
+public class ChatService implements ServiceLayer {
 
     private static final String TAG = "ChatService";
 
@@ -42,59 +43,61 @@ public class ChatService {
 
     private static Map<String, ChatMessageDispatcher> workerIdentifierTodispatcher;
 
-    public static void startService() {
-        if(instance != null)
-            return;
 
+    public static ChatService getInstance() {
         synchronized (lock) {
-            Log.d(TAG, "[+] Starting ChatService");
-            if (instance == null) {
+            if(instance == null)
                 instance = new ChatService();
-                workerIdentifierTodispatcher = new HashMap<String, ChatMessageDispatcher>();
-                EventBus.getDefault().register(instance);
-            }
+
+            return instance;
         }
     }
-    public static void stopService() {
-        if(instance == null)
-            return;
+
+    @Override
+    public String getServiceIdentifier() {
+        return TAG;
+    }
+
+    public void startService() {
+        synchronized (lock) {
+            Log.d(TAG, "[+] Starting ChatService");
+            workerIdentifierTodispatcher = new HashMap<String, ChatMessageDispatcher>();
+            EventBus.getDefault().register(this);
+        }
+    }
+    public void stopService() {
         synchronized (lock) {
             Log.d(TAG, "[-] Stopping ChatService");
-            if(EventBus.getDefault().isRegistered(instance))
-                EventBus.getDefault().unregister(instance);
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
 
-            for(Map.Entry<String, ChatMessageDispatcher> entry : instance.workerIdentifierTodispatcher.entrySet()) {
+            for(Map.Entry<String, ChatMessageDispatcher> entry : workerIdentifierTodispatcher.entrySet()) {
                 ChatMessageDispatcher dispatcher = entry.getValue();
                 dispatcher.stopDispatcher();
             }
-            instance.workerIdentifierTodispatcher.clear();
-            instance = null;
+            workerIdentifierTodispatcher.clear();
         }
     }
 
     public void onEvent(NeighbourConnected event) {
-        if(instance != null) {
-            synchronized (lock) {
-                ChatMessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
-                if (dispatcher != null) {
-                    Log.e(TAG, "worker already binded ?!");
-                    return;
-                }
-                dispatcher = new ChatMessageDispatcher(event.worker);
-                instance.workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
-                dispatcher.startDispatcher();
+        synchronized (lock) {
+            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            if (dispatcher != null) {
+                Log.e(TAG, "worker already binded ?!");
+                return;
             }
+            dispatcher = new ChatMessageDispatcher(event.worker);
+            workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
+            dispatcher.startDispatcher();
         }
     }
     public void onEvent(NeighbourDisconnected event) {
-        if(instance != null) {
-            synchronized (lock) {
-                ChatMessageDispatcher dispatcher = instance.workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
-                if (dispatcher == null)
-                    return;
-                dispatcher.stopDispatcher();
-                instance.workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
-            }
+        synchronized (lock) {
+            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            if (dispatcher == null)
+                return;
+            dispatcher.stopDispatcher();
+            workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
         }
     }
 

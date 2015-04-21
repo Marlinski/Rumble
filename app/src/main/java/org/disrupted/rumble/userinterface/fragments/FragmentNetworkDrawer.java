@@ -39,13 +39,12 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Switch;
-import android.widget.ToggleButton;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 import org.disrupted.rumble.userinterface.adapter.NeighborhoodListAdapter;
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
@@ -53,7 +52,6 @@ import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 
 import java.util.List;
@@ -170,8 +168,12 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                bluetoothToggle.setChecked(mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
-                wifiToggle.setChecked(mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier));
+                bluetoothToggle.setChecked(
+                        BluetoothUtil.isEnabled() && BluetoothUtil.isDiscoverable() &&
+                        mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+                wifiToggle.setChecked(
+                        WifiUtil.isEnabled() &&
+                        mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier));
             }
         });
     }
@@ -218,6 +220,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
         if((requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == getActivity().RESULT_OK)) {
             Log.d(TAG, "[+] Device Discoverable");
+            refreshInterfaces();
             return;
         }
     }
@@ -225,8 +228,9 @@ public class FragmentNetworkDrawer extends Fragment {
     View.OnClickListener onWifiToggleClicked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (!WifiUtil.isEnabled())
+            if (!WifiUtil.isEnabled()) {
                 WifiUtil.enableWifi();
+            }
         }
     };
 

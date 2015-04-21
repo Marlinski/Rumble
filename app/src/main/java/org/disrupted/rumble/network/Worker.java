@@ -17,7 +17,7 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols;
+package org.disrupted.rumble.network;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 

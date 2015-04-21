@@ -19,17 +19,12 @@
 
 package org.disrupted.rumble.network.protocols;
 
-import android.provider.ContactsContract;
-import android.util.Log;
-
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.command.Command;
-import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import de.greenrobot.event.EventBus;
 
 
 /**

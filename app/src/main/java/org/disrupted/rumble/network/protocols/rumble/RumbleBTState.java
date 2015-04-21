@@ -162,12 +162,8 @@ public class RumbleBTState {
         return state;
     }
     public String getWorkerID()  throws StateException{
-        if(state == RumbleBluetoothState.CONNECTION_INITIATED)
-            return this.workerID;
-        throw new StateException();
+        return this.workerID;
     }
-
-
     public static class StateException extends Exception {
     }
 }

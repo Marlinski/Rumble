@@ -62,6 +62,7 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         wifiMan    = null;
         wifiInf    = null;
         register   = false;
+        activated  = false;
     }
 
     @Override
@@ -81,17 +82,17 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
         Log.d(TAG, "[+] Starting Wifi Managed");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
-        if (wifiMan.isWifiEnabled()) {
-            activated = true;
+        wifiInf = wifiMan.getConnectionInfo();
+        macAddress = wifiInf.getMacAddress();
+        multicastLock = wifiMan.createMulticastLock("org.disruptedsystems.rumble");
+
+        if (WifiUtil.isEnabled()) {
             linkConnected();
         } else {
             // we could enable wifi but better to let the user decide
             // instead we will listen to intent and start the link whenever the wifi is ready
             // wifiMan.setWifiEnabled(true);
         }
-        wifiInf = wifiMan.getConnectionInfo();
-        macAddress = wifiInf.getMacAddress();
-        multicastLock = wifiMan.createMulticastLock("org.disruptedsystems.rumble");
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);

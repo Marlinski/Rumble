@@ -22,8 +22,6 @@ package org.disrupted.rumble.network;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.protocols.Worker;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;

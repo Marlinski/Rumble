@@ -40,7 +40,7 @@
 
             <FrameLayout
                 android:id="@+id/chat_sender_avatar_box"
-                android:layout_gravity="bottom"
+                android:layout_gravity="top"
                 android:gravity="end"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -56,37 +56,35 @@
                     android:src="@drawable/left_arrow"/>
             </FrameLayout>
 
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="10">
-
-                <TextView
-                    android:id="@+id/chat_message_author"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="5dp"
-                    style="@style/ChatMessage.Info.Author"/>
-
                 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                     android:id="@+id/chat_message_box"
-                    android:minWidth="50dp"
-                    android:minHeight="50dp"
                     android:orientation="vertical"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:minWidth="50dp"
+                    android:minHeight="50dp"
+                    android:paddingLeft="10dp"
                     android:layout_gravity="center_vertical"
                     android:paddingRight="10dp"
                     android:background="@drawable/chat_message_shape">
 
+                    <TextView
+                        android:id="@+id/chat_message_author"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="5dp"
+                        style="@style/ChatMessage.Info.Author"/>
                     <TextView
                         android:gravity="center_vertical"
                         android:id="@+id/chat_message_text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="start"
-                        android:paddingLeft="10dp"
                         style="@style/Status.Body"/>
                     <ImageView
                         android:id="@+id/chat_message_attached_image"
@@ -94,11 +92,19 @@
                         android:layout_height="100dp"
                         android:scaleType="fitXY"
                         android:gravity="start"
+                        android:layout_marginBottom="10dp"
                         android:visibility="gone"/>
+                    <TextView
+                        android:id="@+id/chat_message_date"
+                        android:gravity="bottom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        style="@style/Status.Info.TimeOfCreation"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <FrameLayout android:id="@+id/chat_local_avatar_box"
+            <FrameLayout
+                android:id="@+id/chat_local_avatar_box"
                 android:layout_gravity="bottom"
                 android:gravity="start"
                 android:layout_width="wrap_content"

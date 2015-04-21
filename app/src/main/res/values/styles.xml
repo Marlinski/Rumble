@@ -73,7 +73,7 @@
 
 
     <style name="ChatMessage.Info.Author" parent="@android:style/TextAppearance">
-        <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+        <item name="android:textSize">10sp</item>
         <item name="android:typeface">sans</item>
         <item name="android:fontFamily">sans-serif-light</item>
         <item name="android:textStyle">bold</item>
