@@ -170,10 +170,14 @@ public class UDPMulticastConnection implements LinkLayerConnection {
     @Override
     public void disconnect() throws LinkLayerConnectionException {
         try {
-            mReceiveMulticastSocket.leaveGroup(multicastAddr);
-            mReceiveMulticastSocket.close();
-            mSendMulticastSocket.disconnect();
-            mSendMulticastSocket.close();
+            if (mReceiveMulticastSocket != null) {
+                mReceiveMulticastSocket.leaveGroup(multicastAddr);
+                mReceiveMulticastSocket.close();
+            }
+            if(mSendMulticastSocket != null) {
+                mSendMulticastSocket.disconnect();
+                mSendMulticastSocket.close();
+            }
         } catch(IOException e) {
             throw new UDPMulticastSocketException();
         }

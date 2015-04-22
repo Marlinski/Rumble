@@ -18,16 +18,22 @@
 package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.content.Context;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
  * @author Marlinski
  */
 public class WifiUtil {
+
+    public static String TAG = "WifiUtil";
 
     public static WifiManager getWifiManager() {
         return (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
@@ -53,6 +59,53 @@ public class WifiUtil {
         {
         }
         return false;
+    }
+
+    public static void enableAP() {
+        Method[] wmMethods = getWifiManager().getClass().getDeclaredMethods();
+        boolean methodFound = false;
+        for (Method method: wmMethods) {
+            Log.d(TAG, method.getName());
+            if (method.getName().equals("setWifiApEnabled")) {
+                methodFound = true;
+                WifiConfiguration netConfig = new WifiConfiguration();
+                netConfig.SSID = "Rumble";
+                netConfig.allowedAuthAlgorithms.set(
+                        WifiConfiguration.AuthAlgorithm.OPEN);
+                try {
+                    boolean apstatus = (Boolean) method.invoke( getWifiManager(), netConfig, true);
+
+                    for (Method isWifiApEnabledmethod: wmMethods) {
+                        if (isWifiApEnabledmethod.getName().equals("isWifiApEnabled")) {
+
+                            while (!(Boolean) isWifiApEnabledmethod.invoke( getWifiManager())) {};
+                            for (Method method1: wmMethods) {
+                                if (method1.getName().equals("getWifiApState")) {
+                                    int apstate;
+                                    apstate = (Integer) method1.invoke(getWifiManager());
+                                }
+                            }
+                        }
+                    }
+
+                    if (apstatus) {
+                        Log.d(TAG, "Access Point created");
+                    } else {
+                        Log.d(TAG, "Access Point creation failed");
+                    }
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (!methodFound) {
+            Log.d("Splash Activity",
+                    "cannot configure an access point");
+        }
     }
 
 }

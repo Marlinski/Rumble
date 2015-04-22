@@ -67,7 +67,7 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
     @Override
     public boolean isActivated() {
-        return activated;
+        return register;
     }
 
     @Override
@@ -155,17 +155,29 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
                             return;
 
                         Log.d(TAG, "[+] connected to a wifi access point");
-                        linkConnected();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // to avoid doing networking on the main thread
+                                linkConnected();
+                            }
+                        }).start();
                     }
                 }
                 if(state == NetworkInfo.State.DISCONNECTED) {
-                    if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
-                        if(!activated)
-                            return;
+                     if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                         if (!activated)
+                             return;
 
-                        Log.d(TAG, "[-] disconnected from a wifi access point");
-                        linkDisconnected();
-                    }
+                         Log.d(TAG, "[-] disconnected from a wifi access point");
+                         new Thread(new Runnable() {
+                             @Override
+                             public void run() {
+                                 // to avoid doing networking on the main thread
+                                 linkDisconnected();
+                             }
+                         }).start();
+                     }
                 }
             }
         }

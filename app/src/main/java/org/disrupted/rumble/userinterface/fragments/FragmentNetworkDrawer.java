@@ -25,6 +25,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -169,7 +170,7 @@ public class FragmentNetworkDrawer extends Fragment {
             @Override
             public void run() {
                 bluetoothToggle.setChecked(
-                        BluetoothUtil.isEnabled() && BluetoothUtil.isDiscoverable() &&
+                        BluetoothUtil.isEnabled() &&
                         mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
                 wifiToggle.setChecked(
                         WifiUtil.isEnabled() &&
@@ -195,16 +196,25 @@ public class FragmentNetworkDrawer extends Fragment {
     View.OnClickListener onBluetoothToggleClicked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (!BluetoothUtil.isEnabled() || !BluetoothUtil.isDiscoverable()) {
-                if(!BluetoothUtil.isEnabled())
-                    BluetoothUtil.enableBT(getActivity());
-                if(!BluetoothUtil.isDiscoverable())
-                    BluetoothUtil.discoverableBT(getActivity());
-            }
-            if(BluetoothUtil.isEnabled() && BluetoothUtil.isDiscoverable() &&
-               mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
-                mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+                        mNetworkCoordinator.linkLayerStart(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
+                        if (!BluetoothUtil.isEnabled())
+                            BluetoothUtil.enableBT(getActivity());
+                        else if (!BluetoothUtil.isDiscoverable())
+                            BluetoothUtil.discoverableBT(getActivity());
+                    } else {
+                        if (!BluetoothUtil.isEnabled())
+                            BluetoothUtil.enableBT(getActivity());
+                        else if (!BluetoothUtil.isDiscoverable())
+                            BluetoothUtil.discoverableBT(getActivity());
+                        else
+                            mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
+                    }
+                }
+            }).start();
         }
     };
 
@@ -214,10 +224,12 @@ public class FragmentNetworkDrawer extends Fragment {
         if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
             if(!BluetoothUtil.isDiscoverable())
                 BluetoothUtil.discoverableBT(getActivity());
+            refreshInterfaces();
             return;
         }
-
         if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_CANCELED)) {
+            mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
+            refreshInterfaces();
             return;
         }
 
@@ -231,12 +243,22 @@ public class FragmentNetworkDrawer extends Fragment {
     View.OnClickListener onWifiToggleClicked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (!WifiUtil.isEnabled()) {
-                WifiUtil.enableWifi();
-            }
-            if(WifiUtil.isEnabled() && mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
-                mNetworkCoordinator.linkLayerStop(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
-            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    //WifiUtil.enableAP();
+                    if (!mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+                        mNetworkCoordinator.linkLayerStart(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
+                        if (!WifiUtil.isEnabled())
+                            WifiUtil.enableWifi();
+                    } else {
+                        if (!WifiUtil.isEnabled())
+                            WifiUtil.enableWifi();
+                        else
+                            mNetworkCoordinator.linkLayerStop(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
+                    }
+                }
+            }).start();
         }
     };
 
@@ -244,8 +266,13 @@ public class FragmentNetworkDrawer extends Fragment {
     View.OnClickListener onForceScanClicked = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if(mBound)
-                mNetworkCoordinator.forceScan();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    if (mBound)
+                        mNetworkCoordinator.forceScan();
+                }
+            }).start();
         }
     };
 

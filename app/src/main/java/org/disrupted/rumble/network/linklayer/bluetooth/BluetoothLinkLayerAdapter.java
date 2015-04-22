@@ -62,7 +62,7 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
 
     @Override
     public boolean isActivated() {
-        return (register && activated);
+        return register;
     }
 
     public void linkStart() {
@@ -119,10 +119,22 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
                 Log.d(TAG, "[!] BT State Changed");
                 switch (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)){
                     case BluetoothAdapter.STATE_ON:
-                        linkStarted();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // to avoid doing networking on the main thread
+                                linkStarted();
+                            }
+                        }).start();
                         break;
                     case BluetoothAdapter.STATE_OFF:
-                        linkStopped();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // to avoid doing networking on the main thread
+                                linkStopped();
+                            }
+                        }).start();
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
                     case BluetoothAdapter.STATE_TURNING_ON:
