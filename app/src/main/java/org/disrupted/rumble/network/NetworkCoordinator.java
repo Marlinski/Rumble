@@ -219,7 +219,7 @@ public class NetworkCoordinator extends Service {
             protocol.protocolStart();
         }
 
-        // start the link layers and worker pools
+        // the user should be in control of what happens in the network
         /*
         for (LinkLayerAdapter adapter : adapters) {
             WorkerPool pool = workerPools.get(adapter.getLinkLayerIdentifier());

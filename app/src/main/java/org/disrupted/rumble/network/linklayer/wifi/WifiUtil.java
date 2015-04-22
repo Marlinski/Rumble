@@ -19,14 +19,20 @@ package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
+import android.text.format.Formatter;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteOrder;
 
 /**
  * @author Marlinski
@@ -40,12 +46,31 @@ public class WifiUtil {
     }
 
     public static boolean isEnabled() {
-       return (getWifiManager().isWifiEnabled() || isWiFiApEnabled());
+        return (getWifiManager().isWifiEnabled() || isWiFiApEnabled());
+    }
+
+    public static String getIPAddress() {
+        WifiInfo wifiInfo = getWifiManager().getConnectionInfo();
+        int ipAddress = wifiInfo.getIpAddress();
+
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            ipAddress = Integer.reverseBytes(ipAddress);
+        }
+
+        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+
+        String ipAddressString;
+        try {
+            return InetAddress.getByAddress(ipByteArray).getHostAddress();
+        } catch (UnknownHostException ex) {
+            return null;
+        }
     }
 
     public static void enableWifi() {
         getWifiManager().setWifiEnabled(true);
     }
+
 
     public static boolean isWiFiApEnabled()
     {

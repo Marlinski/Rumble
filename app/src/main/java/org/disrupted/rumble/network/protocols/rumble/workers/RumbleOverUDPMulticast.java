@@ -25,16 +25,14 @@ import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.util.LinkedList;
-import java.util.List;
 
 import de.greenrobot.event.EventBus;
 

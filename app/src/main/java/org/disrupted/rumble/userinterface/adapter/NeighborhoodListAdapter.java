@@ -32,6 +32,7 @@ import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
 import java.util.List;
 
@@ -68,15 +69,18 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
             BluetoothNeighbour btneighbour = (BluetoothNeighbour)(entry.neighbour);
             name.setText(btneighbour.getBluetoothDeviceName());
-            id.setText(btneighbour.getLinkLayerAddress());
+            id.setText(entry.neighbour.getLinkLayerAddress());
         } else {
-            bluetoothIcon.setVisibility(View.INVISIBLE);
+            bluetoothIcon.setVisibility(View.GONE);
         }
 
         if(entry.neighbour.getLinkLayerIdentifier().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
+            WifiNeighbour wifiNeighbour = (WifiNeighbour)(entry.neighbour);
+            id.setText(wifiNeighbour.getMacAddressFromARP());
+            name.setText(entry.neighbour.getLinkLayerAddress());
         } else {
-            wifiIcon.setVisibility(View.INVISIBLE);
+            wifiIcon.setVisibility(View.GONE);
         }
 
         return neighborView;
@@ -101,15 +105,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void onClick(View view) {
     }
 
-    public void updateList(List<NeighbourInfo> newNeighborhood) {
+    public void swap(List<NeighbourInfo> newNeighborhood) {
         this.neighborhood.clear();
         this.neighborhood = newNeighborhood;
-        notifyDataSetChanged();
-    }
-
-    public void reset() {
-        this.neighborhood.clear();
-        notifyDataSetChanged();
     }
 }
 

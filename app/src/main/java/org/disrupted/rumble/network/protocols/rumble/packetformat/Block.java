@@ -35,17 +35,17 @@ public abstract class Block {
 
     protected BlockHeader  header;
 
-    protected Block(BlockHeader header) {
+    public Block(BlockHeader header) {
         this.header = header;
-    }
-
-    protected final BlockHeader getHeader() {
-        return header;
     }
 
     public abstract long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException;
 
     public abstract long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException;
+
+    protected final BlockHeader getHeader() {
+        return header;
+    }
 
     public abstract void dismiss();
 }

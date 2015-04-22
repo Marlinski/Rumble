@@ -175,7 +175,7 @@ public class BlockChatMessage extends Block {
         int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 post.length;
-        header.setBlockHeaderLength(length);
+        header.setPayloadLength(length);
 
         BlockFile blockFile = null;
         /*

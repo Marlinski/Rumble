@@ -227,7 +227,7 @@ public class BlockContact extends Block {
                 buffersize += bufferEntry.getEntrySize() + Entry.HEADER_SIZE;
             }
         }
-        header.setBlockHeaderLength(buffersize);
+        header.setPayloadLength(buffersize);
 
         /* prepare the block payload buffer */
         byte[] buffer = new byte[buffersize];

@@ -32,6 +32,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
@@ -181,8 +182,9 @@ public class RumbleProtocol implements Protocol {
                 //Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
-        if (neighbour instanceof BluetoothNeighbour) {
-            Log.d(TAG, "[+] shall we connect officer ?");
+
+        if (neighbour instanceof WifiNeighbour) {
+            Log.d(TAG, "[+] we will connect with TCP to: "+neighbour.getLinkLayerAddress());
         }
     }
 

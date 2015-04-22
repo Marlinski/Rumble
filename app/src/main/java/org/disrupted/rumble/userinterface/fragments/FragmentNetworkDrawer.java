@@ -179,9 +179,9 @@ public class FragmentNetworkDrawer extends Fragment {
             @Override
             public void run() {
                 List<NeighbourInfo> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
-                if (mDrawerNeighbourList.getAdapter() != null) {
-                    ((NeighborhoodListAdapter) mDrawerNeighbourList.getAdapter()).updateList(neighborhood);
-                }
+                if (mDrawerNeighbourList.getAdapter() != null)
+                    listAdapter.swap(neighborhood);
+                listAdapter.notifyDataSetChanged();
             }
         });
     }

@@ -81,14 +81,14 @@ public class BlockHeader {
     private boolean reserved6;
     private boolean last_block;
     private int     block_type;
-    private long    block_length;
+    private long    payload_length;
 
     public static final int TRANSACTION_TYPE_UNDEFINED = 0x00;
     public static final int TRANSACTION_TYPE_REQUEST   = 0x01;
     public static final int TRANSACTION_TYPE_RESPONSE  = 0x02;
     public static final int TRANSACTION_TYPE_PUSH      = 0x03;
 
-    public static final int BLOCKTYPE_HELLO         = 0x00;
+    public static final int BLOCKTYPE_BEACON        = 0x00;
     public static final int BLOCKTYPE_PUSH_STATUS   = 0x01;
     public static final int BLOCKTYPE_FILE          = 0x02;
     public static final int BLOCKTYPE_CONTACT       = 0x03;
@@ -105,8 +105,8 @@ public class BlockHeader {
         reserved5 = false;
         reserved6 = false;
         last_block = true;
-        block_type = BLOCKTYPE_HELLO;
-        block_length = 0;
+        block_type = BLOCKTYPE_BEACON;
+        payload_length = 0;
     }
 
     public static BlockHeader readBlock(InputStream in) throws MalformedBlockHeader, IOException {
@@ -134,7 +134,7 @@ public class BlockHeader {
 
         ret.block_type     = ((int) byteBuffer.get() & 0xff);
 
-        ret.block_length   = byteBuffer.getLong();
+        ret.payload_length = byteBuffer.getLong();
 
         return ret;
     }
@@ -154,7 +154,7 @@ public class BlockHeader {
                     (reserved6 ? 1 : 0) << 1 |
                     (last_block ? 1 : 0)));
             bufferBlockHeader.put((byte)(block_type & 0xff));
-            bufferBlockHeader.putLong(block_length);
+            bufferBlockHeader.putLong(payload_length);
 
             out.write(bufferBlockHeader.array());
             bufferBlockHeader.clear();
@@ -170,7 +170,7 @@ public class BlockHeader {
     public int getVersion()      {   return version;   }
     public int getTransaction() {   return transaction_type; }
     public int getBlockType()   {   return block_type;   }
-    public long getBlockLength() {   return block_length; }
+    public long getBlockLength() {   return payload_length; }
     public boolean isReserved0() {   return reserved0; }
     public boolean isReserved1() {   return reserved1; }
     public boolean isReserved2() {   return reserved2; }
@@ -191,11 +191,11 @@ public class BlockHeader {
     public void setReserved5(boolean reserved5) {  this.reserved5 = reserved5; }
     public void setReserved6(boolean reserved6) {  this.reserved6 = reserved6; }
     public void setLastBlock(boolean last_block) {  this.last_block = last_block; }
-    public void setBlockHeaderLength(long length) { this.block_length = length; }
+    public void setPayloadLength(long length) { this.payload_length = length; }
 
     @Override
     public String toString() {
-        return "type:"+block_type+ " payload:"+block_length;
+        return "type:"+block_type+ " payload:"+ payload_length;
     }
 }
 

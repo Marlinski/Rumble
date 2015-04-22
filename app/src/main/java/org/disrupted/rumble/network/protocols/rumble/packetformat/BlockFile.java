@@ -205,7 +205,7 @@ public class BlockFile extends Block {
 
         /* calculate the total block size */
         long size = attachedFile.length();
-        this.header.setBlockHeaderLength(size + MIN_PAYLOAD_SIZE);
+        this.header.setPayloadLength(size + MIN_PAYLOAD_SIZE);
 
         ByteBuffer bufferBlockFilePseudoHeader = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
         bufferBlockFilePseudoHeader.put(status_id, 0, STATUS_ID_SIZE);

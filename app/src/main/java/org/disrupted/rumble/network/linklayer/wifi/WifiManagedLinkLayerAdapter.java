@@ -87,7 +87,7 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
     public void linkStart() {
         if(register)
             return;
-
+        register = true;
         Log.d(TAG, "[+] Starting Wifi Managed");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
@@ -108,7 +108,6 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
 
         Handler handler = new Handler(getLooper());
         RumbleApplication.getContext().registerReceiver(mReceiver, filter, null, handler);
-        register = true;
     }
 
     @Override

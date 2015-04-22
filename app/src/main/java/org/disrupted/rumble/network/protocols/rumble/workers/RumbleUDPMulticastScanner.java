@@ -21,7 +21,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
@@ -30,12 +29,15 @@ import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionExcep
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 
 import de.greenrobot.event.EventBus;
 
@@ -45,6 +47,9 @@ import de.greenrobot.event.EventBus;
 public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner {
 
     public static final String TAG = "RumbleUDPMulticastScanner";
+
+    public static final String RUMBLE_FINGERPRINT = "SD8aw874gaKFSuiy";
+    public static final byte   RUMBLE_VERSION = 0x01;
 
     public static final int    MULTICAST_UDP_PORT = 9715;
     public static final String MULTICAST_ADDRESS = "239.192.0.0";
@@ -56,11 +61,14 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
         SCANNING_OFF, SCANNING_ON,
     }
     private ScanningState scanningState;
-    private HashSet<WifiNeighbour>  wifiNeighborhood;
     private static Object lock = new Object();
 
     private Handler handler;
-    private static final int BEACON_TIME = 1000;
+    private static final int BEACON_TIME       = 5000;
+    private static final int NEIGHBOUR_TIMEOUT = 10000;
+
+    private HashSet<WifiNeighbour>  wifiNeighborhood;
+    private Map<WifiNeighbour, Runnable> timeouts;
 
 
     public RumbleUDPMulticastScanner() {
@@ -68,6 +76,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
         super.start();
         scanningState = ScanningState.SCANNING_OFF;
         wifiNeighborhood = null;
+        timeouts = new HashMap<WifiNeighbour, Runnable>();
     }
 
     @Override
@@ -136,13 +145,26 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
     @Override
     public HashSet<LinkLayerNeighbour> getNeighbourList() {
-        return null;
+        return new HashSet<LinkLayerNeighbour>(wifiNeighborhood);
     }
 
+
+    /*
+     * The Beacon is a very small UDP packet carrying a ProtocolVersion and
+     * a Fingerprint :
+     *
+     * +---------------------------------+------------+
+     * |          FINGERPRINT            |   Version  |
+     * +---------------------------------+------------+
+     *             16 bytes                   1 byte
+     */
     public void sendBeacon() {
         try {
-            byte[] buffer = new byte[10];
-            con.send(buffer);
+            byte[] buffer = new byte[17];
+            ByteBuffer byteBuffer = ByteBuffer.wrap(buffer);
+            byteBuffer.put(RUMBLE_FINGERPRINT.getBytes(), 0, 16);
+            byteBuffer.put(RUMBLE_VERSION);
+            con.send(byteBuffer.array());
         } catch( UDPMulticastSocketException e) {
         } catch( IOException e) {
         }
@@ -164,24 +186,87 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
     Thread receiverThread = new Thread(new Runnable() {
         @Override
         public void run() {
-            while(scanningState.equals(ScanningState.SCANNING_ON)) {
-                byte[] buffer = new byte[PACKET_SIZE];
-                DatagramPacket packet = new DatagramPacket(buffer,  PACKET_SIZE);
-                try {
+            try {
+                while(scanningState.equals(ScanningState.SCANNING_ON)) {
+                    byte[] buffer = new byte[17];
+                    DatagramPacket packet = new DatagramPacket(buffer,  17);
                     con.receive(packet);
-                    Log.d(TAG, "Packet Received, neighbour ??");
-                } catch(UDPMulticastSocketException e) {
-                    stopScanner();
-                    return;
-                } catch( IOException e) {
-                    stopScanner();
-                    return;
+
+                    if(packet.getAddress().getHostAddress().equals(WifiUtil.getIPAddress()))
+                        continue;
+
+                    byte[] data = packet.getData();
+                    if(data.length != 17)
+                        continue;
+
+                    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+                    byte[] fingerprint_buf = new byte[16];
+                    byteBuffer.get(fingerprint_buf, 0, 16);
+                    String fingerprint = new String(fingerprint_buf);
+                    if(!fingerprint.equals(RUMBLE_FINGERPRINT))
+                        continue;
+
+                    byte version = byteBuffer.get();
+                    if(version > RUMBLE_VERSION)
+                        continue;
+
+
+                    WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress());
+                    if(wifiNeighborhood.add(neighbour)) {
+                        EventBus.getDefault().post(new NeighbourReachable(neighbour));
+                    } else {
+                        Runnable callback = timeouts.get(neighbour);
+                        if(callback != null)
+                            handler.removeCallbacks(callback);
+                    }
+
+                    Runnable callback = new RemoveNeighbour(neighbour);
+                    timeouts.put(neighbour, callback);
+                    handler.postDelayed(callback, NEIGHBOUR_TIMEOUT);
                 }
+            } catch(UDPMulticastSocketException e) {
+                stopScanner();
+            } catch( IOException e) {
+                stopScanner();
             }
         }
     });
 
+    public class RemoveNeighbour implements Runnable {
 
+        private WifiNeighbour neighbour;
+
+        public RemoveNeighbour(WifiNeighbour neighbour) {
+            this.neighbour = neighbour;
+        }
+
+        @Override
+        public void run() {
+            Log.d(TAG, "[-] neighbour "+neighbour.getLinkLayerAddress()+" timeouted");
+            timeouts.remove(neighbour);
+            if( wifiNeighborhood.remove(neighbour) )
+                EventBus.getDefault().post(new NeighbourUnreachable(neighbour));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(o == null)
+                return false;
+            if(o instanceof RemoveNeighbour) {
+                RemoveNeighbour other = (RemoveNeighbour)o;
+                if(this.neighbour.equals(other.neighbour))
+                    return true;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return neighbour.hashCode();
+        }
+
+    }
 
 
 }

@@ -241,7 +241,7 @@ public class BlockPushStatus extends Block{
                 author_name.length +
                 group_name.length +
                 post.length;
-        header.setBlockHeaderLength(length);
+        header.setPayloadLength(length);
 
         BlockFile blockFile = null;
         if(status.hasAttachedFile()) {
