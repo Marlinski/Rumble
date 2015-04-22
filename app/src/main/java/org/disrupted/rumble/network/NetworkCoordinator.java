@@ -108,24 +108,20 @@ public class NetworkCoordinator extends Service {
             neighbourManager.startMonitoring();
             scannerList = new LinkedList<Scanner>();
 
-            // register link layers
+            // register link layers and their pool
             adapters = new LinkedList<LinkLayerAdapter>();
-            LinkLayerAdapter bluetoothAdapter = new BluetoothLinkLayerAdapter(this);
-            adapters.add(bluetoothAdapter);
-            LinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter(this);
-            adapters.add(wifiAdapter);
-
-            // create worker pools
             workerPools = new HashMap<String, WorkerPool>();
-            WorkerPool bluetoothWorkers = new WorkerPool(5);
-            workerPools.put(bluetoothAdapter.getLinkLayerIdentifier(), bluetoothWorkers);
-            WorkerPool wifiManagedWorkers = new WorkerPool(5);
-            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), wifiManagedWorkers);
+            BluetoothLinkLayerAdapter bluetoothLinkLayerAdapter = BluetoothLinkLayerAdapter.getInstance(this);
+            adapters.add(bluetoothLinkLayerAdapter);
+            workerPools.put(BluetoothLinkLayerAdapter.LinkLayerIdentifier, new WorkerPool(5));
+            WifiManagedLinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter();
+            adapters.add(wifiAdapter);
+            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(5));
 
             // register protocols
             protocols = new LinkedList<Protocol>();
-            protocols.add(new RumbleProtocol(this));
-            protocols.add(new FirechatProtocol(this));
+            protocols.add(RumbleProtocol.getInstance(this));
+            protocols.add(FirechatProtocol.getInstance(this));
 
             // register services
             services = new LinkedList<ServiceLayer>();
@@ -274,7 +270,7 @@ public class NetworkCoordinator extends Service {
                 return false;
             for (LinkLayerAdapter adapter : adapters) {
                 if(adapter.getLinkLayerIdentifier().equals(linkLayerIdentifier))
-                    return ((adapter != null) && adapter.isActivated());
+                    return adapter.isActivated();
             }
             return false;
         }

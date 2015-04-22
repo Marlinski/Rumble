@@ -29,6 +29,7 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
@@ -49,6 +50,7 @@ public class FirechatProtocol implements Protocol {
     public static final String TAG = "FirechatProtocol";
 
     public static final String protocolID = "Firechat";
+    public static FirechatProtocol instance = null;
 
     /*
      * Firechat Bluetooth Configuration
@@ -63,7 +65,15 @@ public class FirechatProtocol implements Protocol {
 
     private Map<String, FirechatBTState> bluetoothState;
 
-    public FirechatProtocol(NetworkCoordinator networkCoordinator) {
+    public static FirechatProtocol getInstance(NetworkCoordinator networkCoordinator) {
+        synchronized (lock) {
+            if(instance == null)
+                instance = new FirechatProtocol(networkCoordinator);
+            return instance;
+        }
+    }
+
+    private FirechatProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         bluetoothState = new HashMap<String, FirechatBTState>();
         started = false;
@@ -120,7 +130,10 @@ public class FirechatProtocol implements Protocol {
         }
 
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
-            Worker firechatOverUDP = new FirechatOverUDPMulticast();
+            UDPMulticastConnection con = new UDPMulticastConnection(
+                    FirechatOverUDPMulticast.MULTICAST_UDP_PORT,
+                    FirechatOverUDPMulticast.MULTICAST_ADDRESS, false, null, null);
+            Worker firechatOverUDP = new FirechatOverUDPMulticast(this, con);
             networkCoordinator.addWorker(firechatOverUDP);
         }
     }

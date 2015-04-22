@@ -20,7 +20,6 @@
 package org.disrupted.rumble.network.linklayer.wifi;
 
 import android.content.Context;
-import android.net.DhcpInfo;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
@@ -38,14 +37,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
 
 /**
  * An UDP Multicast Connection is not a one-to-one connection but a one-to-many connection
@@ -60,12 +56,12 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
     private static final String TAG = "UDPMulticastConnection";
 
-    private int udpPort;
-    private String address;
-    private InetAddress multicastAddr;
-    private SocketAddress socketAddress;
-    private MulticastSocket mReceiveMulticastSocket;
-    private MulticastSocket mSendMulticastSocket;
+    private int               udpPort;
+    private String            address;
+    private InetAddress       multicastAddr;
+    private SocketAddress     socketAddress;
+    WifiManager.MulticastLock multicastLock;
+    MulticastSocket           socket;
 
     /*
      * only compatible with API 16 !
@@ -114,37 +110,39 @@ public class UDPMulticastConnection implements LinkLayerConnection {
         this.registerService = registerService;
         this.nsdServiceName = nsdServiceName;
         this.nsdServiceType = nsdServiceType;
+        multicastLock = WifiUtil.getWifiManager().createMulticastLock("org.disruptedsystems.rumble.port."+udpPort);
     }
 
     @Override
     public void connect() throws LinkLayerConnectionException {
+        /*
+         * we enable multicast packet over WiFi, it is usually disabled to save battery but we
+         * need it to send/receive message
+         */
+        multicastLock.acquire();
 
-        MulticastSocket tmpReceive = null;
-        MulticastSocket tmpSend    = null;
 
+        MulticastSocket tmp = null;
         try {
             multicastAddr = InetAddress.getByName(address);
             socketAddress = new InetSocketAddress(multicastAddr, udpPort);
-            tmpReceive = new MulticastSocket(udpPort);
-            tmpReceive.joinGroup(multicastAddr);
-            tmpReceive.setReuseAddress(true);
-
-            tmpSend = new MulticastSocket(udpPort);
-            tmpSend.setReuseAddress(true);
-            tmpSend.setTimeToLive(10);
-            tmpSend.connect(socketAddress);
-        } catch(Exception e){
-            throw new UDPMulticastSocketException(udpPort);
+            tmp = new MulticastSocket(udpPort);
+        } catch (UnknownHostException uh) {
+            throw  new UDPMulticastSocketException();
+        } catch( IOException io) {
+            throw  new UDPMulticastSocketException();
         }
 
-        if((tmpReceive == null) || (tmpSend == null)){
-            throw new UDPMulticastSocketException(udpPort);
+        if(tmp == null)
+            throw  new UDPMulticastSocketException();
+
+        socket = tmp;
+        try {
+            socket.joinGroup(multicastAddr);
+            socket.setReuseAddress(true);
+        } catch ( IOException io) {
+            throw  new UDPMulticastSocketException();
         }
-
-        mReceiveMulticastSocket = tmpReceive;
-        mSendMulticastSocket = tmpSend;
-
-
 
         if(registerService && (nsdServiceName!=null) && (nsdServiceType != null)) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
@@ -155,32 +153,36 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
     }
 
-    public DatagramPacket receive(DatagramPacket packet) throws IOException {
-        mReceiveMulticastSocket.receive(packet);
+    public DatagramPacket receive(DatagramPacket packet) throws IOException, UDPMulticastSocketException {
+        if(!multicastLock.isHeld())
+            throw  new UDPMulticastSocketException();
+
+        socket.receive(packet);
         if(packet == null)
             throw new IOException();
         return packet;
     }
 
-    public void send(byte[] bytes) throws IOException {
+    public void send(byte[] bytes) throws IOException, UDPMulticastSocketException {
+        if(!multicastLock.isHeld())
+            throw  new UDPMulticastSocketException();
+
         DatagramPacket packet = new DatagramPacket(bytes, bytes.length, socketAddress);
-        mSendMulticastSocket.send(packet);
+        socket.send(packet);
     }
 
     @Override
     public void disconnect() throws LinkLayerConnectionException {
         try {
-            if (mReceiveMulticastSocket != null) {
-                mReceiveMulticastSocket.leaveGroup(multicastAddr);
-                mReceiveMulticastSocket.close();
-            }
-            if(mSendMulticastSocket != null) {
-                mSendMulticastSocket.disconnect();
-                mSendMulticastSocket.close();
+            if(socket != null) {
+                socket.leaveGroup(multicastAddr);
+                socket.close();
             }
         } catch(IOException e) {
             throw new UDPMulticastSocketException();
         }
+
+        multicastLock.release();
 
         if(!registered)
             return;
@@ -189,6 +191,7 @@ public class UDPMulticastConnection implements LinkLayerConnection {
             //mNsdManager.unregisterService(mRegistrationListener);
         }
     }
+
 
     /*override
      * The following code only deals with DNS-SD registration / discovery

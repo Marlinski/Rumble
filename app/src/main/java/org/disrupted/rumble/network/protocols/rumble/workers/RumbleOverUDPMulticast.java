@@ -23,12 +23,14 @@ import android.util.Log;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,14 +48,11 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     private static final int    MULTICAST_UDP_PORT = 9715;
     private static final int    PACKET_SIZE = 2048;
 
-    private UDPMulticastConnection con;
     private DatagramPacket packet;
     private boolean working;
 
-    public RumbleOverUDPMulticast() {
-        this.con = new UDPMulticastConnection(
-                MULTICAST_UDP_PORT,
-                MULTICAST_ADDRESS, false, null, null);
+    public RumbleOverUDPMulticast(RumbleProtocol protocol, UDPMulticastConnection con) {
+        super(protocol, con);
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         this.working = false;
@@ -110,11 +109,6 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
 
         try {
             Log.d(TAG, "[+] CONNECTED: " + getWorkerIdentifier());
-
-            /*
-             * this one automatically creates two thread, one for processing the command
-             * and one for processing the network
-             */
             onWorkerConnected();
 
         } finally {
@@ -124,6 +118,13 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
 
     @Override
     protected void processingPacketFromNetwork() {
+        try {
+            while(true) {
+                ((UDPMulticastConnection)con).receive(packet);
+            }
+        } catch (IOException e) {
+        } catch (UDPMulticastSocketException e) {
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import android.util.Log;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
+import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
@@ -50,17 +51,16 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
 
     private static final String TAG = "FirechatOverUDPMulticast";
 
-    private static final String MULTICAST_ADDRESS  = "239.192.0.0";
-    private static final int    MULTICAST_UDP_PORT = 7576;
-    private static final int    PACKET_SIZE = 2048;
+    public static final String MULTICAST_ADDRESS  = "239.192.0.0";
+    public static final int    MULTICAST_UDP_PORT = 7576;
+    public static final int    PACKET_SIZE = 2048;
 
-    private UDPMulticastConnection con;
     private DatagramPacket         packet;
     private boolean                working;
     private static final FirechatMessageParser parser = new FirechatMessageParser();
 
-    public FirechatOverUDPMulticast() {
-        this.con = new UDPMulticastConnection(MULTICAST_UDP_PORT, MULTICAST_ADDRESS, false, null, null);
+    public FirechatOverUDPMulticast(FirechatProtocol protocol, UDPMulticastConnection con) {
+        super(protocol, con);
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         working = false;
@@ -130,7 +130,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
     protected void processingPacketFromNetwork() {
         try {
             while(true) {
-                con.receive(packet);
+                ((UDPMulticastConnection)con).receive(packet);
                 ChatMessage chatMessage;
                 try {
                     String jsonString = new String(packet.getData(), 0, packet.getLength());
@@ -161,6 +161,7 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
                 }
             }
         } catch (IOException e) {
+        } catch( UDPMulticastSocketException e) {
         }
     }
 
@@ -170,14 +171,15 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
             switch (command.getCommandID()) {
                 case SEND_CHAT_MESSAGE:
                     String json = parser.chatMessageToNetwork(((CommandSendChatMessage) command).getChatMessage());
-                    con.send(json.getBytes());
+                    ((UDPMulticastConnection)con).send(json.getBytes());
                     EventBus.getDefault().post(new CommandExecuted(this, command, true));
-                    break;
+                    return true;
                 default:
                     return false;
             }
         } catch (IOException ignore) {
             Log.d(TAG, "Fail to send message:",ignore);
+        } catch (UDPMulticastSocketException ignore) {
         }
         EventBus.getDefault().post(new CommandExecuted(this, command, false));
         return false;

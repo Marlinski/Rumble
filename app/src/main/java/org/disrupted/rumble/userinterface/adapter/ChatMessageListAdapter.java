@@ -59,7 +59,6 @@ public class ChatMessageListAdapter extends BaseAdapter {
 
     private static final String TAG = "StatusListAdapter";
 
-    private FragmentChatMessage fragment;
     private Activity activity;
     private LayoutInflater inflater;
     private List<ChatMessage> chatMessageList;
@@ -68,7 +67,6 @@ public class ChatMessageListAdapter extends BaseAdapter {
 
     public ChatMessageListAdapter(Activity activity, FragmentChatMessage fragment) {
         this.activity = activity;
-        this.fragment = fragment;
         this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.chatMessageList = new ArrayList<ChatMessage>();
     }
@@ -77,13 +75,12 @@ public class ChatMessageListAdapter extends BaseAdapter {
         swap(null);
         inflater = null;
         activity = null;
-        fragment = null;
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
 
-        final ChatMessage message = chatMessageList.get(i);
+        final ChatMessage message = (ChatMessage)getItem((int)getItemId(i));
 
         View chatMessageView = inflater.inflate(R.layout.chat_message_item, null);
         FrameLayout senderBox   =  (FrameLayout) chatMessageView.findViewById(R.id.chat_sender_avatar_box);
@@ -171,14 +168,16 @@ public class ChatMessageListAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int i) {
-        return null;
+        return chatMessageList.get(i);
     }
 
     @Override
     public long getItemId(int i) {
         if(chatMessageList == null)
             return 0;
-        return i;
+        // ListView by default stack element from bottom up
+        // this trick reverse the way the list is displayed
+        return (getCount()-i-1);
     }
 
     @Override

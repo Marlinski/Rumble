@@ -47,17 +47,14 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
     public static final String LinkLayerIdentifier = "WIFIManagedMode";
 
-    private NetworkCoordinator networkCoordinator;
     private String macAddress;
     private WifiManager wifiMan;
     private WifiInfo wifiInf;
-    WifiManager.MulticastLock multicastLock;
 
     public boolean register;
     public boolean activated;
 
-    public WifiManagedLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
-        this.networkCoordinator = networkCoordinator;
+    public WifiManagedLinkLayerAdapter() {
         macAddress = null;
         wifiMan    = null;
         wifiInf    = null;
@@ -84,7 +81,6 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
-        multicastLock = wifiMan.createMulticastLock("org.disruptedsystems.rumble");
 
         if (WifiUtil.isEnabled()) {
             linkConnected();
@@ -121,11 +117,6 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
             return;
         activated = true;
         Log.d(TAG, "[+] Wifi Activated");
-        /*
-         * we enable multicast packet over WiFi, it is usually disabled to save battery but we
-         * need it to send/receive message
-         */
-        multicastLock.acquire();
 
         EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
@@ -137,7 +128,6 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
 
         Log.d(TAG, "[-] Wifi De-activated");
         EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
-        multicastLock.release();
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

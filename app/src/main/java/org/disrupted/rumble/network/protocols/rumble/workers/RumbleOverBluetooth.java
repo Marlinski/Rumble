@@ -19,17 +19,14 @@
 
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
-import android.os.SystemClock;
 import android.util.Log;
 
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
@@ -49,7 +46,6 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.io.IOException;
-import java.util.Random;
 
 import de.greenrobot.event.EventBus;
 
@@ -60,17 +56,11 @@ public class RumbleOverBluetooth extends ProtocolWorker {
 
     private static final String TAG = "RumbleOverBluetooth";
 
-    private final BluetoothConnection con;
-    private final RumbleProtocol protocol;
     protected boolean working;
 
-    private BluetoothNeighbour bluetoothNeighbour;
-
     public RumbleOverBluetooth(RumbleProtocol protocol, BluetoothConnection con) {
-        this.protocol = protocol;
-        this.con = con;
+        super(protocol, con);
         this.working = false;
-        this.bluetoothNeighbour = (BluetoothNeighbour)con.getLinkLayerNeighbour();
     }
 
     @Override
@@ -79,28 +69,8 @@ public class RumbleOverBluetooth extends ProtocolWorker {
     }
 
     @Override
-    public String getProtocolIdentifier() {
-        return RumbleProtocol.protocolID;
-    }
-
-    @Override
-    public String getWorkerIdentifier() {
-        return getProtocolIdentifier()+" "+con.getConnectionID();
-    }
-
-    @Override
-    public LinkLayerConnection getLinkLayerConnection() {
-        return con;
-    }
-
-    @Override
-    public String getLinkLayerIdentifier() {
-        return con.getLinkLayerIdentifier();
-    }
-
-    @Override
     public void cancelWorker() {
-        RumbleBTState connectionState = protocol.getBTState(con.getRemoteLinkLayerAddress());
+        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
         if(working) {
             Log.e(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
@@ -116,7 +86,7 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             return;
         working = true;
 
-        RumbleBTState connectionState = protocol.getBTState(con.getRemoteLinkLayerAddress());
+        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
 
         try {
 
@@ -129,8 +99,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 try {
                     connectionState.lock.lock();
                     connectionState.connectionInitiated(getWorkerIdentifier());
-                } catch (RumbleBTState.StateException e) {
-                    throw e;
                 } finally {
                     connectionState.lock.unlock();
                 }
@@ -141,8 +109,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             try {
                 connectionState.lock.lock();
                 connectionState.connected(getWorkerIdentifier());
-            } catch (RumbleBTState.StateException e) {
-                throw e;
             } finally {
                 connectionState.lock.unlock();
             }

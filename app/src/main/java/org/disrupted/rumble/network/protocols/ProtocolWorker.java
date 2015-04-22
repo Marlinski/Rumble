@@ -37,11 +37,36 @@ public abstract class ProtocolWorker implements Worker {
 
     private static final String TAG = "ProtocolWorker";
 
+
+    protected Protocol protocol;
+    protected LinkLayerConnection con;
     private BlockingQueue<Command> commandQueue;
 
-    public ProtocolWorker() {
+    public ProtocolWorker(Protocol protocol, LinkLayerConnection con) {
+        this.protocol = protocol;
+        this.con = con;
         commandQueue = new LinkedBlockingQueue<Command>();
     }
+
+    public LinkLayerConnection getLinkLayerConnection() {
+        return con;
+    }
+
+    @Override
+    public String getLinkLayerIdentifier() {
+        return con.getLinkLayerIdentifier();
+    }
+
+    @Override
+    public String getProtocolIdentifier() {
+        return protocol.getProtocolIdentifier();
+    }
+
+    @Override
+    public String getWorkerIdentifier() {
+        return getProtocolIdentifier()+" "+con.getConnectionID();
+    }
+
 
     protected final void onWorkerConnected() {
         processingCommandFromQueue.start();
@@ -77,8 +102,6 @@ public abstract class ProtocolWorker implements Worker {
     }
 
     abstract protected boolean onCommandReceived(Command command);
-
-    abstract public LinkLayerConnection getLinkLayerConnection();
 
     abstract protected void processingPacketFromNetwork();
 

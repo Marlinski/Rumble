@@ -155,7 +155,7 @@ public class ChatMessageDatabase extends Database {
         if(options.filterFlags > 0)
             query.append(" ) ");
 
-        query.append(" ORDER BY " + ChatMessageDatabase.TIME_OF_ARRIVAL);
+        query.append(" ORDER BY " + ChatMessageDatabase.TIME_OF_ARRIVAL + " DESC ");
 
         if(options.answerLimit > 0) {
             query.append(" LIMIT ? ");

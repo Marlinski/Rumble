@@ -52,6 +52,7 @@ public class RumbleProtocol implements Protocol {
     public static final String TAG = "RumbleProtocol";
 
     public static final String protocolID = "Rumble";
+    public static RumbleProtocol instance = null;
 
     /*
      * Bluetooth Configuration
@@ -69,7 +70,15 @@ public class RumbleProtocol implements Protocol {
 
     private Map<String, RumbleBTState>   bluetoothState;
 
-    public RumbleProtocol(NetworkCoordinator networkCoordinator) {
+    public static RumbleProtocol getInstance(NetworkCoordinator networkCoordinator) {
+        synchronized (lock) {
+            if(instance == null)
+                instance = new RumbleProtocol(networkCoordinator);
+            return instance;
+        }
+    }
+
+    private RumbleProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         bluetoothState = new HashMap<String, RumbleBTState>();
         started = false;

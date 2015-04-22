@@ -30,12 +30,21 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
  */
 public interface Protocol {
 
+    /*
+     * Protocol identification
+     */
     public String getProtocolIdentifier();
 
+    /*
+     * Protocol management
+     */
     public void protocolStart();
 
     public void protocolStop();
 
+    /*
+     * Protocol must catch those event to deal with clients
+     */
     public void onEvent(LinkLayerStarted event);
 
     public void onEvent(LinkLayerStopped event);

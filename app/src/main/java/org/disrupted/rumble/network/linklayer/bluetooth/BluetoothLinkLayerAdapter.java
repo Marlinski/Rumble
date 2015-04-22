@@ -42,14 +42,23 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
 
     private static final String TAG = "BluetoothLinkLayerAdapter";
     public static final String LinkLayerIdentifier = "BLUETOOTH";
+    private static BluetoothLinkLayerAdapter instance = null;
+    private static final Object lock = new Object();
 
     private NetworkCoordinator networkCoordinator;
     private BluetoothScanner btScanner;
     private boolean register;
     private boolean activated;
 
+    public static BluetoothLinkLayerAdapter getInstance(NetworkCoordinator networkCoordinator) {
+        synchronized (lock) {
+            if(instance == null)
+                instance = new BluetoothLinkLayerAdapter(networkCoordinator);
+            return instance;
+        }
+    }
 
-    public BluetoothLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
+    private BluetoothLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
         this.btScanner = BluetoothScanner.getInstance();
         register = false;
