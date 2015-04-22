@@ -30,7 +30,6 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
-import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
@@ -132,7 +131,7 @@ public class FirechatProtocol implements Protocol {
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             UDPMulticastConnection con = new UDPMulticastConnection(
                     FirechatOverUDPMulticast.MULTICAST_UDP_PORT,
-                    FirechatOverUDPMulticast.MULTICAST_ADDRESS, false, null, null);
+                    FirechatOverUDPMulticast.MULTICAST_ADDRESS);
             Worker firechatOverUDP = new FirechatOverUDPMulticast(this, con);
             networkCoordinator.addWorker(firechatOverUDP);
         }
@@ -169,14 +168,6 @@ public class FirechatProtocol implements Protocol {
 
         }
         */
-
-        if(neighbour instanceof UDPNeighbour) {
-          /**
-           * We don't need a worker to manage this specific neighbour
-           * because in Multicast operation, every neighbour are being managed
-           * by the same worker.
-           */
-        }
     }
 
     @Override
@@ -192,12 +183,6 @@ public class FirechatProtocol implements Protocol {
              * while still being connected to it.
              * If the neighbour is indeed disconnected, the connection will drop by itself.
              * todo maybe add a timeout just in case ?
-             */
-        }
-
-        if(neighbour instanceof UDPNeighbour) {
-            /**
-             * Ignore because only one worker anyway
              */
         }
     }

@@ -27,6 +27,8 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.database.CacheManager;
 
+import de.greenrobot.event.EventBus;
+
 /**
  * @author Marlinski
  */
@@ -48,6 +50,7 @@ public class RumbleApplication extends Application{
         super.onCreate();
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
+
         Intent startIntent = new Intent(this, NetworkCoordinator.class);
         startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
         startService(startIntent);

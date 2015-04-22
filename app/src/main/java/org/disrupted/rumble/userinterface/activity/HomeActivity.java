@@ -69,8 +69,8 @@ public class HomeActivity extends ActionBarActivity {
     private FragmentNetworkDrawer mNetworkDrawerFragment;
     public SlidingMenu slidingMenu;
 
-    private Fragment fragmentStatusList = new FragmentStatusList();
-    private Fragment fragmentTchat = new FragmentChatMessage();
+    private Fragment statusFragment;
+    private Fragment chatFragment;
     private View notifStatus;
     private View notifChat;
     private boolean chatHasFocus;
@@ -114,12 +114,14 @@ public class HomeActivity extends ActionBarActivity {
         notifStatus = renderTabView(this, R.drawable.ic_world);
         notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
 
+        statusFragment = new FragmentStatusList();
+        chatFragment = new FragmentChatMessage();
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifStatus)
-                .setTabListener(new HomeTabListener(fragmentStatusList)));
+                .setTabListener(new HomeTabListener(statusFragment)));
         actionBar.addTab(actionBar.newTab()
                 .setCustomView(notifChat)
-                .setTabListener(new HomeTabListener(fragmentTchat)));
+                .setTabListener(new HomeTabListener(chatFragment)));
 
         // hide the action bar
         actionBar.setHomeButtonEnabled(false);

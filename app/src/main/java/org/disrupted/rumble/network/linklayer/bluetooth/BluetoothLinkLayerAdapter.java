@@ -24,6 +24,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 
 
@@ -38,10 +41,12 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
+public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 
     private static final String TAG = "BluetoothLinkLayerAdapter";
+
     public static final String LinkLayerIdentifier = "BLUETOOTH";
+
     private static BluetoothLinkLayerAdapter instance = null;
     private static final Object lock = new Object();
 
@@ -59,10 +64,18 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
     }
 
     private BluetoothLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
+        super(TAG);
         this.networkCoordinator = networkCoordinator;
         this.btScanner = BluetoothScanner.getInstance();
         register = false;
         activated = false;
+        super.start();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.quit();
+        super.finalize();
     }
 
     public String getLinkLayerIdentifier() {
@@ -77,13 +90,14 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
     public void linkStart() {
         if(register)
             return;
-
+        register = true;
         Log.d(TAG, "[+] Starting Bluetooth");
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothAdapter.ACTION_LOCAL_NAME_CHANGED);
-        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
-        register = true;
+
+        Handler handler = new Handler(getLooper());
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter, null, handler);
 
         if(BluetoothUtil.isEnabled())
             linkStarted();
@@ -93,9 +107,9 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
         if(!register)
             return;
         register = false;
-
         Log.d(TAG, "[-] Stopping Bluetooth");
         RumbleApplication.getContext().unregisterReceiver(mReceiver);
+
         linkStopped();
     }
 
@@ -108,6 +122,7 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
         networkCoordinator.addScanner(btScanner);
         EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
+
     private void linkStopped() {
         if(!activated)
             return;
@@ -128,22 +143,10 @@ public class BluetoothLinkLayerAdapter implements LinkLayerAdapter {
                 Log.d(TAG, "[!] BT State Changed");
                 switch (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.STATE_OFF)){
                     case BluetoothAdapter.STATE_ON:
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // to avoid doing networking on the main thread
-                                linkStarted();
-                            }
-                        }).start();
+                        linkStarted();
                         break;
                     case BluetoothAdapter.STATE_OFF:
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // to avoid doing networking on the main thread
-                                linkStopped();
-                            }
-                        }).start();
+                        linkStopped();
                         break;
                     case BluetoothAdapter.STATE_TURNING_OFF:
                     case BluetoothAdapter.STATE_TURNING_ON:

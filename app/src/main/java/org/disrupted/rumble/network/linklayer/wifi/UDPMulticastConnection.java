@@ -63,17 +63,6 @@ public class UDPMulticastConnection implements LinkLayerConnection {
     WifiManager.MulticastLock multicastLock;
     MulticastSocket           socket;
 
-    /*
-     * only compatible with API 16 !
-     */
-    private NsdServiceInfo serviceInfo;
-    private NsdManager mNsdManager;
-    private NsdManager.RegistrationListener mRegistrationListener;
-    private String nsdServiceName;
-    private String nsdServiceType;
-    private boolean registerService;
-    private boolean registered;
-
     @Override
     public String getConnectionID() {
         return "UDPMulticastConnection";
@@ -104,12 +93,9 @@ public class UDPMulticastConnection implements LinkLayerConnection {
         return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
     }
 
-    public UDPMulticastConnection(int port, String address, boolean registerService, String nsdServiceName, String nsdServiceType) {
+    public UDPMulticastConnection(int port, String address) {
         this.udpPort = port;
         this.address = address;
-        this.registerService = registerService;
-        this.nsdServiceName = nsdServiceName;
-        this.nsdServiceType = nsdServiceType;
         multicastLock = WifiUtil.getWifiManager().createMulticastLock("org.disruptedsystems.rumble.port."+udpPort);
     }
 
@@ -143,14 +129,6 @@ public class UDPMulticastConnection implements LinkLayerConnection {
         } catch ( IOException io) {
             throw  new UDPMulticastSocketException();
         }
-
-        if(registerService && (nsdServiceName!=null) && (nsdServiceType != null)) {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-                registerService();
-                registered = true;
-            }
-        }
-
     }
 
     public DatagramPacket receive(DatagramPacket packet) throws IOException, UDPMulticastSocketException {
@@ -184,66 +162,5 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
         multicastLock.release();
 
-        if(!registered)
-            return;
-
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            //mNsdManager.unregisterService(mRegistrationListener);
-        }
     }
-
-
-    /*override
-     * The following code only deals with DNS-SD registration / discovery
-     * and requires API level 16 to works.
-     *
-     * Since service discovery is an heavy tasks (and thus drain the battery),
-     * we may consider using our own strategy instead, trickle based like Bluetooth
-     * todo: do testings
-     */
-    public void registerService() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            initializeRegistrationListener();
-
-            serviceInfo  = new NsdServiceInfo();
-            serviceInfo.setServiceName(nsdServiceName);
-            serviceInfo.setServiceType(nsdServiceType);
-            serviceInfo.setPort(udpPort);
-
-            mNsdManager = (NsdManager) RumbleApplication.getContext().getSystemService(Context.NSD_SERVICE);
-            mNsdManager.registerService(
-                    serviceInfo,
-                    NsdManager.PROTOCOL_DNS_SD,
-                    mRegistrationListener);
-        }
-    }
-
-    public void initializeRegistrationListener() {
-        if( Build.VERSION.SDK_INT  > Build.VERSION_CODES.JELLY_BEAN) {
-            mRegistrationListener = new NsdManager.RegistrationListener() {
-
-                @Override
-                public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN) {
-                        Log.d(TAG, "[+] Service registered");
-                    }
-                }
-
-                @Override
-                public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                }
-
-                @Override
-                public void onServiceUnregistered(NsdServiceInfo arg0) {
-                    Log.d(TAG, "[-] Service unregistered");
-                }
-
-                @Override
-                public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                }
-            };
-        }
-    }
-
-
 }

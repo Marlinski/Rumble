@@ -27,6 +27,9 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -41,7 +44,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
+public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 
     private static final String TAG = "WifiManagedLinkLayerAdapter";
 
@@ -55,11 +58,19 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
     public boolean activated;
 
     public WifiManagedLinkLayerAdapter() {
+        super(TAG);
         macAddress = null;
         wifiMan    = null;
         wifiInf    = null;
         register   = false;
         activated  = false;
+        super.start();
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.quit();
+        super.finalize();
     }
 
     @Override
@@ -94,7 +105,9 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
         filter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         filter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        RumbleApplication.getContext().registerReceiver(mReceiver, filter);
+
+        Handler handler = new Handler(getLooper());
+        RumbleApplication.getContext().registerReceiver(mReceiver, filter, null, handler);
         register = true;
     }
 
@@ -145,13 +158,7 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
                             return;
 
                         Log.d(TAG, "[+] connected to a wifi access point");
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                // to avoid doing networking on the main thread
-                                linkConnected();
-                            }
-                        }).start();
+                        linkConnected();
                     }
                 }
                 if(state == NetworkInfo.State.DISCONNECTED) {
@@ -160,13 +167,7 @@ public class WifiManagedLinkLayerAdapter implements LinkLayerAdapter {
                              return;
 
                          Log.d(TAG, "[-] disconnected from a wifi access point");
-                         new Thread(new Runnable() {
-                             @Override
-                             public void run() {
-                                 // to avoid doing networking on the main thread
-                                 linkDisconnected();
-                             }
-                         }).start();
+                         linkDisconnected();
                      }
                 }
             }

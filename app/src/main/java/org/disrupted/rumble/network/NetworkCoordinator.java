@@ -169,7 +169,14 @@ public class NetworkCoordinator extends Service {
             if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
                 Log.d(TAG, "Received Start Foreground Intent ");
 
-                startNetworking();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // start networking from a new thread to avoid performing network
+                        // related operation from the UI thread
+                        startNetworking();
+                    }
+                }).start();
 
                 Intent notificationIntent = new Intent(this, RoutingActivity.class);
                 notificationIntent.setAction(ACTION_MAIN_ACTION);
@@ -213,11 +220,13 @@ public class NetworkCoordinator extends Service {
         }
 
         // start the link layers and worker pools
+        /*
         for (LinkLayerAdapter adapter : adapters) {
             WorkerPool pool = workerPools.get(adapter.getLinkLayerIdentifier());
             pool.startPool();
             adapter.linkStart();
         }
+        */
 
     }
 

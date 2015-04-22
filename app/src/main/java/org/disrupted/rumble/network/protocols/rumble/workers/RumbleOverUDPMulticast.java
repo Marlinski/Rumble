@@ -28,12 +28,15 @@ import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.LinkedList;
 import java.util.List;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -42,27 +45,15 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
 
     private static final String TAG = "RumbleOverUDP";
 
-    private static final String NSD_SERVICE_NAME = "Rumble";
-    private static final String NSD_SERVICE_TYPE = "_rumble._udp.";
-    private static final String MULTICAST_ADDRESS = "239.192.0.0";
-    private static final int    MULTICAST_UDP_PORT = 9715;
-    private static final int    PACKET_SIZE = 2048;
+    public static final int    PACKET_SIZE = 2048;
 
-    private DatagramPacket packet;
     private boolean working;
 
     public RumbleOverUDPMulticast(RumbleProtocol protocol, UDPMulticastConnection con) {
         super(protocol, con);
-        byte[] buffer = new byte[PACKET_SIZE];
-        this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         this.working = false;
     }
 
-    // todo : a implementer
-    public List<ProtocolNeighbour> getUDPNeighbourList() {
-        List<ProtocolNeighbour> ret = new LinkedList<ProtocolNeighbour>();
-        return ret;
-    }
 
     @Override
     public boolean isWorking() {
@@ -120,6 +111,8 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     protected void processingPacketFromNetwork() {
         try {
             while(true) {
+                byte[] buffer = new byte[PACKET_SIZE];
+                DatagramPacket packet = new DatagramPacket(buffer,  PACKET_SIZE);
                 ((UDPMulticastConnection)con).receive(packet);
             }
         } catch (IOException e) {
@@ -129,6 +122,7 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
 
     @Override
     protected boolean onCommandReceived(Command command) {
+        EventBus.getDefault().post(new CommandExecuted(this, command, false));
         return false;
     }
 

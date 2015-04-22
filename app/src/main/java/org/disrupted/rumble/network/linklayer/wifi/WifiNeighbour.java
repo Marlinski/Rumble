@@ -29,13 +29,11 @@ import java.net.InetAddress;
 /**
  * @author Marlinski
  */
-public class UDPNeighbour implements LinkLayerNeighbour {
+public class WifiNeighbour implements LinkLayerNeighbour {
 
-    int port;
     InetAddress address;
 
-    public UDPNeighbour(int port, InetAddress address) {
-        this.port = port;
+    public WifiNeighbour(InetAddress address) {
         this.address = address;
     }
 
@@ -79,5 +77,23 @@ public class UDPNeighbour implements LinkLayerNeighbour {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+
+        if(o instanceof  WifiNeighbour) {
+            WifiNeighbour neighbour = (WifiNeighbour) o;
+            return address.getHostAddress().equals(neighbour.address.getHostAddress());
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return address.getHostAddress().hashCode();
     }
 }

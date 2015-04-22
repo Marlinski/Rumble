@@ -31,12 +31,12 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnectio
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
-import org.disrupted.rumble.network.linklayer.wifi.UDPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
+import org.disrupted.rumble.network.protocols.rumble.workers.RumbleUDPMulticastScanner;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,12 +57,13 @@ public class RumbleProtocol implements Protocol {
     /*
      * Bluetooth Configuration
      */
-    public static final UUID RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
-    public static final String RUMBLE_BT_STR    = "org.disrupted.rumble";
+    public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
+    public static final String RUMBLE_BT_STR      = "org.disrupted.rumble";
 
     /*
      * Wifi Configuration
      */
+    RumbleUDPMulticastScanner scanner;
 
     private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
@@ -82,6 +83,7 @@ public class RumbleProtocol implements Protocol {
         this.networkCoordinator = networkCoordinator;
         bluetoothState = new HashMap<String, RumbleBTState>();
         started = false;
+        scanner = null;
     }
 
     public RumbleBTState getBTState(String macAddress) {
@@ -138,8 +140,9 @@ public class RumbleProtocol implements Protocol {
         }
 
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
-            //Worker rumbleOverUDP = new RumbleOverUDPMulticast();
-            //networkCoordinator.addWorker(rumbleOverUDP);
+            scanner = new RumbleUDPMulticastScanner();
+            scanner.startScanner();
+            networkCoordinator.addScanner(scanner);
         }
     }
 
@@ -149,6 +152,13 @@ public class RumbleProtocol implements Protocol {
             return;
 
         networkCoordinator.stopWorkers(event.linkLayerIdentifier, protocolID);
+        if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+            if(scanner != null) {
+                networkCoordinator.delScanner(scanner);
+                scanner.stopScanner();
+                scanner = null;
+            }
+        }
     }
 
     @Override
@@ -171,13 +181,8 @@ public class RumbleProtocol implements Protocol {
                 //Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
-
-        if(neighbour instanceof UDPNeighbour) {
-            /**
-             * We don't need a worker to manage this specific neighbour
-             * because in Multicast operation, every neighbour are being managed
-             * by the same worker.
-             */
+        if (neighbour instanceof BluetoothNeighbour) {
+            Log.d(TAG, "[+] shall we connect officer ?");
         }
     }
 
@@ -194,12 +199,6 @@ public class RumbleProtocol implements Protocol {
              * while still being connected to it.
              * If the neighbour is indeed disconnected, the connection will drop by itself.
              * todo maybe add a timeout just in case ?
-             */
-        }
-
-        if(neighbour instanceof UDPNeighbour) {
-            /**
-             * Ignore because only one worker anyway
              */
         }
     }
