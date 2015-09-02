@@ -89,7 +89,7 @@ public class BlockPushStatus extends Block{
     private static final int FIELD_LIKE_SIZE            = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = (
-            FIELD_UID_SIZE +
+                    FIELD_UID_SIZE +
                     FIELD_AUTHOR_LENGTH_SIZE +
                     FIELD_GID_SIZE +
                     FIELD_GROUP_LENGTH_SIZE +
