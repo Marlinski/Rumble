@@ -27,7 +27,7 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
-import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
+import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 
@@ -46,7 +46,7 @@ import de.greenrobot.event.EventBus;
  */
 public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner {
 
-    public static final String TAG = "RumbleUDPMulticastScanner";
+    public static final String TAG = "RumbleUDPScanner";
 
     public static final String RUMBLE_FINGERPRINT = "SD8aw874gaKFSuiy";
     public static final byte   RUMBLE_VERSION = 0x01;
@@ -54,6 +54,9 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
     public static final int    MULTICAST_UDP_PORT = 9715;
     public static final String MULTICAST_ADDRESS = "239.192.0.0";
     public static final int    PACKET_SIZE = 2048;
+
+    private static final int BEACON_TIME       = 5000;
+    private static final int NEIGHBOUR_TIMEOUT = 10000;
 
     private UDPMulticastConnection con;
 
@@ -64,9 +67,6 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
     private static Object lock = new Object();
 
     private Handler handler;
-    private static final int BEACON_TIME       = 5000;
-    private static final int NEIGHBOUR_TIMEOUT = 10000;
-
     private HashSet<WifiNeighbour>  wifiNeighborhood;
     private Map<WifiNeighbour, Runnable> timeouts;
 
@@ -104,7 +104,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                 return;
             }
 
-            Log.d(TAG, "[+] ----- Rumble Scanner started -----");
+            Log.d(TAG, "[+] ----- Rumble UDP Scanner started -----");
             wifiNeighborhood = new LinkedHashSet<WifiNeighbour>();
             receiverThread.start();
             sendBeacon();
@@ -118,7 +118,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                 return;
             scanningState = ScanningState.SCANNING_OFF;
 
-            Log.d(TAG, "[+] ----- Rumble Scanner stopped -----");
+            Log.d(TAG, "[+] ----- Rumble UDP Scanner stopped -----");
             handler.removeCallbacksAndMessages(null);
 
             if (wifiNeighborhood != null)

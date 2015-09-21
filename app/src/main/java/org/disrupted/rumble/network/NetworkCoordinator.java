@@ -121,7 +121,7 @@ public class NetworkCoordinator extends Service {
             // register protocols
             protocols = new LinkedList<Protocol>();
             protocols.add(RumbleProtocol.getInstance(this));
-            protocols.add(FirechatProtocol.getInstance(this));
+            //protocols.add(FirechatProtocol.getInstance(this));
 
             // register services
             services = new LinkedList<ServiceLayer>();

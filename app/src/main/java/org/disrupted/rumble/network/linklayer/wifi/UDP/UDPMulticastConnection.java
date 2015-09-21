@@ -17,21 +17,17 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi;
+package org.disrupted.rumble.network.linklayer.wifi.UDP;
 
-import android.content.Context;
-import android.net.nsd.NsdManager;
-import android.net.nsd.NsdServiceInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
-import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,7 +41,7 @@ import java.net.UnknownHostException;
 
 /**
  * An UDP Multicast Connection is not a one-to-one connection but a one-to-many connection
- * This class is responsible of managing its own neighborhood, that is the other device who
+ * This class is responsible for managing its own neighborhood, that is the other devices who
  * also send and receive on this multicast IP Address. This is achieved by using the DNS-SD
  * service (Bonjour/Avahi)
  *
@@ -80,7 +76,7 @@ public class UDPMulticastConnection implements LinkLayerConnection {
 
     @Override
     public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return new UDPMulticastNeighbour("Multicast", udpPort, address);
+        return new UDPMulticastNeighbour("UDPMulticast", udpPort, address);
     }
 
     @Override

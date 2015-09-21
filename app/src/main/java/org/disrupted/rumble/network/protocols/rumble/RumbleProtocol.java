@@ -37,6 +37,7 @@ import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
+import org.disrupted.rumble.network.protocols.rumble.workers.RumbleTCPServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleUDPMulticastScanner;
 
 import java.util.HashMap;
@@ -64,6 +65,7 @@ public class RumbleProtocol implements Protocol {
     /*
      * Wifi Configuration
      */
+    public static final int   RUMBLE_TCP_PORT = 7430;
     RumbleUDPMulticastScanner scanner;
 
     private static final Object lock = new Object();
@@ -141,6 +143,9 @@ public class RumbleProtocol implements Protocol {
         }
 
         if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+            Worker TCPServer = new RumbleTCPServer(this, networkCoordinator);
+            networkCoordinator.addWorker(TCPServer);
+
             scanner = new RumbleUDPMulticastScanner();
             scanner.startScanner();
             networkCoordinator.addScanner(scanner);

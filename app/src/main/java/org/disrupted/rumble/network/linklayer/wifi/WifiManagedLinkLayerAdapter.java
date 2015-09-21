@@ -46,7 +46,7 @@ import de.greenrobot.event.EventBus;
  */
 public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 
-    private static final String TAG = "WifiManagedLinkLayerAdapter";
+    private static final String TAG = "WifiLinkLayerAdapter";
 
     public static final String LinkLayerIdentifier = "WIFIManagedMode";
 

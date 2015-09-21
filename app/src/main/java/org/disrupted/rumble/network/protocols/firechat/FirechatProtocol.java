@@ -29,7 +29,7 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
-import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
+import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;

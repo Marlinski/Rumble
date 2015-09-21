@@ -116,7 +116,6 @@ public class BluetoothClientConnection extends BluetoothConnection {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         RumbleApplication.getContext().registerReceiver(mReceiver, filter);
         registered = true;
-
     }
 
     /*

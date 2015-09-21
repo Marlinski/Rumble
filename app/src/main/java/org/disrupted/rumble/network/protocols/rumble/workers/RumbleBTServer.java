@@ -40,6 +40,7 @@ import java.io.IOException;
 public class RumbleBTServer extends BluetoothServer {
 
     private static final String TAG = "RumbleBluetoothServer";
+
     private final RumbleProtocol protocol;
     private final NetworkCoordinator networkCoordinator;
 
@@ -94,8 +95,6 @@ public class RumbleBTServer extends BluetoothServer {
                     break;
             }
 
-            // hack to synchronise the client and server
-            mmConnectedSocket.getOutputStream().write(new byte[]{0},0,1);
             Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
             connectionState.connectionAccepted(worker.getWorkerIdentifier());
             networkCoordinator.addWorker(worker);

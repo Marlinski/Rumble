@@ -21,6 +21,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
@@ -52,20 +53,12 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleOverBluetooth extends ProtocolWorker {
+public class RumbleOverBluetooth extends RumbleProtocolWorker {
 
     private static final String TAG = "RumbleOverBluetooth";
 
-    protected boolean working;
-
     public RumbleOverBluetooth(RumbleProtocol protocol, BluetoothConnection con) {
         super(protocol, con);
-        this.working = false;
-    }
-
-    @Override
-    public boolean isWorking() {
-        return working;
     }
 
     @Override
@@ -77,8 +70,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
         } else
             connectionState.notConnected();
     }
-
-
 
     @Override
     public void startWorker() {
@@ -113,7 +104,12 @@ public class RumbleOverBluetooth extends ProtocolWorker {
                 connectionState.lock.unlock();
             }
 
-            // hack to synchronise the client and server
+            /*
+             * Bluetooth hack to synchronise the client and server
+             * if I don't do this, they sometime fail to connect ? :/ ?
+             */
+            if (con instanceof BluetoothServerConnection)
+                con.getOutputStream().write(new byte[]{0},0,1);
             if (con instanceof BluetoothClientConnection)
                 con.getInputStream().read(new byte[1], 0, 1);
 
@@ -148,101 +144,6 @@ public class RumbleOverBluetooth extends ProtocolWorker {
             );
             stopWorker();
             connectionState.notConnected();
-        }
-    }
-
-    @Override
-    protected void processingPacketFromNetwork(){
-        try {
-            while (true) {
-                try {
-                    BlockHeader header = BlockHeader.readBlock(con.getInputStream());
-                    Block block;
-                    switch (header.getBlockType()) {
-                        case BlockHeader.BLOCKTYPE_PUSH_STATUS:
-                            block = new BlockPushStatus(header);
-                            break;
-                        case BlockHeader.BLOCKTYPE_FILE:
-                            block = new BlockFile(header);
-                            break;
-                        case BlockHeader.BLOCKTYPE_CONTACT:
-                            block = new BlockContact(header);
-                            break;
-                        case BlockHeader.BLOCKTYPE_CHAT_MESSAGE:
-                            block = new BlockChatMessage(header);
-                            break;
-                        default:
-                            block = new NullBlock(header);
-                            break;
-                    }
-
-                    long bytesread = 0;
-                    try {
-                        bytesread = block.readBlock(con);
-                    } catch ( MalformedBlockPayload e ) {
-                        bytesread = e.bytesRead;
-                    }
-
-                    if(bytesread < header.getBlockLength()) {
-                        byte[] buffer = new byte[1024];
-                        long readleft = header.getBlockLength();
-                        while(readleft > 0) {
-                            long max_read = Math.min((long)1024,readleft);
-                            int read = con.getInputStream().read(buffer, 0, (int)max_read);
-                            readleft -= read;
-                        }
-                    }
-
-                    block.dismiss();
-                } catch (MalformedBlockHeader e) {
-                    Log.d(TAG, "[!] malformed packet: "+e.getMessage());
-                }
-            }
-        } catch (IOException silentlyCloseConnection) {
-            Log.d(TAG, silentlyCloseConnection.getMessage());
-        } catch (InputOutputStreamException silentlyCloseConnection) {
-            Log.d(TAG, silentlyCloseConnection.getMessage());
-        }
-    }
-
-    @Override
-    protected boolean onCommandReceived(Command command) {
-        Block block;
-        try {
-            switch (command.getCommandID()) {
-                case SEND_LOCAL_INFORMATION:
-                    block = new BlockContact((CommandSendLocalInformation) command);
-                    break;
-                case SEND_PUSH_STATUS:
-                    block = new BlockPushStatus((CommandSendPushStatus) command);
-                    break;
-                case SEND_CHAT_MESSAGE:
-                    block = new BlockChatMessage((CommandSendChatMessage) command);
-                    break;
-                default:
-                    return false;
-            }
-            block.writeBlock(con);
-            block.dismiss();
-            EventBus.getDefault().post(new CommandExecuted(this, command, true));
-            return true;
-        }
-        catch(Exception ignore){
-            Log.e(TAG, "[!] error while sending");
-        }
-        EventBus.getDefault().post(new CommandExecuted(this, command, false));
-        return false;
-    }
-
-    @Override
-    public void stopWorker() {
-        if(!working)
-            return;
-        working = false;
-        try {
-            con.disconnect();
-        } catch (LinkLayerConnectionException ignore) {
-            //Log.d(TAG, "[-]"+ignore.getMessage());
         }
     }
 

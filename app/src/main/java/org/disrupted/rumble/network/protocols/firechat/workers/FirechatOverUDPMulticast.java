@@ -25,7 +25,7 @@ import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
-import org.disrupted.rumble.network.linklayer.wifi.UDPMulticastConnection;
+import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
@@ -49,7 +49,7 @@ import de.greenrobot.event.EventBus;
 public class FirechatOverUDPMulticast extends ProtocolWorker {
 
 
-    private static final String TAG = "FirechatOverUDPMulticast";
+    private static final String TAG = "FirechatOverUDP";
 
     public static final String MULTICAST_ADDRESS  = "239.192.0.0";
     public static final int    MULTICAST_UDP_PORT = 7576;
