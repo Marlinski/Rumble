@@ -264,7 +264,7 @@ public class PushStatusDatabase extends Database {
                     + " SELECT sc."+ StatusContactDatabase.STATUS_DBID
                     + " FROM " + StatusContactDatabase.TABLE_NAME + " sc "
                     + " JOIN " + ContactDatabase.TABLE_NAME + " c "
-                    + " ON sc." + StatusContactDatabase.CONTACT_DBID + " = c"+ContactDatabase.ID
+                    + " ON sc." + StatusContactDatabase.CONTACT_DBID + " = c."+ContactDatabase.ID
                     + " WHERE c."+ ContactDatabase.UID + " = ? )");
             argumentList.add(options.uid);
             groupby = true;
@@ -333,10 +333,10 @@ public class PushStatusDatabase extends Database {
         }
 
         /* perform the query
-        Log.d(TAG, "[Q] query: "+query.toString());
-        for(String argument : argumentList) {
-            Log.d(TAG, argument+" ");
-        }
+            Log.d(TAG, "[Q] query: "+query.toString());
+            for(String argument : argumentList) {
+                Log.d(TAG, argument+" ");
+            }
         */
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
