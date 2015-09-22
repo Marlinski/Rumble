@@ -41,7 +41,6 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.firechat.FirechatBTState;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
-import org.disrupted.rumble.network.protocols.firechat.FirechatNeighbour;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.util.FileUtil;
 import org.json.JSONException;
@@ -73,24 +72,15 @@ public class FirechatOverBluetooth extends ProtocolChannel {
     private boolean working;
 
     private BluetoothNeighbour bluetoothNeighbour;
-    private FirechatNeighbour firechatNeighbour;
 
     public FirechatOverBluetooth(FirechatProtocol protocol, BluetoothConnection con) {
         super(protocol, con);
         this.working = false;
         bluetoothNeighbour = new BluetoothNeighbour(con.getRemoteLinkLayerAddress());
-        firechatNeighbour  = new FirechatNeighbour(
-                bluetoothNeighbour.getLinkLayerAddress(),
-                bluetoothNeighbour.getBluetoothDeviceName(),
-                bluetoothNeighbour);
     }
 
     public BluetoothNeighbour getBluetoothNeighbour() {
         return bluetoothNeighbour;
-    }
-
-    public FirechatNeighbour getFirechatNeighbour() {
-        return firechatNeighbour;
     }
 
     @Override

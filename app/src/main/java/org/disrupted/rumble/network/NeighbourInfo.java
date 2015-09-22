@@ -20,12 +20,8 @@
 package org.disrupted.rumble.network;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.protocols.ProtocolNeighbour;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 /**

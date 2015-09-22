@@ -228,7 +228,6 @@ public class PushService implements ServiceLayer {
         public void startDispatcher() {
             running = true;
             EventBus.getDefault().register(MessageDispatcher.this);
-            sendLocalPreferences(Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST);
             start();
         }
 
