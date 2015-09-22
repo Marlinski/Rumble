@@ -26,10 +26,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-import org.disrupted.rumble.database.events.GroupDeletedEvent;
-import org.disrupted.rumble.database.events.StatusDatabaseEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
-import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.Contact;
@@ -130,7 +127,7 @@ public class PushStatusDatabase extends Database {
         public int          hopLimit;
         public long         from_toc;
         public long         from_toa;
-        public String       interfaceID;
+        public String       uid;
         public int          answerLimit;
         public ORDER_BY     order_by;
         public QUERY_RESULT query_result;
@@ -142,7 +139,7 @@ public class PushStatusDatabase extends Database {
             hashtagFilters = null;
             groupIDFilters = null;
             authorID = null;
-            interfaceID = null;
+            uid      = null;
             from_toc = 0;
             from_toa = 0;
             answerLimit = 0;
@@ -258,18 +255,18 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.interfaceID != null) ) {
+        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.uid != null) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(
                     " ps."+ PushStatusDatabase.ID + "  NOT IN ( "
-                    + " SELECT si."+ StatusInterfaceDatabase.STATUS_DBID
-                    + " FROM " + StatusInterfaceDatabase.TABLE_NAME + " si "
-                    + " JOIN " + InterfaceDatabase.TABLE_NAME + " i "
-                    + " ON si." + StatusInterfaceDatabase.INTERFACE_DBID + " = i."+InterfaceDatabase.ID
-                    + " WHERE i."+ InterfaceDatabase.INTERFACE + " = ? )");
-            argumentList.add(options.interfaceID);
+                    + " SELECT sc."+ StatusContactDatabase.STATUS_DBID
+                    + " FROM " + StatusContactDatabase.TABLE_NAME + " sc "
+                    + " JOIN " + ContactDatabase.TABLE_NAME + " c "
+                    + " ON sc." + StatusContactDatabase.CONTACT_DBID + " = c"+ContactDatabase.ID
+                    + " WHERE c."+ ContactDatabase.UID + " = ? )");
+            argumentList.add(options.uid);
             groupby = true;
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
@@ -432,7 +429,7 @@ public class PushStatusDatabase extends Database {
                 int count = wd.delete(TABLE_NAME, ID_WHERE, new String[]{Long.toString(id)});
                 if (count > 0) {
                     DatabaseFactory.getStatusTagDatabase(context).deleteEntriesMatchingStatusID(id);
-                    DatabaseFactory.getStatusInterfaceDatabase(context).deleteEntriesMatchingStatusDBID(id);
+                    DatabaseFactory.getStatusContactDatabase(context).deleteEntriesMatchingStatusDBID(id);
                 }
                 try {
                     File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(), filename);

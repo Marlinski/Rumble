@@ -560,7 +560,6 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
      * discovering node disrupt connections...
      * when a neighbour is connected,  we scan much less
      */
-
     public void onEvent(NeighbourConnected event) {
         if (!event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
             return;

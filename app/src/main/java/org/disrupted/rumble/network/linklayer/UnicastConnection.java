@@ -15,24 +15,25 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.network.linklayer;
 
-import org.disrupted.rumble.network.events.NetworkEvent;
-import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.command.Command;
+import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author Marlinski
  */
-public class CommandExecuted extends NetworkEvent {
+public interface UnicastConnection extends LinkLayerConnection {
 
-    public ProtocolChannel worker;
-    public Command command;
-    public boolean success;
+    public InputStream getInputStream() throws IOException, InputOutputStreamException;
 
-    public CommandExecuted(ProtocolChannel worker, Command command, boolean success) {
-        this.worker = worker;
-        this.command = command;
-        this.success = success;
-    }
+    public OutputStream getOutputStream()  throws IOException, InputOutputStreamException;
+
+    public String getRemoteLinkLayerAddress();
+
+    public LinkLayerNeighbour getLinkLayerNeighbour();
+
 }

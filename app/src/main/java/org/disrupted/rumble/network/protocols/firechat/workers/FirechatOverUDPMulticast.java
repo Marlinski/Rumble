@@ -26,7 +26,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
@@ -46,7 +46,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FirechatOverUDPMulticast extends ProtocolWorker {
+public class FirechatOverUDPMulticast extends ProtocolChannel {
 
 
     private static final String TAG = "FirechatOverUDP";
@@ -111,17 +111,21 @@ public class FirechatOverUDPMulticast extends ProtocolWorker {
 
         try {
             Log.d(TAG, "[+] CONNECTED: " + getWorkerIdentifier());
+            /* todo how to we deal with multicast channel ?
             EventBus.getDefault().post(new NeighbourConnected(
                             con.getLinkLayerNeighbour(),
                             this)
             );
+            */
             onWorkerConnected();
 
         } finally {
+            /*
             EventBus.getDefault().post(new NeighbourDisconnected(
                             con.getLinkLayerNeighbour(),
                             this)
             );
+            */
             stopWorker();
         }
     }

@@ -61,6 +61,7 @@ public class RumbleProtocol implements Protocol {
      */
     public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
     public static final String RUMBLE_BT_STR      = "org.disrupted.rumble";
+    private Map<String, RumbleBTState>   bluetoothState;
 
     /*
      * Wifi Configuration
@@ -68,11 +69,11 @@ public class RumbleProtocol implements Protocol {
     public static final int   RUMBLE_TCP_PORT = 7430;
     RumbleUDPMulticastScanner scanner;
 
+
+
     private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
-
-    private Map<String, RumbleBTState>   bluetoothState;
 
     public static RumbleProtocol getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
@@ -209,4 +210,6 @@ public class RumbleProtocol implements Protocol {
              */
         }
     }
+
+
 }

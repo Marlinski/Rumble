@@ -15,24 +15,13 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
-
-import org.disrupted.rumble.network.events.NetworkEvent;
-import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.command.Command;
+package org.disrupted.rumble.network.linklayer;
 
 /**
  * @author Marlinski
  */
-public class CommandExecuted extends NetworkEvent {
+public interface MulticastConnection extends LinkLayerConnection {
 
-    public ProtocolChannel worker;
-    public Command command;
-    public boolean success;
+    public String getMulticastAddress();
 
-    public CommandExecuted(ProtocolChannel worker, Command command, boolean success) {
-        this.worker = worker;
-        this.command = command;
-        this.success = success;
-    }
 }

@@ -138,29 +138,6 @@ public class WorkerPool {
         return addWorker(worker, PRIORITY_MIDDLE);
     }
 
-    public final List<Worker> getWorkers(String protocolIdentifier, boolean active) {
-        synchronized (lock) {
-            final List<Worker> ret = new LinkedList<Worker>();
-            if(!active) {
-                Iterator<QueueElement> itq = queue.iterator();
-                while(itq.hasNext()) {
-                    QueueElement element = itq.next();
-                    if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
-                        ret.add(element.getWorker());
-                }
-            }
-
-            Iterator<WorkerThread> itp = pool.iterator();
-            while(itp.hasNext()) {
-                WorkerThread element = itp.next();
-                if(element.getWorker() != null)
-                    if(element.getWorker().getProtocolIdentifier().equals(protocolIdentifier))
-                        ret.add(element.getWorker());
-            }
-            return ret;
-        }
-    }
-
     public void stopWorkers(String protocolIdentifier) {
         synchronized (lock) {
             final List<Worker> ret = new LinkedList<Worker>();

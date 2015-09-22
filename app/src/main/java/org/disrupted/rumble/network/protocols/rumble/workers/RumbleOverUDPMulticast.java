@@ -21,11 +21,11 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
@@ -38,7 +38,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleOverUDPMulticast extends ProtocolWorker {
+public class RumbleOverUDPMulticast extends ProtocolChannel {
 
     private static final String TAG = "RumbleOverUDP";
 
@@ -50,7 +50,6 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
         super(protocol, con);
         this.working = false;
     }
-
 
     @Override
     public boolean isWorking() {
@@ -65,16 +64,6 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
     @Override
     public String getWorkerIdentifier() {
         return getProtocolIdentifier()+" "+con.getConnectionID();
-    }
-
-    @Override
-    public LinkLayerConnection getLinkLayerConnection() {
-        return con;
-    }
-
-    @Override
-    public String getLinkLayerIdentifier() {
-        return con.getLinkLayerIdentifier();
     }
 
     @Override
@@ -122,7 +111,6 @@ public class RumbleOverUDPMulticast extends ProtocolWorker {
         EventBus.getDefault().post(new CommandExecuted(this, command, false));
         return false;
     }
-
 
     @Override
     public void stopWorker() {

@@ -20,7 +20,9 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
@@ -39,9 +41,9 @@ public abstract class Block {
         this.header = header;
     }
 
-    public abstract long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException;
+    public abstract long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException;
 
-    public abstract long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException;
+    public abstract long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException;
 
     protected final BlockHeader getHeader() {
         return header;

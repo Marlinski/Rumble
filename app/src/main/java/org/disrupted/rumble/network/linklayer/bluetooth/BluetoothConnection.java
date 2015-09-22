@@ -29,6 +29,7 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
@@ -45,7 +46,7 @@ import java.io.OutputStream;
  *
  * @author Marlinski
  */
-public abstract class BluetoothConnection implements LinkLayerConnection {
+public abstract class BluetoothConnection implements UnicastConnection {
 
     private static final String TAG = "BluetoothConnection";
 
@@ -71,6 +72,11 @@ public abstract class BluetoothConnection implements LinkLayerConnection {
     @Override
     public String getLinkLayerIdentifier() {
         return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    }
+
+    @Override
+    public int getLinkLayerPriority() {
+        return LINK_LAYER_LOW_PRIORITY;
     }
 
     @Override

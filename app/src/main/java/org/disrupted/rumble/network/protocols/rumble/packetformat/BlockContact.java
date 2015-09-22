@@ -21,6 +21,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -121,7 +123,8 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_CONTACT)
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected",0);
 
@@ -186,9 +189,7 @@ public class BlockContact extends Block {
             EventBus.getDefault().post(new ContactInformationReceived(
                             tempcontact,
                             flags,
-                            sender,
-                            RumbleProtocol.protocolID,
-                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                            channel,
                             BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength(),
                             timeToTransfer)
             );
@@ -202,7 +203,8 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException {
+    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
         /* prepare the entries */
@@ -254,13 +256,9 @@ public class BlockContact extends Block {
         con.getOutputStream().write(blockBuffer.array(), 0, buffersize);
 
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-        List<String> recipients = new ArrayList<String>();
-        recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new ContactInformationSent(
                         contact,
-                        recipients,
-                        RumbleProtocol.protocolID,
-                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                        channel,
                         BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength(),
                         timeToTransfer)
         );

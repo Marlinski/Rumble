@@ -24,6 +24,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
+ * An Interface ID is a hash between a MacAddress and a Protocol
+ *
  * @author Marlinski
  */
 public class InterfaceDatabase extends Database {

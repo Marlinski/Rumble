@@ -29,48 +29,45 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * ForwarderDatabase keeps track of those who already received or sent a status.
- * Because we may receive status from a neighbour before he actually gives us
- * his name, we keep track of a hashed ID of his mac address.
+ * ContactInterfaceDatabase keeps track of the interfaces we met that match a certain contact
+ * This is to avoid resending all of the contact information (name, uid, avatar, etc.) whenever
+ * we reconnect to a device.
  *
- * In the case of Bluetooth, the default ID is hash(MacAddress, DeviceName)
- * In the case of WiFi, the default ID is hash(MacAddress, UserName)
- *
- * If in the future we eventually get the neighbour's name, we simply add an alias
- * for his ID hash(MacAddress, name) to the AliasDatabase
+ * In order to avoid storing all the interface mac address in plain text, we store a hash of the
+ * mac address.
  *
  * @author Marlinski
  */
-public class StatusInterfaceDatabase extends Database {
+public class ContactInterfaceDatabase extends Database {
 
 
-    private static final String TAG = "ForwarderDatabase";
+    private static final String TAG = "ContactInterfaceDatabase";
 
     public static final String TABLE_NAME       = "statusinterface";
-    public static final String STATUS_DBID      = "_sdbid";
+    public static final String CONTACT_DBID     = "_cdbid";
     public static final String INTERFACE_DBID   = "_idbid";
 
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
-            " (" + STATUS_DBID     + " INTEGER, "
+            " (" + CONTACT_DBID     + " INTEGER, "
                  + INTERFACE_DBID  + " INTEGER, "
-                 + " UNIQUE( " + STATUS_DBID + " , " + INTERFACE_DBID + "), "
-                 + " FOREIGN KEY ( "+ STATUS_DBID    + " ) REFERENCES " + PushStatusDatabase.TABLE_NAME  + " ( " + PushStatusDatabase.ID  + " ), "
+                 + " UNIQUE( " + CONTACT_DBID + " , " + INTERFACE_DBID + "), "
+                 + " FOREIGN KEY ( "+ CONTACT_DBID    + " ) REFERENCES " + ContactDatabase.TABLE_NAME  + " ( " + ContactDatabase.ID  + " ), "
                  + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "
             + " );";
 
-    public StatusInterfaceDatabase(Context context, SQLiteOpenHelper databaseHelper) {
+    public ContactInterfaceDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 
     public void deleteEntriesMatchingStatusDBID(long statusDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, STATUS_DBID + " = ?" , new String[] {statusDBID + ""});
+        db.delete(TABLE_NAME, CONTACT_DBID + " = ?" , new String[] {statusDBID + ""});
     }
 
     public long insertStatusInterface(long statusDBID, long interfaceDBID){
         ContentValues contentValues = new ContentValues();
-        contentValues.put(STATUS_DBID, statusDBID);
+        contentValues.put(CONTACT_DBID, statusDBID);
         contentValues.put(INTERFACE_DBID, interfaceDBID);
         return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
     }

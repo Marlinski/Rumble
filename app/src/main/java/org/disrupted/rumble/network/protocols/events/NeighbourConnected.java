@@ -20,7 +20,7 @@
 package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 /**
  * @author Marlinski
@@ -28,9 +28,9 @@ import org.disrupted.rumble.network.protocols.ProtocolWorker;
 public class NeighbourConnected {
 
     public final LinkLayerNeighbour neighbour;
-    public final ProtocolWorker worker;
+    public final ProtocolChannel worker;
 
-    public NeighbourConnected(LinkLayerNeighbour neighbour, ProtocolWorker worker) {
+    public NeighbourConnected(LinkLayerNeighbour neighbour, ProtocolChannel worker) {
         this.neighbour = neighbour;
         this.worker = worker;
     }

@@ -19,12 +19,8 @@
 
 package org.disrupted.rumble.network.linklayer;
 
-import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * LinkLayerConnection is an interface for a class to implement connect() and disconnect()
@@ -34,6 +30,16 @@ import java.io.OutputStream;
  */
 public interface LinkLayerConnection {
 
+    /*
+     * priority is used to determine which channel is the best when multiple channel
+     * are available to a certain neighbour
+     */
+    public static final int LINK_LAYER_HIGH_PRIORITY = 10;
+    public static final int LINK_LAYER_MIDDLE_PRIORITY = 5;
+    public static final int LINK_LAYER_LOW_PRIORITY = 0;
+
+    public int getLinkLayerPriority();
+
     public String getLinkLayerIdentifier();
 
     public String getConnectionID();
@@ -42,12 +48,5 @@ public interface LinkLayerConnection {
 
     public void disconnect() throws LinkLayerConnectionException;
 
-    public InputStream getInputStream() throws IOException, InputOutputStreamException;
-
-    public OutputStream getOutputStream()  throws IOException, InputOutputStreamException;
-
-    public String getRemoteLinkLayerAddress();
-
-    public LinkLayerNeighbour getLinkLayerNeighbour();
 
 }

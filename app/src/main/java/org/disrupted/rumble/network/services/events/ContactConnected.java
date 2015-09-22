@@ -15,24 +15,23 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.network.services.events;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.command.Command;
 
 /**
  * @author Marlinski
  */
-public class CommandExecuted extends NetworkEvent {
+public class ContactConnected extends NetworkEvent {
 
+    public Contact contact;
     public ProtocolChannel worker;
-    public Command command;
-    public boolean success;
 
-    public CommandExecuted(ProtocolChannel worker, Command command, boolean success) {
-        this.worker = worker;
-        this.command = command;
-        this.success = success;
+    public ContactConnected(Contact contact, ProtocolChannel worker) {
+        this.contact = contact;
+        this.worker  = worker;
     }
+
 }

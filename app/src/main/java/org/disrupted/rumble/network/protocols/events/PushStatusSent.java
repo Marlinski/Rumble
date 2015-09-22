@@ -19,10 +19,11 @@
 
 package org.disrupted.rumble.network.protocols.events;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.events.NetworkEvent;
 
-import java.util.List;
+import java.util.Set;
 
 /**
  * This event holds every information known on a transmission that happened successfully. These
@@ -45,13 +46,13 @@ import java.util.List;
 public class PushStatusSent extends NetworkEvent {
 
     public PushStatus status;
-    public List<String> recipients;
+    public Set<Contact> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public PushStatusSent(PushStatus status, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusSent(PushStatus status, Set<Contact> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.recipients = recipients;
         this.protocolID = protocolID;

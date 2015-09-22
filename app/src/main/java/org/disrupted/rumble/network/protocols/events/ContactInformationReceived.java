@@ -18,6 +18,7 @@
 package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 import java.util.List;
 
@@ -28,22 +29,18 @@ public class ContactInformationReceived {
 
     public Contact contact;
     public int     flags;   // see class Contact
-    public String  sender;
-    public String  protocolID;
-    public String  linkLayerIdentifier;
+    public ProtocolChannel channel;
     public boolean authenticated;
     public long    size;
     public long    duration;
 
-    public ContactInformationReceived(Contact contact, int flags, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ContactInformationReceived(Contact contact, int flags, ProtocolChannel channel, long size, long duration) {
         this.contact = contact;
         this.flags = flags;
-        this.sender = sender;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
+        this.channel = channel;
+        this.authenticated = false;
         this.size = size;
         this.duration = duration;
-        this.authenticated = false;
     }
 
 }

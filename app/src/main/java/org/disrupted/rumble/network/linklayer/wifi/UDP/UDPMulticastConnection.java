@@ -23,6 +23,7 @@ import android.net.wifi.WifiManager;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.MulticastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
@@ -47,7 +48,7 @@ import java.net.UnknownHostException;
  *
  * @author Marlinski
  */
-public class UDPMulticastConnection implements LinkLayerConnection {
+public class UDPMulticastConnection implements MulticastConnection {
 
 
     private static final String TAG = "UDPMulticastConnection";
@@ -59,29 +60,20 @@ public class UDPMulticastConnection implements LinkLayerConnection {
     WifiManager.MulticastLock multicastLock;
     MulticastSocket           socket;
 
+    public UDPMulticastConnection(int port, String address) {
+        this.udpPort = port;
+        this.address = address;
+        multicastLock = WifiUtil.getWifiManager().createMulticastLock("org.disruptedsystems.rumble.port."+udpPort);
+    }
+
     @Override
     public String getConnectionID() {
         return "UDPMulticastConnection";
     }
 
     @Override
-    public InputStream getInputStream() throws IOException, InputOutputStreamException {
-        return null;
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException, InputOutputStreamException {
-        return null;
-    }
-
-    @Override
-    public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return new UDPMulticastNeighbour("UDPMulticast", udpPort, address);
-    }
-
-    @Override
-    public String getRemoteLinkLayerAddress() {
-        return null;
+    public String getMulticastAddress() {
+        return multicastAddr.getHostAddress();
     }
 
     @Override
@@ -89,10 +81,9 @@ public class UDPMulticastConnection implements LinkLayerConnection {
         return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
     }
 
-    public UDPMulticastConnection(int port, String address) {
-        this.udpPort = port;
-        this.address = address;
-        multicastLock = WifiUtil.getWifiManager().createMulticastLock("org.disruptedsystems.rumble.port."+udpPort);
+    @Override
+    public int getLinkLayerPriority() {
+        return LINK_LAYER_MIDDLE_PRIORITY;
     }
 
     @Override

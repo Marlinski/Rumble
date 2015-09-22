@@ -39,7 +39,7 @@ public class DatabaseFactory {
 
     private DatabaseHelper                       databaseHelper;
     private final PushStatusDatabase             pushStatusDatabase;
-    private final ChatMessageDatabase chatMessageDatabase;
+    private final ChatMessageDatabase            chatMessageDatabase;
     private final HashtagDatabase                hashtagDatabase;
     private final StatusTagDatabase              statusTagDatabase;
     private final GroupDatabase                  groupDatabase;
@@ -47,7 +47,8 @@ public class DatabaseFactory {
     private final ContactJoinGroupDatabase       contactJoinGroupDatabase;
     private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
     private final InterfaceDatabase              interfaceDatabase;
-    private final StatusInterfaceDatabase        statusInterfaceDatabase;
+    private final ContactInterfaceDatabase       contactInterfaceDatabase;
+    private final StatusContactDatabase          statusContactDatabase;
     private DatabaseExecutor                     databaseExecutor;
 
     public static DatabaseFactory getInstance(Context context) {
@@ -86,8 +87,11 @@ public class DatabaseFactory {
     public static InterfaceDatabase getInterfaceDatabase(Context context) {
         return getInstance(context).interfaceDatabase;
     }
-    public static StatusInterfaceDatabase getStatusInterfaceDatabase(Context context) {
-        return getInstance(context).statusInterfaceDatabase;
+    public static ContactInterfaceDatabase getContactInterfaceDatabase(Context context) {
+        return getInstance(context).contactInterfaceDatabase;
+    }
+    public static StatusContactDatabase getStatusContactDatabase(Context context) {
+        return getInstance(context).statusContactDatabase;
     }
     public static DatabaseExecutor getDatabaseExecutor(Context context) {
         return getInstance(context).databaseExecutor;
@@ -97,14 +101,15 @@ public class DatabaseFactory {
         this.databaseHelper                 = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.interfaceDatabase              = new InterfaceDatabase(context, databaseHelper);
         this.pushStatusDatabase             = new PushStatusDatabase(context, databaseHelper);
-        this.chatMessageDatabase = new ChatMessageDatabase(context, databaseHelper);
+        this.chatMessageDatabase            = new ChatMessageDatabase(context, databaseHelper);
         this.hashtagDatabase                = new HashtagDatabase(context, databaseHelper);
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
         this.contactDatabase                = new ContactDatabase(context, databaseHelper);
-        this.statusInterfaceDatabase = new StatusInterfaceDatabase(context, databaseHelper);
         this.contactJoinGroupDatabase       = new ContactJoinGroupDatabase(context, databaseHelper);
         this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
+        this.contactInterfaceDatabase       = new ContactInterfaceDatabase(context, databaseHelper);
+        this.statusContactDatabase          = new StatusContactDatabase(context, databaseHelper);
         this.databaseExecutor               = new DatabaseExecutor();
     }
 
@@ -119,9 +124,10 @@ public class DatabaseFactory {
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
         this.interfaceDatabase.reset(databaseHelper);
-        this.statusInterfaceDatabase.reset(databaseHelper);
         this.contactJoinGroupDatabase.reset(databaseHelper);
         this.contactHashTagInterestDatabase.reset(databaseHelper);
+        this.contactInterfaceDatabase.reset(databaseHelper);
+        this.statusContactDatabase.reset(databaseHelper);
         old.close();
     }
 
@@ -145,9 +151,10 @@ public class DatabaseFactory {
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(ChatMessageDatabase.CREATE_TABLE);
             db.execSQL(InterfaceDatabase.CREATE_TABLE);
-            db.execSQL(StatusInterfaceDatabase.CREATE_TABLE);
             db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);
             db.execSQL(ContactHashTagInterestDatabase.CREATE_TABLE);
+            db.execSQL(ContactInterfaceDatabase.CREATE_TABLE);
+            db.execSQL(StatusContactDatabase.CREATE_TABLE);
 
             executeStatements(db, StatusTagDatabase.CREATE_INDEXS);
         }

@@ -12,22 +12,23 @@ import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
-import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.ServiceLayer;
-import org.disrupted.rumble.util.HashUtil;
+import org.disrupted.rumble.network.services.events.ContactConnected;
+import org.disrupted.rumble.network.services.events.ContactDisconnected;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,19 +48,24 @@ public class PushService implements ServiceLayer {
     private static ReplicationDensityWatcher rdwatcher;
     private static final Random random = new Random();
 
-    private static Map<String, MessageDispatcher> workerIdentifierTodispatcher;
+    private static NetworkCoordinator networkCoordinator;
+
+    private static Map<Contact, MessageDispatcher> contactToDispatcher;
 
     private PushService() {
         rdwatcher = new ReplicationDensityWatcher(1000*3600);
     }
 
-    public static PushService getInstance() {
+    public static PushService getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)
-                instance = new PushService();
+                instance = new PushService(networkCoordinator);
 
             return instance;
         }
+    }
+    private PushService(NetworkCoordinator networkCoordinator) {
+        this.networkCoordinator = networkCoordinator;
     }
 
     @Override
@@ -71,7 +77,7 @@ public class PushService implements ServiceLayer {
         synchronized (lock) {
             Log.d(TAG, "[+] Starting PushService");
             rdwatcher.start();
-            workerIdentifierTodispatcher = new HashMap<String, MessageDispatcher>();
+            contactToDispatcher = new HashMap<Contact, MessageDispatcher>();
             EventBus.getDefault().register(this);
         }
     }
@@ -82,40 +88,39 @@ public class PushService implements ServiceLayer {
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
 
-            for(Map.Entry<String, MessageDispatcher> entry : workerIdentifierTodispatcher.entrySet()) {
+            for(Map.Entry<Contact, MessageDispatcher> entry : contactToDispatcher.entrySet()) {
                 MessageDispatcher dispatcher = entry.getValue();
                 dispatcher.interrupt();
             }
-            workerIdentifierTodispatcher.clear();
+            contactToDispatcher.clear();
             rdwatcher.stop();
         }
     }
 
     // todo: register protocol to service
-    public void onEvent(NeighbourConnected event) {
+    public void onEvent(ContactConnected event) {
         if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
             return;
+
         synchronized (lock) {
-            MessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            MessageDispatcher dispatcher = contactToDispatcher.get(event.contact);
             if (dispatcher != null) {
-                Log.e(TAG, "worker already binded ?!");
+                Log.d(TAG, "A dispatcher for this contact already exists");
                 return;
             }
-            dispatcher = new MessageDispatcher(event.worker);
-            workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
+            dispatcher = new MessageDispatcher(event.contact);
+            contactToDispatcher.put(event.contact, dispatcher);
             dispatcher.startDispatcher();
         }
     }
 
-    public void onEvent(NeighbourDisconnected event) {
-        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
-            return;
+    public void onEvent(ContactDisconnected event) {
         synchronized (lock) {
-            MessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            MessageDispatcher dispatcher = contactToDispatcher.get(event.contact);
             if (dispatcher == null)
                 return;
             dispatcher.stopDispatcher();
-            workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
+            contactToDispatcher.remove(event.contact);
         }
     }
 
@@ -156,8 +161,8 @@ public class PushService implements ServiceLayer {
 
         private static final String TAG = "MessageDispatcher";
 
-        private ProtocolWorker     worker;
         private Contact            contact;
+        private ProtocolChannel    tmpchannel;
 
         private ArrayList<Integer> statuses;
         private float threshold;
@@ -192,10 +197,9 @@ public class PushService implements ServiceLayer {
             }
         }
 
-        public MessageDispatcher(ProtocolWorker worker) {
+        public MessageDispatcher(Contact contact) {
             this.running = false;
-            this.worker = worker;
-            this.contact = null;
+            this.contact = contact;
             this.max = null;
             this.threshold = 0;
             statuses = new ArrayList<Integer>();
@@ -211,7 +215,6 @@ public class PushService implements ServiceLayer {
         public void stopDispatcher() {
             running = false;
             this.interrupt();
-            worker = null;
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
         }
@@ -223,9 +226,7 @@ public class PushService implements ServiceLayer {
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
             options.groupIDFilters = contact.getJoinedGroupIDs();
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NEVER_SEND_TO_USER;
-            options.interfaceID = HashUtil.computeInterfaceID(
-                    worker.getLinkLayerConnection().getRemoteLinkLayerAddress(),
-                    worker.getProtocolIdentifier());
+            options.uid = contact.getUid();
             options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_DBIDS;
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);
         }
@@ -257,20 +258,25 @@ public class PushService implements ServiceLayer {
             try {
                 Log.d(TAG, "[+] MessageDispatcher initiated");
                 do {
-                    // pickup a message and send it to the CommandExecutor
-                    if (worker != null) {
                         PushStatus message = pickMessage();
-                        lastPush = new CommandSendPushStatus(message);
                         latch = new CountDownLatch(1);
-                        worker.execute(lastPush);
+
+                        // choose a channel to execute the command
+                        ProtocolChannel channel = PushService.networkCoordinator.neighbourManager.chooseBestChannel(contact);
+                        this.tmpchannel = channel;
+
+                        // estimate the number of contact that will receive this status
+                        Set<Contact> recipientList = networkCoordinator.neighbourManager.getRecipientList(channel);
+                        lastPush = new CommandSendPushStatus(message, recipientList);
+
+                        // send the message
+                        channel.execute(lastPush);
 
                         // wait for the command to be executed
                         if(latch.getCount() > 0)
                             latch.await();
                         lastPush = null;
                         message.discard();
-                    }
-
                 } while (running);
 
             } catch (InterruptedException ie) {
@@ -440,20 +446,14 @@ public class PushService implements ServiceLayer {
         public void sendLocalPreferences(int flags) {
             Contact local = Contact.getLocalContact();
             CommandSendLocalInformation command = new CommandSendLocalInformation(local,flags);
-            worker.execute(command);
+
+            ProtocolChannel channel = PushService.networkCoordinator.neighbourManager.chooseBestChannel(contact);
+            this.tmpchannel = channel;
+            channel.execute(command);
         }
 
 
         // ====================== Event management ==========================
-
-        /*
-         * signalling that status has been pushed
-         */
-        public void onEvent(CommandExecuted event) {
-            if(event.worker.equals(this.worker) && event.command.equals(this.lastPush))
-                this.latch.countDown();
-        }
-
 
         /*
          * Keeping the list of status to push up-to-date
@@ -479,12 +479,6 @@ public class PushService implements ServiceLayer {
          * this event only bind the contact uid with the interface
          * we wait for the related DatabaseEvent (if any) for updating the status list
          */
-        public void onEvent(ContactInformationReceived info) {
-            if(info.sender.equals(worker.getLinkLayerConnection().getRemoteLinkLayerAddress())) {
-                if(this.contact == null)
-                    this.contact = new Contact(info.contact);
-            }
-        }
         public void onEvent(ContactGroupListUpdated event) {
             if(this.contact == null)
                 return;
@@ -505,6 +499,14 @@ public class PushService implements ServiceLayer {
             if(event.contact.isLocal()) {
                 sendLocalPreferences(Contact.FLAG_TAG_INTEREST);
             }
+        }
+
+        /*
+         * signalling that status has been pushed
+         */
+        public void onEvent(CommandExecuted event) {
+            if(event.worker.equals(this.tmpchannel) && event.command.equals(this.lastPush))
+                this.latch.countDown();
         }
 
     }

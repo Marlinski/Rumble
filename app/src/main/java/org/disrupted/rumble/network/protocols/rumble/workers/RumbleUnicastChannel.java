@@ -19,10 +19,10 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
@@ -47,13 +47,13 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public abstract class RumbleProtocolWorker extends ProtocolWorker {
+public abstract class RumbleUnicastChannel extends ProtocolChannel {
 
     private static final String TAG = "RumbleProtocolWorker";
 
     protected boolean working;
 
-    public RumbleProtocolWorker(RumbleProtocol protocol, LinkLayerConnection con) {
+    public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
     }
 
@@ -67,7 +67,7 @@ public abstract class RumbleProtocolWorker extends ProtocolWorker {
         try {
             while (true) {
                 try {
-                    BlockHeader header = BlockHeader.readBlock(con.getInputStream());
+                    BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
                     Block block;
                     switch (header.getBlockType()) {
                         case BlockHeader.BLOCKTYPE_PUSH_STATUS:
@@ -89,7 +89,7 @@ public abstract class RumbleProtocolWorker extends ProtocolWorker {
 
                     long bytesread = 0;
                     try {
-                        bytesread = block.readBlock(con);
+                        bytesread = block.readBlock(this);
                     } catch ( MalformedBlockPayload e ) {
                         bytesread = e.bytesRead;
                     }
@@ -99,7 +99,7 @@ public abstract class RumbleProtocolWorker extends ProtocolWorker {
                         long readleft = header.getBlockLength();
                         while(readleft > 0) {
                             long max_read = Math.min((long)1024,readleft);
-                            int read = con.getInputStream().read(buffer, 0, (int)max_read);
+                            int read = ((UnicastConnection)con).getInputStream().read(buffer, 0, (int)max_read);
                             readleft -= read;
                         }
                     }
@@ -133,7 +133,7 @@ public abstract class RumbleProtocolWorker extends ProtocolWorker {
                 default:
                     return false;
             }
-            block.writeBlock(con);
+            block.writeBlock(this);
             block.dismiss();
             EventBus.getDefault().post(new CommandExecuted(this, command, true));
             return true;

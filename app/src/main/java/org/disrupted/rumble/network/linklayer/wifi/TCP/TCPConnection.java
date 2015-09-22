@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.linklayer.wifi.TCP;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
@@ -34,7 +35,7 @@ import java.net.Socket;
 /**
  * @author Marlinski
  */
-public abstract class TCPConnection implements LinkLayerConnection {
+public abstract class TCPConnection implements UnicastConnection {
 
     private static final String TAG = "TCPConnection";
 
@@ -51,9 +52,20 @@ public abstract class TCPConnection implements LinkLayerConnection {
         this.mmConnectedSocket = null;
     }
 
+
+    @Override
+    public String getConnectionID() {
+        return "TCPConnection:"+remoteAddress;
+    }
+
     @Override
     public String getLinkLayerIdentifier() {
         return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
+    }
+
+    @Override
+    public int getLinkLayerPriority() {
+        return LINK_LAYER_HIGH_PRIORITY;
     }
 
     @Override

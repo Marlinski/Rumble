@@ -42,11 +42,6 @@ public class TCPClientConnection extends TCPConnection {
     }
 
     @Override
-    public String getConnectionID() {
-        return "TCP ClientConnection: "+remoteAddress;
-    }
-
-    @Override
     public void connect() throws LinkLayerConnectionException {
         try {
             remoteInetAddress = InetAddress.getByName(remoteAddress);

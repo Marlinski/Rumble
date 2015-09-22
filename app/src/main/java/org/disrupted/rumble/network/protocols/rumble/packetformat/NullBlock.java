@@ -20,7 +20,9 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 import android.util.Log;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
 import java.io.IOException;
@@ -39,7 +41,8 @@ public class NullBlock extends Block {
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         byte[] buffer = new byte[BUFFER_SIZE];
         long readleft = header.getBlockLength();
         while(readleft > 0) {
@@ -51,7 +54,7 @@ public class NullBlock extends Block {
     }
 
     @Override
-    public long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException {
+    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
         return 0;
     }
 

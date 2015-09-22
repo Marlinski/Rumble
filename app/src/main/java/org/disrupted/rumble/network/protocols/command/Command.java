@@ -30,8 +30,6 @@ public abstract class Command {
         SEND_CHAT_MESSAGE
     }
 
-
-
     abstract public CommandID getCommandID();
 
     @Override

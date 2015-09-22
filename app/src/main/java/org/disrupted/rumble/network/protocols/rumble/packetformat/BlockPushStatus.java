@@ -24,6 +24,8 @@ import android.util.Base64;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 import org.disrupted.rumble.network.protocols.events.PushStatusSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -41,6 +43,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -104,13 +107,15 @@ public class BlockPushStatus extends Block{
     private static final int MAX_STATUS_SIZE = 255; // limiting status to 500 character;
     private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_STATUS_SIZE;
 
-    private PushStatus status;
+    private PushStatus   status;
+    private Set<Contact> recipientList;
 
     public BlockPushStatus(CommandSendPushStatus command) {
         super(new BlockHeader());
         this.header.setBlockType(BlockHeader.BLOCKTYPE_PUSH_STATUS);
         this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.status = command.getStatus();
+        this.recipientList = command.getRecipientList();
     }
 
     public BlockPushStatus(BlockHeader header) {
@@ -119,7 +124,8 @@ public class BlockPushStatus extends Block{
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_PUSH_STATUS)
             throw new MalformedBlockPayload("Block type BLOCK_STATUS expected", 0);
 
@@ -213,7 +219,7 @@ public class BlockPushStatus extends Block{
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new PushStatusReceived(
                             status,
-                            con.getRemoteLinkLayerAddress(),
+                            contact_tmp,
                             RumbleProtocol.protocolID,
                             con.getLinkLayerIdentifier(),
                             header.getBlockLength(),
@@ -228,7 +234,8 @@ public class BlockPushStatus extends Block{
     }
 
     @Override
-    public long writeBlock(LinkLayerConnection con) throws IOException,InputOutputStreamException {
+    public long writeBlock(ProtocolChannel channel) throws IOException,InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         long timeToTransfer = System.currentTimeMillis();
 
         /* calculate the total block size */
@@ -270,18 +277,16 @@ public class BlockPushStatus extends Block{
         header.writeBlock(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(),0,length);
         if(blockFile != null)
-            blockFile.writeBlock(con);
+            blockFile.writeBlock(channel);
 
         /*
          * It is very important to post an event as it will be catch by the
          * CacheManager and will update the database accordingly
          */
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-        List<String> recipients = new ArrayList<String>();
-        recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new PushStatusSent(
                         status,
-                        recipients,
+                        recipientList,
                         RumbleProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                         header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,

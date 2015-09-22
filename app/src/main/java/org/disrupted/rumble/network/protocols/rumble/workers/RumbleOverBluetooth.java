@@ -22,29 +22,13 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 import android.util.Log;
 
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
-import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
-import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
-import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
-import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
-import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatus;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.NullBlock;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
-import org.disrupted.rumble.network.protocols.command.Command;
 
 import java.io.IOException;
 
@@ -53,7 +37,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleOverBluetooth extends RumbleProtocolWorker {
+public class RumbleOverBluetooth extends RumbleUnicastChannel {
 
     private static final String TAG = "RumbleOverBluetooth";
 
@@ -63,7 +47,7 @@ public class RumbleOverBluetooth extends RumbleProtocolWorker {
 
     @Override
     public void cancelWorker() {
-        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
+        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
         if(working) {
             Log.e(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
@@ -77,7 +61,7 @@ public class RumbleOverBluetooth extends RumbleProtocolWorker {
             return;
         working = true;
 
-        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
+        RumbleBTState connectionState = ((RumbleProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
 
         try {
 
@@ -109,9 +93,9 @@ public class RumbleOverBluetooth extends RumbleProtocolWorker {
              * if I don't do this, they sometime fail to connect ? :/ ?
              */
             if (con instanceof BluetoothServerConnection)
-                con.getOutputStream().write(new byte[]{0},0,1);
+                ((BluetoothConnection)con).getOutputStream().write(new byte[]{0},0,1);
             if (con instanceof BluetoothClientConnection)
-                con.getInputStream().read(new byte[1], 0, 1);
+                ((BluetoothConnection)con).getInputStream().read(new byte[1], 0, 1);
 
         } catch (RumbleBTState.StateException state) {
             Log.e(TAG, "[-] client connected while trying to connect");
@@ -132,14 +116,14 @@ public class RumbleOverBluetooth extends RumbleProtocolWorker {
         try {
             Log.d(TAG, "[+] connected");
             EventBus.getDefault().post(new NeighbourConnected(
-                            con.getLinkLayerNeighbour(),
+                            ((BluetoothConnection)con).getLinkLayerNeighbour(),
                             this)
             );
             onWorkerConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new NeighbourDisconnected(
-                            con.getLinkLayerNeighbour(),
+                            ((BluetoothConnection)con).getLinkLayerNeighbour(),
                             this)
             );
             stopWorker();

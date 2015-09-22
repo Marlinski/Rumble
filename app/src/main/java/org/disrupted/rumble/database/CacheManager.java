@@ -113,14 +113,13 @@ public class CacheManager {
         status.addReplication(event.recipients.size());
         // first we update the status
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
-        // then the StatusInterface database
+        // then the StatusContact database
         if(status.getdbId() > 0) {
-            for(String recipient : event.recipients) {
-                String interfaceID = HashUtil.computeInterfaceID(recipient, event.protocolID);
-                long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).getInterfaceDBID(interfaceID);
-                if(interfaceDBID < 0)
-                    interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
-                DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(status.getdbId(), interfaceDBID);
+            for(Contact recipient : event.recipients) {
+                long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(recipient.getUid());
+                if(contactDBID < 0)
+                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(recipient);
+                DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(status.getdbId(), contactDBID);
             }
         }
     }
@@ -170,13 +169,10 @@ public class CacheManager {
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
         }
 
-        // then the StatusInterface database
+        // then the StatusContact database
         if(exists.getdbId() > 0) {
-            String interfaceID = HashUtil.computeInterfaceID(event.sender, event.protocolID);
-            long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).getInterfaceDBID(interfaceID);
-            if(interfaceDBID < 0)
-                interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext()).insertInterface(interfaceID);
-            DatabaseFactory.getStatusInterfaceDatabase(RumbleApplication.getContext()).insertStatusInterface(exists.getdbId(), interfaceDBID);
+            long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(contact.getUid());
+            DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), contactDBID);
         }
     }
     public void onEvent(FileReceived event) {

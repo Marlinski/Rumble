@@ -34,7 +34,7 @@ import java.util.Set;
 public class NeighbourInfo {
 
     public LinkLayerNeighbour neighbour;
-    public Set<String> connectedProtocols;
+    private Set<String> connectedProtocols;
 
     public NeighbourInfo(LinkLayerNeighbour neighbour) {
         this.neighbour = neighbour;

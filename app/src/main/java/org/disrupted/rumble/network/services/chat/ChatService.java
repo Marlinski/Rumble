@@ -19,7 +19,8 @@ package org.disrupted.rumble.network.services.chat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
+import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
@@ -41,16 +42,21 @@ public class ChatService implements ServiceLayer {
     private static final Object lock = new Object();
     private static ChatService instance;
 
+    private static NetworkCoordinator networkCoordinator;
+
     private static Map<String, ChatMessageDispatcher> workerIdentifierTodispatcher;
 
 
-    public static ChatService getInstance() {
+    public static ChatService getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)
-                instance = new ChatService();
+                instance = new ChatService(networkCoordinator);
 
             return instance;
         }
+    }
+    private ChatService(NetworkCoordinator networkCoordinator) {
+        this.networkCoordinator = networkCoordinator;
     }
 
     @Override
@@ -106,10 +112,10 @@ public class ChatService implements ServiceLayer {
      */
     private static class ChatMessageDispatcher {
 
-        private ProtocolWorker worker;
+        private ProtocolChannel worker;
 
 
-        public ChatMessageDispatcher(ProtocolWorker worker) {
+        public ChatMessageDispatcher(ProtocolChannel worker) {
             this.worker = worker;
         }
 

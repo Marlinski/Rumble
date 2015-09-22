@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.events.NetworkEvent;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 import java.util.List;
 
@@ -28,17 +29,13 @@ import java.util.List;
 public class ContactInformationSent extends NetworkEvent {
 
     public Contact contact;
-    public List<String> recipients;
-    public String protocolID;
-    public String linkLayerIdentifier;
+    ProtocolChannel channel;
     public long size;
     public long duration;
 
-    public ContactInformationSent(Contact contact, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ContactInformationSent(Contact contact, ProtocolChannel channel, long size, long duration) {
         this.contact = contact;
-        this.recipients = recipients;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
+        this.channel = channel;
         this.size = size;
         this.duration = duration;
     }

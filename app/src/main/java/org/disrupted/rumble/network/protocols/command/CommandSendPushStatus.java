@@ -19,21 +19,30 @@
 
 package org.disrupted.rumble.network.protocols.command;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
+
+import java.util.Set;
 
 /**
  * @author Marlinski
  */
 public class CommandSendPushStatus extends Command {
 
-    private PushStatus status;
+    private PushStatus   status;
+    private Set<Contact> recipientList;
 
-    public CommandSendPushStatus(PushStatus status){
+    public CommandSendPushStatus(PushStatus status, Set<Contact> recipientList){
         this.status = status;
+        this.recipientList = recipientList;
     }
 
     public PushStatus getStatus() {
         return status;
+    }
+
+    public Set<Contact> getRecipientList() {
+        return recipientList;
     }
 
     @Override

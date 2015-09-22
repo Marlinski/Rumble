@@ -23,6 +23,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.FileReceived;
 import org.disrupted.rumble.network.protocols.events.FileSent;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -96,7 +98,8 @@ public class BlockFile extends Block {
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
 
@@ -191,7 +194,8 @@ public class BlockFile extends Block {
     }
 
     @Override
-    public long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException {
+    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         if(filename == null)
             throw new IOException("filename is null");
 

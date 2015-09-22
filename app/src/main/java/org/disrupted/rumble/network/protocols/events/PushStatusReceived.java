@@ -1,5 +1,6 @@
 package org.disrupted.rumble.network.protocols.events;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
 
 /**
@@ -25,13 +26,13 @@ import org.disrupted.rumble.database.objects.PushStatus;
 public class PushStatusReceived {
 
     public PushStatus status;
-    public String sender;
+    public Contact sender;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public PushStatusReceived(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusReceived(PushStatus status, Contact sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.sender = sender;
         this.protocolID = protocolID;

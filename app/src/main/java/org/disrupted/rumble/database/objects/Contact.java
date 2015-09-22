@@ -88,7 +88,7 @@ public class Contact {
     public Set<String> getInterfaces() {                 return interfaces;       }
 
 
-    public void setAvatar(String avatar) {       this.avatar = avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
         joinedGroupIDs.add(groupID);
     }

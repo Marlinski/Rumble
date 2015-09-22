@@ -33,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
-public abstract class ProtocolWorker implements Worker {
+public abstract class ProtocolChannel implements Worker {
 
     private static final String TAG = "ProtocolWorker";
 
@@ -42,11 +42,15 @@ public abstract class ProtocolWorker implements Worker {
     protected LinkLayerConnection con;
     private BlockingQueue<Command> commandQueue;
 
-    public ProtocolWorker(Protocol protocol, LinkLayerConnection con) {
+    public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {
         this.protocol = protocol;
         this.con = con;
         commandQueue = new LinkedBlockingQueue<Command>();
     }
+
+    /*
+     * for identification
+     */
 
     public LinkLayerConnection getLinkLayerConnection() {
         return con;
@@ -67,13 +71,36 @@ public abstract class ProtocolWorker implements Worker {
         return getProtocolIdentifier()+" "+con.getConnectionID();
     }
 
+    /*
+     * to be implemented
+     * - onCommandReceived when a message is received from upper layer (Service Data Unit)
+     * - processingPacketFromNetwork when a message is received from lower layer (network)
+     */
+    abstract protected boolean onCommandReceived(Command command);
 
+    abstract protected void processingPacketFromNetwork();
+
+
+    /*
+     * class API
+     * - onWorkerConnected must be called by implementing class to start the receiving thread
+     * - execute is public method to be called by upper layer
+     */
     protected final void onWorkerConnected() {
         processingCommandFromQueue.start();
         try {
             processingPacketFromNetwork();
         }finally {
             processingCommandFromQueue.interrupt();
+        }
+    }
+
+    public final boolean execute(Command command){
+        try {
+            commandQueue.put(command);
+            return true;
+        } catch (InterruptedException ignore) {
+            return false;
         }
     }
 
@@ -92,32 +119,27 @@ public abstract class ProtocolWorker implements Worker {
         }
     };
 
-    public final boolean execute(Command command){
-        try {
-            commandQueue.put(command);
-            return true;
-        } catch (InterruptedException ignore) {
-            return false;
-        }
-    }
-
-    abstract protected boolean onCommandReceived(Command command);
-
-    abstract protected void processingPacketFromNetwork();
-
+    /*
+     * for easy use in Set, List, Map...
+     */
     @Override
     public boolean equals(Object o) {
         if(o == null)
             return false;
-        if(o instanceof ProtocolWorker) {
-            ProtocolWorker worker = (ProtocolWorker)o;
-            return this.getWorkerIdentifier().equals(worker.getWorkerIdentifier());
+        if(o instanceof ProtocolChannel) {
+            ProtocolChannel channel = (ProtocolChannel)o;
+            return this.getWorkerIdentifier().equals(channel.getWorkerIdentifier());
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return getProtocolIdentifier().hashCode();
+        return this.getWorkerIdentifier().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return this.getWorkerIdentifier();
     }
 }

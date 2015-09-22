@@ -22,8 +22,10 @@ import android.util.Base64;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
@@ -93,7 +95,8 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long readBlock(LinkLayerConnection con) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_CHAT_MESSAGE)
             throw new MalformedBlockPayload("Block type BLOCK_CHAT expected", 0);
 
@@ -164,7 +167,8 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long writeBlock(LinkLayerConnection con) throws IOException, InputOutputStreamException {
+    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         long timeToTransfer = System.currentTimeMillis();
 
         /* calculate the total block size */
@@ -198,7 +202,7 @@ public class BlockChatMessage extends Block {
         header.writeBlock(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(),0,length);
         if(blockFile != null)
-            blockFile.writeBlock(con);
+            blockFile.writeBlock(channel);
 
         /*
          * It is very important to post an event as it will be catch by the

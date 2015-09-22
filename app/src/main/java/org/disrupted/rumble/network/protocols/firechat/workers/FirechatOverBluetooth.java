@@ -25,6 +25,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
@@ -36,7 +37,6 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
-import org.disrupted.rumble.network.protocols.ProtocolWorker;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.firechat.FirechatBTState;
@@ -63,7 +63,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FirechatOverBluetooth extends ProtocolWorker {
+public class FirechatOverBluetooth extends ProtocolChannel {
 
     private static final String TAG = "FirechatOverBluetooth";
 
@@ -120,7 +120,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
 
     @Override
     public void cancelWorker() {
-        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
+        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
         if(working) {
             Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
@@ -134,17 +134,17 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             return;
         working = true;
 
-        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(con.getRemoteLinkLayerAddress());
+        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
 
         try {
             con.connect();
 
             // little hack to force connection
-            con.getOutputStream().write(("{}").getBytes());
+            ((BluetoothConnection)con).getOutputStream().write(("{}").getBytes());
 
             connectionState.connected(this.getWorkerIdentifier());
             EventBus.getDefault().post(new NeighbourConnected(
-                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                            new BluetoothNeighbour(((BluetoothConnection)con).getRemoteLinkLayerAddress()),
                             this)
             );
 
@@ -152,7 +152,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
 
             connectionState.notConnected();
             EventBus.getDefault().post(new NeighbourDisconnected(
-                            new BluetoothNeighbour(con.getRemoteLinkLayerAddress()),
+                            new BluetoothNeighbour(((BluetoothConnection)con).getRemoteLinkLayerAddress()),
                             this)
             );
         } catch (IOException exception) {
@@ -190,7 +190,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
         try {
             final int CR = 13;
             final int LF = 10;
-            pbin = new PushbackInputStream(con.getInputStream(), BUFFER_SIZE);
+            pbin = new PushbackInputStream(((BluetoothConnection)con).getInputStream(), BUFFER_SIZE);
 
             while (true) {
                 byte[] buffer = new byte[BUFFER_SIZE];
@@ -222,7 +222,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                          */
                         EventBus.getDefault().post(new ChatMessageReceived(
                                         status,
-                                        con.getRemoteLinkLayerAddress(),
+                                        ((BluetoothConnection)con).getRemoteLinkLayerAddress(),
                                         FirechatProtocol.protocolID,
                                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                         status.getFileSize()+jsonString.length(),
@@ -297,7 +297,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
             try {
                 long timeToTransfer = System.currentTimeMillis();
                 long bytesTransfered = jsonStatus.getBytes(Charset.forName("UTF-8")).length;
-                con.getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
+                ((BluetoothConnection)con).getOutputStream().write(jsonStatus.getBytes(Charset.forName("UTF-8")));
 
                 if(chatMessage.hasAttachedFile()) {
                     File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), chatMessage.getAttachedFile());
@@ -308,7 +308,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                             byte[] buffer = new byte[BUFFER_SIZE];
                             int count;
                             while ((count = fis.read(buffer)) > 0) {
-                                con.getOutputStream().write(buffer, 0, count);
+                                ((BluetoothConnection)con).getOutputStream().write(buffer, 0, count);
                                 bytesTransfered += count;
                             }
                         } finally {
@@ -323,7 +323,7 @@ public class FirechatOverBluetooth extends ProtocolWorker {
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 long throughput = (bytesTransfered / (timeToTransfer == 0 ? 1: timeToTransfer));
                 List<String> recipients = new LinkedList<String>();
-                recipients.add(con.getRemoteLinkLayerAddress());
+                recipients.add(((BluetoothConnection)con).getRemoteLinkLayerAddress());
                 EventBus.getDefault().post(new ChatMessageSent(
                                 chatMessage,
                                 recipients,

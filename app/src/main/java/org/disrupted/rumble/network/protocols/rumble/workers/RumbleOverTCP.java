@@ -21,7 +21,6 @@ import android.util.Log;
 
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPConnection;
-import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
@@ -31,7 +30,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class RumbleOverTCP extends RumbleProtocolWorker {
+public class RumbleOverTCP extends RumbleUnicastChannel {
 
     private static final String TAG = "RumbleOverTCP";
 
@@ -65,14 +64,14 @@ public class RumbleOverTCP extends RumbleProtocolWorker {
         try {
             Log.d(TAG, "[+] connected");
             EventBus.getDefault().post(new NeighbourConnected(
-                            con.getLinkLayerNeighbour(),
+                            ((TCPConnection)con).getLinkLayerNeighbour(),
                             this)
             );
             onWorkerConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new NeighbourDisconnected(
-                            con.getLinkLayerNeighbour(),
+                            ((TCPConnection)con).getLinkLayerNeighbour(),
                             this)
             );
             stopWorker();
