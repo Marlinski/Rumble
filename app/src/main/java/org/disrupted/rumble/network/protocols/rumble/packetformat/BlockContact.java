@@ -185,7 +185,6 @@ public class BlockContact extends Block {
             }
 
             timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-            String sender = con.getRemoteLinkLayerAddress();
             EventBus.getDefault().post(new ContactInformationReceived(
                             tempcontact,
                             flags,

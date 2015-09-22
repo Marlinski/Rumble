@@ -29,6 +29,7 @@ import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.services.events.ContactConnected;
 import org.disrupted.rumble.network.services.events.ContactDisconnected;
 
 import java.util.HashMap;
@@ -162,6 +163,7 @@ public class NeighbourManager {
         if(channels == null) {
             channels = new HashSet<ProtocolChannel>();
             rumbleNeighborhood.put(event.contact, channels);
+            EventBus.getDefault().post(new ContactConnected(event.contact, event.channel));
         }
         channels.add(event.channel);
     }
