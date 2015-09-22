@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.DatabaseEvent;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.database.CacheManager;
 
@@ -41,6 +42,8 @@ public class RumbleApplication extends Application{
     // minimum 10 MB available for Rumble to save files
     public static long MINIMUM_FREE_SPACE_AVAILABLE = 10000000;
 
+    public  static boolean LOG_EVENT = true;
+    private static EventLogger logger;
     public RumbleApplication() {
         instance = this;
     }
@@ -48,6 +51,10 @@ public class RumbleApplication extends Application{
     @Override
     public void onCreate() {
         super.onCreate();
+
+        if(LOG_EVENT)
+            logger = new EventLogger();
+
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
 

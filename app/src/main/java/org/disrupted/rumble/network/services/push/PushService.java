@@ -18,6 +18,7 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.ServiceLayer;
 import org.disrupted.rumble.network.services.events.ContactConnected;
@@ -94,7 +95,25 @@ public class PushService implements ServiceLayer {
         }
     }
 
-    // todo: register protocol to service
+    /*
+     * Whenever  a new neighbour  is connected, we send him  our contact description
+     * If the  other end do the same, that should  trigger a  ContactConnected event
+     * unless this contact has already been connected in which case this would allow
+     * to add a new channel of communication
+     */
+    public void onEvent(NeighbourConnected event) {
+        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+            return;
+
+        Contact local = Contact.getLocalContact();
+        CommandSendLocalInformation command = new CommandSendLocalInformation(local,Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST);
+        event.worker.execute(command);
+    }
+
+    /*
+     * Whenever a new contact is connected (i.e. we received a contact information packet),
+     * we start the dispatcher that will send him the PushStatus according to its preferences.
+     */
     public void onEvent(ContactConnected event) {
         if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
             return;
@@ -111,6 +130,10 @@ public class PushService implements ServiceLayer {
         }
     }
 
+    /*
+     * Whenever a contact is disconnected, it means that every channel has been closed.
+     * We can thus stop the dispatcher.
+     */
     public void onEvent(ContactDisconnected event) {
         synchronized (lock) {
             MessageDispatcher dispatcher = contactToDispatcher.get(event.contact);
