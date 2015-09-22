@@ -150,4 +150,10 @@ public class UDPMulticastConnection implements MulticastConnection {
         multicastLock.release();
 
     }
+
+    @Override
+    public LinkLayerNeighbour getLinkLayerNeighbour() {
+        return new UDPMulticastNeighbour(getLinkLayerIdentifier(), address, udpPort);
+    }
+
 }

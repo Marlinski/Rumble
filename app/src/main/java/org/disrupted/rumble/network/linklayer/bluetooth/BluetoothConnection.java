@@ -27,7 +27,6 @@ import android.content.Intent;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;

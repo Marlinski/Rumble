@@ -25,6 +25,7 @@ import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionExcep
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
 import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +76,7 @@ public abstract class TCPConnection implements UnicastConnection {
 
     @Override
     public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return new TCPNeighbour(remoteAddress);
+        return new WifiNeighbour(remoteInetAddress);
     }
 
     @Override

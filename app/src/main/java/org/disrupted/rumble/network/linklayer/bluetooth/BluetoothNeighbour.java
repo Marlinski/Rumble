@@ -32,10 +32,6 @@ public class BluetoothNeighbour implements LinkLayerNeighbour {
 
     private String bluetoothMacAddress;
 
-    public BluetoothNeighbour(BluetoothNeighbour neighbour){
-        this.bluetoothMacAddress = neighbour.getLinkLayerAddress();
-    }
-
     public BluetoothNeighbour(String macAddress){
         this.bluetoothMacAddress = macAddress;
     }

@@ -19,8 +19,6 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.Worker;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServer;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServerConnection;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
@@ -55,7 +53,6 @@ public class RumbleTCPServer extends TCPServer {
 
     @Override
     protected void onClientConnected(Socket mmConnectedSocket) {
-        LinkLayerNeighbour neighbour = new TCPNeighbour(mmConnectedSocket.getInetAddress().getHostAddress());
         Worker worker = new RumbleOverTCP(protocol, new TCPServerConnection(mmConnectedSocket));
         networkCoordinator.addWorker(worker);
     }

@@ -25,24 +25,43 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 public class UDPMulticastNeighbour implements LinkLayerNeighbour {
 
 
-    int port;
-    String multicastAddress;
-    String protocolID;
+    private String linkLayerIdentifier;
+    private String multicastAddress;
+    private int port;
 
-    public UDPMulticastNeighbour(String protocolID, int port, String multicastAddress) {
-        this.protocolID = protocolID;
-        this.port = port;
+    public UDPMulticastNeighbour(String linkLayerIdentifier, String multicastAddress, int port) {
+        this.linkLayerIdentifier = linkLayerIdentifier;
         this.multicastAddress = multicastAddress;
+        this.port = port;
     }
 
     @Override
     public String getLinkLayerIdentifier() {
-        return protocolID;
+        return linkLayerIdentifier;
     }
 
     @Override
     public String getLinkLayerAddress() {
         return multicastAddress+":"+port;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+
+        if(o instanceof  UDPMulticastNeighbour) {
+            UDPMulticastNeighbour neighbour = (UDPMulticastNeighbour) o;
+            return multicastAddress.equals(neighbour.multicastAddress);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return multicastAddress.hashCode();
     }
 
 }

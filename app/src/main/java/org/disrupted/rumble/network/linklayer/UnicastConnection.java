@@ -34,6 +34,4 @@ public interface UnicastConnection extends LinkLayerConnection {
 
     public String getRemoteLinkLayerAddress();
 
-    public LinkLayerNeighbour getLinkLayerNeighbour();
-
 }

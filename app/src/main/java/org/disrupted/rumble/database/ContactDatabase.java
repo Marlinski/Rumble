@@ -244,6 +244,31 @@ public class ContactDatabase extends Database  {
         }
     }
 
+    public Set<Contact> getContactsUsingMacAddress(String macAddress) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            StringBuilder query = new StringBuilder(
+                    "SELECT c.* FROM " + ContactDatabase.TABLE_NAME + " c" +
+                            " JOIN " + ContactInterfaceDatabase.TABLE_NAME + " ci" +
+                            " ON c." + ContactDatabase.ID + " = ci." + ContactInterfaceDatabase.CONTACT_DBID +
+                            " JOIN " + InterfaceDatabase.TABLE_NAME + " i" +
+                            " ON i." + InterfaceDatabase.ID + " = ci." + ContactInterfaceDatabase.INTERFACE_DBID +
+                            " WHERE i." + InterfaceDatabase.MACADDRESS + " = ?");
+            cursor = database.rawQuery(query.toString(), new String[]{macAddress});
+            Set<Contact> ret = new HashSet<Contact>();
+            if (cursor != null) {
+                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                    ret.add(cursorToContact(cursor));
+                }
+            }
+            return ret;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
 }
 
 

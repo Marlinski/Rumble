@@ -48,5 +48,5 @@ public interface LinkLayerConnection {
 
     public void disconnect() throws LinkLayerConnectionException;
 
-
+    public LinkLayerNeighbour getLinkLayerNeighbour();
 }

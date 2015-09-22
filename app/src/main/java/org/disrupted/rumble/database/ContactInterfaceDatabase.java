@@ -25,6 +25,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.disrupted.rumble.database.objects.Contact;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -47,11 +49,10 @@ public class ContactInterfaceDatabase extends Database {
     public static final String CONTACT_DBID     = "_cdbid";
     public static final String INTERFACE_DBID   = "_idbid";
 
-
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + CONTACT_DBID     + " INTEGER, "
                  + INTERFACE_DBID  + " INTEGER, "
-                 + " UNIQUE( " + CONTACT_DBID + " , " + INTERFACE_DBID + "), "
+                 + " UNIQUE( " + INTERFACE_DBID + "), "
                  + " FOREIGN KEY ( "+ CONTACT_DBID    + " ) REFERENCES " + ContactDatabase.TABLE_NAME  + " ( " + ContactDatabase.ID  + " ), "
                  + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "
             + " );";
@@ -60,15 +61,16 @@ public class ContactInterfaceDatabase extends Database {
         super(context, databaseHelper);
     }
 
-    public void deleteEntriesMatchingStatusDBID(long statusDBID){
+    public void deleteEntriesMatchingContactDBID(long contactDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
-        db.delete(TABLE_NAME, CONTACT_DBID + " = ?" , new String[] {statusDBID + ""});
+        db.delete(TABLE_NAME, CONTACT_DBID + " = ?" , new String[] {contactDBID + ""});
     }
 
-    public long insertStatusInterface(long statusDBID, long interfaceDBID){
+    public long insertContactInterface(long contactDBID, long interfaceDBID){
         ContentValues contentValues = new ContentValues();
-        contentValues.put(CONTACT_DBID, statusDBID);
+        contentValues.put(CONTACT_DBID, contactDBID);
         contentValues.put(INTERFACE_DBID, interfaceDBID);
-        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);
+        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
     }
+
 }

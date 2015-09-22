@@ -31,6 +31,7 @@ import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
@@ -222,11 +223,9 @@ public class CacheManager {
             }
         }
 
-        // should we update and remember the interface which correspond to this user ?
-        // not necessary and would also be a cause for potential attacks based on corruption
-        // of MAC address cache
         long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                 .getContactDBID(contact.getUid());
+
         // We only update the affected attributes
         if ((event.flags & Contact.FLAG_GROUP_LIST) == Contact.FLAG_GROUP_LIST) {
             contact.setJoinedGroupIDs(event.contact.getJoinedGroupIDs());
@@ -250,6 +249,12 @@ public class CacheManager {
             }
             EventBus.getDefault().post(new ContactTagInterestUpdatedEvent(contact));
         }
+
+        // We also keep track of the interface and protocol this contact was discovered with
+        long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext())
+                    .insertInterface(event.interfaceID, event.channel.getProtocolIdentifier());
+        DatabaseFactory.getContactInterfaceDatabase(RumbleApplication.getContext())
+                .insertContactInterface(contactDBID, interfaceDBID);
     }
     public void onEvent(ChatMessageReceived event) {
         if(event.chatMessage == null)

@@ -19,29 +19,88 @@
 
 package org.disrupted.rumble.network;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
+ * This class summarize a contact or neighbour information to be displayed by the UI
  * @author Marlinski
  */
 public class NeighbourInfo {
 
-    public LinkLayerNeighbour neighbour;
-    private Set<String> connectedProtocols;
+    public Contact contact;
+    public Set<LinkLayerNeighbour> reachable;
+    public Set<LinkLayerNeighbour> connected;
 
-    public NeighbourInfo(LinkLayerNeighbour neighbour) {
-        this.neighbour = neighbour;
-        connectedProtocols = new HashSet<String>();
+    public NeighbourInfo(Contact contact, Set<LinkLayerNeighbour> channels) {
+        this.contact  = contact;
+        this.connected = channels;
     }
 
-    public void addProtocol(String protocol) {
-        connectedProtocols.add(protocol);
+    public String getFirstName() {
+        if(contact == null) {
+            if(reachable == null)
+                return "???";
+            else {
+                Iterator<LinkLayerNeighbour> it = reachable.iterator();
+                if(it.hasNext()) {
+                    LinkLayerNeighbour neighbour = it.next();
+                    if(neighbour instanceof BluetoothNeighbour)
+                        return ((BluetoothNeighbour)neighbour).getBluetoothDeviceName();
+                    if(neighbour instanceof WifiNeighbour)
+                        return ((WifiNeighbour)neighbour).getLinkLayerAddress();
+                    if(neighbour instanceof UDPMulticastNeighbour)
+                        return ((UDPMulticastNeighbour)neighbour).getLinkLayerAddress();
+                    else
+                        return neighbour.getLinkLayerAddress();
+                }
+                return "";
+            }
+        } else {
+            return contact.getName();
+        }
     }
 
-    public boolean isConnected() {
-        return (connectedProtocols.size() > 0);
+    public String getSecondName() {
+        if(contact == null) {
+            if(reachable == null)
+                return "???";
+            else {
+                Iterator<LinkLayerNeighbour> it = reachable.iterator();
+                if(it.hasNext()) {
+                    LinkLayerNeighbour neighbour = it.next();
+                    if (neighbour instanceof BluetoothNeighbour)
+                        return ((BluetoothNeighbour) neighbour).getLinkLayerAddress();
+                    if (neighbour instanceof WifiNeighbour)
+                        return ((WifiNeighbour) neighbour).getMacAddressFromARP();
+                }
+            }
+        } else {
+            return contact.getUid();
+        }
+        return "";
     }
+
+    public boolean isReachable(String linkLayerIdentifier) {
+        for(LinkLayerNeighbour channel : reachable) {
+            if(channel.getLinkLayerIdentifier().equals(linkLayerIdentifier))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean isConnected(String linkLayerIdentifier) {
+        for(LinkLayerNeighbour channel : connected) {
+            if(channel.getLinkLayerIdentifier().equals(linkLayerIdentifier))
+                return true;
+        }
+        return false;
+    }
+
 }

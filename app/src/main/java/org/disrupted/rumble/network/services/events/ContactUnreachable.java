@@ -15,34 +15,20 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.network.services.events;
 
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.protocols.ProtocolChannel;
-
-import java.util.List;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
  * @author Marlinski
  */
-public class ContactInformationReceived {
+public class ContactUnreachable extends NetworkEvent {
 
     public Contact contact;
-    public int     flags;   // see class Contact
-    public ProtocolChannel channel;
-    public String interfaceID;
-    public boolean authenticated;
-    public long    size;
-    public long    duration;
 
-    public ContactInformationReceived(Contact contact, int flags, ProtocolChannel channel, String interfaceID, long size, long duration) {
+    public ContactUnreachable(Contact contact) {
         this.contact = contact;
-        this.flags = flags;
-        this.channel = channel;
-        this.interfaceID = interfaceID;
-        this.authenticated = false;
-        this.size = size;
-        this.duration = duration;
     }
 
 }

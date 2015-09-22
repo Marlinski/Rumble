@@ -23,6 +23,7 @@ import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -103,7 +104,7 @@ public abstract class TCPServer implements Worker {
                 if (mmConnectedSocket != null) {
                     Log.d(TAG, "[+] Client connected");
 
-                    LinkLayerNeighbour neighbour = new TCPNeighbour(mmConnectedSocket.getInetAddress().getHostAddress());
+                    LinkLayerNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress());
 
                     onClientConnected(mmConnectedSocket);
 

@@ -47,10 +47,6 @@ public class WifiNeighbour implements LinkLayerNeighbour {
         return address.getHostAddress();
     }
 
-    public final InetAddress getInetAddress() {
-        return address;
-    }
-
     public String getMacAddressFromARP() {
         BufferedReader br = null;
         try {

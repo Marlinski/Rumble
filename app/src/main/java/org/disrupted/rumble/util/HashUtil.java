@@ -36,7 +36,7 @@ public class HashUtil {
     public static final int USER_ID_SIZE   = 8;
     public static final int GROUP_ID_SIZE  = 8;
 
-    public static final String computeInterfaceID(String linkLayerAddress, String protocol) {
+    public static final String computeInterfaceID(String linkLayerAddress,String protocol) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(linkLayerAddress.getBytes());

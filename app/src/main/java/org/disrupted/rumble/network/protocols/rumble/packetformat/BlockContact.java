@@ -189,6 +189,7 @@ public class BlockContact extends Block {
                             tempcontact,
                             flags,
                             channel,
+                            con.getRemoteLinkLayerAddress(),
                             BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength(),
                             timeToTransfer)
             );

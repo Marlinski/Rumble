@@ -15,38 +15,23 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.wifi.TCP;
+package org.disrupted.rumble.network.services.events;
 
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.util.NetUtil;
-
-import java.net.InetAddress;
 
 /**
  * @author Marlinski
  */
-public class TCPNeighbour implements LinkLayerNeighbour {
+public class ContactReachable extends NetworkEvent {
 
-    private String macAddress;
-    private String ipAddress;
+    public Contact contact;
+    public LinkLayerNeighbour neighbour;
 
-    public TCPNeighbour(String address) {
-        this.ipAddress = address;
-        try {
-            this.macAddress = NetUtil.getMacFromArpCache(address);
-        } catch (Exception e) {
-            this.macAddress = null;
-        }
-    }
-
-    @Override
-    public String getLinkLayerIdentifier() {
-        return "TCP";
-    }
-
-    @Override
-    public String getLinkLayerAddress() {
-        return ipAddress;
+    public ContactReachable(Contact contact, LinkLayerNeighbour neighbour) {
+        this.contact = contact;
+        this.neighbour  = neighbour;
     }
 
 }
