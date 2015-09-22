@@ -46,7 +46,6 @@ public class ChatService implements ServiceLayer {
 
     private static Map<String, ChatMessageDispatcher> workerIdentifierTodispatcher;
 
-
     public static ChatService getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)

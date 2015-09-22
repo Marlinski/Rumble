@@ -52,10 +52,6 @@ public class PushService implements ServiceLayer {
 
     private static Map<Contact, MessageDispatcher> contactToDispatcher;
 
-    private PushService() {
-        rdwatcher = new ReplicationDensityWatcher(1000*3600);
-    }
-
     public static PushService getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)
@@ -66,6 +62,7 @@ public class PushService implements ServiceLayer {
     }
     private PushService(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
+        rdwatcher = new ReplicationDensityWatcher(1000*3600);
     }
 
     @Override
