@@ -63,7 +63,7 @@ public class BluetoothClientConnection extends BluetoothConnection {
 
     @Override
     public String getConnectionID() {
-        return "Bluetooth Client: "+remoteMacAddress;
+        return "Bluetooth ClientConnection: "+remoteMacAddress;
     }
 
 

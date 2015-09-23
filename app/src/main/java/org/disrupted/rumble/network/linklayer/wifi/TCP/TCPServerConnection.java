@@ -37,6 +37,12 @@ public class TCPServerConnection extends TCPConnection {
     }
 
     @Override
+    public String getConnectionID() {
+        return "TCP ServerConnection: "+remoteAddress;
+    }
+
+
+    @Override
     public void connect() throws LinkLayerConnectionException {
         if (mmConnectedSocket == null)
             throw new NullSocketException();

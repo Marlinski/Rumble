@@ -53,12 +53,6 @@ public abstract class TCPConnection implements UnicastConnection {
         this.mmConnectedSocket = null;
     }
 
-
-    @Override
-    public String getConnectionID() {
-        return "TCPConnection:"+remoteAddress;
-    }
-
     @Override
     public String getLinkLayerIdentifier() {
         return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
