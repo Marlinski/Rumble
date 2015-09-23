@@ -17,8 +17,13 @@
 
 package org.disrupted.rumble.network.linklayer.wifi.TCP;
 
+import android.content.Context;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.text.format.Formatter;
 import android.util.Log;
 
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
@@ -44,7 +49,6 @@ public abstract class TCPServer implements Worker {
 
     private static final String TAG = "TCPServer";
 
-    protected String localMacAddress;
     protected ServerSocket mmServerSocket;
     protected int mmServerPort;
     private boolean working;

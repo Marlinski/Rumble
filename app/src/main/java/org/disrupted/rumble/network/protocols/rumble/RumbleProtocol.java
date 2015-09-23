@@ -31,18 +31,19 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnectio
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPClientConnection;
+import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleBTServer;
-import org.disrupted.rumble.network.protocols.rumble.workers.RumbleOverBluetooth;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleTCPServer;
 import org.disrupted.rumble.network.protocols.rumble.workers.RumbleUDPMulticastScanner;
+import org.disrupted.rumble.network.protocols.rumble.workers.RumbleUnicastChannel;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
 
@@ -52,26 +53,29 @@ import de.greenrobot.event.EventBus;
 public class RumbleProtocol implements Protocol {
 
     public static final String TAG = "RumbleProtocol";
-
     public static final String protocolID = "Rumble";
-    public static RumbleProtocol instance = null;
-
-    /*
-     * Bluetooth Configuration
-     */
-    public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
-    public static final String RUMBLE_BT_STR      = "org.disrupted.rumble";
-    private Map<String, RumbleBTState>   bluetoothState;
-
-    /*
-     * Wifi Configuration
-     */
-    public static final int   RUMBLE_TCP_PORT = 7430;
-    RumbleUDPMulticastScanner scanner;
 
     private static final Object lock = new Object();
+    public static RumbleProtocol instance = null;
+
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
+
+    // Scanner to discover peer whenever wifi is available
+    RumbleUDPMulticastScanner scanner;
+
+    //conState holds the Connection State of Bluetooth and TCP connection
+    private Map<String, RumbleStateMachine> conState;
+    public RumbleStateMachine getState(String linkLayerAddress) {
+        synchronized (lock) {
+            RumbleStateMachine state = conState.get(linkLayerAddress);
+            if (state == null) {
+                state = new RumbleStateMachine();
+                conState.put(linkLayerAddress, state);
+            }
+            return state;
+        }
+    }
 
     public static RumbleProtocol getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
@@ -83,7 +87,7 @@ public class RumbleProtocol implements Protocol {
 
     private RumbleProtocol(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
-        bluetoothState = new HashMap<String, RumbleBTState>();
+        conState = new HashMap<String, RumbleStateMachine>();
         started = false;
         scanner = null;
     }
@@ -91,17 +95,6 @@ public class RumbleProtocol implements Protocol {
     @Override
     public int getProtocolPriority() {
         return PROTOCOL_HIGH_PRIORITY;
-    }
-
-    public RumbleBTState getBTState(String macAddress) {
-        synchronized (lock) {
-            RumbleBTState state = bluetoothState.get(macAddress);
-            if (state == null) {
-                state = new RumbleBTState();
-                bluetoothState.put(macAddress, state);
-            }
-            return state;
-        }
     }
 
     @Override
@@ -133,7 +126,7 @@ public class RumbleProtocol implements Protocol {
 
         networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
-        bluetoothState.clear();
+        conState.clear();
     }
 
     @Override
@@ -181,19 +174,29 @@ public class RumbleProtocol implements Protocol {
             try {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
-                        RUMBLE_BT_UUID_128,
-                        RUMBLE_BT_STR,
+                        RumbleBTServer.RUMBLE_BT_UUID_128,
+                        RumbleBTServer.RUMBLE_BT_STR,
                         false);
-                Worker rumbleOverBluetooth = new RumbleOverBluetooth(this, con);
-                getBTState(neighbour.getLinkLayerAddress()).connectionScheduled(rumbleOverBluetooth.getWorkerIdentifier());
+                Worker rumbleOverBluetooth = new RumbleUnicastChannel(this, con);
+                getState(neighbour.getLinkLayerAddress()).connectionScheduled(rumbleOverBluetooth.getWorkerIdentifier());
                 networkCoordinator.addWorker(rumbleOverBluetooth);
-            } catch(RumbleBTState.StateException ignore) {
+            } catch(RumbleStateMachine.StateException ignore) {
                 //Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
             }
         }
 
         if (neighbour instanceof WifiNeighbour) {
-            Log.d(TAG, "[+] we will connect with TCP to: "+neighbour.getLinkLayerAddress());
+            try {
+                TCPConnection con = new TCPClientConnection(
+                        neighbour.getLinkLayerAddress(),
+                        RumbleTCPServer.RUMBLE_TCP_PORT
+                );
+                Worker rumbleOverTCP = new RumbleUnicastChannel(this, con);
+                getState(neighbour.getLinkLayerAddress()).connectionScheduled(rumbleOverTCP.getWorkerIdentifier());
+                networkCoordinator.addWorker(rumbleOverTCP);
+            } catch(RumbleStateMachine.StateException ignore) {
+                //Log.d(TAG, neighbour.getLinkLayerAddress() + " state is not disconnected: " + getBTState(neighbour.getLinkLayerAddress()).printState());
+            }
         }
     }
 
@@ -201,18 +204,7 @@ public class RumbleProtocol implements Protocol {
     public void onEvent(NeighbourUnreachable event) {
         if(!started)
             return;
-
-        LinkLayerNeighbour neighbour = event.neighbour;
-
-        if(neighbour instanceof BluetoothNeighbour) {
-            /**
-             * ignore because sometimes the BluetoothScanner may not detect the neighbour
-             * while still being connected to it.
-             * If the neighbour is indeed disconnected, the connection will drop by itself.
-             * todo maybe add a timeout just in case ?
-             */
-        }
+        conState.remove(event.neighbour.getLinkLayerAddress());
     }
-
 
 }

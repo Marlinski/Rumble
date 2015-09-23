@@ -24,22 +24,50 @@ import android.util.Log;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
+ * The RumbleStateMachine describe the different state possible when connecting to a peer
+ * wether it is done using Bluetooth or TCP.
+ *
+ *                      +-----------------+
+ *                      |  NOT CONNECTED  |
+ *                      +-----------------+
+ *                         |          |
+ *                         |          |
+ *              +----------+          +-----------+
+ *              |                                 |
+ *              v                                 v
+ *     +---------------------+      +----------------------+
+ *     | CONNECTION ACCEPTED |      | CONNECTION SCHEDULED |
+ *     +---------------------+      +---------------------+
+ *              |      ^              |            ^    |
+ *              |      |              v            |    |
+ *              |      |       +============+      |    |
+ *              |      |       | is current |      |    |
+ *              |      +- yes <   address   > no -+     |
+ *              |              |   lower ?  |           |
+ *              |              +============+           |
+ *              |                                       |
+ *              |                                       |
+ *              |          +-------------+              |
+ *              +--------->|  CONNECTED  |<-------------+
+ *                         +-------------+
+ *
+ *
  * @author Marlinski
  */
-public class RumbleBTState {
+public class RumbleStateMachine {
 
-    private static final String TAG = "RumbleBTState";
+    private static final String TAG = "RumbleStateMachine";
 
-    public static enum RumbleBluetoothState {
-        NOT_CONNECTED, CONNECTION_SCHEDULED, CONNECTION_INITIATED, CONNECTION_ACCEPTED, CONNECTED;
+    public static enum RumbleState {
+        NOT_CONNECTED, CONNECTION_SCHEDULED, CONNECTION_ACCEPTED, CONNECTED
     }
 
     public  final ReentrantLock lock = new ReentrantLock();
-    private RumbleBluetoothState state;
+    private RumbleState state;
     private String workerID;
 
-    public RumbleBTState() {
-        this.state = RumbleBluetoothState.NOT_CONNECTED;
+    public RumbleStateMachine() {
+        this.state = RumbleState.NOT_CONNECTED;
         this.workerID = null;
     }
 
@@ -47,17 +75,15 @@ public class RumbleBTState {
         switch (state) {
             case NOT_CONNECTED: return "NOT CONNECTED";
             case CONNECTION_SCHEDULED: return "CONNECTION SCHEDULED";
-            case CONNECTION_INITIATED: return "CONNECTION INITIATED";
             case CONNECTION_ACCEPTED: return "CONNECTION ACCEPTED";
             case CONNECTED: return "CONNECTED";
             default: return "####";
         }
     }
 
-
     /*
      * goTo the CONNECTION SCHEDULED state which happens when we put a worker on the pool
-     * The workerID is then stored as it may be cancelled under certain circumstances.
+     * The workerID is then stored as it may be cancelled under certain circumstances
      * It throws a StateException if previous state is different than NOT_CONNECTED
      */
     public void connectionScheduled(String workerID) throws StateException {
@@ -65,41 +91,18 @@ public class RumbleBTState {
         switch (state) {
             case CONNECTED:
             case CONNECTION_SCHEDULED:
-            case CONNECTION_INITIATED:
             case CONNECTION_ACCEPTED:
                 throw new StateException();
             case NOT_CONNECTED:
             default:
                 this.workerID = workerID;
-                state = RumbleBluetoothState.CONNECTION_SCHEDULED;
+                state = RumbleState.CONNECTION_SCHEDULED;
                 Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
         }
     }
 
     /*
-     * goTo the CONNECTION INITIATED state which happens when we initiate a connection
-     * (most probably from the BluetoothLinkLayer.connectTo method).
-     * The workerID is then stored as it may be cancelled under certain circumstances.
-     * It throws a StateException if previous state is different than CONNECTION_SCHEDULED
-     */
-    public void connectionInitiated(String workerID) throws StateException {
-        String previous = printState();
-        switch (state) {
-            case CONNECTED:
-            case NOT_CONNECTED:
-            case CONNECTION_INITIATED:
-            case CONNECTION_ACCEPTED:
-                throw new StateException();
-            case CONNECTION_SCHEDULED:
-            default:
-                this.workerID = workerID;
-                state = RumbleBluetoothState.CONNECTION_INITIATED;
-                Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
-        }
-    }
-
-    /*
-     * goTo the CONNECTION ACCEPTED state which happens when RumbleBTServer receive
+     * goTo the CONNECTION ACCEPTED state which happens when a Server receive
      * a connection (accept() returns). The workerID is then stored as it may be
      * cancelled under certain circumstances.
      * It can only happen from the NOT_CONNECTED or CONNECTION_INITIATED state.
@@ -112,18 +115,16 @@ public class RumbleBTState {
             case CONNECTION_ACCEPTED:
                 throw new StateException();
             case CONNECTION_SCHEDULED:
-            case CONNECTION_INITIATED:
             case NOT_CONNECTED:
             default:
                 this.workerID = workerID;
-                state = RumbleBluetoothState.CONNECTION_ACCEPTED;
+                state = RumbleState.CONNECTION_ACCEPTED;
                 Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
         }
     }
 
     /*
-     * goTo the CONNECTED state which happens when a BluetoothConnection connect()
-     * (wether it is as a BluetoothClient or as a BluetoothServerConnection)
+     * goTo the CONNECTED state which happens when a connection connect()
      * It can only happen from an intermediary state like CONNECTION_INITIATED or
      * CONNECTED_ACCEPTED. It throws a StateException otherwise
      */
@@ -131,34 +132,33 @@ public class RumbleBTState {
         String previous = printState();
         switch (state) {
             case NOT_CONNECTED:
-            case CONNECTION_SCHEDULED:
             case CONNECTED:
                 throw new StateException();
-            case CONNECTION_INITIATED:
+            case CONNECTION_SCHEDULED:
             case CONNECTION_ACCEPTED:
             default:
                 this.workerID = workerID;
-                state = RumbleBluetoothState.CONNECTED;
+                state = RumbleState.CONNECTED;
                 Log.d(TAG, previous+" -> "+printState()+ " ("+this.workerID+")");
         }
     }
 
     /*
      * goTo the NOT_CONNECTED state which can happen from any state
-     *    - when a BluetoothConnection disconnect()
+     *    - when a Connection disconnect()
      *    - when the intermediary state has been cancelled
      */
     public void notConnected() {
         String previous = printState();
         switch (state) {
             default:
-                state = RumbleBluetoothState.NOT_CONNECTED;
+                state = RumbleState.NOT_CONNECTED;
                 this.workerID = null;
                 Log.d(TAG, previous+" -> "+printState());
         }
     }
 
-    public RumbleBluetoothState getState() {
+    public RumbleState getState() {
         return state;
     }
     public String getWorkerID()  throws StateException{

@@ -21,6 +21,9 @@ import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothClientConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
@@ -30,7 +33,10 @@ import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformatio
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
+import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
@@ -51,7 +57,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public abstract class RumbleUnicastChannel extends ProtocolChannel {
+public class RumbleUnicastChannel extends ProtocolChannel {
 
     private static final String TAG = "RumbleProtocolWorker";
 
@@ -64,10 +70,85 @@ public abstract class RumbleUnicastChannel extends ProtocolChannel {
     }
 
     @Override
+    public void cancelWorker() {
+        RumbleStateMachine connectionState = ((RumbleProtocol)protocol).getState(
+                con.getLinkLayerNeighbour().getLinkLayerAddress());
+        if(working) {
+            Log.e(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
+            stopWorker();
+        } else
+            connectionState.notConnected();
+    }
+
+    @Override
     public void startWorker() {
         if(isWorking())
             return;
+        working = true;
         EventBus.getDefault().register(this);
+
+        RumbleProtocol     rumbleProtocol = (RumbleProtocol)protocol;
+        RumbleStateMachine connectionState = rumbleProtocol.getState(
+                con.getLinkLayerNeighbour().getLinkLayerAddress());
+
+        try {
+            if (con instanceof BluetoothClientConnection) {
+                if (!connectionState.getState().equals(RumbleStateMachine.RumbleState.CONNECTION_SCHEDULED))
+                    throw new RumbleStateMachine.StateException();
+
+                ((BluetoothClientConnection) con).waitScannerToStop();
+            }
+
+            con.connect();
+
+            try {
+                connectionState.lock.lock();
+                connectionState.connected(getWorkerIdentifier());
+            } finally {
+                connectionState.lock.unlock();
+            }
+
+            /*
+             * Bluetooth hack to synchronise the client and server
+             * if I don't do this, they sometime fail to connect ? :/ ?
+             */
+            if (con instanceof BluetoothServerConnection)
+                ((BluetoothConnection)con).getOutputStream().write(new byte[]{0},0,1);
+            if (con instanceof BluetoothClientConnection)
+                ((BluetoothConnection)con).getInputStream().read(new byte[1], 0, 1);
+
+        } catch (RumbleStateMachine.StateException state) {
+            Log.e(TAG, "[-] client connected while trying to connect");
+            stopWorker();
+            return;
+        } catch (LinkLayerConnectionException llce) {
+            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + " - " + llce.getMessage());
+            stopWorker();
+            connectionState.notConnected();
+            return;
+        } catch (IOException io) {
+            Log.e(TAG, "[!] FAILED CON: " + getWorkerIdentifier() + " - " + io.getMessage());
+            stopWorker();
+            connectionState.notConnected();
+            return;
+        }
+
+        try {
+            Log.d(TAG, "[+] connected");
+            EventBus.getDefault().post(new NeighbourConnected(
+                            con.getLinkLayerNeighbour(),
+                            this)
+            );
+            onWorkerConnected();
+        } finally {
+            Log.d(TAG, "[+] disconnected");
+            EventBus.getDefault().post(new NeighbourDisconnected(
+                            con.getLinkLayerNeighbour(),
+                            this)
+            );
+            stopWorker();
+            connectionState.notConnected();
+        }
     }
 
     @Override
@@ -169,7 +250,8 @@ public abstract class RumbleUnicastChannel extends ProtocolChannel {
             //Log.d(TAG, "[-]"+ignore.getMessage());
         }
         finally {
-            EventBus.getDefault().unregister(this);
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
         }
     }
 

@@ -29,11 +29,13 @@ import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
-import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.util.HashUtil;
+import org.disrupted.rumble.network.services.events.ContactConnected;
+import org.disrupted.rumble.network.services.events.ContactDisconnected;
+import org.disrupted.rumble.network.services.events.ContactReachable;
+import org.disrupted.rumble.network.services.events.ContactUnreachable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +53,7 @@ import de.greenrobot.event.EventBus;
  * - the connected neighborhood comprised of all the nodes connected with the protocols
  * - the contact neighborhood which is a rearrangement of the physical and connected neighborhood
  *   relevant to a certain contact
+ *
  */
 public class NeighbourManager {
 
@@ -95,9 +98,8 @@ public class NeighbourManager {
         }
     }
 
-
     /*
-     * Managing the neighborhood
+     * Using Events to manage the neighborhood
      */
     public void onEvent(NeighbourReachable event) {
         synchronized (managerLock) {
@@ -105,6 +107,14 @@ public class NeighbourManager {
                 return;
             NeighbourEntry entry = new NeighbourEntry(event.neighbour);
             neighborhood.put(event.neighbour.getLinkLayerAddress(), entry);
+
+            // throw ContactReachable event if any
+            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
+            if(!contacts.isEmpty()) {
+                for (Contact contact : contacts)
+                    EventBus.getDefault().post(new ContactReachable(contact, event.neighbour));
+            }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -114,9 +124,18 @@ public class NeighbourManager {
             NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
             if (entry == null)
                 return;
-            if (entry.channels.isEmpty())
+            if (entry.channels.isEmpty()) {
                 neighborhood.remove(event.neighbour.getLinkLayerAddress());
-            else
+
+                // throw ContactUnreachable event if any
+                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
+                if(!contacts.isEmpty()) {
+                    for (Contact contact : contacts)
+                        EventBus.getDefault().post(new ContactUnreachable(contact));
+                }
+
+            } else
                 entry.reachable = false;
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
@@ -130,6 +149,14 @@ public class NeighbourManager {
                 neighborhood.put(event.neighbour.getLinkLayerAddress(), entry);
             }
             entry.channels.add(event.worker);
+
+            // throw ContactConnected event if any
+            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
+            if(!contacts.isEmpty()) {
+                for (Contact contact : contacts)
+                    EventBus.getDefault().post(new ContactConnected(contact, event.worker));
+            }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -140,8 +167,24 @@ public class NeighbourManager {
             if (entry == null)
                 return;
             entry.channels.remove(event.worker);
-            if (entry.channels.isEmpty() && !entry.reachable)
+
+            // throw ContactDisconnected event if any
+            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
+            if(!contacts.isEmpty()) {
+                for (Contact contact : contacts)
+                    EventBus.getDefault().post(new ContactDisconnected(contact));
+            }
+
+            if (entry.channels.isEmpty() && !entry.reachable) {
                 neighborhood.remove(entry);
+
+                // throw ContactUnreachable event if any
+                if(!contacts.isEmpty()) {
+                    for (Contact contact : contacts)
+                        EventBus.getDefault().post(new ContactUnreachable(contact));
+                }
+            }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -162,7 +205,6 @@ public class NeighbourManager {
     public void onEvent(ContactInsertedEvent event) {
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
-
 
     /*
      * List of neighbour for the UI Adapter

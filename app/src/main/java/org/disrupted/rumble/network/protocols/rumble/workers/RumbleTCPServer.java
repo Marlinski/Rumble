@@ -17,12 +17,19 @@
 
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
+import android.util.Log;
+
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServer;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServerConnection;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
+import org.disrupted.rumble.util.NetUtil;
 
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -30,13 +37,15 @@ import java.net.Socket;
  */
 public class RumbleTCPServer extends TCPServer {
 
-    private static final String TAG = "RumbleBluetoothServer";
+    private static final String TAG = "RumbleTCPServer";
+
+    public static final int   RUMBLE_TCP_PORT = 7430;
 
     private final RumbleProtocol protocol;
     private final NetworkCoordinator networkCoordinator;
 
     public RumbleTCPServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator) {
-        super(RumbleProtocol.RUMBLE_TCP_PORT);
+        super(RUMBLE_TCP_PORT);
         this.protocol = protocol;
         this.networkCoordinator = networkCoordinator;
     }
@@ -53,7 +62,42 @@ public class RumbleTCPServer extends TCPServer {
 
     @Override
     protected void onClientConnected(Socket mmConnectedSocket) {
-        Worker worker = new RumbleOverTCP(protocol, new TCPServerConnection(mmConnectedSocket));
-        networkCoordinator.addWorker(worker);
+        WifiNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress());
+        RumbleStateMachine connectionState = protocol.getState(neighbour.getLinkLayerAddress());
+        try {
+            connectionState.lock.lock();
+            switch (connectionState.getState()) {
+                case CONNECTED:
+                case CONNECTION_ACCEPTED:
+                    Log.d(TAG, "[-] refusing client connection");
+                    mmConnectedSocket.close();
+                    return;
+                case CONNECTION_SCHEDULED:
+                    if (NetUtil.getLocalIpAddress().compareTo(neighbour.getLinkLayerAddress()) < 0) {
+                        Log.d(TAG, "[-] refusing client connection");
+                        mmConnectedSocket.close();
+                        return;
+                    } else {
+                        Log.d(TAG, "[-] cancelling connection " + connectionState.getWorkerID());
+                        networkCoordinator.stopWorker(
+                                WifiManagedLinkLayerAdapter.LinkLayerIdentifier,
+                                connectionState.getWorkerID());
+                        break;
+                    }
+                case NOT_CONNECTED:
+                default:
+                    break;
+            }
+
+            Worker worker = new RumbleUnicastChannel(protocol, new TCPServerConnection(mmConnectedSocket));
+            connectionState.connectionAccepted(worker.getWorkerIdentifier());
+            networkCoordinator.addWorker(worker);
+        } catch(IOException ignore) {
+            Log.e(TAG, "[!] Client CON: " + ignore.getMessage());
+        } catch (RumbleStateMachine.StateException e) {
+            Log.e(TAG,"[!] Rumble TCP State Exception");
+        } finally {
+            connectionState.lock.unlock();
+        }
     }
 }

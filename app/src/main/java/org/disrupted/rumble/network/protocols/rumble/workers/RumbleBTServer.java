@@ -29,10 +29,11 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServerConnection;
 import org.disrupted.rumble.network.Worker;
-import org.disrupted.rumble.network.protocols.rumble.RumbleBTState;
+import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * @author Marlinski
@@ -41,11 +42,17 @@ public class RumbleBTServer extends BluetoothServer {
 
     private static final String TAG = "RumbleBluetoothServer";
 
+    /*
+     * Bluetooth Configuration
+     */
+    public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
+    public static final String RUMBLE_BT_STR      = "org.disrupted.rumble";
+
     private final RumbleProtocol protocol;
     private final NetworkCoordinator networkCoordinator;
 
     public RumbleBTServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator) {
-        super(RumbleProtocol.RUMBLE_BT_UUID_128, RumbleProtocol.RUMBLE_BT_STR, false);
+        super(RUMBLE_BT_UUID_128, RUMBLE_BT_STR, false);
         this.protocol = protocol;
         this.networkCoordinator = networkCoordinator;
     }
@@ -63,7 +70,7 @@ public class RumbleBTServer extends BluetoothServer {
     @Override
     protected void onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
-        RumbleBTState connectionState = protocol.getBTState(neighbour.getLinkLayerAddress());
+        RumbleStateMachine connectionState = protocol.getState(neighbour.getLinkLayerAddress());
         try {
             connectionState.lock.lock();
             switch (connectionState.getState()) {
@@ -73,18 +80,12 @@ public class RumbleBTServer extends BluetoothServer {
                     mmConnectedSocket.close();
                     return;
                 case CONNECTION_SCHEDULED:
-                    Log.d(TAG, "[-] cancelling scheduled worker");
-                    networkCoordinator.stopWorker(
-                            BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                            connectionState.getWorkerID());
-                    break;
-                case CONNECTION_INITIATED:
                     if (neighbour.getLinkLayerAddress().compareTo(localMacAddress) < 0) {
                         Log.d(TAG, "[-] refusing client connection");
                         mmConnectedSocket.close();
                         return;
                     } else {
-                        Log.d(TAG, "[-] cancelling initiated connection " + connectionState.getWorkerID());
+                        Log.d(TAG, "[-] cancelling connection " + connectionState.getWorkerID());
                         networkCoordinator.stopWorker(
                                 BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                                 connectionState.getWorkerID());
@@ -95,12 +96,12 @@ public class RumbleBTServer extends BluetoothServer {
                     break;
             }
 
-            Worker worker = new RumbleOverBluetooth(protocol, new BluetoothServerConnection(mmConnectedSocket));
+            Worker worker = new RumbleUnicastChannel(protocol, new BluetoothServerConnection(mmConnectedSocket));
             connectionState.connectionAccepted(worker.getWorkerIdentifier());
             networkCoordinator.addWorker(worker);
         } catch(IOException ignore) {
             Log.e(TAG,"[!] Client CON: "+ignore.getMessage());
-        } catch (RumbleBTState.StateException e) {
+        } catch (RumbleStateMachine.StateException e) {
             Log.e(TAG,"[!] Rumble Bluetooth State Exception");
         } finally {
             connectionState.lock.unlock();
