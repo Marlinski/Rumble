@@ -44,7 +44,7 @@ public class DatabaseFactory {
     private final StatusTagDatabase              statusTagDatabase;
     private final GroupDatabase                  groupDatabase;
     private final ContactDatabase                contactDatabase;
-    private final ContactJoinGroupDatabase       contactJoinGroupDatabase;
+    private final ContactGroupDatabase contactGroupDatabase;
     private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
     private final InterfaceDatabase              interfaceDatabase;
     private final ContactInterfaceDatabase       contactInterfaceDatabase;
@@ -78,8 +78,8 @@ public class DatabaseFactory {
     public static ContactDatabase getContactDatabase(Context context) {
         return getInstance(context).contactDatabase;
     }
-    public static ContactJoinGroupDatabase getContactJoinGroupDatabase(Context context) {
-        return getInstance(context).contactJoinGroupDatabase;
+    public static ContactGroupDatabase getContactJoinGroupDatabase(Context context) {
+        return getInstance(context).contactGroupDatabase;
     }
     public static ContactHashTagInterestDatabase getContactHashTagInterestDatabase(Context context) {
         return getInstance(context).contactHashTagInterestDatabase;
@@ -106,7 +106,7 @@ public class DatabaseFactory {
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
         this.contactDatabase                = new ContactDatabase(context, databaseHelper);
-        this.contactJoinGroupDatabase       = new ContactJoinGroupDatabase(context, databaseHelper);
+        this.contactGroupDatabase = new ContactGroupDatabase(context, databaseHelper);
         this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
         this.contactInterfaceDatabase       = new ContactInterfaceDatabase(context, databaseHelper);
         this.statusContactDatabase          = new StatusContactDatabase(context, databaseHelper);
@@ -124,7 +124,7 @@ public class DatabaseFactory {
         this.statusTagDatabase.reset(databaseHelper);
         this.groupDatabase.reset(databaseHelper);
         this.interfaceDatabase.reset(databaseHelper);
-        this.contactJoinGroupDatabase.reset(databaseHelper);
+        this.contactGroupDatabase.reset(databaseHelper);
         this.contactHashTagInterestDatabase.reset(databaseHelper);
         this.contactInterfaceDatabase.reset(databaseHelper);
         this.statusContactDatabase.reset(databaseHelper);
@@ -151,7 +151,7 @@ public class DatabaseFactory {
             db.execSQL(StatusTagDatabase.CREATE_TABLE);
             db.execSQL(ChatMessageDatabase.CREATE_TABLE);
             db.execSQL(InterfaceDatabase.CREATE_TABLE);
-            db.execSQL(ContactJoinGroupDatabase.CREATE_TABLE);
+            db.execSQL(ContactGroupDatabase.CREATE_TABLE);
             db.execSQL(ContactHashTagInterestDatabase.CREATE_TABLE);
             db.execSQL(ContactInterfaceDatabase.CREATE_TABLE);
             db.execSQL(StatusContactDatabase.CREATE_TABLE);

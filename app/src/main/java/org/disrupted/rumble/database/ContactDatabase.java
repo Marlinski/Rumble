@@ -231,9 +231,9 @@ public class ContactDatabase extends Database  {
             StringBuilder query = new StringBuilder(
                     "SELECT g." + GroupDatabase.GID +
                             " FROM " + GroupDatabase.TABLE_NAME + " g" +
-                            " JOIN " + ContactJoinGroupDatabase.TABLE_NAME + " c" +
-                            " ON g." + GroupDatabase.ID + " = c." + ContactJoinGroupDatabase.GDBID +
-                            " WHERE c." + ContactJoinGroupDatabase.UDBID + " = ?");
+                            " JOIN " + ContactGroupDatabase.TABLE_NAME + " c" +
+                            " ON g." + GroupDatabase.ID + " = c." + ContactGroupDatabase.GDBID +
+                            " WHERE c." + ContactGroupDatabase.UDBID + " = ?");
             cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
             Set<String> ret = new HashSet<String>();
             if (cursor != null) {

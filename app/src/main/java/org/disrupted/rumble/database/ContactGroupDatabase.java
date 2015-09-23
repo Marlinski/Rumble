@@ -26,9 +26,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 /**
  * @author Marlinski
  */
-public class ContactJoinGroupDatabase extends Database {
+public class ContactGroupDatabase extends Database {
 
-    private static final String TAG = "ContactJoinGroupDatabase";
+    private static final String TAG = "ContactGroupDatabase";
 
     public  static final String TABLE_NAME = "group_subscriptions";
     public  static final String UDBID = "_udbid";
@@ -43,7 +43,7 @@ public class ContactJoinGroupDatabase extends Database {
        + " );";
 
 
-    public ContactJoinGroupDatabase(Context context, SQLiteOpenHelper databaseHelper) {
+    public ContactGroupDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
 

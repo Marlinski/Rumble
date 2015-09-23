@@ -45,7 +45,7 @@ public class ContactInterfaceDatabase extends Database {
 
     private static final String TAG = "ContactInterfaceDatabase";
 
-    public static final String TABLE_NAME       = "statusinterface";
+    public static final String TABLE_NAME       = "contact_interfaces";
     public static final String CONTACT_DBID     = "_cdbid";
     public static final String INTERFACE_DBID   = "_idbid";
 

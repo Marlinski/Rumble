@@ -35,7 +35,7 @@ public class InterfaceDatabase extends Database {
 
     private static final String TAG = "InterfaceDatabase";
 
-    public  static final String TABLE_NAME   = "interface";
+    public  static final String TABLE_NAME   = "interfaces_met";
     public  static final String ID           = "_id";
     public  static final String HASH         = "hash";
     public  static final String MACADDRESS   = "macaddress";
