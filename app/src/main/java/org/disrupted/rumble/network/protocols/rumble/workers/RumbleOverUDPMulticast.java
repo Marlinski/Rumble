@@ -21,6 +21,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
@@ -28,10 +29,16 @@ import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.services.events.ContactConnected;
+import org.disrupted.rumble.network.services.events.ContactDisconnected;
+import org.disrupted.rumble.network.services.events.ContactReachable;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -44,11 +51,13 @@ public class RumbleOverUDPMulticast extends ProtocolChannel {
 
     public static final int    PACKET_SIZE = 2048;
 
+    private Set<Contact> recipientList;
     private boolean working;
 
     public RumbleOverUDPMulticast(RumbleProtocol protocol, UDPMulticastConnection con) {
         super(protocol, con);
         this.working = false;
+        this.recipientList = new HashSet<Contact>();
     }
 
     @Override
@@ -76,6 +85,7 @@ public class RumbleOverUDPMulticast extends ProtocolChannel {
         if(working)
             return;
         working = true;
+        EventBus.getDefault().register(this);
 
         try {
             con.connect();
@@ -116,12 +126,27 @@ public class RumbleOverUDPMulticast extends ProtocolChannel {
     public void stopWorker() {
         if(!working)
             return;
-
         this.working = false;
+        EventBus.getDefault().unregister(this);
+
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException ignore) {
         }
         Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
+    }
+
+
+    @Override
+    public Set<Contact> getRecipientList() {
+        return (Set)((HashSet)recipientList).clone();
+    }
+    public void onEvent(ContactConnected event) {
+        if(event.worker.equals(this))
+            recipientList.add(event.contact);
+    }
+    public void onEvent(ContactDisconnected event) {
+        if(recipientList.contains(event.contact))
+            recipientList.remove(event.contact);
     }
 }

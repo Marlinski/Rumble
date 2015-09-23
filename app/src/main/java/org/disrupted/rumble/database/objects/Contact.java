@@ -41,7 +41,7 @@ public class Contact {
     /* dynamic attributes */
     protected Set<String>           joinedGroupIDs;
     protected Map<String, Integer>  hashtagInterests;
-    protected Set<String>           interfaces;
+    protected Set<Interface>           interfaces;
 
     public static final int MAX_INTEREST_TAG_VALUE = 255;
     public static final int MIN_INTEREST_TAG_VALUE = 0;
@@ -66,7 +66,7 @@ public class Contact {
         this.local            = contact.local;
         this.joinedGroupIDs   = new HashSet<String>(contact.joinedGroupIDs);
         this.hashtagInterests = new HashMap<String, Integer>(contact.hashtagInterests);
-        this.interfaces       = new HashSet<String>(contact.interfaces);
+        this.interfaces       = new HashSet<Interface>(contact.interfaces);
     }
 
     public Contact(String name, String uid, boolean local) {
@@ -75,7 +75,7 @@ public class Contact {
         this.local       = local;
         joinedGroupIDs   = new HashSet<String>();
         hashtagInterests = new HashMap<String, Integer>();
-        interfaces       = new HashSet<String>();
+        interfaces       = new HashSet<Interface>();
     }
 
     public String getUid()    { return uid;}
@@ -85,8 +85,7 @@ public class Contact {
     public boolean isFriend() { return friend; }
     public Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
     public Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
-    public Set<String> getInterfaces() {                 return interfaces;       }
-
+    public Set<Interface> getInterfaces() {              return interfaces;       }
 
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
@@ -95,7 +94,7 @@ public class Contact {
     public void addTagInterest(String hashtag, int levelOfInterest) {
         hashtagInterests.put(hashtag, levelOfInterest);
     }
-    public void addInterface(String interfaceID) {
+    public void addInterface(Interface interfaceID) {
         interfaces.add(interfaceID);
     }
     public void setHashtagInterests(Map<String, Integer> hashtagInterests) {
@@ -114,13 +113,13 @@ public class Contact {
         else
             this.joinedGroupIDs = new HashSet<String>();
     }
-    public void setInterfaces(Set<String> interfaces) {
+    public void setInterfaces(Set<Interface> interfaces) {
         if(this.interfaces.size() > 0)
             this.interfaces.clear();
         if(interfaces != null)
             this.interfaces = interfaces;
         else
-            this.interfaces = new HashSet<String>();
+            this.interfaces = new HashSet<Interface>();
     }
 
 

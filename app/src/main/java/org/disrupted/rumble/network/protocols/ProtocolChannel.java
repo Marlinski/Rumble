@@ -19,12 +19,16 @@
 
 package org.disrupted.rumble.network.protocols;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.command.Command;
 
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import de.greenrobot.event.EventBus;
 
 
 /**
@@ -80,6 +84,7 @@ public abstract class ProtocolChannel implements Worker {
 
     abstract protected void processingPacketFromNetwork();
 
+    abstract public Set<Contact> getRecipientList();
 
     /*
      * class API
@@ -118,6 +123,11 @@ public abstract class ProtocolChannel implements Worker {
             }
         }
     };
+
+    public int getChannelPriority() {
+        return this.getLinkLayerConnection().getLinkLayerPriority() +
+               this.protocol.getProtocolPriority();
+    }
 
     /*
      * for easy use in Set, List, Map...

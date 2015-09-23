@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.util.Log;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
@@ -28,6 +29,7 @@ import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
@@ -40,6 +42,8 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 
 import de.greenrobot.event.EventBus;
@@ -52,9 +56,18 @@ public abstract class RumbleUnicastChannel extends ProtocolChannel {
     private static final String TAG = "RumbleProtocolWorker";
 
     protected boolean working;
+    protected Contact remoteContact;
 
     public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
+        remoteContact = null;
+    }
+
+    @Override
+    public void startWorker() {
+        if(isWorking())
+            return;
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -155,7 +168,20 @@ public abstract class RumbleUnicastChannel extends ProtocolChannel {
         } catch (LinkLayerConnectionException ignore) {
             //Log.d(TAG, "[-]"+ignore.getMessage());
         }
+        finally {
+            EventBus.getDefault().unregister(this);
+        }
     }
 
-
+    @Override
+    public Set<Contact> getRecipientList() {
+        Set<Contact> ret = new HashSet<Contact>(1);
+        if(remoteContact != null)
+            ret.add(remoteContact);
+        return ret;
+    }
+    public void onEvent(ContactInformationReceived event) {
+        if(event.channel.equals(this))
+            this.remoteContact = event.contact;
+    }
 }

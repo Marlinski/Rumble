@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.disrupted.rumble.database.objects.Interface;
 import org.disrupted.rumble.util.HashUtil;
 
 /**
@@ -33,7 +34,6 @@ import org.disrupted.rumble.util.HashUtil;
 public class InterfaceDatabase extends Database {
 
     private static final String TAG = "InterfaceDatabase";
-
 
     public  static final String TABLE_NAME   = "interface";
     public  static final String ID           = "_id";
@@ -49,6 +49,15 @@ public class InterfaceDatabase extends Database {
 
     public InterfaceDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
+    }
+
+    public static Interface cursorToInterface(Cursor cursor) {
+        if(cursor == null)
+            return null;
+        long interfaceDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        String hash        = cursor.getString(cursor.getColumnIndexOrThrow(HASH));
+        String macAddress  = cursor.getString(cursor.getColumnIndexOrThrow(MACADDRESS));
+        return new Interface(interfaceDBID, hash, macAddress);
     }
 
     public long getInterfaceDBIDFromHash(String hash) {

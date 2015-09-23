@@ -69,8 +69,6 @@ public class RumbleProtocol implements Protocol {
     public static final int   RUMBLE_TCP_PORT = 7430;
     RumbleUDPMulticastScanner scanner;
 
-
-
     private static final Object lock = new Object();
     private final NetworkCoordinator networkCoordinator;
     private boolean started;
@@ -88,6 +86,11 @@ public class RumbleProtocol implements Protocol {
         bluetoothState = new HashMap<String, RumbleBTState>();
         started = false;
         scanner = null;
+    }
+
+    @Override
+    public int getProtocolPriority() {
+        return PROTOCOL_HIGH_PRIORITY;
     }
 
     public RumbleBTState getBTState(String macAddress) {

@@ -25,10 +25,12 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
@@ -54,8 +56,10 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -70,6 +74,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
     private static final int BUFFER_SIZE = 1024;
     private PushbackInputStream pbin;
     private boolean working;
+    private Contact remoteContact;
 
     private BluetoothNeighbour bluetoothNeighbour;
 
@@ -110,7 +115,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
 
     @Override
     public void cancelWorker() {
-        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
+        FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(((BluetoothConnection) con).getRemoteLinkLayerAddress());
         if(working) {
             Log.d(TAG, "[!] should not call cancelWorker() on a working Worker, call stopWorker() instead !");
             stopWorker();
@@ -123,6 +128,8 @@ public class FirechatOverBluetooth extends ProtocolChannel {
         if(working)
             return;
         working = true;
+
+        EventBus.getDefault().register(this);
 
         FirechatBTState connectionState = ((FirechatProtocol)protocol).getBTState(((BluetoothConnection)con).getRemoteLinkLayerAddress());
 
@@ -336,12 +343,24 @@ public class FirechatOverBluetooth extends ProtocolChannel {
     public void stopWorker() {
         if(!working)
             return;
-
         this.working = false;
+        EventBus.getDefault().unregister(this);
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException ignore) {
         }
+    }
+
+    @Override
+    public Set<Contact> getRecipientList() {
+        Set<Contact> ret = new HashSet<Contact>(1);
+        if(remoteContact != null)
+            ret.add(remoteContact);
+        return ret;
+    }
+    public void onEvent(ContactInformationReceived event) {
+        if(event.channel.equals(this))
+            this.remoteContact = event.contact;
     }
 
 }

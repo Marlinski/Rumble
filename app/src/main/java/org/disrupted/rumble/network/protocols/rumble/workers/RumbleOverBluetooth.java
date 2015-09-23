@@ -57,6 +57,7 @@ public class RumbleOverBluetooth extends RumbleUnicastChannel {
 
     @Override
     public void startWorker() {
+        super.startWorker();
         if (working)
             return;
         working = true;

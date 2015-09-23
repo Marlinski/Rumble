@@ -38,11 +38,11 @@ import android.widget.ProgressBar;
 import android.widget.Switch;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 import org.disrupted.rumble.userinterface.adapter.NeighborhoodListAdapter;
-import org.disrupted.rumble.network.NeighbourInfo;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
@@ -52,6 +52,7 @@ import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 
 import java.util.List;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -149,9 +150,10 @@ public class FragmentNetworkDrawer extends Fragment {
 
     public void initializeNeighbourview() {
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        List<NeighbourInfo> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
+        Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
         listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
         mDrawerNeighbourList.setAdapter(listAdapter);
+        neighborhood.clear();
     }
 
     public void initializeProgressBar() {
@@ -178,9 +180,10 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                List<NeighbourInfo> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
+                Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
                 if (mDrawerNeighbourList.getAdapter() != null)
                     listAdapter.swap(neighborhood);
+                neighborhood.clear();
                 listAdapter.notifyDataSetChanged();
             }
         });

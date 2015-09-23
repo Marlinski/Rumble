@@ -22,6 +22,7 @@ package org.disrupted.rumble.network.protocols.firechat.workers;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
@@ -35,11 +36,15 @@ import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
+import org.disrupted.rumble.network.services.events.ContactConnected;
+import org.disrupted.rumble.network.services.events.ContactDisconnected;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.greenrobot.event.EventBus;
 
@@ -57,6 +62,8 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
 
     private DatagramPacket         packet;
     private boolean                working;
+    private Set<Contact>           recipientList;
+
     private static final FirechatMessageParser parser = new FirechatMessageParser();
 
     public FirechatOverUDPMulticast(FirechatProtocol protocol, UDPMulticastConnection con) {
@@ -64,6 +71,7 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
         byte[] buffer = new byte[PACKET_SIZE];
         this.packet = new DatagramPacket(buffer,  PACKET_SIZE);
         working = false;
+        this.recipientList = new HashSet<Contact>();
     }
 
     @Override
@@ -101,7 +109,7 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
         if(working)
             return;
         working = true;
-
+        EventBus.getDefault().register(this);
         try {
             con.connect();
         } catch (LinkLayerConnectionException exception) {
@@ -198,8 +206,24 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
         try {
             con.disconnect();
         } catch (LinkLayerConnectionException ignore) {
+        } finally {
+            EventBus.getDefault().unregister(this);
         }
         Log.d(TAG, "[-] ENDED: " + getWorkerIdentifier());
+    }
+
+
+    @Override
+    public Set<Contact> getRecipientList() {
+        return (Set)((HashSet)recipientList).clone();
+    }
+    public void onEvent(ContactConnected event) {
+        if(event.worker.equals(this))
+            recipientList.add(event.contact);
+    }
+    public void onEvent(ContactDisconnected event) {
+        if(recipientList.contains(event.contact))
+            recipientList.remove(event.contact);
     }
 
 }

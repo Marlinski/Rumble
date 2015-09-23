@@ -28,14 +28,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.NeighbourInfo;
-import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
-import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -47,16 +44,17 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     private static final String TAG = "NeighborListAdapter";
 
     private final LayoutInflater inflater;
-    private List<NeighbourInfo> neighborhood;
+    private List<NeighbourManager.Neighbour> neighborhood;
 
-    public NeighborhoodListAdapter(Activity activity, List<NeighbourInfo> neighborhood) {
+    public NeighborhoodListAdapter(Activity activity, Set<NeighbourManager.Neighbour> neighborhood) {
         this.inflater     = LayoutInflater.from(activity);
-        this.neighborhood = neighborhood;
+        this.neighborhood = new LinkedList<NeighbourManager.Neighbour>();
+        this.neighborhood.addAll(neighborhood);
     }
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        NeighbourInfo entry = neighborhood.get(i);
+        NeighbourManager.Neighbour neighbour = neighborhood.get(i);
 
         View neighborView = inflater.inflate(R.layout.neighbour_item, null, true);
         TextView name = (TextView) neighborView.findViewById(R.id.neighbour_item_name);
@@ -64,12 +62,12 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
 
-        name.setText(entry.getFirstName());
-        id.setText(entry.getSecondName());
+        name.setText(neighbour.getFirstName());
+        id.setText(neighbour.getSecondName());
 
-        if(entry.isReachable(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(neighbour.isReachable(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
             bluetoothIcon.setVisibility(View.VISIBLE);
-            if(entry.isConnected(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
+            if(neighbour.isConnected(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
             else
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
@@ -77,9 +75,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
             bluetoothIcon.setVisibility(View.GONE);
         }
 
-        if(entry.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(neighbour.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
-            if(entry.isConnected(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+            if(neighbour.isConnected(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
             else
                 bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
@@ -109,9 +107,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public void onClick(View view) {
     }
 
-    public void swap(List<NeighbourInfo> newNeighborhood) {
+    public void swap(Set<NeighbourManager.Neighbour> newNeighborhood) {
         this.neighborhood.clear();
-        this.neighborhood = newNeighborhood;
+        this.neighborhood.addAll(newNeighborhood);
     }
 }
 

@@ -31,6 +31,15 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 public interface Protocol {
 
     /*
+     * priority is used to determine which protocol is best when multiple protocol
+     * are available to a certain contact
+     */
+    public static final int PROTOCOL_HIGH_PRIORITY   = 2;
+    public static final int PROTOCOL_MIDDLE_PRIORITY = 1;
+    public static final int PROTOCOL_LOW_PRIORITY    = 0;
+    public abstract int getProtocolPriority();
+
+    /*
      * Protocol identification
      */
     public String getProtocolIdentifier();

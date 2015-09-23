@@ -29,6 +29,7 @@ import android.util.Log;
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
 import org.disrupted.rumble.database.events.ContactUpdatedEvent;
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Interface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -184,6 +185,8 @@ public class ContactDatabase extends Database  {
     }
 
     private Contact cursorToContact(final Cursor cursor) {
+        if(cursor == null)
+            return null;
         long contactDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
         String author    = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
         String uid       = cursor.getString(cursor.getColumnIndexOrThrow(UID));
@@ -191,6 +194,7 @@ public class ContactDatabase extends Database  {
         Contact contact  = new Contact(author, uid, local);
         contact.setHashtagInterests(getHashtagsOfInterest(contactDBID));
         contact.setJoinedGroupIDs(getJoinedGroupIDs(contactDBID));
+        contact.setInterfaces(getInterfaces(contactDBID));
         return contact;
     }
 
@@ -235,6 +239,33 @@ public class ContactDatabase extends Database  {
             if (cursor != null) {
                 for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                     ret.add(cursor.getString(cursor.getColumnIndexOrThrow(GroupDatabase.GID)));
+                }
+            }
+            return ret;
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+    }
+
+
+    public Set<Interface> getInterfaces(long contactDBID) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            StringBuilder query = new StringBuilder(
+                    "SELECT i.*" + InterfaceDatabase.HASH +
+                            " FROM " + InterfaceDatabase.TABLE_NAME + " i" +
+                            " JOIN " + ContactInterfaceDatabase.TABLE_NAME + " ci" +
+                            " ON i." + InterfaceDatabase.ID + " = ci." + ContactInterfaceDatabase.INTERFACE_DBID +
+                            " JOIN " + ContactDatabase.TABLE_NAME + " c" +
+                            " ON c." + ContactDatabase.ID + " = ci." + ContactInterfaceDatabase.CONTACT_DBID +
+                            " WHERE c." + ContactDatabase.ID + " = ?");
+            cursor = database.rawQuery(query.toString(), new String[]{Long.toString(contactDBID)});
+            Set<Interface> ret = new HashSet<Interface>();
+            if (cursor != null) {
+                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
+                    ret.add(InterfaceDatabase.cursorToInterface(cursor));
                 }
             }
             return ret;

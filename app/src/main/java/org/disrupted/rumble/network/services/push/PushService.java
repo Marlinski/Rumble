@@ -285,7 +285,7 @@ public class PushService implements ServiceLayer {
                         this.tmpchannel = channel;
 
                         // estimate the number of contact that will receive this status
-                        Set<Contact> recipientList = networkCoordinator.neighbourManager.getRecipientList(channel);
+                        Set<Contact> recipientList = this.tmpchannel.getRecipientList();
                         lastPush = new CommandSendPushStatus(message, recipientList);
 
                         // send the message

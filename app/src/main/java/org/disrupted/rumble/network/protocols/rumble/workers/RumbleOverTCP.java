@@ -49,6 +49,7 @@ public class RumbleOverTCP extends RumbleUnicastChannel {
 
     @Override
     public void startWorker() {
+        super.startWorker();
         if (working)
             return;
         working = true;
