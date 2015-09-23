@@ -254,8 +254,7 @@ public class ContactDatabase extends Database  {
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             StringBuilder query = new StringBuilder(
-                    "SELECT i.*" + InterfaceDatabase.HASH +
-                            " FROM " + InterfaceDatabase.TABLE_NAME + " i" +
+                    "SELECT i.* FROM " + InterfaceDatabase.TABLE_NAME + " i" +
                             " JOIN " + ContactInterfaceDatabase.TABLE_NAME + " ci" +
                             " ON i." + InterfaceDatabase.ID + " = ci." + ContactInterfaceDatabase.INTERFACE_DBID +
                             " JOIN " + ContactDatabase.TABLE_NAME + " c" +
