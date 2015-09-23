@@ -296,7 +296,7 @@ public class NeighbourManager {
                 Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                         .getContactsUsingMacAddress(neighbourEntry.linkLayerNeighbour.getLinkLayerAddress());
 
-                if(contacts == null) {
+                if(contacts.isEmpty()) {
                     // this neighbour entry is unknown
                     Neighbour unknowNeighbour = new UnknowNeighbour(neighbourEntry);
                     ret.add(unknowNeighbour);
