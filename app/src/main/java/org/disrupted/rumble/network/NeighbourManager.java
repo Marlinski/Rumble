@@ -348,8 +348,14 @@ public class NeighbourManager {
 
                 // we might know some of the entries already, either because we are already
                 // connected to them, or because we met them in the past
+                String macAddress = "";
+                try {
+                    macAddress = neighbourEntry.linkLayerNeighbour.getLinkLayerMacAddress();
+                } catch(LinkLayerNeighbour.NoMacAddressException ignore){
+                    // it cannot happen here
+                }
                 Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                        .getContactsUsingMacAddress(neighbourEntry.linkLayerNeighbour.getLinkLayerAddress());
+                        .getContactsUsingMacAddress(macAddress);
 
                 if(contacts.isEmpty()) {
                     // this neighbour entry is unknown
