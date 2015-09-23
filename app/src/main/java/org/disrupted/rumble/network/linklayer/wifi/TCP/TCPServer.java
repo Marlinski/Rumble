@@ -108,7 +108,7 @@ public abstract class TCPServer implements Worker {
                 if (mmConnectedSocket != null) {
                     Log.d(TAG, "[+] Client connected");
 
-                    LinkLayerNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress());
+                    LinkLayerNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress().getHostAddress());
 
                     onClientConnected(mmConnectedSocket);
 

@@ -212,7 +212,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                         continue;
 
 
-                    WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress());
+                    WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress().getHostAddress());
                     if(wifiNeighborhood.add(neighbour)) {
                         EventBus.getDefault().post(new NeighbourReachable(neighbour));
                     } else {
