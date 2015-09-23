@@ -20,6 +20,7 @@ package org.disrupted.rumble.network;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
+import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Interface;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
@@ -202,6 +203,19 @@ public class NeighbourManager {
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
+    public void onEvent(ContactInterfaceInserted event) {
+        NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
+        if(entry == null)
+            return;
+
+        for(ProtocolChannel channel : entry.channels) {
+            if(channel.equals(event.channel)) {
+                EventBus.getDefault().post(new ContactConnected(event.contact, channel));
+                return;
+            }
+        }
+    }
+
     public void onEvent(ContactInsertedEvent event) {
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -237,10 +251,12 @@ public class NeighbourManager {
         public String getSecondName() {
             if (neighbour.linkLayerNeighbour instanceof BluetoothNeighbour)
                 return ((BluetoothNeighbour) neighbour.linkLayerNeighbour).getLinkLayerAddress();
-            if (neighbour.linkLayerNeighbour instanceof WifiNeighbour)
-                return ((WifiNeighbour) neighbour.linkLayerNeighbour).getMacAddressFromARP();
-            else
-                return "";
+            try {
+                if (neighbour.linkLayerNeighbour instanceof WifiNeighbour)
+                    return neighbour.linkLayerNeighbour.getLinkLayerMacAddress();
+            } catch(LinkLayerNeighbour.NoMacAddressException ignore) {
+            }
+            return "";
         }
 
         @Override

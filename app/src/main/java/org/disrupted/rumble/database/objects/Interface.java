@@ -42,6 +42,10 @@ public class Interface {
         this.macAddress = macAddress;
     }
 
+    public String getMacAddress() {
+        return macAddress;
+    }
+
     @Override
     public boolean equals(Object o) {
         if(o == null)

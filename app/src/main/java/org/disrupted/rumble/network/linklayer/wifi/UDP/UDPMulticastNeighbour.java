@@ -45,6 +45,10 @@ public class UDPMulticastNeighbour implements LinkLayerNeighbour {
         return multicastAddress+":"+port;
     }
 
+    @Override
+    public String getLinkLayerMacAddress() throws NoMacAddressException {
+        throw new NoMacAddressException();
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -70,7 +70,7 @@ public class ContactInterfaceDatabase extends Database {
         ContentValues contentValues = new ContentValues();
         contentValues.put(CONTACT_DBID, contactDBID);
         contentValues.put(INTERFACE_DBID, interfaceDBID);
-        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_REPLACE);
+        return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
     }
 
 }

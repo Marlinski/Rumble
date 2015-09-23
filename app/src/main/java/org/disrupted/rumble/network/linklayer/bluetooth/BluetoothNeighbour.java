@@ -37,13 +37,19 @@ public class BluetoothNeighbour implements LinkLayerNeighbour {
     }
 
     @Override
+    public String getLinkLayerIdentifier() {
+        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    }
+
+
+    @Override
     public String getLinkLayerAddress() {
         return bluetoothMacAddress;
     }
 
     @Override
-    public String getLinkLayerIdentifier() {
-        return BluetoothLinkLayerAdapter.LinkLayerIdentifier;
+    public String getLinkLayerMacAddress() throws NoMacAddressException {
+        return bluetoothMacAddress;
     }
 
     public String getBluetoothDeviceName() {

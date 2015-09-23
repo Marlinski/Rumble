@@ -20,6 +20,7 @@
 package org.disrupted.rumble.network.linklayer.wifi;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.util.NetUtil;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -45,6 +46,15 @@ public class WifiNeighbour implements LinkLayerNeighbour {
     @Override
     public String getLinkLayerAddress() {
         return remoteAddress;
+    }
+
+    @Override
+    public String getLinkLayerMacAddress() throws NoMacAddressException{
+        try {
+            return NetUtil.getMacFromArpCache(remoteAddress);
+        } catch (Exception e) {
+            throw new NoMacAddressException();
+        }
     }
 
     public String getMacAddressFromARP() {

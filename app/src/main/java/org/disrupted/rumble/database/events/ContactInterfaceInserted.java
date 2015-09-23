@@ -15,35 +15,27 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.database.events;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Interface;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-
-import java.util.List;
 
 /**
  * @author Marlinski
  */
-public class ContactInformationReceived {
+public class ContactInterfaceInserted extends DatabaseEvent {
 
-    public Contact contact;
-    public int     flags;   // see class Contact
-    public ProtocolChannel channel;
-    public LinkLayerNeighbour neighbour;
-    public boolean authenticated;
-    public long    size;
-    public long    duration;
+    public final Contact            contact;
+    public final LinkLayerNeighbour neighbour;
+    public final ProtocolChannel    channel;
 
-    public ContactInformationReceived(Contact contact, int flags, ProtocolChannel channel, LinkLayerNeighbour neighbour, long size, long duration) {
-        this.contact = contact;
-        this.flags = flags;
-        this.channel = channel;
+    public ContactInterfaceInserted(Contact contact, LinkLayerNeighbour neighbour, ProtocolChannel channel){
+        this.contact   = contact;
         this.neighbour = neighbour;
-        this.authenticated = false;
-        this.size = size;
-        this.duration = duration;
+        this.channel   = channel;
     }
+
 
 }

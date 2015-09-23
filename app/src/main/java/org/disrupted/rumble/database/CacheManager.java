@@ -25,12 +25,15 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
+import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.Interface;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
@@ -251,10 +254,17 @@ public class CacheManager {
         }
 
         // We also keep track of the interface and protocol this contact was discovered with
-        long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext())
-                    .insertInterface(event.interfaceID, event.channel.getProtocolIdentifier());
-        DatabaseFactory.getContactInterfaceDatabase(RumbleApplication.getContext())
-                .insertContactInterface(contactDBID, interfaceDBID);
+        try {
+            long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext())
+                    .insertInterface(
+                            event.neighbour.getLinkLayerMacAddress(),
+                            event.channel.getProtocolIdentifier());
+            long res = DatabaseFactory.getContactInterfaceDatabase(RumbleApplication.getContext())
+                    .insertContactInterface(contactDBID, interfaceDBID);
+            if (res > 0)
+                EventBus.getDefault().post(new ContactInterfaceInserted(contact, event.neighbour, event.channel));
+        } catch(LinkLayerNeighbour.NoMacAddressException ignore) {
+        }
     }
     public void onEvent(ChatMessageReceived event) {
         if(event.chatMessage == null)

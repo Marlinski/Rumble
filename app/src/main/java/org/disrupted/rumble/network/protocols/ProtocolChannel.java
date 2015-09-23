@@ -52,10 +52,6 @@ public abstract class ProtocolChannel implements Worker {
         commandQueue = new LinkedBlockingQueue<Command>();
     }
 
-    /*
-     * for identification
-     */
-
     public LinkLayerConnection getLinkLayerConnection() {
         return con;
     }
@@ -128,6 +124,7 @@ public abstract class ProtocolChannel implements Worker {
         return this.getLinkLayerConnection().getLinkLayerPriority() +
                this.protocol.getProtocolPriority();
     }
+
 
     /*
      * for easy use in Set, List, Map...

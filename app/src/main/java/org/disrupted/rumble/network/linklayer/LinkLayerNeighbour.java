@@ -29,4 +29,9 @@ public interface LinkLayerNeighbour {
 
     public String getLinkLayerAddress();
 
+    public String getLinkLayerMacAddress() throws NoMacAddressException;
+
+    public class NoMacAddressException extends Exception{
+    }
+
 }
