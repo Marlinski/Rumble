@@ -62,7 +62,7 @@ public class RumbleTCPServer extends TCPServer {
 
     @Override
     protected void onClientConnected(Socket mmConnectedSocket) {
-        WifiNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress());
+        WifiNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress().getHostAddress());
         RumbleStateMachine connectionState = protocol.getState(neighbour.getLinkLayerAddress());
         try {
             connectionState.lock.lock();

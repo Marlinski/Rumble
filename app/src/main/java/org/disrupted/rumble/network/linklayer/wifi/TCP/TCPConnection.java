@@ -70,7 +70,7 @@ public abstract class TCPConnection implements UnicastConnection {
 
     @Override
     public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return new WifiNeighbour(remoteInetAddress);
+        return new WifiNeighbour(remoteAddress);
     }
 
     @Override

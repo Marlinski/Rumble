@@ -31,10 +31,10 @@ import java.net.InetAddress;
  */
 public class WifiNeighbour implements LinkLayerNeighbour {
 
-    InetAddress address;
+    String remoteAddress;
 
-    public WifiNeighbour(InetAddress address) {
-        this.address = address;
+    public WifiNeighbour(String remoteAddress) {
+        this.remoteAddress = remoteAddress;
     }
 
     @Override
@@ -44,7 +44,7 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
     @Override
     public String getLinkLayerAddress() {
-        return address.getHostAddress();
+        return remoteAddress;
     }
 
     public String getMacAddressFromARP() {
@@ -54,7 +54,7 @@ public class WifiNeighbour implements LinkLayerNeighbour {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] splitted = line.split(" +");
-                if (splitted != null && splitted.length >= 4 && address.getHostAddress().equals(splitted[0])) {
+                if (splitted != null && splitted.length >= 4 && remoteAddress.equals(splitted[0])) {
                     // Basic sanity check
                     String mac = splitted[3];
                     if (mac.matches("..:..:..:..:..:..")) {
@@ -82,7 +82,7 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
         if(o instanceof  WifiNeighbour) {
             WifiNeighbour neighbour = (WifiNeighbour) o;
-            return address.getHostAddress().equals(neighbour.address.getHostAddress());
+            return remoteAddress.equals(neighbour.remoteAddress);
         }
 
         return false;
@@ -90,6 +90,6 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
     @Override
     public int hashCode() {
-        return address.getHostAddress().hashCode();
+        return remoteAddress.hashCode();
     }
 }
