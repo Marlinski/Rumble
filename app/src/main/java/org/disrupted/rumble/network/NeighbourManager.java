@@ -214,9 +214,6 @@ public class NeighbourManager {
                 return;
             }
         }
-    }
-
-    public void onEvent(ContactInsertedEvent event) {
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
