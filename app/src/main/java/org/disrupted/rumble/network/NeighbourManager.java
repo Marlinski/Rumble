@@ -387,7 +387,7 @@ public class NeighbourManager {
                         }
 
                         // now we add the neighbourEntry to our ContactNeighbour
-                        // but only with the relevant ProtocolChannel.
+                        // but only with the ProtocolChannel relevant to our contact
                         NeighbourEntry newNeighbourEntry = new NeighbourEntry(neighbourEntry.linkLayerNeighbour);
                         for(ProtocolChannel channel : mapEntry.getValue().channels) {
                             Interface iface = new Interface(

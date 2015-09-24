@@ -113,6 +113,8 @@ public class BlockFile extends Block {
         InputStream in = con.getInputStream();
         byte[] pseudoHeaderBuffer = new byte[MIN_PAYLOAD_SIZE];
         int count = in.read(pseudoHeaderBuffer, 0, MIN_PAYLOAD_SIZE);
+        if (count < 0)
+            throw new IOException();
         if (count < MIN_PAYLOAD_SIZE)
             throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
 

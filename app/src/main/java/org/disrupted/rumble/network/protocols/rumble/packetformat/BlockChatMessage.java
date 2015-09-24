@@ -110,7 +110,9 @@ public class BlockChatMessage extends Block {
         /* read the block */
         InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
-        int count =in.read(blockBuffer, 0, (int)header.getBlockLength());
+        int count = in.read(blockBuffer, 0, (int)header.getBlockLength());
+        if (count < 0)
+            throw new IOException();
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 

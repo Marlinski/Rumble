@@ -194,6 +194,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         while(readleft > 0) {
                             long max_read = Math.min((long)1024,readleft);
                             int read = ((UnicastConnection)con).getInputStream().read(buffer, 0, (int)max_read);
+                            if (read < 0)
+                                throw new IOException();
                             readleft -= read;
                         }
                     }
