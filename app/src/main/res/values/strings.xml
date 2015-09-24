@@ -57,7 +57,8 @@
     <string name="popup_compose_chat_title">Chat !</string>
     <string name="popup_compose_group">Group: </string>
     <string name="popup_create_group">Create new group</string>
-    <string name="popup_create_group_checkbox">Private Group</string>
+    <string name="popup_create_group_checkbox_private">Private Group</string>
+    <string name="popup_create_group_checkbox_public">Public Group</string>
 
     <string name="popup_question_yes">Yes</string>
     <string name="popup_question_no">No</string>

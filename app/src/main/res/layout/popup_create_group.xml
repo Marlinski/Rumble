@@ -110,12 +110,13 @@
                     android:gravity="center"
                     android:layout_gravity="center_vertical"/>
                 <TextView
+                    android:id="@+id/group_label"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:textSize="15dp"
                     android:layout_gravity="center_vertical"
-                    android:text="@string/popup_create_group_checkbox"/>
+                    android:text="@string/popup_create_group_checkbox_private"/>
                 <CheckBox android:id="@+id/popup_check_private"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

@@ -30,6 +30,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
@@ -46,6 +47,7 @@ public class PopupCreateGroup extends Activity {
 
     private LinearLayout         dismiss;
     private EditText             groupNameView;
+    private TextView             groupLabel;
     private CheckBox             privateGroupCheckBox;
     private ImageButton          createGroupButton;
     private ImageView            groupLock;
@@ -61,6 +63,7 @@ public class PopupCreateGroup extends Activity {
         createGroupButton = (ImageButton)(findViewById(R.id.popup_button_create_group));
         privateGroupCheckBox = (CheckBox)(findViewById(R.id.popup_check_private));
         groupLock = (ImageView)(findViewById(R.id.group_lock_image));
+        groupLabel = (TextView)(findViewById(R.id.group_label));
 
         groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
         privateGroupCheckBox.setOnClickListener(displayLock);
@@ -79,10 +82,13 @@ public class PopupCreateGroup extends Activity {
     View.OnClickListener displayLock = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if(!privateGroupCheckBox.isChecked())
+            if(!privateGroupCheckBox.isChecked()) {
                 groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
-            else
+                groupLabel.setText(R.string.popup_create_group_checkbox_private);
+            } else {
                 groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
+                groupLabel.setText(R.string.popup_create_group_checkbox_public);
+            }
         }
     };
 
