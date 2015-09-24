@@ -22,7 +22,9 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import org.disrupted.rumble.database.objects.Contact;
@@ -52,7 +54,7 @@ public class ContactInterfaceDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + CONTACT_DBID     + " INTEGER, "
                  + INTERFACE_DBID  + " INTEGER, "
-                 + " UNIQUE( " + INTERFACE_DBID + "), "
+                 + " UNIQUE( " + CONTACT_DBID +","+ INTERFACE_DBID + "), "
                  + " FOREIGN KEY ( "+ CONTACT_DBID    + " ) REFERENCES " + ContactDatabase.TABLE_NAME  + " ( " + ContactDatabase.ID  + " ), "
                  + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "
             + " );";
@@ -70,7 +72,11 @@ public class ContactInterfaceDatabase extends Database {
         ContentValues contentValues = new ContentValues();
         contentValues.put(CONTACT_DBID, contactDBID);
         contentValues.put(INTERFACE_DBID, interfaceDBID);
-        return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+        try {
+            return databaseHelper.getWritableDatabase().insertOrThrow(TABLE_NAME, null, contentValues);
+        } catch(Exception e){
+            return -1;
+        }
     }
 
 }

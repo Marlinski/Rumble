@@ -31,7 +31,7 @@ public class EventLogger {
     public static final String TAG = "EventLogger";
 
     public EventLogger() {
-        EventBus.getDefault().register(this);
+        EventBus.getDefault().register(this,10);
     }
 
     public void onEvent(Object event) {

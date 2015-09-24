@@ -74,13 +74,13 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         } else {
             bluetoothIcon.setVisibility(View.GONE);
         }
-
+ 
         if(neighbour.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
             if(neighbour.isConnected(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
-                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_white_18dp);
+                wifiIcon.setImageResource(R.drawable.ic_signal_wifi_4_bar_white_18dp);
             else
-                bluetoothIcon.setImageResource(R.drawable.ic_bluetooth_grey600_18dp);
+                wifiIcon.setImageResource(R.drawable.ic_signal_wifi_0_bar_grey600_18dp);
         } else {
             wifiIcon.setVisibility(View.GONE);
         }

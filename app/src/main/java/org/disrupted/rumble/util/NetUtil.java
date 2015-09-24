@@ -17,7 +17,11 @@
 
 package org.disrupted.rumble.util;
 
+import android.content.Context;
+import android.net.wifi.WifiManager;
 import android.util.Log;
+
+import org.disrupted.rumble.app.RumbleApplication;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -99,4 +103,9 @@ public class NetUtil {
         return null;
     }
 
+    public static int getWifiSignalStrength() {
+        WifiManager wifiManager = (WifiManager) RumbleApplication.getContext()
+                .getSystemService(Context.WIFI_SERVICE);
+        return wifiManager.getConnectionInfo().getRssi();
+    }
 }
