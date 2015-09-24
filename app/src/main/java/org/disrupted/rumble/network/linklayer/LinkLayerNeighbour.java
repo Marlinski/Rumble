@@ -20,6 +20,8 @@
 package org.disrupted.rumble.network.linklayer;
 
 
+import org.disrupted.rumble.util.NetUtil;
+
 /**
  * @author Marlinski
  */
@@ -29,9 +31,6 @@ public interface LinkLayerNeighbour {
 
     public String getLinkLayerAddress();
 
-    public String getLinkLayerMacAddress() throws NoMacAddressException;
-
-    public class NoMacAddressException extends Exception{
-    }
+    public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException;
 
 }

@@ -37,6 +37,7 @@ import org.disrupted.rumble.network.services.events.ContactConnected;
 import org.disrupted.rumble.network.services.events.ContactDisconnected;
 import org.disrupted.rumble.network.services.events.ContactReachable;
 import org.disrupted.rumble.network.services.events.ContactUnreachable;
+import org.disrupted.rumble.util.NetUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -251,7 +252,7 @@ public class NeighbourManager {
             try {
                 if (neighbour.linkLayerNeighbour instanceof WifiNeighbour)
                     return neighbour.linkLayerNeighbour.getLinkLayerMacAddress();
-            } catch(LinkLayerNeighbour.NoMacAddressException ignore) {
+            } catch(NetUtil.NoMacAddressException ignore) {
             }
             return "";
         }
@@ -351,9 +352,10 @@ public class NeighbourManager {
                 String macAddress = "";
                 try {
                     macAddress = neighbourEntry.linkLayerNeighbour.getLinkLayerMacAddress();
-                } catch(LinkLayerNeighbour.NoMacAddressException ignore){
-                    // it cannot happen here
+                } catch(NetUtil.NoMacAddressException e){
+                    continue;
                 }
+
                 Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                         .getContactsUsingMacAddress(macAddress);
 

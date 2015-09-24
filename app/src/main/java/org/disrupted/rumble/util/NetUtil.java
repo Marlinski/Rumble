@@ -65,7 +65,7 @@ public class NetUtil {
                     if (mac.matches("..:..:..:..:..:..")) {
                         return mac;
                     } else {
-                        return null;
+                        throw new Exception();
                     }
                 }
             }
@@ -77,7 +77,9 @@ public class NetUtil {
             } catch (IOException e) {
             }
         }
-        return null;
+        throw new NoMacAddressException();
+    }
+    public static class NoMacAddressException extends Exception{
     }
 
     public static String getLocalIpAddress() {

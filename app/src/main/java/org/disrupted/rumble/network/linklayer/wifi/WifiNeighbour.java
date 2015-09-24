@@ -49,40 +49,12 @@ public class WifiNeighbour implements LinkLayerNeighbour {
     }
 
     @Override
-    public String getLinkLayerMacAddress() throws NoMacAddressException{
+    public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException {
         try {
             return NetUtil.getMacFromArpCache(remoteAddress);
         } catch (Exception e) {
-            throw new NoMacAddressException();
+            throw new NetUtil.NoMacAddressException();
         }
-    }
-
-    public String getMacAddressFromARP() {
-        BufferedReader br = null;
-        try {
-            br = new BufferedReader(new FileReader("/proc/net/arp"));
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] splitted = line.split(" +");
-                if (splitted != null && splitted.length >= 4 && remoteAddress.equals(splitted[0])) {
-                    // Basic sanity check
-                    String mac = splitted[3];
-                    if (mac.matches("..:..:..:..:..:..")) {
-                        return mac;
-                    } else {
-                        return null;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                br.close();
-            } catch (IOException ignore) {
-            }
-        }
-        return null;
     }
 
     @Override
