@@ -161,8 +161,7 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
                     EventBus.getDefault().post(new ChatMessageReceived(
                                     chatMessage,
                                     senderIP,
-                                    FirechatProtocol.protocolID,
-                                    con.getLinkLayerIdentifier(),
+                                    this,
                                     chatMessage.getFileSize()+jsonString.length(),
                                     -1)
                     );

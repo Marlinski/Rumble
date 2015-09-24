@@ -220,8 +220,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
                         EventBus.getDefault().post(new ChatMessageReceived(
                                         status,
                                         ((BluetoothConnection)con).getRemoteLinkLayerAddress(),
-                                        FirechatProtocol.protocolID,
-                                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
+                                        this,
                                         status.getFileSize()+jsonString.length(),
                                         -1)
                         );
