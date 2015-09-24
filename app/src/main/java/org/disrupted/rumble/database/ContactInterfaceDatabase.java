@@ -54,7 +54,7 @@ public class ContactInterfaceDatabase extends Database {
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + CONTACT_DBID     + " INTEGER, "
                  + INTERFACE_DBID  + " INTEGER, "
-                 + " UNIQUE( " + CONTACT_DBID +","+ INTERFACE_DBID + "), "
+                 + " UNIQUE( " + INTERFACE_DBID + "), "
                  + " FOREIGN KEY ( "+ CONTACT_DBID    + " ) REFERENCES " + ContactDatabase.TABLE_NAME  + " ( " + ContactDatabase.ID  + " ), "
                  + " FOREIGN KEY ( "+ INTERFACE_DBID + " ) REFERENCES " + InterfaceDatabase.TABLE_NAME   + " ( " + InterfaceDatabase.ID   + " ) "
             + " );";
@@ -68,14 +68,34 @@ public class ContactInterfaceDatabase extends Database {
         db.delete(TABLE_NAME, CONTACT_DBID + " = ?" , new String[] {contactDBID + ""});
     }
 
+    /*
+     * adds a (contact, interface) entry.
+     *  - returns 1 if an entry has been added or updated,
+     *  - returns -1 otherwise
+     *
+     * Interface is a hash between the macAddress and the protocolID.
+     * Only one Contact can be matched to an Interface
+     */
     public long insertContactInterface(long contactDBID, long interfaceDBID){
         ContentValues contentValues = new ContentValues();
         contentValues.put(CONTACT_DBID, contactDBID);
         contentValues.put(INTERFACE_DBID, interfaceDBID);
+
+        Cursor cursor = null;
         try {
-            return databaseHelper.getWritableDatabase().insertOrThrow(TABLE_NAME, null, contentValues);
-        } catch(Exception e){
-            return -1;
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, INTERFACE_DBID+" = ?",
+                    new String[] {Long.toString(interfaceDBID)}, null, null, null);
+            if(cursor.moveToFirst() && !cursor.isAfterLast()) {
+                long contactDBID2 = cursor.getLong(cursor.getColumnIndexOrThrow(CONTACT_DBID));
+                if(contactDBID2 == contactDBID)
+                    return -1;
+            }
+            databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_REPLACE);
+            return 1;
+        } finally {
+            if(cursor != null)
+                cursor.close();
         }
     }
 

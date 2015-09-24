@@ -105,7 +105,7 @@ public class NetworkCoordinator extends Service {
             workerPools.put(BluetoothLinkLayerAdapter.LinkLayerIdentifier, new WorkerPool(5));
             WifiManagedLinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter();
             adapters.add(wifiAdapter);
-            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(5));
+            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(10));
 
             // register protocols
             protocols = new LinkedList<Protocol>();
