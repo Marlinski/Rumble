@@ -151,8 +151,7 @@ public class BlockChatMessage extends Block {
             EventBus.getDefault().post(new ChatMessageReceived(
                             chatMessage,
                             con.getRemoteLinkLayerAddress(),
-                            RumbleProtocol.protocolID,
-                            con.getLinkLayerIdentifier(),
+                            channel,
                             header.getBlockLength(),
                             timeToTransfer)
             );

@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.network.events.NetworkEvent;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 /**
  * @author Marlinski
@@ -27,16 +28,14 @@ public class ChatMessageReceived extends NetworkEvent {
 
     public ChatMessage chatMessage;
     public String sender;
-    public String protocolID;
-    public String linkLayerIdentifier;
+    public ProtocolChannel channel;
     public long size;
     public long duration;
 
-    public ChatMessageReceived(ChatMessage chatMessage, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ChatMessageReceived(ChatMessage chatMessage, String sender, ProtocolChannel channel, long size, long duration) {
         this.chatMessage = chatMessage;
         this.sender = sender;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
+        this.channel = channel;
         this.size = size;
         this.duration = duration;
     }

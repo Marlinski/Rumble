@@ -22,6 +22,7 @@ import android.util.Log;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.services.ServiceLayer;
@@ -111,11 +112,10 @@ public class ChatService implements ServiceLayer {
      */
     private static class ChatMessageDispatcher {
 
-        private ProtocolChannel worker;
+        private ProtocolChannel channel;
 
-
-        public ChatMessageDispatcher(ProtocolChannel worker) {
-            this.worker = worker;
+        public ChatMessageDispatcher(ProtocolChannel channel) {
+            this.channel = channel;
         }
 
         public void startDispatcher() {
@@ -125,11 +125,16 @@ public class ChatService implements ServiceLayer {
         public void stopDispatcher() {
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
-            this.worker = null;
+            this.channel = null;
         }
 
         public void onEvent(UserComposeChatMessage event) {
-            worker.execute(new CommandSendChatMessage(event.chatMessage));
+            channel.execute(new CommandSendChatMessage(event.chatMessage));
+        }
+
+        public void onEvent(ChatMessageReceived event) {
+            if(!event.channel.equals(this.channel))
+                channel.execute(new CommandSendChatMessage(event.chatMessage));
         }
 
     }

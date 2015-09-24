@@ -19,7 +19,6 @@ package org.disrupted.rumble.network;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.events.ContactInsertedEvent;
 import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Interface;
@@ -152,12 +151,15 @@ public class NeighbourManager {
             }
             entry.channels.add(event.worker);
 
-            // throw ContactConnected event if any
-            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
-            if(!contacts.isEmpty()) {
-                for (Contact contact : contacts)
-                    EventBus.getDefault().post(new ContactConnected(contact, event.worker));
+            try {
+                // throw ContactConnected event if any
+                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerMacAddress());
+                if (!contacts.isEmpty()) {
+                    for (Contact contact : contacts)
+                        EventBus.getDefault().post(new ContactConnected(contact, event.worker));
+                }
+            } catch(NetUtil.NoMacAddressException ignore){
             }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
@@ -170,23 +172,25 @@ public class NeighbourManager {
                 return;
             entry.channels.remove(event.worker);
 
-            // throw ContactDisconnected event if any
-            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
-            if(!contacts.isEmpty()) {
-                for (Contact contact : contacts)
-                    EventBus.getDefault().post(new ContactDisconnected(contact));
-            }
-
-            if (entry.channels.isEmpty() && !entry.reachable) {
-                neighborhood.remove(entry);
-
-                // throw ContactUnreachable event if any
-                if(!contacts.isEmpty()) {
+            try {
+                // throw ContactDisconnected event if any
+                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerMacAddress());
+                if (!contacts.isEmpty()) {
                     for (Contact contact : contacts)
-                        EventBus.getDefault().post(new ContactUnreachable(contact));
+                        EventBus.getDefault().post(new ContactDisconnected(contact));
                 }
+                if (entry.channels.isEmpty() && !entry.reachable) {
+                    if (!contacts.isEmpty()) {
+                        for (Contact contact : contacts)
+                            EventBus.getDefault().post(new ContactUnreachable(contact));
+                    }
+                }
+            } catch(NetUtil.NoMacAddressException ignore) {
             }
+
+            if (entry.channels.isEmpty() && !entry.reachable)
+                neighborhood.remove(entry);
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -370,6 +374,7 @@ public class NeighbourManager {
                     // every contact will have its own ContactNeighbour entry
                     ContactNeighbour contactNeighbour = null;
                     for (Contact contact : contacts) {
+                        // now we might have created this contact already (with another interface)
                         boolean found = false;
                         Iterator<Neighbour> it = ret.iterator();
                         while (it.hasNext() && !found) {
@@ -388,17 +393,17 @@ public class NeighbourManager {
                             ret.add(contactNeighbour);
                         }
 
-                        // now we add the neighbourEntry to our ContactNeighbour
+                        // now we add the channels to our ContactNeighbour
                         // but only with the ProtocolChannel relevant to our contact
                         NeighbourEntry newNeighbourEntry = new NeighbourEntry(neighbourEntry.linkLayerNeighbour);
-                        for(ProtocolChannel channel : mapEntry.getValue().channels) {
+                        for(ProtocolChannel channel : neighbourEntry.channels) {
                             Interface iface = new Interface(
-                                    neighbourEntry.linkLayerNeighbour.getLinkLayerAddress(),
+                                    macAddress,
                                     channel.getProtocolIdentifier());
-                            if(contact.getInterfaces().contains(iface));
-                                    neighbourEntry.channels.add(channel);
+                            if(contact.getInterfaces().contains(iface))
+                                newNeighbourEntry.channels.add(channel);
                         }
-                        contactNeighbour.addNeighbourEntry(neighbourEntry);
+                        contactNeighbour.addNeighbourEntry(newNeighbourEntry);
                     }
                 }
             }

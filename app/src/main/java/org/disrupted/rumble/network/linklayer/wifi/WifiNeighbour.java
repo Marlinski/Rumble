@@ -22,20 +22,21 @@ package org.disrupted.rumble.network.linklayer.wifi;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.util.NetUtil;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.InetAddress;
-
 /**
  * @author Marlinski
  */
 public class WifiNeighbour implements LinkLayerNeighbour {
 
-    String remoteAddress;
+    String remoteIPAddress;
+    String remoteMacAddress;
 
-    public WifiNeighbour(String remoteAddress) {
-        this.remoteAddress = remoteAddress;
+    public WifiNeighbour(String remoteIPAddress) {
+        this.remoteIPAddress = remoteIPAddress;
+        try {
+            this.remoteMacAddress = NetUtil.getMacFromArpCache(remoteIPAddress);
+        } catch (Exception e) {
+            this.remoteMacAddress = null;
+        }
     }
 
     @Override
@@ -45,13 +46,16 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
     @Override
     public String getLinkLayerAddress() {
-        return remoteAddress;
+        return remoteIPAddress;
     }
 
     @Override
     public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException {
         try {
-            return NetUtil.getMacFromArpCache(remoteAddress);
+            if(this.remoteMacAddress == null)
+                return NetUtil.getMacFromArpCache(remoteIPAddress);
+            else
+                return remoteMacAddress;
         } catch (Exception e) {
             throw new NetUtil.NoMacAddressException();
         }
@@ -64,7 +68,7 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
         if(o instanceof  WifiNeighbour) {
             WifiNeighbour neighbour = (WifiNeighbour) o;
-            return remoteAddress.equals(neighbour.remoteAddress);
+            return remoteIPAddress.equals(neighbour.remoteIPAddress);
         }
 
         return false;
@@ -72,6 +76,6 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
     @Override
     public int hashCode() {
-        return remoteAddress.hashCode();
+        return remoteIPAddress.hashCode();
     }
 }
