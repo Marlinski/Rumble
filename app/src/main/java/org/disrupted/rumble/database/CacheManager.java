@@ -56,6 +56,7 @@ import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.HashUtil;
+import org.disrupted.rumble.util.NetUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -263,7 +264,7 @@ public class CacheManager {
                     .insertContactInterface(contactDBID, interfaceDBID);
             if (res > 0)
                 EventBus.getDefault().post(new ContactInterfaceInserted(contact, event.neighbour, event.channel));
-        } catch(LinkLayerNeighbour.NoMacAddressException ignore) {
+        } catch(NetUtil.NoMacAddressException ignore) {
         }
     }
     public void onEvent(ChatMessageReceived event) {

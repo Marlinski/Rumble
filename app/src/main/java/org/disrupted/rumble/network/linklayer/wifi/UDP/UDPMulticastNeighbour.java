@@ -18,6 +18,7 @@
 package org.disrupted.rumble.network.linklayer.wifi.UDP;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.util.NetUtil;
 
 /**
  * @author Marlinski
@@ -46,8 +47,8 @@ public class UDPMulticastNeighbour implements LinkLayerNeighbour {
     }
 
     @Override
-    public String getLinkLayerMacAddress() throws NoMacAddressException {
-        throw new NoMacAddressException();
+    public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException {
+        throw new NetUtil.NoMacAddressException();
     }
 
     @Override

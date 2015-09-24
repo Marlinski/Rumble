@@ -24,6 +24,7 @@ import android.bluetooth.BluetoothDevice;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.util.NetUtil;
 
 /**
  * @author Marlinski
@@ -48,7 +49,7 @@ public class BluetoothNeighbour implements LinkLayerNeighbour {
     }
 
     @Override
-    public String getLinkLayerMacAddress() throws NoMacAddressException {
+    public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException {
         return bluetoothMacAddress;
     }
 
