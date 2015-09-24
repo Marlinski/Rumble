@@ -49,7 +49,7 @@ public class NullBlock extends Block {
             long max_read = Math.min((long)BUFFER_SIZE,readleft);
             int read = con.getInputStream().read(buffer, 0, (int)max_read);
             if (read < 0)
-                throw new IOException();
+                throw new IOException("end of stream reached");
             readleft -= read;
         }
         return 0;

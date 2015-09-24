@@ -115,7 +115,7 @@ public class BlockHeader {
 
         int count = in.read(headerBuffer, 0, BLOCK_HEADER_LENGTH);
         if (count < 0)
-            throw new IOException();
+            throw new IOException("end of stream reached");
         if (count < BLOCK_HEADER_LENGTH)
             throw new MalformedBlockHeader("read less bytes than expected", count);
 
