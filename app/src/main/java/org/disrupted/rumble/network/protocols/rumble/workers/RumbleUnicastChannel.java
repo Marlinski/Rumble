@@ -197,7 +197,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 }
 
                 // channel is alive
-                socketTimeout.removeCallbacks(keepAliveFires);
+                socketTimeout.removeCallbacks(socketTimeoutFires);
 
                 long bytesread = 0;
                 try {
