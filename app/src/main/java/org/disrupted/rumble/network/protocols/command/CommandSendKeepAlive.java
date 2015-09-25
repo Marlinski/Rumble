@@ -15,27 +15,15 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
-
-import org.disrupted.rumble.database.objects.ChatMessage;
-import org.disrupted.rumble.network.protocols.ProtocolChannel;
+package org.disrupted.rumble.network.protocols.command;
 
 /**
  * @author Marlinski
  */
-public class ChatMessageInsertedEvent extends DatabaseEvent {
+public class CommandSendKeepAlive extends Command {
 
-    public final ChatMessage chatMessage;
-    public final ProtocolChannel channel;
-
-    public ChatMessageInsertedEvent(ChatMessage chatMessage) {
-        this.chatMessage = chatMessage;
-        this.channel = null;
+    @Override
+    public CommandID getCommandID() {
+        return CommandID.SEND_KEEP_ALIVE;
     }
-
-    public ChatMessageInsertedEvent(ChatMessage chatMessage, ProtocolChannel channel) {
-        this.chatMessage = chatMessage;
-        this.channel = channel;
-    }
-
 }

@@ -27,7 +27,8 @@ public abstract class Command {
     public enum CommandID {
         SEND_PUSH_STATUS,
         SEND_LOCAL_INFORMATION,
-        SEND_CHAT_MESSAGE
+        SEND_CHAT_MESSAGE,
+        SEND_KEEP_ALIVE
     }
 
     abstract public CommandID getCommandID();

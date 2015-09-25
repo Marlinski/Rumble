@@ -19,6 +19,7 @@ package org.disrupted.rumble.network.services.chat;
 
 import android.util.Log;
 
+import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
@@ -128,13 +129,10 @@ public class ChatService implements ServiceLayer {
             this.channel = null;
         }
 
-        public void onEvent(UserComposeChatMessage event) {
+        public void onEvent(ChatMessageInsertedEvent event) {
+            if((event.channel != null) && event.channel.equals(this.channel))
+                return;
             channel.execute(new CommandSendChatMessage(event.chatMessage));
-        }
-
-        public void onEvent(ChatMessageReceived event) {
-            if(!event.channel.equals(this.channel))
-                channel.execute(new CommandSendChatMessage(event.chatMessage));
         }
 
     }

@@ -88,7 +88,7 @@ public class BlockHeader {
     public static final int TRANSACTION_TYPE_RESPONSE  = 0x02;
     public static final int TRANSACTION_TYPE_PUSH      = 0x03;
 
-    public static final int BLOCKTYPE_BEACON        = 0x00;
+    public static final int BLOCKTYPE_KEEPALIVE     = 0x00;
     public static final int BLOCKTYPE_PUSH_STATUS   = 0x01;
     public static final int BLOCKTYPE_FILE          = 0x02;
     public static final int BLOCKTYPE_CONTACT       = 0x03;
@@ -105,7 +105,7 @@ public class BlockHeader {
         reserved5 = false;
         reserved6 = false;
         last_block = true;
-        block_type = BLOCKTYPE_BEACON;
+        block_type = BLOCKTYPE_KEEPALIVE;
         payload_length = 0;
     }
 

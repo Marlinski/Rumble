@@ -288,7 +288,7 @@ public class CacheManager {
         }
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
-            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage, event.channel));
     }
 
     /*

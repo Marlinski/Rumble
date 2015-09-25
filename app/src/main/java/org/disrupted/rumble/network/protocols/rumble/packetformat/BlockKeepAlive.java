@@ -19,10 +19,10 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
+import org.disrupted.rumble.network.protocols.command.CommandSendKeepAlive;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
 import java.io.IOException;
@@ -30,38 +30,35 @@ import java.io.IOException;
 /**
  * @author Marlinski
  */
-public class NullBlock extends Block {
+public class BlockKeepAlive extends Block {
 
     public static final String TAG = "NullBlock";
     public static final int BUFFER_SIZE = 1024;
 
-    public NullBlock(BlockHeader header) {
+    public BlockKeepAlive(BlockHeader header) {
         super(header);
         Log.d(TAG, "[+] null block: "+header.toString());
     }
 
+    public BlockKeepAlive(CommandSendKeepAlive command) {
+        super(new BlockHeader());
+        header.setBlockType(BlockHeader.BLOCKTYPE_KEEPALIVE);
+        header.setPayloadLength(0);
+    }
+
     @Override
     public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        byte[] buffer = new byte[BUFFER_SIZE];
-        long readleft = header.getBlockLength();
-        while(readleft > 0) {
-            long max_read = Math.min((long)BUFFER_SIZE,readleft);
-            int read = con.getInputStream().read(buffer, 0, (int)max_read);
-            if (read < 0)
-                throw new IOException("end of stream reached");
-            readleft -= read;
-        }
         return 0;
     }
 
     @Override
     public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
-        return 0;
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+        header.writeBlock(con.getOutputStream());
+        return BlockHeader.BLOCK_HEADER_LENGTH;
     }
 
     @Override
     public void dismiss() {
-
     }
 }
