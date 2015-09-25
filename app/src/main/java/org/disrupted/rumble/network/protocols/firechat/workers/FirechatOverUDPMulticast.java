@@ -32,8 +32,6 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
 import org.disrupted.rumble.network.services.events.ContactConnected;
@@ -125,7 +123,7 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
                             this)
             );
             */
-            onWorkerConnected();
+            onChannelConnected();
 
         } finally {
             /*

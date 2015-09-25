@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network.protocols;
 
+import android.os.HandlerThread;
+
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.Worker;
@@ -32,8 +34,8 @@ import de.greenrobot.event.EventBus;
 
 
 /**
- * The GenericProtocol implements a generic protocol where one thread take care
- * of receiving and processing packet from the network while another one take
+ * The GenericProtocol implements a generic protocol where one thread takes care
+ * of receiving and processing packet from the network while another one takes
  * care of receiving and processing command from the upper layer.
  * @author Marlinski
  */
@@ -84,10 +86,10 @@ public abstract class ProtocolChannel implements Worker {
 
     /*
      * class API
-     * - onWorkerConnected must be called by implementing class to start the receiving thread
+     * - onChannelConnected must be called by implementing class to start the receiving thread
      * - execute is public method to be called by upper layer
      */
-    protected final void onWorkerConnected() {
+    protected final void onChannelConnected() {
         processingCommandFromQueue.start();
         try {
             processingPacketFromNetwork();
@@ -105,7 +107,12 @@ public abstract class ProtocolChannel implements Worker {
         }
     }
 
-    Thread processingCommandFromQueue = new Thread() {
+    public int getChannelPriority() {
+        return this.getLinkLayerConnection().getLinkLayerPriority() +
+               this.protocol.getProtocolPriority();
+    }
+
+    protected HandlerThread processingCommandFromQueue = new HandlerThread(getWorkerIdentifier()) {
         @Override
         public synchronized void run() {
             try {
@@ -119,12 +126,6 @@ public abstract class ProtocolChannel implements Worker {
             }
         }
     };
-
-    public int getChannelPriority() {
-        return this.getLinkLayerConnection().getLinkLayerPriority() +
-               this.protocol.getProtocolPriority();
-    }
-
 
     /*
      * for easy use in Set, List, Map...

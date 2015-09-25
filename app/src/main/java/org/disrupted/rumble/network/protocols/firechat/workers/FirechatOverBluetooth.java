@@ -145,7 +145,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
                             this)
             );
 
-            onWorkerConnected();
+            onChannelConnected();
 
             connectionState.notConnected();
             EventBus.getDefault().post(new NeighbourDisconnected(

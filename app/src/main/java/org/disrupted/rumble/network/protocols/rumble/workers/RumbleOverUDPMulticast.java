@@ -22,18 +22,15 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
-import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.events.ContactConnected;
 import org.disrupted.rumble.network.services.events.ContactDisconnected;
-import org.disrupted.rumble.network.services.events.ContactReachable;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -96,7 +93,7 @@ public class RumbleOverUDPMulticast extends ProtocolChannel {
 
         try {
             Log.d(TAG, "[+] CONNECTED: " + getWorkerIdentifier());
-            onWorkerConnected();
+            onChannelConnected();
 
         } finally {
             stopWorker();

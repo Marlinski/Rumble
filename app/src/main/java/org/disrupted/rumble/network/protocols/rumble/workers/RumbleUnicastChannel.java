@@ -73,6 +73,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
         remoteContact = null;
+        keepAlive = new Handler(processingCommandFromQueue.getLooper());
     }
 
     @Override
@@ -145,7 +146,10 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                             con.getLinkLayerNeighbour(),
                             this)
             );
-            onWorkerConnected();
+
+            keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
+
+            onChannelConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new NeighbourDisconnected(
@@ -188,6 +192,9 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         throw new MalformedBlockHeader("Unknown header type", 0);
                 }
 
+                // channel is obviously alive, no need to send KeepAlive
+                keepAlive.removeCallbacks(scheduleKeepAliveFires);
+
                 long bytesread = 0;
                 try {
                     bytesread = block.readBlock(this);
@@ -207,6 +214,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     }
                 }
                 block.dismiss();
+                keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
             }
         } catch (IOException silentlyCloseConnection) {
             Log.d(TAG, silentlyCloseConnection.getMessage());
@@ -237,9 +245,16 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 default:
                     return false;
             }
+
+            // channel is obviously alive, no need to send KeepAlive
+            keepAlive.removeCallbacks(scheduleKeepAliveFires);
+
             block.writeBlock(this);
             block.dismiss();
             EventBus.getDefault().post(new CommandExecuted(this, command, true));
+
+            // let schedule a keep alive
+            keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
             return true;
         }
         catch(Exception ignore){
