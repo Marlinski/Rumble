@@ -62,9 +62,9 @@ import de.greenrobot.event.EventBus;
  */
 public class RumbleUnicastChannel extends ProtocolChannel {
 
-    private static final String TAG = "RumbleProtocolWorker";
+    private static final String TAG = "RumbleUnicastChannel";
 
-    private static final int KEEP_ALIVE_TIME = 5;
+    private static final int KEEP_ALIVE_TIME = 5000;
 
     protected boolean working;
     protected Contact remoteContact;
@@ -145,7 +145,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                             con.getLinkLayerNeighbour(),
                             this)
             );
-
             onChannelConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
@@ -165,7 +164,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
     @Override
     protected void processingPacketFromNetwork(){
-        keepAlive = new Handler(processingCommandFromQueue.getLooper());
+        scheduleKeepAlive();
         try {
             while (true) {
                 BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
@@ -191,7 +190,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 }
 
                 // channel is obviously alive, no need to send KeepAlive
-                keepAlive.removeCallbacks(scheduleKeepAliveFires);
+                cancelKeepAlive();
 
                 long bytesread = 0;
                 try {
@@ -212,7 +211,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     }
                 }
                 block.dismiss();
-                keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
+                scheduleKeepAlive();
             }
         } catch (IOException silentlyCloseConnection) {
             Log.d(TAG, silentlyCloseConnection.getMessage());
@@ -245,20 +244,22 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             }
 
             // channel is obviously alive, no need to send KeepAlive
-            keepAlive.removeCallbacks(scheduleKeepAliveFires);
+            cancelKeepAlive();
 
             block.writeBlock(this);
             block.dismiss();
             EventBus.getDefault().post(new CommandExecuted(this, command, true));
 
             // let schedule a keep alive
-            keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
+            scheduleKeepAlive();
             return true;
-        }
-        catch(Exception ignore){
-            Log.e(TAG, "[!] error while sending");
+        } catch(InputOutputStreamException ignore) {
+            Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
+        } catch(IOException ignore){
+            Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
         }
         EventBus.getDefault().post(new CommandExecuted(this, command, false));
+        stopWorker();
         return false;
     }
 
@@ -290,16 +291,27 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             this.remoteContact = event.contact;
     }
 
-    public void sendKeepAlive() {
-        CommandSendKeepAlive sendKeepAlive = new CommandSendKeepAlive();
-        execute(sendKeepAlive);
+
+    /*
+     * keep-alive handler related method
+     */
+    private void cancelKeepAlive() {
+        if(keepAlive == null)
+            return;
+        keepAlive.removeCallbacks(scheduleKeepAliveFires);
+    }
+    private void scheduleKeepAlive() {
+        if(keepAlive == null)
+            keepAlive = new Handler(processingCommandFromQueue.getLooper());
+        cancelKeepAlive();
         keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
     }
-
-    Runnable scheduleKeepAliveFires = new Runnable() {
+    private Runnable scheduleKeepAliveFires = new Runnable() {
         @Override
         public void run() {
-            sendKeepAlive();
+            CommandSendKeepAlive sendKeepAlive = new CommandSendKeepAlive();
+            execute(sendKeepAlive);
+            scheduleKeepAlive();
         }
     };
 }
