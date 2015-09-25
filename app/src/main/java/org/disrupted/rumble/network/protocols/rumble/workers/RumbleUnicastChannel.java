@@ -73,7 +73,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
         remoteContact = null;
-        keepAlive = new Handler(processingCommandFromQueue.getLooper());
     }
 
     @Override
@@ -147,8 +146,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                             this)
             );
 
-            keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
-
             onChannelConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
@@ -168,6 +165,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
     @Override
     protected void processingPacketFromNetwork(){
+        keepAlive = new Handler(processingCommandFromQueue.getLooper());
         try {
             while (true) {
                 BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
