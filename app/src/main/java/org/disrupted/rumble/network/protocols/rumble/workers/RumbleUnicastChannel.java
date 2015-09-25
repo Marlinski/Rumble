@@ -255,9 +255,10 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
             block.writeBlock(this);
             block.dismiss();
-            EventBus.getDefault().post(new CommandExecuted(this, command, true));
+            if(!command.getCommandID().equals(Command.CommandID.SEND_KEEP_ALIVE))
+                EventBus.getDefault().post(new CommandExecuted(this, command, true));
 
-            // let schedule a keep alive
+            // schedule a keep alive to send
             keepAlive.postDelayed(keepAliveFires, KEEP_ALIVE_TIME);
             return true;
         } catch(InputOutputStreamException ignore) {

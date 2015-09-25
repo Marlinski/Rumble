@@ -32,12 +32,11 @@ import java.io.IOException;
  */
 public class BlockKeepAlive extends Block {
 
-    public static final String TAG = "NullBlock";
+    public static final String TAG = "BlockKeepAlive";
     public static final int BUFFER_SIZE = 1024;
 
     public BlockKeepAlive(BlockHeader header) {
         super(header);
-        Log.d(TAG, "[+] null block: "+header.toString());
     }
 
     public BlockKeepAlive(CommandSendKeepAlive command) {

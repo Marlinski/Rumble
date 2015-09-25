@@ -44,6 +44,7 @@
         android:id="@+id/status_list_progressbar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/grey_blue"
         android:visibility="visible">
         <ProgressBar
             android:layout_gravity="center_vertical|center_horizontal"

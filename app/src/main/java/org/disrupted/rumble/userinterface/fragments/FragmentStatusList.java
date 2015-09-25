@@ -51,6 +51,7 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import de.greenrobot.event.EventBus;
 
@@ -67,6 +68,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private StatusListAdapter  statusListAdapter;
     private FilterListAdapter  filterListAdapter;
     private ListView filters;
+    private String   filter_gid;
 
     public interface OnFilterClick {
         public void onClick(String entry);
@@ -76,13 +78,17 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-
         super.onCreateView(inflater, container, savedInstanceState);
+
+        Bundle args = getArguments();
+        if(args != null)
+            this.filter_gid = args.getString("GroupID");
+        else
+            this.filter_gid = null;
 
         mView = inflater.inflate(R.layout.status_list, container, false);
 
@@ -147,20 +153,22 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
 
     public void refreshStatuses() {
-            PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
-            options.answerLimit = 20;
-            options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
-            options.order_by = PushStatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
+        PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+        options.answerLimit = 20;
+        options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
+        options.order_by = PushStatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
 
-            if (filterListAdapter.getCount() == 0) {
-                DatabaseFactory.getPushStatusDatabase(getActivity())
-                        .getStatuses(options, onStatusesLoaded);
-            } else {
-                options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;
-                options.hashtagFilters = filterListAdapter.getFilterList();
-                DatabaseFactory.getPushStatusDatabase(getActivity())
-                        .getStatuses(options, onStatusesLoaded);
-            }
+        if(filter_gid != null) {
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
+            options.groupIDFilters = new HashSet<String>();
+            options.groupIDFilters.add(filter_gid);
+        }
+        if (filterListAdapter.getCount() != 0) {
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;
+            options.hashtagFilters = filterListAdapter.getFilterList();
+        }
+        DatabaseFactory.getPushStatusDatabase(getActivity())
+                .getStatuses(options, onStatusesLoaded);
     }
     DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
@@ -174,8 +182,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     statusListAdapter.swap(answer);
                     statusListAdapter.notifyDataSetChanged();
                     swipeLayout.setRefreshing(false);
-                    if (getActivity() != null)
-                        ((HomeActivity)getActivity()).refreshChatNotifications();
+                    if (getActivity() != null) {
+                        if(getActivity() instanceof HomeActivity)
+                            ((HomeActivity) getActivity()).refreshChatNotifications();
+                    }
                 }
             });
         }

@@ -48,6 +48,7 @@ import com.squareup.picasso.Picasso;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.DisplayQRCode;
+import org.disrupted.rumble.userinterface.activity.GroupStatusActivity;
 import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
 
 import java.nio.ByteBuffer;
@@ -80,14 +81,14 @@ public class GroupListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         LinearLayout layout = (LinearLayout)inflater.inflate(R.layout.group_list_item, null, true);
 
-        LinearLayout title = (LinearLayout) layout.findViewById(R.id.group_title);
-        ImageView group_lock  = (ImageView) layout.findViewById(R.id.group_lock_image);
-        TextView  group_name  = (TextView)  layout.findViewById(R.id.group_name);
-        TextView  group_gid   = (TextView)  layout.findViewById(R.id.group_gid);
-        TextView  group_desc   = (TextView)  layout.findViewById(R.id.group_desc);
+        LinearLayout title     = (LinearLayout) layout.findViewById(R.id.group_title);
+        ImageView group_lock   = (ImageView)    layout.findViewById(R.id.group_lock_image);
+        TextView  group_name   = (TextView)     layout.findViewById(R.id.group_name);
+        TextView  group_gid    = (TextView)     layout.findViewById(R.id.group_gid);
+        TextView  group_desc   = (TextView)     layout.findViewById(R.id.group_desc);
         //TextView  unread_messages  = (TextView)  layout.findViewById(R.id.group_unread_messages);
-        ImageView group_delete  = (ImageView) layout.findViewById(R.id.group_delete);
-        ImageView group_invite  = (ImageView) layout.findViewById(R.id.group_invite);
+        ImageView group_delete  = (ImageView)   layout.findViewById(R.id.group_delete);
+        ImageView group_invite  = (ImageView)   layout.findViewById(R.id.group_invite);
 
         //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
         if(groupList.get(i).isIsprivate())
@@ -106,13 +107,26 @@ public class GroupListAdapter extends BaseAdapter {
         else
             group_desc.setText("Description: "+groupList.get(i).getDesc());
 
-        title.setOnClickListener(onGroupClicked);
 
-        final String gid = groupList.get(i).getGid();
-
+        /*
+         * Manage click events
+         */
+        final String    gid          = groupList.get(i).getGid();
         final boolean   privateGroup = groupList.get(i).isIsprivate();
         final SecretKey key          = groupList.get(i).getGroupKey();
         final String    name         = groupList.get(i).getName();
+
+        title.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent groupStatusActivity = new Intent(activity, GroupStatusActivity.class );
+                groupStatusActivity.putExtra("GroupID",gid);
+                groupStatusActivity.putExtra("GroupName",name);
+                activity.startActivity(groupStatusActivity);
+                activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+            }
+        });
+
         group_invite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -168,7 +182,6 @@ public class GroupListAdapter extends BaseAdapter {
             }
         });
 
-
         group_delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -187,20 +200,6 @@ public class GroupListAdapter extends BaseAdapter {
             return 0;
         return i;
     }
-
-
-    View.OnClickListener onGroupClicked = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            LinearLayout linearLayout = (LinearLayout)view.findViewById(R.id.group_information);
-            if(linearLayout != null) {
-                if(linearLayout.getVisibility() == View.VISIBLE)
-                    linearLayout.setVisibility(View.GONE);
-                else
-                    linearLayout.setVisibility(View.VISIBLE);
-            }
-        }
-    };
 
     @Override
     public Object getItem(int i) {

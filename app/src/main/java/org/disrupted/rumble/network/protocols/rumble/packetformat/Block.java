@@ -45,9 +45,5 @@ public abstract class Block {
 
     public abstract long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException;
 
-    protected final BlockHeader getHeader() {
-        return header;
-    }
-
     public abstract void dismiss();
 }
