@@ -47,13 +47,13 @@ public abstract class ProtocolChannel implements Worker {
     protected Protocol protocol;
     protected LinkLayerConnection con;
     private BlockingQueue<Command> commandQueue;
-    protected HandlerThread processingCommandFromQueue;
+    protected Thread processingCommandFromQueue;
 
     public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {
         this.protocol = protocol;
         this.con = con;
         commandQueue = new LinkedBlockingQueue<Command>();
-        this.processingCommandFromQueue = new HandlerThread(getProtocolIdentifier()+" "+con.getConnectionID()) {
+        this.processingCommandFromQueue = new Thread("CommandThread for "+con.getConnectionID()) {
             @Override
             public synchronized void run() {
                 try {

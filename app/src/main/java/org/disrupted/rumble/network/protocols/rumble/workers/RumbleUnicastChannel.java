@@ -18,6 +18,8 @@
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
@@ -64,15 +66,20 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
     private static final String TAG = "RumbleUnicastChannel";
 
-    private static final int KEEP_ALIVE_TIME = 5000;
+    private static final int KEEP_ALIVE_TIME = 2000;
+    private static final int SOCKET_TIMEOUT  = 5000;
 
-    protected boolean working;
-    protected Contact remoteContact;
-    protected Handler keepAlive;
+    private boolean working;
+    private Contact remoteContact;
+
+    private Handler keepAlive;
+    private Handler socketTimeout;
 
     public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
         remoteContact = null;
+        keepAlive     = new Handler(Looper.getMainLooper());
+        socketTimeout = new Handler(Looper.getMainLooper());
     }
 
     @Override
@@ -145,6 +152,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                             con.getLinkLayerNeighbour(),
                             this)
             );
+
             onChannelConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
@@ -164,7 +172,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
     @Override
     protected void processingPacketFromNetwork(){
-        scheduleKeepAlive();
         try {
             while (true) {
                 BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
@@ -189,8 +196,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         throw new MalformedBlockHeader("Unknown header type", 0);
                 }
 
-                // channel is obviously alive, no need to send KeepAlive
-                cancelKeepAlive();
+                // channel is alive
+                socketTimeout.removeCallbacks(keepAliveFires);
 
                 long bytesread = 0;
                 try {
@@ -211,7 +218,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     }
                 }
                 block.dismiss();
-                scheduleKeepAlive();
+                socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT);
             }
         } catch (IOException silentlyCloseConnection) {
             Log.d(TAG, silentlyCloseConnection.getMessage());
@@ -226,6 +233,9 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     protected boolean onCommandReceived(Command command) {
         Block block;
         try {
+            // remove keep alive if any
+            keepAlive.removeCallbacks(keepAliveFires);
+
             switch (command.getCommandID()) {
                 case SEND_LOCAL_INFORMATION:
                     block = new BlockContact((CommandSendLocalInformation) command);
@@ -243,21 +253,19 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     return false;
             }
 
-            // channel is obviously alive, no need to send KeepAlive
-            cancelKeepAlive();
-
             block.writeBlock(this);
             block.dismiss();
             EventBus.getDefault().post(new CommandExecuted(this, command, true));
 
             // let schedule a keep alive
-            scheduleKeepAlive();
+            keepAlive.postDelayed(keepAliveFires, KEEP_ALIVE_TIME);
             return true;
         } catch(InputOutputStreamException ignore) {
             Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
         } catch(IOException ignore){
             Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
         }
+
         EventBus.getDefault().post(new CommandExecuted(this, command, false));
         stopWorker();
         return false;
@@ -295,23 +303,17 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     /*
      * keep-alive handler related method
      */
-    private void cancelKeepAlive() {
-        if(keepAlive == null)
-            return;
-        keepAlive.removeCallbacks(scheduleKeepAliveFires);
-    }
-    private void scheduleKeepAlive() {
-        if(keepAlive == null)
-            keepAlive = new Handler(processingCommandFromQueue.getLooper());
-        cancelKeepAlive();
-        keepAlive.postDelayed(scheduleKeepAliveFires, KEEP_ALIVE_TIME);
-    }
-    private Runnable scheduleKeepAliveFires = new Runnable() {
+    private Runnable keepAliveFires = new Runnable() {
         @Override
         public void run() {
             CommandSendKeepAlive sendKeepAlive = new CommandSendKeepAlive();
             execute(sendKeepAlive);
-            scheduleKeepAlive();
+        }
+    };
+    private Runnable socketTimeoutFires = new Runnable() {
+        @Override
+        public void run() {
+            stopWorker();
         }
     };
 }
