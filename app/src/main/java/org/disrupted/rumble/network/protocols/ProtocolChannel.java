@@ -47,11 +47,26 @@ public abstract class ProtocolChannel implements Worker {
     protected Protocol protocol;
     protected LinkLayerConnection con;
     private BlockingQueue<Command> commandQueue;
+    protected HandlerThread processingCommandFromQueue;
 
     public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {
         this.protocol = protocol;
         this.con = con;
         commandQueue = new LinkedBlockingQueue<Command>();
+        this.processingCommandFromQueue = new HandlerThread(getProtocolIdentifier()+" "+con.getConnectionID()) {
+            @Override
+            public synchronized void run() {
+                try {
+                    while (true) {
+                        Command command = commandQueue.take();
+                        onCommandReceived(command);
+                    }
+                }
+                catch(InterruptedException e) {
+                    commandQueue.clear();
+                }
+            }
+        };
     }
 
     public LinkLayerConnection getLinkLayerConnection() {
@@ -111,21 +126,6 @@ public abstract class ProtocolChannel implements Worker {
         return this.getLinkLayerConnection().getLinkLayerPriority() +
                this.protocol.getProtocolPriority();
     }
-
-    protected HandlerThread processingCommandFromQueue = new HandlerThread(getWorkerIdentifier()) {
-        @Override
-        public synchronized void run() {
-            try {
-                while (true) {
-                    Command command = commandQueue.take();
-                    onCommandReceived(command);
-                }
-            }
-            catch(InterruptedException e) {
-                commandQueue.clear();
-            }
-        }
-    };
 
     /*
      * for easy use in Set, List, Map...
