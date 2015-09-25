@@ -21,7 +21,7 @@ import de.greenrobot.event.EventBus;
  */
 public class ReplicationDensityWatcher {
 
-    private static final String TAG = "ReplicationDensityWatcher";
+    private static final String TAG = "RDWatcher";
 
     private boolean started;
     private long windowSize;   //window size in seconds
@@ -51,7 +51,7 @@ public class ReplicationDensityWatcher {
             return;
         started = false;
 
-        Log.d(TAG, "[+] RD Watcher Stopped");
+        Log.d(TAG, "[-] RD Watcher Stopped");
         handler.removeCallbacksAndMessages(null);
         copiesReceived.clear();
 

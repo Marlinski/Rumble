@@ -114,10 +114,8 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
                 break;
             case 4:
                 Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
-                stopIntent.setAction(NetworkCoordinator.ACTION_STOP_NETWORKING);
                 getActivity().stopService(stopIntent);
                 getActivity().finish();
-                System.exit(0);
                 break;
             default:
         }

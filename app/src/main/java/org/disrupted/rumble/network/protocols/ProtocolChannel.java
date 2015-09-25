@@ -22,6 +22,7 @@ package org.disrupted.rumble.network.protocols;
 import android.os.HandlerThread;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.command.Command;
@@ -43,10 +44,10 @@ public abstract class ProtocolChannel implements Worker {
 
     private static final String TAG = "ProtocolWorker";
 
+    private BlockingQueue<Command> commandQueue;
 
     protected Protocol protocol;
     protected LinkLayerConnection con;
-    private BlockingQueue<Command> commandQueue;
     protected Thread processingCommandFromQueue;
 
     public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {

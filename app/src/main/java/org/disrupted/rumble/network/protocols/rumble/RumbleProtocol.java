@@ -77,6 +77,11 @@ public class RumbleProtocol implements Protocol {
         }
     }
 
+    @Override
+    public NetworkCoordinator getNetworkCoordinator() {
+        return networkCoordinator;
+    }
+
     public static RumbleProtocol getInstance(NetworkCoordinator networkCoordinator) {
         synchronized (lock) {
             if(instance == null)
@@ -119,7 +124,7 @@ public class RumbleProtocol implements Protocol {
             return;
         started = false;
 
-        Log.d(TAG, "[+] Rumble Protocol stopped");
+        Log.d(TAG, "[-] Rumble Protocol stopped");
 
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);

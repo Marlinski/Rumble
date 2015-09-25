@@ -24,8 +24,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
-import android.os.IBinder;
+import android.os.*;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
@@ -67,8 +66,10 @@ public class NetworkCoordinator extends Service {
     public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
     private static final String TAG = "NetworkCoordinator";
-
     private static final Object lock = new Object();
+
+    private Looper  serviceLooper;
+    private Handler serviceHandler;
 
     private List<LinkLayerAdapter>  adapters;
     private Map<String, WorkerPool> workerPools;
@@ -92,33 +93,42 @@ public class NetworkCoordinator extends Service {
         super.onCreate();
         synchronized (lock) {
             Log.d(TAG, "[+] Starting NetworkCoordinator");
+            HandlerThread serviceThread = new HandlerThread("NetworkCoordinatorThread",
+                    android.os.Process.THREAD_PRIORITY_BACKGROUND);
+            serviceThread.start();
+            serviceLooper = serviceThread.getLooper();
+            serviceHandler = new Handler(serviceLooper);
+            serviceHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    neighbourManager = new NeighbourManager();
+                    scannerList = new LinkedList<Scanner>();
 
-            neighbourManager = new NeighbourManager();
-            neighbourManager.startMonitoring();
-            scannerList = new LinkedList<Scanner>();
+                    // register link layers and their pool
+                    adapters = new LinkedList<LinkLayerAdapter>();
+                    workerPools = new HashMap<String, WorkerPool>();
+                    BluetoothLinkLayerAdapter bluetoothLinkLayerAdapter =
+                            BluetoothLinkLayerAdapter.getInstance(NetworkCoordinator.this);
+                    adapters.add(bluetoothLinkLayerAdapter);
+                    workerPools.put(BluetoothLinkLayerAdapter.LinkLayerIdentifier, new WorkerPool(5));
+                    WifiManagedLinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter();
+                    adapters.add(wifiAdapter);
+                    workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(10));
 
-            // register link layers and their pool
-            adapters = new LinkedList<LinkLayerAdapter>();
-            workerPools = new HashMap<String, WorkerPool>();
-            BluetoothLinkLayerAdapter bluetoothLinkLayerAdapter = BluetoothLinkLayerAdapter.getInstance(this);
-            adapters.add(bluetoothLinkLayerAdapter);
-            workerPools.put(BluetoothLinkLayerAdapter.LinkLayerIdentifier, new WorkerPool(5));
-            WifiManagedLinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter();
-            adapters.add(wifiAdapter);
-            workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(10));
+                    // register protocols
+                    protocols = new LinkedList<Protocol>();
+                    protocols.add(RumbleProtocol.getInstance(NetworkCoordinator.this));
+                    //protocols.add(FirechatProtocol.getInstance(this));
 
-            // register protocols
-            protocols = new LinkedList<Protocol>();
-            protocols.add(RumbleProtocol.getInstance(this));
-            //protocols.add(FirechatProtocol.getInstance(this));
+                    // register services
+                    services = new LinkedList<ServiceLayer>();
+                    services.add(PushService.getInstance(NetworkCoordinator.this));
+                    services.add(ChatService.getInstance(NetworkCoordinator.this));
 
-            // register services
-            services = new LinkedList<ServiceLayer>();
-            services.add(PushService.getInstance(this));
-            services.add(ChatService.getInstance(this));
-
-            networkingStarted = false;
-            EventBus.getDefault().register(this);
+                    networkingStarted = false;
+                    EventBus.getDefault().register(NetworkCoordinator.this);
+                }
+            });
         }
     }
 
@@ -133,19 +143,25 @@ public class NetworkCoordinator extends Service {
         synchronized (lock) {
             Log.d(TAG, "[-] Destroy NetworkCoordinator");
 
-            services.clear();
-            services = null;
-            protocols.clear();
-            protocols = null;
-            workerPools.clear();
-            workerPools = null;
-            adapters.clear();
-            adapters = null;
+            serviceHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    stopNetworking();
+                    services.clear();
+                    services = null;
+                    protocols.clear();
+                    protocols = null;
+                    workerPools.clear();
+                    workerPools = null;
+                    adapters.clear();
+                    adapters = null;
 
-            neighbourManager.stopMonitoring();
+                    if (EventBus.getDefault().isRegistered(NetworkCoordinator.this))
+                        EventBus.getDefault().unregister(NetworkCoordinator.this);
 
-            if(EventBus.getDefault().isRegistered(this))
-                EventBus.getDefault().unregister(this);
+                    System.exit(0);
+                }
+            });
         }
     }
 
@@ -158,14 +174,14 @@ public class NetworkCoordinator extends Service {
             if (intent.getAction().equals(ACTION_START_FOREGROUND)) {
                 Log.d(TAG, "Received Start Foreground Intent ");
 
-                new Thread(new Runnable() {
+                serviceHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         // start networking from a new thread to avoid performing network
                         // related operation from the UI thread
                         startNetworking();
                     }
-                }).start();
+                });
 
                 Intent notificationIntent = new Intent(this, RoutingActivity.class);
                 notificationIntent.setAction(ACTION_MAIN_ACTION);
@@ -183,14 +199,13 @@ public class NetworkCoordinator extends Service {
 
                 startForeground(FOREGROUND_SERVICE_ID, notification);
             }
-
-            if(intent.getAction().equals(ACTION_STOP_NETWORKING)) {
-                Log.d(TAG, "STOP ?");
-                stopNetworking();
-            }
         }
 
         return START_STICKY;
+    }
+
+    public Looper getServiceLooper() {
+        return serviceLooper;
     }
 
     public void startNetworking() {
@@ -216,13 +231,14 @@ public class NetworkCoordinator extends Service {
             adapter.linkStart();
         }
         */
-
+        neighbourManager.startMonitoring();
     }
 
     public void stopNetworking() {
         if(!networkingStarted)
             return;
         networkingStarted = false;
+        neighbourManager.stopMonitoring();
         // stop services
         for(ServiceLayer service : services) {
             service.stopService();

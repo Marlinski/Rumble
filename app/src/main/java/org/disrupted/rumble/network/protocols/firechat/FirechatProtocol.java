@@ -83,6 +83,11 @@ public class FirechatProtocol implements Protocol {
         return PROTOCOL_MIDDLE_PRIORITY;
     }
 
+    @Override
+    public NetworkCoordinator getNetworkCoordinator() {
+        return networkCoordinator;
+    }
+
     public FirechatBTState getBTState(String macAddress) {
         synchronized (lock) {
             FirechatBTState state = bluetoothState.get(macAddress);

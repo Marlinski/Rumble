@@ -20,6 +20,7 @@
 package org.disrupted.rumble.network.protocols;
 
 
+import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
@@ -29,6 +30,8 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
  * @author Marlinski
  */
 public interface Protocol {
+
+    public NetworkCoordinator getNetworkCoordinator();
 
     /*
      * priority is used to determine which protocol is best when multiple protocol

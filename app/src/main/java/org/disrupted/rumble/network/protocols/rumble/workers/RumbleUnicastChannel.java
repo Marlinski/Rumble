@@ -78,8 +78,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     public RumbleUnicastChannel(RumbleProtocol protocol, UnicastConnection con) {
         super(protocol, con);
         remoteContact = null;
-        keepAlive     = new Handler(Looper.getMainLooper());
-        socketTimeout = new Handler(Looper.getMainLooper());
+        keepAlive     = new Handler(protocol.getNetworkCoordinator().getServiceLooper());
+        socketTimeout = new Handler(protocol.getNetworkCoordinator().getServiceLooper());
     }
 
     @Override
@@ -282,6 +282,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             //Log.d(TAG, "[-]"+ignore.getMessage());
         }
         finally {
+            keepAlive.removeCallbacks(keepAliveFires);
+            socketTimeout.removeCallbacks(socketTimeoutFires);
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
         }
@@ -298,7 +300,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         if(event.channel.equals(this))
             this.remoteContact = event.contact;
     }
-
 
     /*
      * keep-alive handler related method
