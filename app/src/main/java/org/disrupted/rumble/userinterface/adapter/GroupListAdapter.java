@@ -23,10 +23,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.util.Base64;
 import android.util.Log;
-import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +36,6 @@ import android.widget.TextView;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
-import com.google.zxing.aztec.AztecWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -48,7 +45,7 @@ import com.squareup.picasso.Picasso;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.DisplayQRCode;
-import org.disrupted.rumble.userinterface.activity.GroupStatusActivity;
+import org.disrupted.rumble.userinterface.activity.GroupDetailActivity;
 import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
 
 import java.nio.ByteBuffer;
@@ -119,7 +116,7 @@ public class GroupListAdapter extends BaseAdapter {
         title.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent groupStatusActivity = new Intent(activity, GroupStatusActivity.class );
+                Intent groupStatusActivity = new Intent(activity, GroupDetailActivity.class );
                 groupStatusActivity.putExtra("GroupID",gid);
                 groupStatusActivity.putExtra("GroupName",name);
                 activity.startActivity(groupStatusActivity);

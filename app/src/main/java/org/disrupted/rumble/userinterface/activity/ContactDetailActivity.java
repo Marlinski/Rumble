@@ -29,9 +29,10 @@ import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 /**
  * @author Marlinski
  */
-public class GroupStatusActivity extends ActionBarActivity {
+public class ContactDetailActivity extends ActionBarActivity {
 
-    private static final String TAG = "GroupStatusActivity";
+
+    private static final String TAG = "ContactDetailActivity";
 
     @Override
     protected void onDestroy() {
@@ -43,7 +44,7 @@ public class GroupStatusActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
 
         Bundle args = getIntent().getExtras();
-        String name = args.getString("GroupName");
+        String name = args.getString("ContactName");
 
         setContentView(R.layout.fragment_activity);
         setTitle(name);

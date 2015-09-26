@@ -52,7 +52,6 @@
                     android:gravity="left"
                     android:src="@drawable/ic_contact_picture" />
 
-
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

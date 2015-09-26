@@ -82,11 +82,11 @@ public class PopupCreateGroup extends Activity {
     View.OnClickListener displayLock = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if(!privateGroupCheckBox.isChecked()) {
-                groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
+            if(privateGroupCheckBox.isChecked()) {
+                groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
                 groupLabel.setText(R.string.popup_create_group_checkbox_private);
             } else {
-                groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);
+                groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
                 groupLabel.setText(R.string.popup_create_group_checkbox_public);
             }
         }

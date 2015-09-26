@@ -77,6 +77,7 @@ public class PopupComposeStatus extends Activity {
 
     private Spinner spinner;
     private GroupSpinnerAdapter spinnerArrayAdapter;
+    private String  filter_gid = null;
 
     private String mCurrentPhotoFile;
 
@@ -84,6 +85,10 @@ public class PopupComposeStatus extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.popup_compose_status);
+
+        Bundle args = getIntent().getExtras();
+        if(args != null)
+            this.filter_gid = args.getString("GroupID");
 
         imageBitmap = null;
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
@@ -95,13 +100,16 @@ public class PopupComposeStatus extends Activity {
         spinner = (Spinner)(findViewById(R.id.group_list_spinner));
         groupLock = (ImageView)(findViewById(R.id.group_lock_image));
 
-
         groupLock.setBackgroundResource(R.drawable.ic_lock_outline_white_24dp);
 
-        spinnerArrayAdapter = new GroupSpinnerAdapter();
-        spinner.setAdapter(spinnerArrayAdapter);
-        spinner.setOnItemSelectedListener(spinnerArrayAdapter);
-        getGroupList();
+        if(filter_gid == null) {
+            spinnerArrayAdapter = new GroupSpinnerAdapter();
+            spinner.setAdapter(spinnerArrayAdapter);
+            spinner.setOnItemSelectedListener(spinnerArrayAdapter);
+            getGroupList();
+        } else {
+            spinner.setVisibility(View.INVISIBLE);
+        }
 
         dismiss.setOnClickListener(onDiscardClick);
         takePicture.setOnClickListener(onTakePictureClick);
@@ -205,7 +213,12 @@ public class PopupComposeStatus extends Activity {
                 if (message.equals(""))
                     return;
 
-                Group group = spinnerArrayAdapter.getSelected();
+                Group group;
+                if(filter_gid == null)
+                    group = spinnerArrayAdapter.getSelected();
+                else
+                    group = DatabaseFactory.getGroupDatabase(PopupComposeStatus.this).getGroup(filter_gid);
+
                 if(group == null)
                     return;
 

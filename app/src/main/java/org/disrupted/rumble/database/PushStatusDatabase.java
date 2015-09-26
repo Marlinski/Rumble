@@ -100,7 +100,7 @@ public class PushStatusDatabase extends Database {
         public static final long FILTER_HOPS               = 0x0004;
         public static final long FILTER_LIKE               = 0x0008;
         public static final long FILTER_TAG                = 0x0010;
-        public static final long FILTER_USER               = 0x0020;
+        public static final long FILTER_AUTHOR             = 0x0020;
         public static final long FILTER_TOC_FROM           = 0x0040;
         public static final long FILTER_TOA_FROM           = 0x0080;
         public static final long FILTER_NEVER_SEND_TO_USER = 0x0100;
@@ -123,7 +123,6 @@ public class PushStatusDatabase extends Database {
         public long         filterFlags;
         public Set<String>  hashtagFilters;
         public Set<String>  groupIDFilters;
-        public String       authorID;
         public int          hopLimit;
         public long         from_toc;
         public long         from_toa;
@@ -138,7 +137,6 @@ public class PushStatusDatabase extends Database {
             like = false;
             hashtagFilters = null;
             groupIDFilters = null;
-            authorID = null;
             uid      = null;
             from_toc = 0;
             from_toa = 0;
@@ -204,10 +202,10 @@ public class PushStatusDatabase extends Database {
             hashtagJoined = true;
         }
         boolean contactJoined = false;
-        if (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) {
+        if (((options.filterFlags & StatusQueryOption.FILTER_AUTHOR) == StatusQueryOption.FILTER_AUTHOR) && (options.uid != null)) {
             query.append(
                     " JOIN " + ContactDatabase.TABLE_NAME + " c" +
-                    " ON ps." + PushStatusDatabase.GROUP_DBID + " = c." + ContactDatabase.ID);
+                    " ON ps." + PushStatusDatabase.AUTHOR_DBID + " = c." + ContactDatabase.ID);
             contactJoined = true;
         }
         boolean groupJoined = false;
@@ -234,12 +232,12 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if (contactJoined && (((options.filterFlags & StatusQueryOption.FILTER_USER) == StatusQueryOption.FILTER_USER) && (options.authorID != null)) ) {
+        if (contactJoined && (((options.filterFlags & StatusQueryOption.FILTER_AUTHOR) == StatusQueryOption.FILTER_AUTHOR) && (options.uid != null)) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" c." + ContactDatabase.UID + " = ? ");
-            argumentList.add(options.authorID);
+            argumentList.add(options.uid);
         }
         if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDFilters != null) && (options.groupIDFilters.size() > 0) ) {
             if(!firstwhere)

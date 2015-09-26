@@ -105,21 +105,28 @@
         </activity>
 
         <activity
-            android:name=".userinterface.activity.GroupsActivity"
+            android:name=".userinterface.activity.GroupListActivity"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
         </activity>
 
         <activity
-            android:name=".userinterface.activity.GroupStatusActivity"
+            android:name=".userinterface.activity.GroupDetailActivity"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
         </activity>
 
         <activity
-            android:name=".userinterface.activity.ContactsActivity"
+            android:name=".userinterface.activity.ContactListActivity"
+            android:uiOptions="splitActionBarWhenNarrow">
+            <meta-data android:name="android.support.UI_OPTIONS"
+                android:value="splitActionBarWhenNarrow" />
+        </activity>
+
+        <activity
+            android:name=".userinterface.activity.ContactDetailActivity"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />

@@ -32,8 +32,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.userinterface.activity.ContactsActivity;
-import org.disrupted.rumble.userinterface.activity.GroupsActivity;
+import org.disrupted.rumble.userinterface.activity.ContactListActivity;
+import org.disrupted.rumble.userinterface.activity.GroupListActivity;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.userinterface.activity.SettingsActivity;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
@@ -98,12 +98,12 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
         ((HomeActivity)getActivity()).slidingMenu.toggle();
         switch(firstList.get(position).getID()) {
             case 1:
-                Intent groupActivity = new Intent(getActivity(), GroupsActivity.class );
+                Intent groupActivity = new Intent(getActivity(), GroupListActivity.class );
                 startActivity(groupActivity);
                 getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
             case 2:
-                Intent contactActivity = new Intent(getActivity(), ContactsActivity.class );
+                Intent contactActivity = new Intent(getActivity(), ContactListActivity.class );
                 startActivity(contactActivity);
                 getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;

@@ -68,7 +68,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private StatusListAdapter  statusListAdapter;
     private FilterListAdapter  filterListAdapter;
     private ListView filters;
-    private String   filter_gid;
+
+    private String   filter_gid = null;
+    private String   filter_uid = null;
 
     public interface OnFilterClick {
         public void onClick(String entry);
@@ -85,10 +87,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         super.onCreateView(inflater, container, savedInstanceState);
 
         Bundle args = getArguments();
-        if(args != null)
+        if(args != null) {
             this.filter_gid = args.getString("GroupID");
-        else
-            this.filter_gid = null;
+            this.filter_uid = args.getString("ContactID");
+        }
 
         mView = inflater.inflate(R.layout.status_list, container, false);
 
@@ -110,11 +112,11 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         statusList = (ListView) mView.findViewById(R.id.status_list);
         statusListAdapter = new StatusListAdapter(getActivity(), this);
         statusListAdapter.registerDataSetObserver(new DataSetObserver() {
-                                                      public void onChanged() {
-                                                          FrameLayout progressBar = (FrameLayout) mView.findViewById(R.id.status_list_progressbar);
-                                                          progressBar.setVisibility(View.GONE);
-                                                      }
-                                                  }
+                  public void onChanged() {
+                      FrameLayout progressBar = (FrameLayout) mView.findViewById(R.id.status_list_progressbar);
+                      progressBar.setVisibility(View.GONE);
+                  }
+              }
         );
         statusList.setAdapter(statusListAdapter);
 
@@ -134,8 +136,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.public_message_menu, menu);
-        super.onCreateOptionsMenu(menu, inflater);
+        if(filter_uid == null) {
+            inflater.inflate(R.menu.public_message_menu, menu);
+            super.onCreateOptionsMenu(menu, inflater);
+        }
     }
 
     @Override
@@ -146,6 +150,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                 return true;
             case R.id.action_compose:
                 Intent compose = new Intent(getActivity(), PopupComposeStatus.class );
+                if(filter_gid != null)
+                    compose.putExtra("GroupID",filter_gid);
                 startActivity(compose);
                 return true;
         }
@@ -162,6 +168,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
             options.groupIDFilters = new HashSet<String>();
             options.groupIDFilters.add(filter_gid);
+        }
+        if(filter_uid != null) {
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_AUTHOR;
+            options.uid = filter_uid;
         }
         if (filterListAdapter.getCount() != 0) {
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;

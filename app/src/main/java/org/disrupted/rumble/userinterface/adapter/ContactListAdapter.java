@@ -19,6 +19,7 @@ package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,7 @@ import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.userinterface.activity.ContactDetailActivity;
 import org.disrupted.rumble.userinterface.events.UserDeleteContact;
 
 import java.util.ArrayList;
@@ -65,25 +67,38 @@ public class ContactListAdapter extends BaseAdapter {
         ImageView contact_avatar = (ImageView)    layout.findViewById(R.id.contact_avatar);
         TextView  contact_name   = (TextView)     layout.findViewById(R.id.contact_name);
         TextView  contact_uid    = (TextView)     layout.findViewById(R.id.contact_uid);
-        ImageView contact_delete = (ImageView)    layout.findViewById(R.id.contact_delete);
+        //ImageView contact_delete = (ImageView)    layout.findViewById(R.id.contact_delete);
 
         ColorGenerator generator = ColorGenerator.DEFAULT;
         contact_avatar.setImageDrawable(
                 builder.build(contactList.get(i).getName().substring(0, 1),
                         generator.getColor(contactList.get(i).getUid())));
         contact_name.setText(contactList.get(i).getName());
-        contact_uid.setText("Contact ID: "+contactList.get(i).getUid());
+        contact_uid.setText(contactList.get(i).getUid());
 
         /*
          * Manage click events
          */
-        final String    uid      = contactList.get(i).getUid();
+        final String    uid  = contactList.get(i).getUid();
+        final String    name = contactList.get(i).getName();
+        layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent contactStatusActivity = new Intent(activity, ContactDetailActivity.class );
+                contactStatusActivity.putExtra("ContactID", uid);
+                contactStatusActivity.putExtra("ContactName",name);
+                activity.startActivity(contactStatusActivity);
+                activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+            }
+        });
+        /*
         contact_delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 EventBus.getDefault().post(new UserDeleteContact(uid));
             }
         });
+        */
 
         return layout;
     }
