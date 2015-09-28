@@ -50,6 +50,7 @@ public class ContactDatabase extends Database  {
     public static final String ID           = "_id";
     public static final String UID          = "uid";
     public static final String NAME         = "name";
+    public static final String LAST_MET     = "last_met";
     public static final String AVATAR       = "avatar";
     public static final String LOCALUSER    = "local";
     public static final String TRUSTNESS    = "trustness";
@@ -60,6 +61,7 @@ public class ContactDatabase extends Database  {
                  + UID       + " TEXT, "
                  + NAME      + " TEXT, "
                  + AVATAR    + " TEXT, "
+                 + LAST_MET  + " INTEGER, "
                  + LOCALUSER + " INTEGER, "
                  + TRUSTNESS + " INTEGER, "
                  + PUBKEY    + " TEXT, "
@@ -170,6 +172,7 @@ public class ContactDatabase extends Database  {
         contentValues.put(NAME, contact.getName());
         contentValues.put(AVATAR, contact.getAvatar());
         contentValues.put(LOCALUSER, contact.isLocal() ? 1 : 0);
+        contentValues.put(LAST_MET, contact.lastMet());
 
         long contactDBID = getContactDBID(contact.getUid());
 
@@ -193,7 +196,10 @@ public class ContactDatabase extends Database  {
         String author    = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
         String uid       = cursor.getString(cursor.getColumnIndexOrThrow(UID));
         boolean local    = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
+        long date        = cursor.getInt(cursor.getColumnIndexOrThrow(LAST_MET));
+
         Contact contact  = new Contact(author, uid, local);
+        contact.lastMet(date);
         contact.setHashtagInterests(getHashtagsOfInterest(contactDBID));
         contact.setJoinedGroupIDs(getJoinedGroupIDs(contactDBID));
         contact.setInterfaces(getInterfaces(contactDBID));

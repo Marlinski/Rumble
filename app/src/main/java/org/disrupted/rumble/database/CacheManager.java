@@ -225,6 +225,9 @@ public class CacheManager {
                 Log.d(TAG, "[!] receive contact information for ourself");
                 return;
             }
+
+            contact.lastMet(event.contact.lastMet());
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         }
 
         long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
@@ -254,7 +257,7 @@ public class CacheManager {
             EventBus.getDefault().post(new ContactTagInterestUpdatedEvent(contact));
         }
 
-        // We also keep track of the interface and protocol this contact was discovered with
+        // We also keep track of the interface and protocol this contact was discovered on
         try {
             long interfaceDBID = DatabaseFactory.getInterfaceDatabase(RumbleApplication.getContext())
                     .insertInterface(

@@ -50,6 +50,7 @@ import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 import org.disrupted.rumble.util.FileUtil;
+import org.disrupted.rumble.util.TimeUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,8 +113,8 @@ public class StatusListAdapter extends BaseAdapter {
 
         // we draw the author field
         authorView.setText(message.getAuthor().getName());
-        tocView.setText(new TimeElapsed(message.getTimeOfCreation()).display());
-        toaView.setText(new TimeElapsed(message.getTimeOfArrival()).display());
+        tocView.setText(TimeUtil.timeElapsed(message.getTimeOfCreation()));
+        toaView.setText(TimeUtil.timeElapsed(message.getTimeOfArrival()));
         groupNameView.setText(message.getGroup().getName());
         groupNameView.setTextColor(generator.getColor(message.getGroup().getGid()));
 
@@ -268,74 +269,6 @@ public class StatusListAdapter extends BaseAdapter {
             }
         }
         return false;
-    }
-
-    private class TimeElapsed {
-
-        private static final long ONE_MINUTE_IN_SECONDS = 60;
-        private static final long ONE_HOUR_IN_SECONDS = 60 * ONE_MINUTE_IN_SECONDS;
-        private static final long ONE_DAY_IN_SECONDS = 24 * ONE_HOUR_IN_SECONDS;
-        private static final long ONE_MONTH_IN_SECONDS = 30 * ONE_DAY_IN_SECONDS;
-        private static final long ONE_YEAR_IN_SECONDS = 365 * ONE_DAY_IN_SECONDS;
-
-        private long time;
-
-        TimeElapsed(long timeInSecondsSinceEpoch) {
-            this.time = (System.currentTimeMillis() / 1000L) - timeInSecondsSinceEpoch;
-        }
-
-        public String display() {
-            Resources res = activity.getResources();
-            if(time < ONE_MINUTE_IN_SECONDS)
-                return getTimeInSeconds()+" "+res.getString(R.string.seconds_ago);
-
-            if(time < 2*ONE_MINUTE_IN_SECONDS)
-                return res.getString(R.string.minute_ago);
-            if(time < ONE_HOUR_IN_SECONDS)
-                return getTimeInMinutes()+" "+res.getString(R.string.minutes_ago);
-
-            if(time < 2*ONE_HOUR_IN_SECONDS)
-                return res.getString(R.string.hour_ago);
-            if(time < ONE_DAY_IN_SECONDS)
-                return getTimeInHours()+" "+res.getString(R.string.hours_ago);
-
-            if(time < 2*ONE_DAY_IN_SECONDS)
-                return res.getString(R.string.day_ago);
-            if(time < ONE_MONTH_IN_SECONDS)
-                return getTimeInDays()+" "+res.getString(R.string.days_ago);
-
-            if(time < 2*ONE_MONTH_IN_SECONDS)
-                return res.getString(R.string.month_ago);
-            if(time < ONE_YEAR_IN_SECONDS)
-                return getTimeInMonths()+" "+res.getString(R.string.months_ago);
-
-            if(time < 2*ONE_YEAR_IN_SECONDS)
-                return res.getString(R.string.year_ago);
-            if(time < 10*ONE_YEAR_IN_SECONDS)
-                return getTimeInYears()+" "+res.getString(R.string.years_ago);
-
-            return res.getString(R.string.too_old);
-        }
-
-        private String getTimeInSeconds(){
-            return Long.toString(time);
-        }
-        private String getTimeInMinutes(){
-            return Long.toString(time/ONE_MINUTE_IN_SECONDS);
-        }
-        private String getTimeInHours(){
-            return Long.toString(time/ONE_HOUR_IN_SECONDS);
-        }
-        private String getTimeInDays(){
-            return Long.toString(time/ONE_DAY_IN_SECONDS);
-        }
-        private String getTimeInMonths(){
-            return Long.toString(time/ONE_MONTH_IN_SECONDS);
-        }
-        private String getTimeInYears(){
-            return Long.toString(time/ONE_YEAR_IN_SECONDS);
-        }
-
     }
 
     private class PopupMenuListener implements View.OnClickListener

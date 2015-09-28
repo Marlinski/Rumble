@@ -36,6 +36,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.activity.ContactDetailActivity;
 import org.disrupted.rumble.userinterface.events.UserDeleteContact;
+import org.disrupted.rumble.util.TimeUtil;
 
 import java.util.ArrayList;
 
@@ -64,9 +65,9 @@ public class ContactListAdapter extends BaseAdapter {
     public View getView(int i, View view, ViewGroup viewGroup) {
         LinearLayout layout = (LinearLayout)inflater.inflate(R.layout.contact_list_item, null, true);
 
-        ImageView contact_avatar = (ImageView)    layout.findViewById(R.id.contact_avatar);
-        TextView  contact_name   = (TextView)     layout.findViewById(R.id.contact_name);
-        TextView  contact_uid    = (TextView)     layout.findViewById(R.id.contact_uid);
+        ImageView contact_avatar   = (ImageView)    layout.findViewById(R.id.contact_avatar);
+        TextView  contact_name     = (TextView)     layout.findViewById(R.id.contact_name);
+        TextView  contact_last_met = (TextView)     layout.findViewById(R.id.contact_last_met);
         //ImageView contact_delete = (ImageView)    layout.findViewById(R.id.contact_delete);
 
         ColorGenerator generator = ColorGenerator.DEFAULT;
@@ -74,7 +75,7 @@ public class ContactListAdapter extends BaseAdapter {
                 builder.build(contactList.get(i).getName().substring(0, 1),
                         generator.getColor(contactList.get(i).getUid())));
         contact_name.setText(contactList.get(i).getName());
-        contact_uid.setText(contactList.get(i).getUid());
+        contact_last_met.setText(TimeUtil.timeElapsed(contactList.get(i).lastMet()));
 
         /*
          * Manage click events

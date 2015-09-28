@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2014 Disrupted Systems
+  ~ This file is part of Rumble.
+  ~ Rumble is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ Rumble is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="5dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="45">
+
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:orientation="horizontal"
+            android:layout_centerInParent="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/chat_compose"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:padding="5dip"
+                android:minHeight="50dp"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:textColor="@color/black"
+                android:hint="@string/chat_input_hint"
+                android:textColorHint="@color/light_grey"
+                android:maxLines="4"
+                android:scrollbars="vertical"
+                android:background="@drawable/chat_message_shape" />
+
+            <FrameLayout
+                android:id="@+id/chat_send_box"
+                android:layout_width="50dp"
+                android:layout_height="50dp">
+                <ImageView
+                    android:id="@+id/popup_button_send"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_horizontal|bottom"
+                    android:padding="5dip"
+                    android:src="@drawable/ic_send_grey600_24dp"/>
+                <ImageView
+                    android:layout_width="20px"
+                    android:layout_height="20px"
+                    android:layout_gravity="start"
+                    android:src="@drawable/top_right_arrow"/>
+            </FrameLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="0dip"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+    </RelativeLayout>
+
+</LinearLayout>

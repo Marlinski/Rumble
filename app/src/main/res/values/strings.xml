@@ -55,6 +55,7 @@
 
     <string name="popup_compose_title">Compose</string>
     <string name="popup_compose_chat_title">Chat !</string>
+    <string name="chat_input_hint">Type a message</string>
     <string name="popup_compose_group">Group: </string>
     <string name="popup_create_group">Create new group</string>
     <string name="popup_create_group_checkbox_private">Private Group</string>

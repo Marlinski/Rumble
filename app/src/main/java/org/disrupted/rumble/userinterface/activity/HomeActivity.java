@@ -132,13 +132,14 @@ public class HomeActivity extends AppCompatActivity {
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.container, fragment)
                             .commit();
+                    fab.show();
                     fab.setOnClickListener(((FragmentStatusList)fragment).onFabClicked);
                     chatHasFocus = false;
                 } else {
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.container, fragment)
                             .commit();
-                    fab.setOnClickListener(((FragmentChatMessage)fragment).onFabClicked);
+                    fab.hide();
                     chatHasFocus = true;
                 }
             }

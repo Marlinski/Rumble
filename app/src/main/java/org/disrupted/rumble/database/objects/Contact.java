@@ -37,11 +37,12 @@ public class Contact {
     protected String                avatar;
     protected boolean               local;
     protected boolean               friend;
+    protected long                  last_met;
 
     /* dynamic attributes */
     protected Set<String>           joinedGroupIDs;
     protected Map<String, Integer>  hashtagInterests;
-    protected Set<Interface>           interfaces;
+    protected Set<Interface>        interfaces;
 
     public static final int MAX_INTEREST_TAG_VALUE = 255;
     public static final int MIN_INTEREST_TAG_VALUE = 0;
@@ -76,6 +77,7 @@ public class Contact {
         joinedGroupIDs   = new HashSet<String>();
         hashtagInterests = new HashMap<String, Integer>();
         interfaces       = new HashSet<Interface>();
+        last_met         = 0;
     }
 
     public String getUid()    { return uid;}
@@ -83,10 +85,12 @@ public class Contact {
     public String getAvatar() { return avatar;}
     public boolean isLocal()  { return local;}
     public boolean isFriend() { return friend; }
+    public long   lastMet()   { return last_met; }
     public Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
     public Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
     public Set<Interface> getInterfaces() {              return interfaces;       }
 
+    public void lastMet(long date)   { this.last_met = date; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
         joinedGroupIDs.add(groupID);

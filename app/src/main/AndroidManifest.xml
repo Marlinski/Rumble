@@ -94,7 +94,7 @@
             android:name=".userinterface.activity.HomeActivity"
             android:screenOrientation="portrait"
             android:label="@string/app_name"
-            android:windowSoftInputMode="adjustPan|adjustResize|stateHidden"
+            android:windowSoftInputMode="adjustResize|stateHidden"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"

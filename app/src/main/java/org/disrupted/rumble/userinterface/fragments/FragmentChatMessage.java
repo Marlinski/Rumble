@@ -19,30 +19,41 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.ChatMessageDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatWipedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
+import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.userinterface.activity.PopupComposeChat;
 import org.disrupted.rumble.userinterface.adapter.ChatMessageListAdapter;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
+import org.disrupted.rumble.util.FileUtil;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
@@ -51,14 +62,16 @@ import de.greenrobot.event.EventBus;
  * @author Marlinski
  */
 public class FragmentChatMessage extends Fragment {
+
+    private static final String TAG = "FragmentChatMessage";
+
     private static View mView;
 
-    /*
-    EditText    editText;
-    ImageButton sendButton;
-    */
     private ListView chatMessageList;
     private ChatMessageListAdapter chatMessageListAdapter;
+
+    private FrameLayout sendBox;
+    private EditText    compose;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -72,25 +85,18 @@ public class FragmentChatMessage extends Fragment {
 
         chatMessageList = (ListView) mView.findViewById(R.id.chat_message_list);
         chatMessageListAdapter = new ChatMessageListAdapter(getActivity(), this);
-        /*
-        chatMessageListAdapter.registerDataSetObserver(new DataSetObserver() {
-                  public void onChanged() {
-                      FrameLayout progressBar = (FrameLayout) mView.findViewById(R.id.status_list_progressbar);
-                      progressBar.setVisibility(View.GONE);
-                  }
-              }
-        );
-        */
         chatMessageList.setAdapter(chatMessageListAdapter);
 
+        compose = (EditText) mView.findViewById(R.id.chat_compose);
+
+        sendBox = (FrameLayout) mView.findViewById(R.id.chat_send_box);
+        sendBox.setOnClickListener(onClickSend);
 
         refreshChatMessages();
         EventBus.getDefault().register(this);
 
         return mView;
     }
-
-
 
     @Override
     public void onDestroy() {
@@ -100,30 +106,30 @@ public class FragmentChatMessage extends Fragment {
         super.onDestroy();
     }
 
-    public View.OnClickListener onFabClicked = new View.OnClickListener() {
+    public View.OnClickListener onClickSend = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            Intent compose = new Intent(getActivity(), PopupComposeChat.class );
-            startActivity(compose);
+            try {
+                String message = compose.getText().toString();
+                if (message.equals(""))
+                    return;
+
+                Contact localContact = Contact.getLocalContact();
+                long now = (System.currentTimeMillis() / 1000L);
+                ChatMessage chatMessage = new ChatMessage(localContact, message, now, RumbleProtocol.protocolID);
+                chatMessage.setUserRead(true);
+
+                EventBus.getDefault().post(new UserComposeChatMessage(chatMessage));
+            } catch (Exception e) {
+                Log.e(TAG, "[!] " + e.getMessage());
+            } finally {
+                compose.setText("");
+                InputMethodManager imm = (InputMethodManager) RumbleApplication.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(compose.getWindowToken(), 0);
+            }
         }
     };
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.direct_message_list_menu, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_new_discussion:
-                Intent compose = new Intent(getActivity(), PopupComposeChat.class );
-                startActivity(compose);
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     public void refreshChatMessages() {
         ChatMessageDatabase.ChatMessageQueryOption options = new ChatMessageDatabase.ChatMessageQueryOption();

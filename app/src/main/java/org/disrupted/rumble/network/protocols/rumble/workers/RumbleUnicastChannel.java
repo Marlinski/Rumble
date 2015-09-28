@@ -221,9 +221,9 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT);
             }
         } catch (IOException silentlyCloseConnection) {
-            Log.d(TAG, silentlyCloseConnection.getMessage());
+            Log.d(TAG, ""+silentlyCloseConnection.getMessage());
         } catch (InputOutputStreamException silentlyCloseConnection) {
-            Log.d(TAG, silentlyCloseConnection.getMessage());
+            Log.d(TAG, ""+silentlyCloseConnection.getMessage());
         } catch (MalformedBlock e) {
             Log.d(TAG, "[!] malformed block: " + e.getMessage());
         }

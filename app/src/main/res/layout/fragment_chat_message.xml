@@ -45,4 +45,10 @@
         android:layout_weight="10">
     </ListView>
 
+
+    <include
+        android:id="@+id/chat_message_box"
+        layout="@layout/chat_message_input_box">
+    </include>
+
 </LinearLayout>

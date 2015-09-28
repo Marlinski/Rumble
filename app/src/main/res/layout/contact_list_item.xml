@@ -57,7 +57,7 @@
                 style="@style/Status.Info.Author"/>
 
             <TextView
-                android:id="@+id/contact_uid"
+                android:id="@+id/contact_last_met"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="left"
