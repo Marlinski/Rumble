@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "22.0.0"
+    buildToolsVersion "23.0.1"
     defaultConfig {
         applicationId 'org.disrupted.rumble'
         minSdkVersion 10
