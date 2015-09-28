@@ -92,9 +92,6 @@ public class FragmentGroupList extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_search_group:
-                //do something
-                return true;
             case R.id.action_scan_qrcode:
                 IntentIntegrator.initiateScan(getActivity());
                 return true;

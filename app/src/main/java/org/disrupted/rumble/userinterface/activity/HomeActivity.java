@@ -21,11 +21,10 @@ package org.disrupted.rumble.userinterface.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -63,7 +62,6 @@ public class HomeActivity extends AppCompatActivity {
     private static final String TAG = "HomeActivity";
     private CharSequence mTitle;
 
-    private ActionBar actionBar;
     private FragmentNavigationDrawer mNavigationDrawerFragment;
     private FragmentNetworkDrawer mNetworkDrawerFragment;
     public  SlidingMenu slidingMenu;
@@ -73,6 +71,7 @@ public class HomeActivity extends AppCompatActivity {
     private View notifStatus;
     private View notifChat;
     private boolean chatHasFocus;
+    private FloatingActionButton fab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,17 +106,21 @@ public class HomeActivity extends AppCompatActivity {
         }
         slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 
-        /* two tabs with notification icons */
-        notifStatus = renderTabView(this, R.drawable.ic_world);
-        notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
+        /* the floating action button */
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        /* populate the container */
         statusFragment = new FragmentStatusList();
         chatFragment = new FragmentChatMessage();
-
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, statusFragment)
                 .commit();
+        fab.setOnClickListener(((FragmentStatusList)statusFragment).onFabClicked);
         chatHasFocus = false;
 
+        /* two tabs with notification icons */
+        notifStatus = renderTabView(this, R.drawable.ic_world);
+        notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setCustomView(notifStatus));
         tabLayout.addTab(tabLayout.newTab().setCustomView(notifChat));
@@ -129,11 +132,13 @@ public class HomeActivity extends AppCompatActivity {
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.container, fragment)
                             .commit();
+                    fab.setOnClickListener(((FragmentStatusList)fragment).onFabClicked);
                     chatHasFocus = false;
                 } else {
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.container, fragment)
                             .commit();
+                    fab.setOnClickListener(((FragmentChatMessage)fragment).onFabClicked);
                     chatHasFocus = true;
                 }
             }

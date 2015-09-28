@@ -82,7 +82,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -136,6 +135,16 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         statusListAdapter.clean();
         super.onDestroy();
     }
+
+    public View.OnClickListener onFabClicked = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent compose = new Intent(getActivity(), PopupComposeStatus.class );
+            if(filter_gid != null)
+                compose.putExtra("GroupID",filter_gid);
+            startActivity(compose);
+        }
+    };
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {

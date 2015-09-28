@@ -81,10 +81,10 @@ public class GroupListAdapter extends BaseAdapter {
         LinearLayout title     = (LinearLayout) layout.findViewById(R.id.group_title);
         ImageView group_lock   = (ImageView)    layout.findViewById(R.id.group_lock_image);
         TextView  group_name   = (TextView)     layout.findViewById(R.id.group_name);
-        TextView  group_gid    = (TextView)     layout.findViewById(R.id.group_gid);
+        //TextView  group_gid    = (TextView)     layout.findViewById(R.id.group_gid);
         TextView  group_desc   = (TextView)     layout.findViewById(R.id.group_desc);
         //TextView  unread_messages  = (TextView)  layout.findViewById(R.id.group_unread_messages);
-        ImageView group_delete  = (ImageView)   layout.findViewById(R.id.group_delete);
+        //ImageView group_delete  = (ImageView)   layout.findViewById(R.id.group_delete);
         ImageView group_invite  = (ImageView)   layout.findViewById(R.id.group_invite);
 
         //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
@@ -98,7 +98,6 @@ public class GroupListAdapter extends BaseAdapter {
                     .into(group_lock);
 
         group_name.setText(groupList.get(i).getName());
-        group_gid.setText("Group ID: "+groupList.get(i).getGid());
         if(groupList.get(i).getDesc().equals(""))
             group_desc.setVisibility(View.GONE);
         else
@@ -176,13 +175,6 @@ public class GroupListAdapter extends BaseAdapter {
                     }
                 }
 
-            }
-        });
-
-        group_delete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                EventBus.getDefault().post(new UserDeleteGroup(gid));
             }
         });
 

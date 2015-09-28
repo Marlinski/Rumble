@@ -102,7 +102,9 @@ public class ContactDatabase extends Database  {
         ArrayList<Contact> ret = new ArrayList<Contact>();
         try {
             for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                ret.add(cursorToContact(cursor));
+                Contact contact = cursorToContact(cursor);
+                if(!contact.isLocal())
+                    ret.add(contact);
             }
         } finally {
             cursor.close();

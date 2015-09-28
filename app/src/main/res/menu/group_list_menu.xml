@@ -24,12 +24,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".HomeActivity" >
 
-    <item android:id="@+id/action_search_group"
-        android:title="@string/action_search"
-        android:icon="@drawable/ic_search_white_24dp"
-        android:orderInCategory="100"
-        app:showAsAction="always" />
-
     <item android:id="@+id/action_scan_qrcode"
         android:title="@string/action_scan_qrcode"
         android:icon="@drawable/ic_scan_qrcode"
@@ -38,7 +32,7 @@
 
     <item android:id="@+id/action_create_group"
         android:title="@string/action_create_group"
-        android:icon="@drawable/ic_group_add_white_24dp"
+        android:icon="@drawable/ic_add_white_24dp"
         android:orderInCategory="100"
         app:showAsAction="always" />
 

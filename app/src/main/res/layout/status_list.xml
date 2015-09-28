@@ -37,11 +37,6 @@
         android:clickable="false"
         android:listSelector="@android:color/transparent"/>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/white" />
-
     <FrameLayout
         android:id="@+id/status_list_progressbar"
         android:layout_width="match_parent"

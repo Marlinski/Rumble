@@ -28,10 +28,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.amulyakhare.textdrawable.TextDrawable;
+import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.activity.ContactListActivity;
 import org.disrupted.rumble.userinterface.activity.GroupListActivity;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
@@ -54,6 +61,8 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
     private ListView mFirstListView;
     private IconTextListAdapter mFirstListAdapter;
     List<IconTextItem> firstList;
+    Contact localContact;
+    private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
@@ -68,6 +77,20 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mDrawerFragmentLayout = (LinearLayout) inflater.inflate(R.layout.fragment_navigation_drawer, container, false);
 
+        /* set the header */
+        localContact = Contact.getLocalContact();
+        RelativeLayout header = (RelativeLayout) mDrawerFragmentLayout.findViewById(R.id.header);
+        TextView  user_name   = (TextView)  mDrawerFragmentLayout.findViewById(R.id.header_user_name);
+        TextView  user_id     = (TextView)  mDrawerFragmentLayout.findViewById(R.id.header_user_id);
+
+        user_name.setText(localContact.getName());
+        user_id.setText(localContact.getUid());
+        ColorGenerator generator = ColorGenerator.DEFAULT;
+        header.setBackgroundDrawable(
+                builder.build(localContact.getName().substring(0, 1),
+                        generator.getColor(localContact.getUid())));
+
+        /* set the navigation menu */
         Resources res = getActivity().getResources();
         mFirstListView   = (ListView) mDrawerFragmentLayout.findViewById(R.id.navigation_first_item_list);
         firstList = new LinkedList<IconTextItem>();

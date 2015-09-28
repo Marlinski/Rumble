@@ -100,6 +100,14 @@ public class FragmentChatMessage extends Fragment {
         super.onDestroy();
     }
 
+    public View.OnClickListener onFabClicked = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            Intent compose = new Intent(getActivity(), PopupComposeChat.class );
+            startActivity(compose);
+        }
+    };
+
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.direct_message_list_menu, menu);

@@ -133,7 +133,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:layout_marginBottom="10dp"
-                    android:src="@drawable/ic_group_add_white_24dp"/>
+                    android:src="@drawable/ic_add_white_24dp"/>
             </LinearLayout>
         </LinearLayout>
     </RelativeLayout>
