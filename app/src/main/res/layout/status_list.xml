@@ -19,8 +19,10 @@
   ~ along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
+    android:background="@color/grey_blue"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -75,6 +77,5 @@
             android:scrollingCache="false"
             android:animationCache="false" />
     </android.support.v4.widget.SwipeRefreshLayout>
-
 
 </LinearLayout>

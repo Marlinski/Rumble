@@ -17,18 +17,15 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
 import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
 import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
@@ -42,7 +39,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class SettingsActivity extends ActionBarActivity implements ListView.OnItemClickListener {
+public class SettingsActivity extends AppCompatActivity implements ListView.OnItemClickListener {
 
     private static final String TAG = "Settings";
 

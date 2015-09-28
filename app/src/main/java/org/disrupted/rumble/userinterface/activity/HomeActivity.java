@@ -21,11 +21,12 @@ package org.disrupted.rumble.userinterface.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -46,9 +47,7 @@ import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusDatabaseEvent;
-import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
-import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessage;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
@@ -59,7 +58,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class HomeActivity extends ActionBarActivity {
+public class HomeActivity extends AppCompatActivity {
 
     private static final String TAG = "HomeActivity";
     private CharSequence mTitle;
@@ -67,7 +66,7 @@ public class HomeActivity extends ActionBarActivity {
     private ActionBar actionBar;
     private FragmentNavigationDrawer mNavigationDrawerFragment;
     private FragmentNetworkDrawer mNetworkDrawerFragment;
-    public SlidingMenu slidingMenu;
+    public  SlidingMenu slidingMenu;
 
     private Fragment statusFragment;
     private Fragment chatFragment;
@@ -79,10 +78,9 @@ public class HomeActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.fragment_activity);
+        setContentView(R.layout.fragment_main);
 
         mTitle = getTitle();
-        actionBar = getSupportActionBar();
 
         /* sliding menu with both right and left drawer */
         slidingMenu = new SlidingMenu(this);
@@ -98,7 +96,7 @@ public class HomeActivity extends ActionBarActivity {
 
         if (savedInstanceState == null) {
             mNavigationDrawerFragment = new FragmentNavigationDrawer();
-            mNetworkDrawerFragment = new FragmentNetworkDrawer();
+            mNetworkDrawerFragment    = new FragmentNetworkDrawer();
             this.getSupportFragmentManager().beginTransaction()
                     .replace(R.id.navigation_drawer_frame, mNavigationDrawerFragment).commit();
             this.getSupportFragmentManager().beginTransaction()
@@ -109,25 +107,51 @@ public class HomeActivity extends ActionBarActivity {
         }
         slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 
-        /* three tabs with notification icons */
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        /* two tabs with notification icons */
         notifStatus = renderTabView(this, R.drawable.ic_world);
         notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
-
         statusFragment = new FragmentStatusList();
         chatFragment = new FragmentChatMessage();
-        actionBar.addTab(actionBar.newTab()
-                .setCustomView(notifStatus)
-                .setTabListener(new HomeTabListener(statusFragment)));
-        actionBar.addTab(actionBar.newTab()
-                .setCustomView(notifChat)
-                .setTabListener(new HomeTabListener(chatFragment)));
 
-        // hide the action bar
-        actionBar.setHomeButtonEnabled(false);
-        actionBar.setDisplayHomeAsUpEnabled(false);
-        actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayShowHomeEnabled(false);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, statusFragment)
+                .commit();
+        chatHasFocus = false;
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        tabLayout.addTab(tabLayout.newTab().setCustomView(notifStatus));
+        tabLayout.addTab(tabLayout.newTab().setCustomView(notifChat));
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                Fragment fragment = chatHasFocus ? statusFragment : chatFragment;
+                if(chatHasFocus) {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.container, fragment)
+                            .commit();
+                    chatHasFocus = false;
+                } else {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.container, fragment)
+                            .commit();
+                    chatHasFocus = true;
+                }
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                Fragment fragment = chatHasFocus ? chatFragment : statusFragment;
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                fragmentManager.beginTransaction()
+                        .remove(fragment)
+                        .commit();
+            }
+        });
+        tabLayout.setSelectedTabIndicatorHeight(10);
 
         // for notification
         refreshStatusNotifications();
@@ -167,44 +191,6 @@ public class HomeActivity extends ActionBarActivity {
             case BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE:
                 mNetworkDrawerFragment.manageBTCode(requestCode, resultCode, data);
                 break;
-        }
-    }
-
-    /*
-     * TABS + Notification management
-     */
-    private class HomeTabListener implements ActionBar.TabListener {
-
-        private Fragment fragment;
-
-        public HomeTabListener(Fragment fragment) {
-            this.fragment = fragment;
-        }
-
-        @Override
-        public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-            if (fragment != null) {
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.container, fragment)
-                        .commit();
-
-                if(fragment instanceof FragmentChatMessage)
-                    chatHasFocus = true;
-                else
-                    chatHasFocus = false;
-            }
-        }
-
-        @Override
-        public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.beginTransaction()
-                    .remove(fragment)
-                    .commit();
-        }
-
-        @Override
-        public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
         }
     }
 

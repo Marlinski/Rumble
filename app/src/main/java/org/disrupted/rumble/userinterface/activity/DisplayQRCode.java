@@ -25,6 +25,7 @@ import android.graphics.drawable.Drawable;
 import android.media.Image;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -35,7 +36,7 @@ import org.disrupted.rumble.R;
 /**
  * @author Marlinski
  */
-public class DisplayQRCode extends ActionBarActivity {
+public class DisplayQRCode extends AppCompatActivity {
 
     Bitmap bitmap;
 

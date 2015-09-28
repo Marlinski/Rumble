@@ -25,6 +25,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -39,7 +40,7 @@ import java.io.IOException;
 /**
  * @author Marlinski
  */
-public class DisplayImage extends ActionBarActivity {
+public class DisplayImage extends AppCompatActivity {
 
 
     @Override

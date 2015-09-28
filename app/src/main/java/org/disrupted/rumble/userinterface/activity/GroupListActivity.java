@@ -21,7 +21,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
@@ -42,7 +42,7 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class GroupListActivity extends ActionBarActivity {
+public class GroupListActivity extends AppCompatActivity {
 
     private static final String TAG = "GroupsActivity";
 

@@ -20,7 +20,7 @@ package org.disrupted.rumble.userinterface.activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 
 import org.disrupted.rumble.R;
@@ -29,7 +29,7 @@ import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 /**
  * @author Marlinski
  */
-public class ContactDetailActivity extends ActionBarActivity {
+public class ContactDetailActivity extends AppCompatActivity {
 
 
     private static final String TAG = "ContactDetailActivity";

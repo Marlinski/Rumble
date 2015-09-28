@@ -27,7 +27,6 @@ import android.preference.PreferenceManager;
 import android.view.Window;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.network.NetworkCoordinator;
 
 /**
  * @author Marlinski
