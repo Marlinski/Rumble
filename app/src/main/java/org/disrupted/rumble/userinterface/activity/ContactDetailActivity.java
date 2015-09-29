@@ -20,7 +20,6 @@ package org.disrupted.rumble.userinterface.activity;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -43,9 +42,6 @@ public class ContactDetailActivity extends AppCompatActivity {
     private String contactName;
     private String contactUID;
 
-    private Toolbar toolbar;
-    private CollapsingToolbarLayout collapsingToolbar;
-    private ImageView header;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     @Override
@@ -57,32 +53,30 @@ public class ContactDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.contact_detail);
+
         Bundle args = getIntent().getExtras();
         String contactName = args.getString("ContactName");
         String contactUID  = args.getString("ContactID");
 
-        /*
-        setContentView(R.layout.fragment_activity);
-        setTitle(name);
-
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayHomeAsUpEnabled(true);
-        actionBar.setDisplayShowHomeEnabled(false);
-        */
-        setContentView(R.layout.contact_detail_collapsing_header);
-
-        header = (ImageView) findViewById(R.id.header_background);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
-        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
-
-        setSupportActionBar(toolbar);
+        /* set the toolbar */
+        CollapsingToolbarLayout collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
         collapsingToolbar.setTitle(contactName);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        /* set the background header */
+        ImageView header = (ImageView) findViewById(R.id.header_background);
         ColorGenerator generator = ColorGenerator.DEFAULT;
         header.setBackgroundDrawable(
                 builder.build(contactName.substring(0, 1),
                 generator.getColor(contactUID)));
 
+        /* populate the container */
         Fragment fragmentGroupList = new FragmentStatusList();
+        args.putBoolean("noCoordinatorLayout",true);
         fragmentGroupList.setArguments(args);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, fragmentGroupList)

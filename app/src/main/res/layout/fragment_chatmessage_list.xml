@@ -19,18 +19,18 @@
 ~ along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/grey_blue"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/chat_message_list"
-        android:stackFromBottom="true"
         android:layout_width="match_parent"
         android:divider="@null"
-        android:dividerHeight="5dp"
         android:paddingBottom="5dp"
         android:paddingTop="5dp"
         android:clipToPadding="false"
@@ -42,13 +42,12 @@
         android:scrollingCache="false"
         android:animationCache="false"
         android:layout_height="0dp"
-        android:layout_weight="10">
-    </ListView>
-
+        android:layout_weight="10"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
     <include
         android:id="@+id/chat_message_box"
-        layout="@layout/chat_message_input_box">
+        layout="@layout/chatmessage_input_box">
     </include>
 
 </LinearLayout>

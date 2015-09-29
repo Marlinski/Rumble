@@ -20,22 +20,18 @@
 package org.disrupted.rumble.userinterface.fragments;
 
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ListView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
@@ -48,12 +44,9 @@ import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
-import org.disrupted.rumble.userinterface.activity.PopupComposeChat;
-import org.disrupted.rumble.userinterface.adapter.ChatMessageListAdapter;
+import org.disrupted.rumble.userinterface.adapter.ChatMessageRecyclerAdapter;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
-import org.disrupted.rumble.util.FileUtil;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import de.greenrobot.event.EventBus;
@@ -61,14 +54,14 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class FragmentChatMessage extends Fragment {
+public class FragmentChatMessageList extends Fragment {
 
     private static final String TAG = "FragmentChatMessage";
 
     private static View mView;
 
-    private ListView chatMessageList;
-    private ChatMessageListAdapter chatMessageListAdapter;
+    private RecyclerView mRecyclerView;
+    private ChatMessageRecyclerAdapter messageRecyclerAdapter;
 
     private FrameLayout sendBox;
     private EditText    compose;
@@ -81,11 +74,12 @@ public class FragmentChatMessage extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.fragment_chat_message, container, false);
+        mView = inflater.inflate(R.layout.fragment_chatmessage_list, container, false);
 
-        chatMessageList = (ListView) mView.findViewById(R.id.chat_message_list);
-        chatMessageListAdapter = new ChatMessageListAdapter(getActivity(), this);
-        chatMessageList.setAdapter(chatMessageListAdapter);
+        mRecyclerView = (RecyclerView) mView.findViewById(R.id.chat_message_list);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        messageRecyclerAdapter = new ChatMessageRecyclerAdapter(getActivity(), this);
+        mRecyclerView.setAdapter(messageRecyclerAdapter);
 
         compose = (EditText) mView.findViewById(R.id.chat_compose);
 
@@ -102,7 +96,7 @@ public class FragmentChatMessage extends Fragment {
     public void onDestroy() {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
-        chatMessageListAdapter.clean();
+        messageRecyclerAdapter.clean();
         super.onDestroy();
     }
 
@@ -146,8 +140,11 @@ public class FragmentChatMessage extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    chatMessageListAdapter.swap(answer);
-                    chatMessageListAdapter.notifyDataSetChanged();
+                    messageRecyclerAdapter = new ChatMessageRecyclerAdapter(getActivity(),
+                            FragmentChatMessageList.this);
+                    messageRecyclerAdapter.swap(answer);
+                    mRecyclerView.setAdapter(messageRecyclerAdapter);
+                    mRecyclerView.smoothScrollToPosition(messageRecyclerAdapter.getItemCount());
                     //if (getActivity() != null)
                     //    ((HomeActivity)getActivity()).refreshNotifications();
                 }
@@ -155,12 +152,16 @@ public class FragmentChatMessage extends Fragment {
         }
     };
 
-    public void onEvent(ChatMessageInsertedEvent event) {
+    public void onEvent(final ChatMessageInsertedEvent event) {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(((HomeActivity)getActivity()).isChatHasFocus())
-                    refreshChatMessages();
+                final ChatMessage message = event.chatMessage;
+                if(((HomeActivity)getActivity()).isChatHasFocus()) {
+                    int pos = messageRecyclerAdapter.addChatMessage(message);
+                    messageRecyclerAdapter.notifyItemInserted(pos);
+                    mRecyclerView.smoothScrollToPosition(pos);
+                }
             }
         });
     }

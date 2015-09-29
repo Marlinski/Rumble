@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/status_item_box"
-            android:background="@drawable/status_shape">
+            android:background="@drawable/status_shape_read">
 
             <LinearLayout
                 android:id="@+id/status_item_info"
@@ -69,7 +69,7 @@
                         android:layout_gravity="left"
                         style="@style/Status.Info.Author"/>
                     <TextView
-                        android:id="@+id/status_group_name"
+                        android:id="@+id/status_item_group_name"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="5dp"

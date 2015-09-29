@@ -125,7 +125,6 @@ public class PushService implements ServiceLayer {
                 return;
             }
             dispatcher = new MessageDispatcher(event.contact);
-            contactToDispatcher.put(event.contact, dispatcher);
             dispatcher.startDispatcher();
         }
     }
@@ -140,7 +139,6 @@ public class PushService implements ServiceLayer {
             if (dispatcher == null)
                 return;
             dispatcher.stopDispatcher();
-            contactToDispatcher.remove(event.contact);
         }
     }
 
@@ -223,6 +221,7 @@ public class PushService implements ServiceLayer {
             this.max = null;
             this.threshold = 0;
             statuses = new ArrayList<Integer>();
+            contactToDispatcher.put(contact, this);
         }
 
         public void startDispatcher() {
@@ -236,6 +235,7 @@ public class PushService implements ServiceLayer {
             this.interrupt();
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
+            contactToDispatcher.remove(contact);
         }
 
         private void updateStatusList() {
@@ -283,6 +283,10 @@ public class PushService implements ServiceLayer {
                         // choose a channel to execute the command
                         ProtocolChannel channel = PushService.networkCoordinator.neighbourManager.chooseBestChannel(contact);
                         this.tmpchannel = channel;
+                        if(this.tmpchannel == null) {
+                            // the contact must have disconnected
+                            stopDispatcher();
+                        }
 
                         // estimate the number of contact that will receive this status
                         Set<Contact> recipientList = this.tmpchannel.getRecipientList();

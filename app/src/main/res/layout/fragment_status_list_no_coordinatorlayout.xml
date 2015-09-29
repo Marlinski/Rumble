@@ -16,57 +16,49 @@
   ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
-<android.support.design.widget.CoordinatorLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/grey_blue"
     android:layout_width="match_parent"
-    android:fitsSystemWindows="true">
+    android:layout_height="match_parent">
 
-    <LinearLayout
+    <ListView android:id="@+id/filter_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/light_grey"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false"
+        android:listSelector="@android:color/transparent"/>
+
+    <android.support.v4.widget.SwipeRefreshLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:orientation="vertical"
-        android:background="@color/grey_blue"
+        android:id="@+id/swipe_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ListView android:id="@+id/filter_list"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/status_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/light_grey"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
+            android:layout_height="0dp"
+            android:stackFromBottom="false"
+            android:layout_weight="1"
+            android:background="@color/grey_blue"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:clipToPadding="false"
             android:focusable="false"
             android:focusableInTouchMode="false"
             android:clickable="false"
-            android:listSelector="@android:color/transparent"/>
-
-        <android.support.v4.widget.SwipeRefreshLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/swipe_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <android.support.v7.widget.RecyclerView
-                android:id="@+id/status_list"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:stackFromBottom="false"
-                android:layout_weight="1"
-                android:background="@color/grey_blue"
-                android:paddingBottom="5dp"
-                android:paddingTop="5dp"
-                android:clipToPadding="false"
-                android:focusable="false"
-                android:focusableInTouchMode="false"
-                android:clickable="false"
-                android:smoothScrollbar="true"
-                android:scrollingCache="false"
-                android:animationCache="false"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
-        </android.support.v4.widget.SwipeRefreshLayout>
-    </LinearLayout>
+            android:smoothScrollbar="true"
+            android:scrollingCache="false"
+            android:animationCache="false"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <android.support.design.widget.FloatingActionButton
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -84,4 +76,4 @@
         app:pressedTranslationZ="12dp"
         app:layout_behavior="org.disrupted.rumble.userinterface.misc.ScrollAwareFABBehavior"/>
 
-</android.support.design.widget.CoordinatorLayout>
+</LinearLayout>

@@ -18,7 +18,6 @@
 package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -42,6 +41,7 @@ import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.userinterface.activity.ContactDetailActivity;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
@@ -68,27 +68,48 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
     public class StatusHolder extends RecyclerView.ViewHolder {
 
+        ImageView avatarView;
+        TextView  authorView;
+        TextView  textView;
+        TextView  tocView;
+        TextView  toaView;
+        TextView  groupNameView;
+        ImageView attachedView;
+        ImageView moreView;
+        LinearLayout box;
+
         public StatusHolder(View itemView) {
             super(itemView);
+            avatarView    = (ImageView)itemView.findViewById(R.id.status_item_avatar);
+            authorView    = (TextView) itemView.findViewById(R.id.status_item_author);
+            textView      = (TextView) itemView.findViewById(R.id.status_item_body);
+            tocView       = (TextView) itemView.findViewById(R.id.status_item_created);
+            toaView       = (TextView) itemView.findViewById(R.id.status_item_received);
+            groupNameView = (TextView) itemView.findViewById(R.id.status_item_group_name);
+            attachedView  = (ImageView)itemView.findViewById(R.id.status_item_attached_image);
+            moreView      = (ImageView)itemView.findViewById(R.id.status_item_more_options);
+            box           = (LinearLayout)itemView.findViewById(R.id.status_item_box);
         }
 
         public void bindStatus(PushStatus status) {
-
-            ImageView avatarView    = (ImageView)itemView.findViewById(R.id.status_item_avatar);
-            TextView  authorView    = (TextView) itemView.findViewById(R.id.status_item_author);
-            TextView  textView      = (TextView) itemView.findViewById(R.id.status_item_body);
-            TextView  tocView       = (TextView) itemView.findViewById(R.id.status_item_created);
-            TextView  toaView       = (TextView) itemView.findViewById(R.id.status_item_received);
-            TextView  groupNameView = (TextView) itemView.findViewById(R.id.status_group_name);
-            ImageView attachedView  = (ImageView)itemView.findViewById(R.id.status_item_attached_image);
-            ImageView moreView      = (ImageView)itemView.findViewById(R.id.status_item_more_options);
-            LinearLayout box        = (LinearLayout)itemView.findViewById(R.id.status_item_box);
+            final String uid = status.getAuthor().getUid();
+            final String name= status.getAuthor().getName();
 
             // we draw the avatar
             ColorGenerator generator = ColorGenerator.DEFAULT;
             avatarView.setImageDrawable(
                     builder.build(status.getAuthor().getName().substring(0, 1),
                             generator.getColor(status.getAuthor().getUid())));
+            avatarView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent contactDetailActivity = new Intent(activity, ContactDetailActivity.class );
+                    contactDetailActivity.putExtra("ContactID",  uid);
+                    contactDetailActivity.putExtra("ContactName",name);
+                    activity.startActivity(contactDetailActivity);
+                    activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+                }
+            });
 
             // we draw the author field
             authorView.setText(status.getAuthor().getName());
@@ -96,7 +117,6 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
             toaView.setText(TimeUtil.timeElapsed(status.getTimeOfArrival()));
             groupNameView.setText(status.getGroup().getName());
             groupNameView.setTextColor(generator.getColor(status.getGroup().getGid()));
-
 
             // we draw the status (with clickable hashtag)
             if (status.getPost().length() == 0) {
@@ -150,18 +170,20 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
                         attachedView.setVisibility(View.VISIBLE);
 
-                        final String name =  status.getFileName();
+                        final String filename =  status.getFileName();
                         attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                Log.d(TAG, "trying to open: " + name);
+                                Log.d(TAG, "trying to open: " + filename);
                                 Intent intent = new Intent(activity, DisplayImage.class);
-                                intent.putExtra("IMAGE_NAME", name);
+                                intent.putExtra("IMAGE_NAME", filename);
                                 activity.startActivity(intent);
                             }
                         });
                     } catch (IOException ignore) {
                     }
+                } else {
+                    attachedView.setVisibility(View.GONE);
                 }
 
                 moreView.setOnClickListener(new PopupMenuListener());
@@ -174,6 +196,12 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                     if (!status.hasUserReadAlready()) {
                         status.setUserRead(true);
                         EventBus.getDefault().post(new UserReadStatus(status));
+                    }
+                } else {
+                    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
+                        box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_read));
+                    } else {
+                        box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_read));
                     }
                 }
             }
@@ -216,7 +244,6 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
     private FragmentStatusList fragment;
     private Activity activity;
-    private LayoutInflater inflater;
     private List<PushStatus> statuses;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
@@ -224,7 +251,6 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
     public StatusRecyclerAdapter(Activity activity, FragmentStatusList fragment) {
         this.activity = activity;
         this.fragment = fragment;
-        this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.statuses = new ArrayList<PushStatus>();
     }
 
@@ -257,14 +283,13 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
     public void clean() {
         swap(null);
-        inflater = null;
         activity = null;
         fragment = null;
     }
 
     public int addStatus(PushStatus status) {
         statuses.add(0,status);
-        return statuses.indexOf(status);
+        return 0;
     }
     public int deleteStatus(String uuid) {
         Iterator<PushStatus> it = statuses.iterator();

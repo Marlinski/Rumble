@@ -68,7 +68,7 @@ public class FragmentContactList  extends Fragment {
             this.filter_gid = args.getString("GroupID");
         }
 
-        mView = inflater.inflate(R.layout.fragment_contact_recycler, container, false);
+        mView = inflater.inflate(R.layout.fragment_contact_list, container, false);
         mRecyclerView = (RecyclerView) mView.findViewById(R.id.contact_list);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 

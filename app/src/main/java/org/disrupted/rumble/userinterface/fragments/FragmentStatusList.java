@@ -22,6 +22,7 @@ package org.disrupted.rumble.userinterface.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
@@ -37,7 +38,6 @@ import android.widget.ListView;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
-import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.events.StatusUpdatedEvent;
@@ -68,6 +68,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private StatusRecyclerAdapter statusRecyclerAdapter;
     private FilterListAdapter  filterListAdapter;
     private ListView filters;
+    private FloatingActionButton composeFAB;
+    private boolean noCoordinatorLayout;
 
     private String   filter_gid = null;
     private String   filter_uid = null;
@@ -89,9 +91,15 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         if(args != null) {
             this.filter_gid = args.getString("GroupID");
             this.filter_uid = args.getString("ContactID");
+            this.noCoordinatorLayout = args.getBoolean("noCoordinatorLayout");
+
         }
 
-        mView = inflater.inflate(R.layout.fragment_status_list, container, false);
+        if(noCoordinatorLayout) {
+            mView = inflater.inflate(R.layout.fragment_status_list_no_coordinatorlayout, container, false);
+        } else {
+            mView = inflater.inflate(R.layout.fragment_status_list, container, false);
+        }
 
         // the filters
         filters = (ListView) (mView.findViewById(R.id.filter_list));
@@ -112,6 +120,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(), this);
         mRecyclerView.setAdapter(statusRecyclerAdapter);
+
+        // the compose button
+        composeFAB = (FloatingActionButton) mView.findViewById(R.id.compose_fab);
+        composeFAB.setOnClickListener(onFabClicked);
 
         refreshStatuses();
         EventBus.getDefault().register(this);
@@ -192,12 +204,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    statusRecyclerAdapter.clean();
-                    statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(),
-                            FragmentStatusList.this);
                     statusRecyclerAdapter.swap(answer);
-                    mRecyclerView.setAdapter(statusRecyclerAdapter);
-
+                    statusRecyclerAdapter.notifyDataSetChanged();
                     swipeLayout.setRefreshing(false);
 
                     if (getActivity() != null) {
