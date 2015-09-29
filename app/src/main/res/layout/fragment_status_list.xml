@@ -21,6 +21,7 @@
 
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:background="@color/grey_blue"
     android:layout_width="match_parent"
@@ -37,6 +38,7 @@
         android:clickable="false"
         android:listSelector="@android:color/transparent"/>
 
+    <!--
     <FrameLayout
         android:id="@+id/status_list_progressbar"
         android:layout_width="match_parent"
@@ -48,20 +50,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
     </FrameLayout>
+    -->
 
     <android.support.v4.widget.SwipeRefreshLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/swipe_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <ListView android:id="@+id/status_list"
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/status_list"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:stackFromBottom="false"
             android:layout_weight="1"
             android:background="@color/grey_blue"
-            android:divider="@null"
-            android:dividerHeight="5dp"
             android:paddingBottom="5dp"
             android:paddingTop="5dp"
             android:clipToPadding="false"
@@ -70,7 +73,8 @@
             android:clickable="false"
             android:smoothScrollbar="true"
             android:scrollingCache="false"
-            android:animationCache="false" />
+            android:animationCache="false"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
     </android.support.v4.widget.SwipeRefreshLayout>
 
 </LinearLayout>

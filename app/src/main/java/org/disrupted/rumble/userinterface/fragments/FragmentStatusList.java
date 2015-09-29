@@ -19,22 +19,19 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
-import android.app.ActionBar;
 import android.content.Intent;
-import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
@@ -48,9 +45,9 @@ import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.PopupComposeStatus;
 import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
-import org.disrupted.rumble.userinterface.adapter.StatusListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.userinterface.adapter.StatusRecyclerAdapter;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
 import java.util.ArrayList;
@@ -66,9 +63,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private static final String TAG = "FragmentStatusList";
 
     private View mView;
-    private ListView statusList;
+    private RecyclerView mRecyclerView;
     private SwipeRefreshLayout swipeLayout;
-    private StatusListAdapter  statusListAdapter;
+    private StatusRecyclerAdapter statusRecyclerAdapter;
     private FilterListAdapter  filterListAdapter;
     private ListView filters;
 
@@ -94,7 +91,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             this.filter_uid = args.getString("ContactID");
         }
 
-        mView = inflater.inflate(R.layout.status_list, container, false);
+        mView = inflater.inflate(R.layout.fragment_status_list, container, false);
 
         // the filters
         filters = (ListView) (mView.findViewById(R.id.filter_list));
@@ -111,16 +108,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         final int swipeDistance = Math.round(64 * density);
         swipeLayout.setProgressViewOffset(true, 10, 10+swipeDistance);
         */
-        statusList = (ListView) mView.findViewById(R.id.status_list);
-        statusListAdapter = new StatusListAdapter(getActivity(), this);
-        statusListAdapter.registerDataSetObserver(new DataSetObserver() {
-                  public void onChanged() {
-                      FrameLayout progressBar = (FrameLayout) mView.findViewById(R.id.status_list_progressbar);
-                      progressBar.setVisibility(View.GONE);
-                  }
-              }
-        );
-        statusList.setAdapter(statusListAdapter);
+        mRecyclerView = (RecyclerView) mView.findViewById(R.id.status_list);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(), this);
+        mRecyclerView.setAdapter(statusRecyclerAdapter);
 
         refreshStatuses();
         EventBus.getDefault().register(this);
@@ -132,7 +123,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     public void onDestroy() {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
-        statusListAdapter.clean();
+        statusRecyclerAdapter.clean();
         super.onDestroy();
     }
 
@@ -201,9 +192,14 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    statusListAdapter.swap(answer);
-                    statusListAdapter.notifyDataSetChanged();
+                    statusRecyclerAdapter.clean();
+                    statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(),
+                            FragmentStatusList.this);
+                    statusRecyclerAdapter.swap(answer);
+                    mRecyclerView.setAdapter(statusRecyclerAdapter);
+
                     swipeLayout.setRefreshing(false);
+
                     if (getActivity() != null) {
                         if(getActivity() instanceof HomeActivity)
                             ((HomeActivity) getActivity()).refreshChatNotifications();
@@ -257,8 +253,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                statusListAdapter.addStatus(message);
-                statusListAdapter.notifyDataSetChanged();
+                statusRecyclerAdapter.addStatus(message);
+                statusRecyclerAdapter.notifyItemInserted(0);
+                mRecyclerView.smoothScrollToPosition(0);
             }
         });
 
@@ -268,8 +265,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(statusListAdapter.deleteStatus(uuid))
-                    statusListAdapter.notifyDataSetChanged();
+            int pos = statusRecyclerAdapter.deleteStatus(uuid);
+            if(pos > 0)
+                statusRecyclerAdapter.notifyItemRemoved(pos);
             }
         });
     }
@@ -278,20 +276,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(statusListAdapter.updateStatus(message))
-                    statusListAdapter.notifyDataSetChanged();
+                //if(statusRecyclerAdapter.updateStatus(message))
+                //    statusRecyclerAdapter.notifyDataSetChanged();
             }
         });
-    }
-    public void onEvent(ContactTagInterestUpdatedEvent event) {
-        if (event.contact.isLocal()) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    filterListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
     }
 
 }

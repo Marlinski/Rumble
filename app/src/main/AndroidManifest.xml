@@ -128,6 +128,7 @@
 
         <activity
             android:name=".userinterface.activity.ContactDetailActivity"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />

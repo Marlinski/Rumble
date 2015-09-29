@@ -48,6 +48,10 @@
     <string name="status_more_option_save">Save</string>
     <string name="status_more_option_delete">Delete</string>
 
+    <string name="contact_is_local">local contact</string>
+    <string name="contact_has_never_been_met">contact never met</string>
+    <string name="contact_last_met">last met:</string>
+
     <string name="action_settings">Settings</string>
     <string name="action_search">Filter</string>
     <string name="action_compose">Compose</string>
@@ -92,7 +96,7 @@
     <string name="months_ago">months ago</string>
     <string name="year_ago">a year ago</string>
     <string name="years_ago">years ago</string>
-    <string name="too_old">ooooooold</string>
+    <string name="too_old">it\'s been a while</string>
 
     <string name="filter_not_subscribed">not subscribed</string>
     <string name="filter_subscribed">subscribed</string>

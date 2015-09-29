@@ -18,10 +18,16 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
+import android.widget.ImageView;
+
+import com.amulyakhare.textdrawable.TextDrawable;
+import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
@@ -34,6 +40,14 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "ContactDetailActivity";
 
+    private String contactName;
+    private String contactUID;
+
+    private Toolbar toolbar;
+    private CollapsingToolbarLayout collapsingToolbar;
+    private ImageView header;
+    private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -44,20 +58,36 @@ public class ContactDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Bundle args = getIntent().getExtras();
-        String name = args.getString("ContactName");
+        String contactName = args.getString("ContactName");
+        String contactUID  = args.getString("ContactID");
 
+        /*
         setContentView(R.layout.fragment_activity);
         setTitle(name);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(false);
+        */
+        setContentView(R.layout.contact_detail_collapsing_header);
+
+        header = (ImageView) findViewById(R.id.header_background);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        collapsingToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsing_toolbar);
+
+        setSupportActionBar(toolbar);
+        collapsingToolbar.setTitle(contactName);
+        ColorGenerator generator = ColorGenerator.DEFAULT;
+        header.setBackgroundDrawable(
+                builder.build(contactName.substring(0, 1),
+                generator.getColor(contactUID)));
 
         Fragment fragmentGroupList = new FragmentStatusList();
         fragmentGroupList.setArguments(args);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container, fragmentGroupList)
                 .commit();
+
     }
 
     @Override

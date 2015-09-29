@@ -230,9 +230,7 @@ public class ContactDatabase extends Database  {
         try {
             ArrayList<Contact> ret = new ArrayList<Contact>();
             for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                Contact contact = cursorToContact(cursor);
-                if(!contact.isLocal())
-                    ret.add(contact);
+                ret.add(cursorToContact(cursor));
             }
             return ret;
         } finally {

@@ -20,11 +20,12 @@ package org.disrupted.rumble.userinterface.fragments;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.ContactDatabase;
@@ -33,7 +34,7 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ContactDeletedEvent;
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.userinterface.adapter.ContactListAdapter;
+import org.disrupted.rumble.userinterface.adapter.ContactRecyclerAdapter;
 
 import java.util.ArrayList;
 
@@ -48,8 +49,8 @@ public class FragmentContactList  extends Fragment {
 
 
     private View mView;
-    private ListView contactList;
-    private ContactListAdapter contactListAdapter;
+    private RecyclerView mRecyclerView;
+    private ContactRecyclerAdapter contactRecyclerAdapter;
     private String   filter_gid = null;
 
     @Override
@@ -67,10 +68,12 @@ public class FragmentContactList  extends Fragment {
             this.filter_gid = args.getString("GroupID");
         }
 
-        mView = inflater.inflate(R.layout.fragment_group_list, container, false);
-        contactList = (ListView) mView.findViewById(R.id.group_list);
-        contactListAdapter = new ContactListAdapter(getActivity());
-        contactList.setAdapter(contactListAdapter);
+        mView = inflater.inflate(R.layout.fragment_contact_recycler, container, false);
+        mRecyclerView = (RecyclerView) mView.findViewById(R.id.contact_list);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        contactRecyclerAdapter = new ContactRecyclerAdapter(getActivity());
+        mRecyclerView.setAdapter(contactRecyclerAdapter);
         EventBus.getDefault().register(this);
         getContactList();
         return mView;
@@ -114,7 +117,7 @@ public class FragmentContactList  extends Fragment {
                     @Override
                     public void run() {
                         ArrayList<Contact> answer = (ArrayList<Contact>)(result);
-                        contactListAdapter.swap(answer);
+                        contactRecyclerAdapter.swap(answer);
                     }
                 }
             );

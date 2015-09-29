@@ -186,7 +186,7 @@ public class BlockContact extends Block {
                 readleft -= (Entry.HEADER_SIZE+entry.getEntrySize());
             }
 
-            tempcontact.lastMet(System.currentTimeMillis());
+            tempcontact.lastMet(System.currentTimeMillis() / 1000L);
             timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new ContactInformationReceived(
                             tempcontact,
