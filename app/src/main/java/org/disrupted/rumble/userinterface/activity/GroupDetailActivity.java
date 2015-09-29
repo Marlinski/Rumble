@@ -18,12 +18,17 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.userinterface.fragments.FragmentContactList;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 /**
@@ -32,6 +37,11 @@ import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 public class GroupDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "GroupStatusActivity";
+
+    private FloatingActionButton fab;
+    private boolean message_has_focus;
+    FragmentStatusList  statusFragment;
+    FragmentContactList contactFragment;
 
     @Override
     protected void onDestroy() {
@@ -45,18 +55,67 @@ public class GroupDetailActivity extends AppCompatActivity {
         Bundle args = getIntent().getExtras();
         String name = args.getString("GroupName");
 
-        setContentView(R.layout.fragment_activity);
+        setContentView(R.layout.fragment_group_detail);
         setTitle(name);
 
         ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(false);
 
-        Fragment fragmentGroupList = new FragmentStatusList();
-        fragmentGroupList.setArguments(args);
+
+        /* create the two fragment that will be displayed on tab */
+        statusFragment  = new FragmentStatusList();
+        contactFragment = new FragmentContactList();
+        statusFragment.setArguments(args);
+        contactFragment.setArguments(args);
+
+        /* populate the first tab */
         getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragmentGroupList)
+                .replace(R.id.container, statusFragment)
                 .commit();
+        message_has_focus = true;
+
+        /* the floating action button */
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(((FragmentStatusList)statusFragment).onFabClicked);
+
+        /* the tab layout */
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.group_detail_tab_message));
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.group_detail_tab_members));
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                Fragment fragment = message_has_focus ? contactFragment : statusFragment;
+                if (message_has_focus) {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.container, fragment)
+                            .commit();
+                    fab.setVisibility(View.GONE);
+                    message_has_focus = false;
+                } else {
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.container, fragment)
+                            .commit();
+                    fab.setVisibility(View.VISIBLE);
+                    message_has_focus = true;
+                }
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                Fragment fragment = message_has_focus ? statusFragment : contactFragment;
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                fragmentManager.beginTransaction()
+                        .remove(fragment)
+                        .commit();
+            }
+        });
+        tabLayout.setSelectedTabIndicatorHeight(10);
     }
 
     @Override

@@ -486,9 +486,11 @@ public class PushService implements ServiceLayer {
             }
         }
         public void onEvent(StatusInsertedEvent event) {
-            PushStatus message = new PushStatus(event.status);
-            add(message);
-            message.discard();
+            if(!event.status.getAuthor().equals(this.contact)) {
+                PushStatus message = new PushStatus(event.status);
+                add(message);
+                message.discard();
+            }
         }
 
         /*

@@ -118,9 +118,10 @@ public class PushStatusDatabase extends Database {
             TIME_OF_ARRIVAL
         }
 
+        public long         filterFlags;
+
         public boolean      read;
         public boolean      like;
-        public long         filterFlags;
         public Set<String>  hashtagFilters;
         public Set<String>  groupIDFilters;
         public int          hopLimit;
@@ -151,7 +152,7 @@ public class PushStatusDatabase extends Database {
     }
 
     /*
-     * General querying with versatil options
+     * General querying with options
      */
     public boolean getStatuses(final StatusQueryOption options, DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
@@ -308,11 +309,11 @@ public class PushStatusDatabase extends Database {
         if (options.filterFlags > 0)
             query.append(" ) ");
 
-        /* group by if necessary */
+        /* 4th: group by if necessary */
         if (groupby)
             query.append(" GROUP BY ps." + PushStatusDatabase.ID);
 
-        /* ordering as requested */
+        /* 5th: ordering as requested */
         if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
             switch (options.order_by) {
                 case TIME_OF_CREATION:
@@ -324,7 +325,7 @@ public class PushStatusDatabase extends Database {
             }
         }
 
-        /* limiting the number of answer */
+        /* 6th: limiting the number of answer */
         if(options.answerLimit > 0) {
             query.append(" LIMIT ? ");
             argumentList.add(Integer.toString(options.answerLimit));

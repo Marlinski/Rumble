@@ -30,7 +30,7 @@
 
     <include
         android:id="@+id/header"
-        layout="@layout/header_layout">
+        layout="@layout/navigation_drawer_header">
     </include>
 
     <ListView

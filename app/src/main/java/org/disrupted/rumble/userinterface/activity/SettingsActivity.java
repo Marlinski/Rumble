@@ -96,7 +96,7 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
         int id = item.getItemId();
         if (id==android.R.id.home) {
             finish();
-            //overridePendingTransition(0, R.anim.right_slide_out);
+            overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
         }
         return true;
     }
@@ -104,6 +104,6 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
     @Override
     public void onBackPressed() {
         finish();
-        //overridePendingTransition(0, R.anim.right_slide_out);
+        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
     }
 }

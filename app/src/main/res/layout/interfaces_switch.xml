@@ -25,17 +25,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/menu_interfaces_title"
+        android:visibility="gone"
         style="@style/Drawer.SectionTitle"/>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
+        android:visibility="gone"
         android:layout_alignParentBottom="true"
         android:background="#AAAAAA" ></View>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:gravity="center_vertical"
         android:background="#ffeeeeee"
         android:orientation="vertical">

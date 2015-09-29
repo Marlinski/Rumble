@@ -34,6 +34,7 @@ import org.disrupted.rumble.database.objects.Interface;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -68,6 +69,39 @@ public class ContactDatabase extends Database  {
                  + "UNIQUE( " + UID + " ) "
                  + " );";
 
+    public static class StatusQueryOption {
+        public static final long FILTER_GROUP  = 0x0001;
+        public static final long FILTER_MET    = 0x0002;
+        public static final long FILTER_FRIEND = 0x0004;
+        public static final long FILTER_LOCAL  = 0x0008;
+
+        public enum ORDER_BY {
+            NO_ORDERING,
+            LAST_TIME_MET
+        }
+
+        public long         filterFlags;
+
+        public String   gid;
+        public boolean  met;
+        public boolean  friend;
+        public boolean  local;
+        public int      answerLimit;
+        public ORDER_BY order_by;
+
+        public StatusQueryOption() {
+            filterFlags = 0x00;
+            gid         = null;
+            met = false;
+            friend = false;
+            local = false;
+            answerLimit = 0;
+            order_by = ORDER_BY.NO_ORDERING;
+        }
+    }
+
+
+
     public ContactDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }
@@ -87,31 +121,123 @@ public class ContactDatabase extends Database  {
         }
     }
 
-    public boolean getContacts(DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getContacts(final StatusQueryOption options,DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
                     public Object read() {
-                        return getContacts();
+                        return getContacts(options);
                     }
                 }, callback);
     }
-    private ArrayList<Contact> getContacts() {
+    private ArrayList<Contact> getContacts(StatusQueryOption options) {
+        if(options == null)
+            options = new StatusQueryOption();
+
+        /* 1st:  configure what the query will return */
+        String select = " c.* ";
+
+        StringBuilder query = new StringBuilder(
+                "SELECT "+select+" FROM "+ ContactDatabase.TABLE_NAME+" c"
+        );
+
+        boolean groupby = false;
+        boolean firstwhere = true;
+        List<String> argumentList = new ArrayList<String>();
+
+        /* 2nd:  Join The tables as needed */
+        boolean groupJoined = false;
+        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.gid != null)) {
+            query.append(
+                    " JOIN " + ContactGroupDatabase.TABLE_NAME + " cg" +
+                    " ON c." + ContactDatabase.ID + " = cg." + ContactGroupDatabase.UDBID +
+                    " JOIN " + GroupDatabase.TABLE_NAME + " g" +
+                    " ON g." + GroupDatabase.ID + " = cg." + ContactGroupDatabase.GDBID);
+            groupJoined = true;
+        }
+
+        /* 3rd:  Add the constraints */
+        if (options.filterFlags > 0)
+            query.append(" WHERE ( ");
+
+        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.gid != null)) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" g."+GroupDatabase.GID +" = ? ");
+            argumentList.add(options.gid);
+            groupby = true;
+        }
+        if((options.filterFlags & StatusQueryOption.FILTER_MET) == StatusQueryOption.FILTER_MET) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            if(options.met)
+                query.append(" c."+ContactDatabase.LAST_MET +" > 0 ");
+            else
+                query.append(" c."+ContactDatabase.LAST_MET +" = 0 ");
+        }
+        if((options.filterFlags & StatusQueryOption.FILTER_FRIEND) == StatusQueryOption.FILTER_FRIEND) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            if(options.friend)
+                query.append(" c."+ContactDatabase.TRUSTNESS +" = 1 ");
+            else
+                query.append(" c."+ContactDatabase.TRUSTNESS +" = 0 ");
+        }
+        if((options.filterFlags & StatusQueryOption.FILTER_LOCAL) == StatusQueryOption.FILTER_LOCAL) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            if(options.local)
+                query.append(" c."+ContactDatabase.LOCALUSER +" = 1 ");
+            else
+                query.append(" c."+ContactDatabase.LOCALUSER +" = 0 ");
+        }
+        if (options.filterFlags > 0)
+            query.append(" ) ");
+
+        /* 4th: group by if necessary */
+        if (groupby)
+            query.append(" GROUP BY c." + ContactDatabase.ID);
+
+        /* 5th: ordering as requested */
+        if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
+            switch (options.order_by) {
+                case LAST_TIME_MET:
+                    query.append(" ORDER BY " + ContactDatabase.LAST_MET + " DESC ");
+                    break;
+            }
+        }
+
+        /* 6th: limiting the number of answer */
+        if(options.answerLimit > 0) {
+            query.append(" LIMIT ? ");
+            argumentList.add(Integer.toString(options.answerLimit));
+        }
+
+        Log.d(TAG, "[Q] query: "+query.toString());
+        for(String argument : argumentList) {
+            Log.d(TAG, argument+" ");
+        }
+
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
-        Cursor cursor = database.query(TABLE_NAME, null, null, null, null, null, null);
+        Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
         if(cursor == null)
             return null;
-        ArrayList<Contact> ret = new ArrayList<Contact>();
+
         try {
+            ArrayList<Contact> ret = new ArrayList<Contact>();
             for(cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                 Contact contact = cursorToContact(cursor);
                 if(!contact.isLocal())
                     ret.add(contact);
             }
+            return ret;
         } finally {
             cursor.close();
         }
-        return ret;
     }
 
     public Contact getContact(long contact_dbid) {

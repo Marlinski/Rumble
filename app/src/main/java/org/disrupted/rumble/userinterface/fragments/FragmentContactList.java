@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.ContactDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ContactDeletedEvent;
@@ -49,6 +50,7 @@ public class FragmentContactList  extends Fragment {
     private View mView;
     private ListView contactList;
     private ContactListAdapter contactListAdapter;
+    private String   filter_gid = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,6 +60,13 @@ public class FragmentContactList  extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+
+        Bundle args = getArguments();
+        if(args != null) {
+            this.filter_gid = args.getString("GroupID");
+        }
+
         mView = inflater.inflate(R.layout.fragment_group_list, container, false);
         contactList = (ListView) mView.findViewById(R.id.group_list);
         contactListAdapter = new ContactListAdapter(getActivity());
@@ -82,7 +91,19 @@ public class FragmentContactList  extends Fragment {
     }
 
     public void getContactList() {
-        DatabaseFactory.getContactDatabase(getActivity()).getContacts(onContactsLoaded);
+        ContactDatabase.StatusQueryOption options = new ContactDatabase.StatusQueryOption();
+        options.answerLimit = 20;
+        options.order_by = ContactDatabase.StatusQueryOption.ORDER_BY.LAST_TIME_MET;
+
+        if(filter_gid != null) {
+            options.filterFlags |= ContactDatabase.StatusQueryOption.FILTER_GROUP;
+            options.gid = filter_gid;
+        } else {
+            options.filterFlags |= ContactDatabase.StatusQueryOption.FILTER_LOCAL;
+            options.local = false;
+        }
+        DatabaseFactory.getContactDatabase(getActivity())
+                .getContacts(options, onContactsLoaded);
     }
     private DatabaseExecutor.ReadableQueryCallback onContactsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override

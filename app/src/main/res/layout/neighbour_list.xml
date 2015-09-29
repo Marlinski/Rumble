@@ -21,18 +21,28 @@
 
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/menu_neighbors_title"
-        style="@style/Drawer.SectionTitle"/>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
+        android:layout_height="46dp"
+        android:orientation="vertical"
+        android:background="#20ffffff"
+        android:layout_marginBottom="10dp"
         android:layout_alignParentBottom="true"
-        android:background="#AAAAAA" ></View>
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
+        <TextView
+            android:id="@+id/header_user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="16dp"
+            android:layout_gravity="center_vertical"
+            android:textColor="#ffffff"
+            android:text="@string/menu_neighbors_title"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/scanningProgressBar"

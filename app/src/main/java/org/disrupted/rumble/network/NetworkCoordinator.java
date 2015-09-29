@@ -223,14 +223,13 @@ public class NetworkCoordinator extends Service {
             protocol.protocolStart();
         }
 
-        // the user should be in control of what happens in the network
-        /*
+        // start the link layers
         for (LinkLayerAdapter adapter : adapters) {
             WorkerPool pool = workerPools.get(adapter.getLinkLayerIdentifier());
             pool.startPool();
             adapter.linkStart();
         }
-        */
+
         neighbourManager.startMonitoring();
     }
 
