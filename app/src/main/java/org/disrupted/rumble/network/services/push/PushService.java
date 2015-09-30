@@ -288,6 +288,7 @@ public class PushService implements ServiceLayer {
                         if(this.tmpchannel == null) {
                             // the contact must have disconnected
                             stopDispatcher();
+                            break;
                         }
 
                         // estimate the number of contact that will receive this status
