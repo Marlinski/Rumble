@@ -151,8 +151,12 @@ public class NeighbourManager {
             }
             entry.channels.add(event.worker);
 
+            /* we used to send a ContactConnected event if it matches a contact's known interface
+             * but it is actually not a good idea as a user can recreate its own profile
+             * and thus we might encounter the same macadress with different contact.
+             * the solution is to send a contactconnected event only when we receive a
+             * ContactInformationReceivedEvent
             try {
-                // throw ContactConnected event if any
                 Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                         .getContactsUsingMacAddress(event.neighbour.getLinkLayerMacAddress());
                 if (!contacts.isEmpty()) {
@@ -161,6 +165,7 @@ public class NeighbourManager {
                 }
             } catch(NetUtil.NoMacAddressException ignore){
             }
+            */
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
@@ -209,16 +214,6 @@ public class NeighbourManager {
     }
 
     public void onEvent(ContactInterfaceInserted event) {
-        NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
-        if(entry == null)
-            return;
-
-        for(ProtocolChannel channel : entry.channels) {
-            if(channel.equals(event.channel)) {
-                EventBus.getDefault().post(new ContactConnected(event.contact, channel));
-                return;
-            }
-        }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
@@ -413,22 +408,25 @@ public class NeighbourManager {
     }
 
     public ProtocolChannel chooseBestChannel(Contact contact) {
-        Set<Neighbour> neighbourList = getNeighbourList();
         ProtocolChannel ret = null;
-        Iterator<Neighbour> it = neighbourList.iterator();
-        while(it.hasNext() ){
-            Neighbour neighbour = it.next();
-            if(!(neighbour instanceof ContactNeighbour))
-                continue;
+        
+        synchronized (managerLock) {
+            Set<Neighbour> neighbourList = getNeighbourList();
+            Iterator<Neighbour> it = neighbourList.iterator();
+            while (it.hasNext()) {
+                Neighbour neighbour = it.next();
+                if (!(neighbour instanceof ContactNeighbour))
+                    continue;
 
-            if(((ContactNeighbour) neighbour).contact.equals(contact)) {
-                for(NeighbourEntry neighbourEntry : ((ContactNeighbour)neighbour).getNeighbourEntries()) {
-                    for(ProtocolChannel channel : neighbourEntry.channels) {
-                        if(ret == null)
-                            ret = channel;
-                        else
-                            ret = (ret.getChannelPriority() >
-                                    channel.getChannelPriority() ? ret : channel );
+                if (((ContactNeighbour) neighbour).contact.equals(contact)) {
+                    for (NeighbourEntry neighbourEntry : ((ContactNeighbour) neighbour).getNeighbourEntries()) {
+                        for (ProtocolChannel channel : neighbourEntry.channels) {
+                            if (ret == null)
+                                ret = channel;
+                            else
+                                ret = (ret.getChannelPriority() >
+                                        channel.getChannelPriority() ? ret : channel);
+                        }
                     }
                 }
             }

@@ -18,6 +18,7 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.ServiceLayer;
@@ -97,7 +98,7 @@ public class PushService implements ServiceLayer {
 
     /*
      * Whenever  a new neighbour  is connected, we send him  our contact description
-     * If the  other end do the same, that should  trigger a  ContactConnected event
+     * If the  other end do the same, that should  trigger a ContactConnected event
      * unless this contact has already been connected in which case this would allow
      * to add a new channel of communication
      */
@@ -114,14 +115,15 @@ public class PushService implements ServiceLayer {
      * Whenever a new contact is connected (i.e. we received a contact information packet),
      * we start the dispatcher that will send him the PushStatus according to its preferences.
      */
-    public void onEvent(ContactConnected event) {
-        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+    public void onEvent(ContactInformationReceived event) {
+        if(!event.channel.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
             return;
 
         synchronized (lock) {
             MessageDispatcher dispatcher = contactToDispatcher.get(event.contact);
             if (dispatcher != null) {
-                Log.d(TAG, "A dispatcher for this contact already exists");
+                Log.d(TAG, "A dispatcher contact "+event.contact.getName()
+                        +" ("+event.contact.getUid()+") already exists");
                 return;
             }
             dispatcher = new MessageDispatcher(event.contact);
