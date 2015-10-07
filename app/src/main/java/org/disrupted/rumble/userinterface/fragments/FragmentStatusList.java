@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 
+import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
@@ -44,9 +45,9 @@ import org.disrupted.rumble.database.events.StatusUpdatedEvent;
 import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.PopupComposeStatus;
-import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.userinterface.adapter.FilterListAdapter;
 import org.disrupted.rumble.userinterface.adapter.StatusRecyclerAdapter;
 import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 
@@ -66,17 +67,13 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout swipeLayout;
     private StatusRecyclerAdapter statusRecyclerAdapter;
-    private FilterListAdapter  filterListAdapter;
+    private FilterListAdapter filterListAdapter;
     private ListView filters;
     private FloatingActionButton composeFAB;
     private boolean noCoordinatorLayout;
 
     private String   filter_gid = null;
     private String   filter_uid = null;
-
-    public interface OnFilterClick {
-        public void onClick(String entry);
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -103,9 +100,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
         // the filters
         filters = (ListView) (mView.findViewById(R.id.filter_list));
-        filterListAdapter = new FilterListAdapter(getActivity());
+        filterListAdapter = new FilterListAdapter(getActivity(), this);
         filters.setAdapter(filterListAdapter);
         filters.setClickable(false);
+        filters.setVisibility(View.GONE);
 
         // the list of status
         swipeLayout = (SwipeRefreshLayout) mView.findViewById(R.id.swipe_container);
@@ -226,30 +224,24 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     /*
      * Hashtag List
      */
-    OnFilterClick onFilterClick = new OnFilterClick() {
-        @Override
-        public void onClick(String filter) {
-            filterListAdapter.deleteFilter(filter);
-            filterListAdapter.notifyDataSetChanged();
-            if(filterListAdapter.getCount() == 0)
-                filters.setVisibility(View.GONE);
-            refreshStatuses();
-        }
-    };
+    public void onFilterClickCallback(String filter) {
+        filterListAdapter.deleteFilter(filter);
+        if(filterListAdapter.getCount() == 0)
+            filters.setVisibility(View.GONE);
+        refreshStatuses();
+    }
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
 
-        FilterListAdapter.FilterEntry entry = new FilterListAdapter.FilterEntry();
-        entry.filter = filter;
-        entry.filterClick = onFilterClick;
-
-        if(filterListAdapter.addFilter(entry)) {
-            filterListAdapter.notifyDataSetChanged();
+        if(filterListAdapter.addFilter(filter)) {
             refreshStatuses();
         }
     }
 
+    /*
+     * Status Events
+     */
     public void onEvent(GroupDeletedEvent event) {
         refreshStatuses();
     }
@@ -289,5 +281,9 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             }
         });
     }
-
+    public void onEvent(ContactTagInterestUpdatedEvent event) {
+        if(event.contact.isLocal()) {
+            filterListAdapter.notifyDataSetChanged();
+        }
+    }
 }
