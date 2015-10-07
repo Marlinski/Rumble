@@ -28,9 +28,6 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
@@ -71,6 +68,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private ListView filters;
     private FloatingActionButton composeFAB;
     private boolean noCoordinatorLayout;
+    private boolean loadingMore;
+    private boolean noMoreStatusToLoad;
 
     private String   filter_gid = null;
     private String   filter_uid = null;
@@ -89,9 +88,20 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             this.filter_gid = args.getString("GroupID");
             this.filter_uid = args.getString("ContactID");
             this.noCoordinatorLayout = args.getBoolean("noCoordinatorLayout");
-
         }
 
+        /*
+         * This fragment is shown in three activities: the HomeActivity, the GroupDetail activity
+         * and the ContactDetail activity. For HomeActivity and GroupDetail, I need the floating
+         * action button to compose message and I need it to disappear when I scroll down so I need
+         * this fragment to embeds it in a CoordinatorLayout to enable this effect.
+         *
+         * However for ContactDetail activity, I need a CoordinatorLayout for the whole activity
+         * in order to hide the collapsingtoolbar whenever I scroll down. Unfortunately it conflicts
+         * with the coordinatorlayout I use for this very fragmentStatusList. Because I don't need
+         * the compose button to display the status of a specific contact, I created two different
+         * layout to avoid conflicts and use the argument noCoordinatorLayout to decide which one.
+         */
         if(noCoordinatorLayout) {
             mView = inflater.inflate(R.layout.fragment_status_list_no_coordinatorlayout, container, false);
         } else {
@@ -105,7 +115,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         filters.setClickable(false);
         filters.setVisibility(View.GONE);
 
-        // the list of status
+        // refreshing the list of status by pulling down
         swipeLayout = (SwipeRefreshLayout) mView.findViewById(R.id.swipe_container);
         swipeLayout.setOnRefreshListener(this);
 
@@ -114,16 +124,23 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         final int swipeDistance = Math.round(64 * density);
         swipeLayout.setProgressViewOffset(true, 10, 10+swipeDistance);
         */
+
+        // the list of status
         mRecyclerView = (RecyclerView) mView.findViewById(R.id.status_list);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(), this);
         mRecyclerView.setAdapter(statusRecyclerAdapter);
+        mRecyclerView.addOnScrollListener(loadMore);
 
         // the compose button
         composeFAB = (FloatingActionButton) mView.findViewById(R.id.compose_fab);
         composeFAB.setOnClickListener(onFabClicked);
 
-        refreshStatuses();
+        // now get the latest status
+        loadingMore = false;
+        noMoreStatusToLoad = false;
+        refreshStatuses(-1,-1);
+
         EventBus.getDefault().register(this);
 
         return mView;
@@ -148,35 +165,30 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     };
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        if(filter_uid == null) {
-            inflater.inflate(R.menu.public_message_menu, menu);
-            super.onCreateOptionsMenu(menu, inflater);
-        }
+    public void onRefresh() {
+        PushStatus status = statusRecyclerAdapter.getFirstItem();
+        refreshStatuses(-1,-1);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_search_public:
-                //do something
-                return true;
-            case R.id.action_compose:
-                Intent compose = new Intent(getActivity(), PopupComposeStatus.class );
-                if(filter_gid != null)
-                    compose.putExtra("GroupID",filter_gid);
-                startActivity(compose);
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
+    public void refreshStatuses(long before_toa, long after_toa) {
+        if(loadingMore)
+            return;
+        swipeLayout.setRefreshing(true);
+        loadingMore = true;
 
-    public void refreshStatuses() {
         PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
-        options.answerLimit = 20;
+        options.answerLimit = 10;
         options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_MESSAGE;
         options.order_by = PushStatusDatabase.StatusQueryOption.ORDER_BY.TIME_OF_ARRIVAL;
 
+        if(before_toa > 0) {
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_BEFORE_TOA;
+            options.before_toa = before_toa;
+        }
+        if(after_toa > 0) {
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_AFTER_TOA;
+            options.after_toa = after_toa;
+        }
         if(filter_gid != null) {
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
             options.groupIDFilters = new HashSet<String>();
@@ -190,10 +202,15 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;
             options.hashtagFilters = filterListAdapter.getFilterList();
         }
-        DatabaseFactory.getPushStatusDatabase(getActivity())
-                .getStatuses(options, onStatusesLoaded);
+        if(before_toa <= 0) {
+            DatabaseFactory.getPushStatusDatabase(getActivity())
+                    .getStatuses(options, onStatusesRefreshed);
+        } else {
+            DatabaseFactory.getPushStatusDatabase(getActivity())
+                    .getStatuses(options, onStatusesLoaded);
+        }
     }
-    DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+    DatabaseExecutor.ReadableQueryCallback onStatusesRefreshed = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(final Object result) {
             final ArrayList<PushStatus> answer = (ArrayList<PushStatus>)result;
@@ -205,6 +222,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     statusRecyclerAdapter.swap(answer);
                     statusRecyclerAdapter.notifyDataSetChanged();
                     swipeLayout.setRefreshing(false);
+                    loadingMore = false;
+                    noMoreStatusToLoad = false;
 
                     if (getActivity() != null) {
                         if(getActivity() instanceof HomeActivity)
@@ -214,12 +233,52 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             });
         }
     };
+    DatabaseExecutor.ReadableQueryCallback onStatusesLoaded = new DatabaseExecutor.ReadableQueryCallback() {
+        @Override
+        public void onReadableQueryFinished(final Object result) {
+            final ArrayList<PushStatus> answer = (ArrayList<PushStatus>)result;
+            if (getActivity() == null)
+                return;
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(answer.size() > 0) {
+                        statusRecyclerAdapter.addStatusAtBottom(answer);
+                        statusRecyclerAdapter.notifyItemRangeInserted(
+                                statusRecyclerAdapter.getItemCount()-answer.size(),
+                                statusRecyclerAdapter.getItemCount()-1
+                        );
+                    } else {
+                        noMoreStatusToLoad = true;
+                    }
+                    swipeLayout.setRefreshing(false);
+                    loadingMore = false;
+                }
+            });
+        }
+    };
 
-    @Override
-    public void onRefresh() {
-        swipeLayout.setRefreshing(true);
-        refreshStatuses();
-    }
+    /*
+     * Endless scrolling. Whenever we reach the last item, we load for more
+     */
+    RecyclerView.OnScrollListener loadMore = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            LinearLayoutManager mLayoutManager = (LinearLayoutManager)recyclerView.getLayoutManager();
+            int visibleItemCount = mLayoutManager.getChildCount();
+            int totalItemCount = mLayoutManager.getItemCount();
+            int pastVisiblesItems = mLayoutManager.findFirstVisibleItemPosition();
+            if ( (visibleItemCount + pastVisiblesItems) >= totalItemCount) {
+                if((!loadingMore) && (!noMoreStatusToLoad)) {
+                    PushStatus status = statusRecyclerAdapter.getLastItem();
+                    if(status == null)
+                        return;
+                    refreshStatuses(status.getTimeOfArrival(),-1);
+                }
+            }
+        }
+    };
 
     /*
      * Hashtag List
@@ -228,14 +287,14 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         filterListAdapter.deleteFilter(filter);
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.GONE);
-        refreshStatuses();
+        refreshStatuses(-1,-1);
     }
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
 
         if(filterListAdapter.addFilter(filter)) {
-            refreshStatuses();
+            refreshStatuses(-1,-1);
         }
     }
 
@@ -243,22 +302,21 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
      * Status Events
      */
     public void onEvent(GroupDeletedEvent event) {
-        refreshStatuses();
+        refreshStatuses(-1,-1);
     }
     public void onEvent(StatusWipedEvent event) {
-        refreshStatuses();
+        refreshStatuses(-1,-1);
     }
     public void onEvent(UserComposeStatus event) {
         final PushStatus message = event.status;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                statusRecyclerAdapter.addStatus(message);
+                statusRecyclerAdapter.addStatusOnTop(message);
                 statusRecyclerAdapter.notifyItemInserted(0);
                 mRecyclerView.smoothScrollToPosition(0);
             }
         });
-
     }
     public void onEvent(StatusDeletedEvent event) {
         final String uuid = event.uuid;

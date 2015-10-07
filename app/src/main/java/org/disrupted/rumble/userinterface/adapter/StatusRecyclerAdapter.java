@@ -287,10 +287,26 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
         fragment = null;
     }
 
-    public int addStatus(PushStatus status) {
+    public PushStatus getLastItem() {
+        if(statuses.size() == 0)
+            return null;
+        return statuses.get(statuses.size()-1);
+    }
+    public PushStatus getFirstItem() {
+        if(statuses.size() == 0)
+            return null;
+        return statuses.get(0);
+    }
+
+    public int addStatusOnTop(PushStatus status) {
         statuses.add(0,status);
         return 0;
     }
+
+    public void addStatusAtBottom(List<PushStatus> statuses) {
+        this.statuses.addAll(statuses);
+    }
+
     public int deleteStatus(String uuid) {
         Iterator<PushStatus> it = statuses.iterator();
         while(it.hasNext()) {
@@ -303,7 +319,6 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
         }
         return -1;
     }
-
     public void swap(List<PushStatus> statuses) {
         if(this.statuses != null) {
             for (PushStatus message : this.statuses) {

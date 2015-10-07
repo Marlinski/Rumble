@@ -101,9 +101,11 @@ public class PushStatusDatabase extends Database {
         public static final long FILTER_LIKE               = 0x0008;
         public static final long FILTER_TAG                = 0x0010;
         public static final long FILTER_AUTHOR             = 0x0020;
-        public static final long FILTER_TOC_FROM           = 0x0040;
-        public static final long FILTER_TOA_FROM           = 0x0080;
-        public static final long FILTER_NEVER_SEND_TO_USER = 0x0100;
+        public static final long FILTER_AFTER_TOC          = 0x0040;
+        public static final long FILTER_AFTER_TOA          = 0x0080;
+        public static final long FILTER_BEFORE_TOC         = 0x0100;
+        public static final long FILTER_BEFORE_TOA         = 0x0200;
+        public static final long FILTER_NEVER_SEND_TO_USER = 0x0400;
 
         public enum QUERY_RESULT {
             COUNT,
@@ -125,8 +127,10 @@ public class PushStatusDatabase extends Database {
         public Set<String>  hashtagFilters;
         public Set<String>  groupIDFilters;
         public int          hopLimit;
-        public long         from_toc;
-        public long         from_toa;
+        public long         after_toc;
+        public long         after_toa;
+        public long         before_toc;
+        public long         before_toa;
         public String       uid;
         public int          answerLimit;
         public ORDER_BY     order_by;
@@ -139,8 +143,10 @@ public class PushStatusDatabase extends Database {
             hashtagFilters = null;
             groupIDFilters = null;
             uid      = null;
-            from_toc = 0;
-            from_toa = 0;
+            after_toc = 0;
+            before_toc = 0;
+            after_toa = 0;
+            before_toa = 0;
             answerLimit = 0;
             order_by = ORDER_BY.NO_ORDERING;
             query_result = QUERY_RESULT.LIST_OF_MESSAGE;
@@ -233,14 +239,17 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if (contactJoined && (((options.filterFlags & StatusQueryOption.FILTER_AUTHOR) == StatusQueryOption.FILTER_AUTHOR) && (options.uid != null)) ) {
+        if (contactJoined && (((options.filterFlags & StatusQueryOption.FILTER_AUTHOR) == StatusQueryOption.FILTER_AUTHOR)
+                && (options.uid != null)) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" c." + ContactDatabase.UID + " = ? ");
             argumentList.add(options.uid);
         }
-        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.groupIDFilters != null) && (options.groupIDFilters.size() > 0) ) {
+        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP)
+                && (options.groupIDFilters != null)
+                && (options.groupIDFilters.size() > 0) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -254,7 +263,8 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
             groupby = true;
         }
-        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER) && (options.uid != null) ) {
+        if(((options.filterFlags & StatusQueryOption.FILTER_NEVER_SEND_TO_USER) == StatusQueryOption.FILTER_NEVER_SEND_TO_USER)
+                && (options.uid != null) ) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -268,19 +278,33 @@ public class PushStatusDatabase extends Database {
             argumentList.add(options.uid);
             groupby = true;
         }
-        if ((options.filterFlags & StatusQueryOption.FILTER_TOC_FROM) == StatusQueryOption.FILTER_TOC_FROM) {
+        if ((options.filterFlags & StatusQueryOption.FILTER_AFTER_TOC) == StatusQueryOption.FILTER_AFTER_TOC) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " > ? ");
-            argumentList.add(Long.toString(options.from_toc));
+            argumentList.add(Long.toString(options.after_toc));
         }
-        if ((options.filterFlags & StatusQueryOption.FILTER_TOA_FROM) == StatusQueryOption.FILTER_TOA_FROM) {
+        if ((options.filterFlags & StatusQueryOption.FILTER_AFTER_TOA) == StatusQueryOption.FILTER_AFTER_TOA) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
             query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " > ? ");
-            argumentList.add(Long.toString(options.from_toa));
+            argumentList.add(Long.toString(options.after_toa));
+        }
+        if ((options.filterFlags & StatusQueryOption.FILTER_BEFORE_TOC) == StatusQueryOption.FILTER_BEFORE_TOC) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " < ? ");
+            argumentList.add(Long.toString(options.before_toc));
+        }
+        if ((options.filterFlags & StatusQueryOption.FILTER_BEFORE_TOA) == StatusQueryOption.FILTER_BEFORE_TOA) {
+            if(!firstwhere)
+                query.append(" AND ");
+            firstwhere = false;
+            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " < ? ");
+            argumentList.add(Long.toString(options.before_toa));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {
             if(!firstwhere)
