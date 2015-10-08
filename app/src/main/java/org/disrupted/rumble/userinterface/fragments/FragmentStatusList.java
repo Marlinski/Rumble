@@ -166,14 +166,13 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     @Override
     public void onRefresh() {
-        PushStatus status = statusRecyclerAdapter.getFirstItem();
+        swipeLayout.setRefreshing(true);
         refreshStatuses(-1,-1);
     }
 
     public void refreshStatuses(long before_toa, long after_toa) {
         if(loadingMore)
             return;
-        swipeLayout.setRefreshing(true);
         loadingMore = true;
 
         PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
