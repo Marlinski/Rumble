@@ -29,8 +29,11 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -100,16 +103,18 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
             avatarView.setImageDrawable(
                     builder.build(status.getAuthor().getName().substring(0, 1),
                             generator.getColor(status.getAuthor().getUid())));
-            avatarView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent contactDetailActivity = new Intent(activity, ContactDetailActivity.class );
-                    contactDetailActivity.putExtra("ContactID",  uid);
-                    contactDetailActivity.putExtra("ContactName",name);
-                    activity.startActivity(contactDetailActivity);
-                    activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
-                }
-            });
+            if(!fragment.noCoordinatorLayout) {
+                avatarView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent contactDetailActivity = new Intent(activity, ContactDetailActivity.class);
+                        contactDetailActivity.putExtra("ContactID", uid);
+                        contactDetailActivity.putExtra("ContactName", name);
+                        activity.startActivity(contactDetailActivity);
+                        activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+                    }
+                });
+            }
 
             // we draw the author field
             authorView.setText(status.getAuthor().getName());

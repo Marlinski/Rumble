@@ -67,7 +67,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     private FilterListAdapter filterListAdapter;
     private ListView filters;
     private FloatingActionButton composeFAB;
-    private boolean noCoordinatorLayout;
+    public  boolean noCoordinatorLayout;
     private boolean loadingMore;
     private boolean noMoreStatusToLoad;
 
@@ -115,9 +115,13 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         filters.setClickable(false);
         filters.setVisibility(View.GONE);
 
-        // refreshing the list of status by pulling down
+        // refreshing the list of status by pulling down, disabled for ContactDetail
         swipeLayout = (SwipeRefreshLayout) mView.findViewById(R.id.swipe_container);
-        swipeLayout.setOnRefreshListener(this);
+        if(noCoordinatorLayout)
+            swipeLayout.setEnabled(false);
+        else
+            swipeLayout.setOnRefreshListener(this);
+
 
         /*
         final float density = getResources().getDisplayMetrics().density;
@@ -132,9 +136,13 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         mRecyclerView.setAdapter(statusRecyclerAdapter);
         mRecyclerView.addOnScrollListener(loadMore);
 
-        // the compose button
+        // the compose button, disabled for ContactDetail
         composeFAB = (FloatingActionButton) mView.findViewById(R.id.compose_fab);
-        composeFAB.setOnClickListener(onFabClicked);
+        if(noCoordinatorLayout)
+            composeFAB.setVisibility(View.GONE);
+        else
+            composeFAB.setOnClickListener(onFabClicked);
+
 
         // now get the latest status
         loadingMore = false;

@@ -97,14 +97,12 @@ public class ContactRecyclerAdapter extends RecyclerView.Adapter<ContactRecycler
     }
 
     private Activity activity;
-    private LayoutInflater inflater;
     private ArrayList<Contact> contactList;
     private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
 
     public ContactRecyclerAdapter(Activity activity) {
         this.activity = activity;
-        this.inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.contactList = null;
     }
 

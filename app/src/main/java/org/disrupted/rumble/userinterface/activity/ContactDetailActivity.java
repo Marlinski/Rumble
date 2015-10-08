@@ -19,7 +19,9 @@ package org.disrupted.rumble.userinterface.activity;
 
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -29,6 +31,7 @@ import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.userinterface.adapter.ContactDetailPagerAdapter;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 /**
@@ -66,6 +69,7 @@ public class ContactDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle(contactName);
 
         /* set the background header */
         ImageView header = (ImageView) findViewById(R.id.header_background);
@@ -74,14 +78,13 @@ public class ContactDetailActivity extends AppCompatActivity {
                 builder.build(contactName.substring(0, 1),
                 generator.getColor(contactUID)));
 
-        /* populate the container */
-        Fragment fragmentGroupList = new FragmentStatusList();
-        args.putBoolean("noCoordinatorLayout",true);
-        fragmentGroupList.setArguments(args);
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, fragmentGroupList)
-                .commit();
-
+        /* setting up the view pager and the tablayout */
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.contact_tab_layout);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.contact_viewpager);
+        ContactDetailPagerAdapter pagerAdapter = new ContactDetailPagerAdapter(getSupportFragmentManager(), args);
+        viewPager.setAdapter(pagerAdapter);
+        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.setSelectedTabIndicatorHeight(10);
     }
 
     @Override

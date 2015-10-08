@@ -59,6 +59,7 @@ public class FragmentContactList  extends Fragment {
         setHasOptionsMenu(true);
     }
 
+    @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -84,13 +85,6 @@ public class FragmentContactList  extends Fragment {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
         super.onDestroy();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     public void getContactList() {

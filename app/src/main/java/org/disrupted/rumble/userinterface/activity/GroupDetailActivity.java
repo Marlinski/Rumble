@@ -67,7 +67,7 @@ public class GroupDetailActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        /* next we set up the view pager and the tablayout */
+        /* setting up the view pager and the tablayout */
         TabLayout tabLayout = (TabLayout) findViewById(R.id.group_tab_layout);
         ViewPager viewPager = (ViewPager) findViewById(R.id.group_viewpager);
         GroupDetailPagerAdapter pagerAdapter = new GroupDetailPagerAdapter(getSupportFragmentManager(), args);
