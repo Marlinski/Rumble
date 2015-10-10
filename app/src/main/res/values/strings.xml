@@ -86,7 +86,13 @@
     <string name="menu_interfaces_title">Interfaces</string>
     <string name="menu_neighbors_title">Neighborhood</string>
     <string name="interface_bluetooth">Bluetooth</string>
+    <string name="bluetooth_disabled">disable</string>
+    <string name="bluetooth_enabled">enable</string>
+    <string name="bluetooth_discoverable">discoverable</string>
     <string name="interface_wifi">WiFi</string>
+    <string name="wifi_disabled">disable</string>
+    <string name="wifi_normal">normal</string>
+    <string name="wifi_AP">access point</string>
     <string name="drawer_force_scan">Force Scan</string>
 
     <string name="settings_title">Settings</string>

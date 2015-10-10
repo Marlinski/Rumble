@@ -71,6 +71,10 @@ public class WifiUtil {
         getWifiManager().setWifiEnabled(true);
     }
 
+    public static void disableWifi() {
+        getWifiManager().setWifiEnabled(false);
+    }
+
 
     public static boolean isWiFiApEnabled()
     {

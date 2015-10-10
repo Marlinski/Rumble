@@ -27,8 +27,63 @@
     android:gravity="top"
     android:orientation="vertical">
 
-    <include layout="@layout/interfaces_switch"/>
+    <!-- The neighborhood header, with the switches -->
+    <LinearLayout
+        android:id="@+id/interfaces_state_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#20ffffff"
+        android:layout_marginBottom="10dp">
 
-    <include layout="@layout/neighbour_list"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_gravity="center_vertical"
+            android:textColor="#ffffff"
+            android:text="@string/menu_neighbors_title"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+        <org.disrupted.rumble.userinterface.misc.MultiStateButton
+            android:id="@+id/bluetooth_controller"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <org.disrupted.rumble.userinterface.misc.MultiStateButton
+            android:id="@+id/wifi_controller"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <!-- The neighborhood header, with the switches -->
+    <ProgressBar
+        android:id="@+id/scanningProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminate="true" />
+
+    <ImageButton
+        android:id="@+id/scanningButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_menu_search"
+        android:onClick="onForceScanClicked"
+        android:contentDescription="Force Scan"/>
+
+    <ListView
+        android:id="@+id/neighbours_list_view"
+        android:background="?attr/colorPrimary"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+    </ListView>
 
 </LinearLayout>

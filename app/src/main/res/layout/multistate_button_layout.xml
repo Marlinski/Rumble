@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (C) 2014 Disrupted Systems
+  ~ This file is part of Rumble.
+  ~ Rumble is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ Rumble is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along
+  ~ with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/multistate_button_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="15dp"
+    android:layout_marginRight="15dp"
+    android:layout_marginBottom="5dp"
+    android:background="@drawable/multistate_button_shape">
+
+    <ImageView
+        android:id="@+id/toggle_selector"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/multistate_button_toggle_shape"/>
+
+    <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/multistate_table_layout"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_centerVertical="true"
+        android:gravity="center_vertical"
+        android:stretchColumns="*" >
+
+        <TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/multi_state_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal|center_vertical">
+        </TableRow>
+
+    </TableLayout>
+
+</RelativeLayout>

@@ -85,7 +85,7 @@ public class BluetoothUtil {
         }
     }
 
-    public static void discoverableBT(Activity activity) {
+    public static void discoverableBT(Activity activity, int duration) {
         if (!isEnabled()) {
             Log.d(TAG, "cannot request discoverable: enable Bluetooth first");
             return;
@@ -93,7 +93,7 @@ public class BluetoothUtil {
 
         if (!isDiscoverable()) {
             Intent discoverableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableBTIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 3600);
+            discoverableBTIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, duration);
             activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
         }
     }

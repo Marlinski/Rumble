@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -30,12 +31,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourManager;
@@ -50,8 +49,8 @@ import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.userinterface.misc.MultiStateButton;
 
-import java.util.List;
 import java.util.Set;
 
 import de.greenrobot.event.EventBus;
@@ -64,12 +63,12 @@ public class FragmentNetworkDrawer extends Fragment {
     public static final String TAG = "FragmentNetworkDrawer";
 
     private LinearLayout mDrawerFragmentLayout;
+    private MultiStateButton bluetoothController;
+    private MultiStateButton wifiController;
     private ListView mDrawerNeighbourList;
     private NeighborhoodListAdapter listAdapter;
-    NetworkCoordinator mNetworkCoordinator;
+    private NetworkCoordinator mNetworkCoordinator;
     boolean mBound = false;
-    Switch bluetoothToggle;
-    Switch wifiToggle;
     ImageButton  forceScan;
 
     @Override
@@ -84,8 +83,9 @@ public class FragmentNetworkDrawer extends Fragment {
         Log.d(TAG, "onDestroyView");
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
-        if(mBound)
+        if(mBound) {
             getActivity().unbindService(mConnection);
+        }
     }
 
     @Override
@@ -100,30 +100,30 @@ public class FragmentNetworkDrawer extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
-        mDrawerFragmentLayout   = (LinearLayout) inflater.inflate(R.layout.fragment_network_drawer, container, false);
-        bluetoothToggle = (Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_bluetooth);
-        wifiToggle      = (Switch) mDrawerFragmentLayout.findViewById(R.id.toggle_wifi);
-        forceScan       = (ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton);
+        mDrawerFragmentLayout = (LinearLayout)inflater.inflate(R.layout.fragment_network_drawer, container, false);
 
-        bluetoothToggle.setOnClickListener(onBluetoothToggleClicked);
-        bluetoothToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                refreshInterfaces();
-            }
-        });
-        wifiToggle.setOnClickListener(onWifiToggleClicked);
-        wifiToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                refreshInterfaces();
-            }
-        });
+        // create the multistate bluetooth controller
+        bluetoothController   = (MultiStateButton)mDrawerFragmentLayout.findViewById(R.id.bluetooth_controller);
+        bluetoothController.addState(R.drawable.ic_bluetooth_disabled_white_18dp);
+        bluetoothController.addState(R.drawable.ic_bluetooth_white_18dp);
+        bluetoothController.addState(R.drawable.ic_bluetooth_searching_white_18dp);
+        bluetoothController.setOnMultiStateClickListener(bluetoothControllerClick);
 
+        // create the multistate wifi controller
+        wifiController   = (MultiStateButton)mDrawerFragmentLayout.findViewById(R.id.wifi_controller);
+        wifiController.addState(R.drawable.ic_signal_wifi_off_white_18dp);
+        wifiController.addState(R.drawable.ic_signal_wifi_4_bar_white_18dp);
+        wifiController.addState(R.drawable.ic_wifi_tethering_white_18dp);
+        wifiController.setOnMultiStateClickListener(wifiControllerClick);
+
+        // set the force scan button to refresh neighborhood
+        forceScan       = (ImageButton)  mDrawerFragmentLayout.findViewById(R.id.scanningButton);
         forceScan.setOnClickListener(onForceScanClicked);
 
+        // bind to the networkCoordinator service
         Intent intent = new Intent(getActivity(), NetworkCoordinator.class);
         getActivity().bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
         return mDrawerFragmentLayout;
     }
 
@@ -137,7 +137,6 @@ public class FragmentNetworkDrawer extends Fragment {
             NetworkCoordinator.LocalBinder binder = (NetworkCoordinator.LocalBinder) service;
             mNetworkCoordinator = binder.getService();
             mBound = true;
-            refreshInterfaces();
             initializeNeighbourview();
             initializeProgressBar();
         }
@@ -147,120 +146,6 @@ public class FragmentNetworkDrawer extends Fragment {
             mBound = false;
         }
     };
-
-    public void initializeNeighbourview() {
-        mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
-        Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
-        listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
-        mDrawerNeighbourList.setAdapter(listAdapter);
-        neighborhood.clear();
-    }
-
-    public void initializeProgressBar() {
-        if (mNetworkCoordinator.isScanning()) {
-            ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
-            ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void refreshInterfaces() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                bluetoothToggle.setChecked(
-                        BluetoothUtil.isEnabled() &&
-                        mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
-                wifiToggle.setChecked(
-                        WifiUtil.isEnabled() &&
-                        mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier));
-            }
-        });
-    }
-    private void refreshNeighborhood() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
-                if (mDrawerNeighbourList.getAdapter() != null)
-                    listAdapter.swap(neighborhood);
-                neighborhood.clear();
-                listAdapter.notifyDataSetChanged();
-            }
-        });
-    }
-
-    /*
-     *         User Interactions
-     */
-    View.OnClickListener onBluetoothToggleClicked = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    if (!mNetworkCoordinator.isLinkLayerEnabled(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
-                        mNetworkCoordinator.linkLayerStart(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-                        if (!BluetoothUtil.isEnabled())
-                            BluetoothUtil.enableBT(getActivity());
-                        else if (!BluetoothUtil.isDiscoverable())
-                            BluetoothUtil.discoverableBT(getActivity());
-                    } else {
-                        if (!BluetoothUtil.isEnabled())
-                            BluetoothUtil.enableBT(getActivity());
-                        else if (!BluetoothUtil.isDiscoverable())
-                            BluetoothUtil.discoverableBT(getActivity());
-                        else
-                            mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-                    }
-                }
-            }).start();
-        }
-    };
-
-    public void manageBTCode(int requestCode, int resultCode, Intent data) {
-        if(!mBound)
-            return;
-        if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_OK)) {
-            if(!BluetoothUtil.isDiscoverable())
-                BluetoothUtil.discoverableBT(getActivity());
-            refreshInterfaces();
-            return;
-        }
-        if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == getActivity().RESULT_CANCELED)) {
-            mNetworkCoordinator.linkLayerStop(BluetoothLinkLayerAdapter.LinkLayerIdentifier);
-            refreshInterfaces();
-            return;
-        }
-
-        if((requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == getActivity().RESULT_OK)) {
-            Log.d(TAG, "[+] Device Discoverable");
-            refreshInterfaces();
-            return;
-        }
-    }
-
-    View.OnClickListener onWifiToggleClicked = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    //WifiUtil.enableAP();
-                    if (!mNetworkCoordinator.isLinkLayerEnabled(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
-                        mNetworkCoordinator.linkLayerStart(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
-                        if (!WifiUtil.isEnabled())
-                            WifiUtil.enableWifi();
-                    } else {
-                        if (!WifiUtil.isEnabled())
-                            WifiUtil.enableWifi();
-                        else
-                            mNetworkCoordinator.linkLayerStop(WifiManagedLinkLayerAdapter.LinkLayerIdentifier);
-                    }
-                }
-            }).start();
-        }
-    };
-
 
     View.OnClickListener onForceScanClicked = new View.OnClickListener() {
         @Override
@@ -275,15 +160,145 @@ public class FragmentNetworkDrawer extends Fragment {
         }
     };
 
+    /*
+     * Bluetooth Logic
+     */
+    MultiStateButton.OnMultiStateClickListener bluetoothControllerClick = new MultiStateButton.OnMultiStateClickListener() {
+        @Override
+        public void onMultiStateClick(int oldState, int newState) {
+            if(newState == oldState)
+                return;
+            switch (newState) {
+                case 0:
+                    if (BluetoothUtil.isEnabled())
+                        BluetoothUtil.disableBT();
+                    break;
+                case 1:
+                    if (!BluetoothUtil.isEnabled())
+                        BluetoothUtil.enableBT(getActivity());
+                    if (oldState == 2) {
+                        BluetoothUtil.discoverableBT(getActivity(), 1);
+                    }
+                    break;
+                case 2:
+                    if (!BluetoothUtil.isEnabled()) {
+                        BluetoothUtil.enableBT(getActivity());
+                    } else {
+                        if(!BluetoothUtil.isDiscoverable())
+                            BluetoothUtil.discoverableBT(getActivity(), 3600);
+                    }
+                    break;
+            }
+            bluetoothController.setSelected(newState);
+        }
+    };
+
+    MultiStateButton.OnMultiStateClickListener wifiControllerClick = new MultiStateButton.OnMultiStateClickListener() {
+        @Override
+        public void onMultiStateClick(int oldState, int newState) {
+            if(newState == oldState)
+                return;
+            switch (newState) {
+                case 0:
+                    WifiUtil.disableWifi();
+                    break;
+                case 1:
+                    if (WifiUtil.isEnabled())
+                        WifiUtil.enableWifi();
+                case 2:
+                    WifiUtil.enableAP();
+                    break;
+            }
+            wifiController.setSelected(newState);
+        }
+    };
+
+
+    public void manageBTCode(int requestCode, int resultCode, Intent data) {
+        if(!mBound)
+            return;
+        if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == Activity.RESULT_OK)) {
+            if(!BluetoothUtil.isDiscoverable())
+                BluetoothUtil.discoverableBT(getActivity(), 3600);
+            refreshBluetoothController();
+            return;
+        }
+        if((requestCode == BluetoothUtil.REQUEST_ENABLE_BT) && (resultCode == Activity.RESULT_CANCELED)) {
+            refreshBluetoothController();
+            return;
+        }
+        if((requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == Activity.RESULT_OK)) {
+            refreshBluetoothController();
+            return;
+        }
+    }
+
+    private void refreshBluetoothController() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (BluetoothUtil.isEnabled()) {
+                    bluetoothController.setSelected(1);
+                    if (BluetoothUtil.isDiscoverable())
+                        bluetoothController.setSelected(2);
+                } else {
+                    bluetoothController.setSelected(0);
+                }
+            }
+        });
+    }
+
+    private void refreshWifiController() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (WifiUtil.isEnabled()) {
+                    wifiController.setSelected(1);
+                } else {
+                    wifiController.setSelected(0);
+                }
+            }
+        });
+    }
+
+    public void initializeNeighbourview() {
+        mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
+        Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
+        listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
+        mDrawerNeighbourList.setAdapter(listAdapter);
+        neighborhood.clear();
+    }
+    public void initializeProgressBar() {
+        if (mNetworkCoordinator.isScanning()) {
+            ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
+            ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
+        }
+    }
+    private void refreshNeighborhood() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
+                if (mDrawerNeighbourList.getAdapter() != null)
+                    listAdapter.swap(neighborhood);
+                neighborhood.clear();
+                listAdapter.notifyDataSetChanged();
+            }
+        });
+    }
+
 
     /*
      *          Event management
      */
+
     public void onEvent(LinkLayerStarted event) {
-        refreshInterfaces();
+        refreshBluetoothController();
+        refreshWifiController();
     }
     public void onEvent(LinkLayerStopped event) {
-        refreshInterfaces();
+        refreshBluetoothController();
+        refreshWifiController();
     }
     public void onEvent(NeighborhoodChanged event) {
         refreshNeighborhood();
