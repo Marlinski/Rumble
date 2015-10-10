@@ -252,7 +252,9 @@ public class FragmentNetworkDrawer extends Fragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (WifiUtil.isEnabled()) {
+                if(WifiUtil.isWiFiApEnabled()) {
+                    wifiController.setSelected(2);
+                } if (WifiUtil.isEnabled()) {
                     wifiController.setSelected(1);
                 } else {
                     wifiController.setSelected(0);
