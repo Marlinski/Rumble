@@ -150,22 +150,6 @@ public class NeighbourManager {
                 neighborhood.put(event.neighbour.getLinkLayerAddress(), entry);
             }
             entry.channels.add(event.worker);
-
-            /* we used to send a ContactConnected event if it matches a contact's known interface
-             * but it is actually not a good idea as a user can recreate its own profile
-             * and thus we might encounter the same macadress with different contact.
-             * the solution is to send a contactconnected event only when we receive a
-             * ContactInformationReceivedEvent
-            try {
-                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerMacAddress());
-                if (!contacts.isEmpty()) {
-                    for (Contact contact : contacts)
-                        EventBus.getDefault().post(new ContactConnected(contact, event.worker));
-                }
-            } catch(NetUtil.NoMacAddressException ignore){
-            }
-            */
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }

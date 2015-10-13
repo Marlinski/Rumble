@@ -42,10 +42,8 @@ import java.net.UnknownHostException;
 
 /**
  * An UDP Multicast Connection is not a one-to-one connection but a one-to-many connection
- * This class is responsible for managing its own neighborhood, that is the other devices who
- * also send and receive on this multicast IP Address. This is achieved by using the DNS-SD
- * service (Bonjour/Avahi)
- *
+ * This class is responsible for managing its own neighborhood constituted of the other devices who
+ * also send and receive on this multicast IP Address.
  * @author Marlinski
  */
 public class UDPMulticastConnection implements MulticastConnection {
@@ -105,9 +103,6 @@ public class UDPMulticastConnection implements MulticastConnection {
         } catch( IOException io) {
             throw  new UDPMulticastSocketException();
         }
-
-        if(tmp == null)
-            throw  new UDPMulticastSocketException();
 
         socket = tmp;
         try {
