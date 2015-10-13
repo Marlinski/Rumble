@@ -53,6 +53,14 @@ public class BluetoothUtil {
         return adapter;
     }
 
+    public static boolean isWorking() {
+        BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
+        if ( adapter == null)
+            return false;
+        return ((adapter.getScanMode() == BluetoothAdapter.STATE_CONNECTING) ||
+                (adapter.getScanMode() == BluetoothAdapter.STATE_DISCONNECTING) );
+    }
+
     public static boolean isEnabled() {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if(adapter == null)
@@ -90,12 +98,9 @@ public class BluetoothUtil {
             Log.d(TAG, "cannot request discoverable: enable Bluetooth first");
             return;
         }
-
-        if (!isDiscoverable()) {
-            Intent discoverableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableBTIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, duration);
-            activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
-        }
+        Intent discoverableBTIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discoverableBTIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, duration);
+        activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
     }
 
 }

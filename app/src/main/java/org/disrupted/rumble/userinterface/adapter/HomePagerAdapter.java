@@ -21,6 +21,7 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
@@ -59,5 +60,10 @@ public class HomePagerAdapter extends FragmentPagerAdapter {
         else
             return context.getResources().getString(R.string.group_detail_tab_members);
     }
+
+    public void refreshChatMessage() {
+        chatMessageFragment.refreshChatMessages();
+    }
+
 
 }

@@ -155,7 +155,6 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
                     if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
                         if(activated)
                             return;
-
                         Log.d(TAG, "[+] connected to a wifi access point");
                         linkConnected();
                     }

@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -92,6 +93,8 @@ public class FragmentNetworkDrawer extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
+        refreshBluetoothController();
+        refreshWifiController();
         if(listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
@@ -113,7 +116,7 @@ public class FragmentNetworkDrawer extends Fragment {
         wifiController   = (MultiStateButton)mDrawerFragmentLayout.findViewById(R.id.wifi_controller);
         wifiController.addState(R.drawable.ic_signal_wifi_off_white_18dp);
         wifiController.addState(R.drawable.ic_signal_wifi_4_bar_white_18dp);
-        wifiController.addState(R.drawable.ic_wifi_tethering_white_18dp);
+        //wifiController.addState(R.drawable.ic_wifi_tethering_white_18dp);
         wifiController.setOnMultiStateClickListener(wifiControllerClick);
 
         // set the force scan button to refresh neighborhood
@@ -139,6 +142,8 @@ public class FragmentNetworkDrawer extends Fragment {
             mBound = true;
             initializeNeighbourview();
             initializeProgressBar();
+            refreshBluetoothController();
+            refreshWifiController();
         }
 
         @Override
@@ -198,18 +203,29 @@ public class FragmentNetworkDrawer extends Fragment {
         public void onMultiStateClick(int oldState, int newState) {
             if(newState == oldState)
                 return;
-            switch (newState) {
-                case 0:
-                    WifiUtil.disableWifi();
-                    break;
-                case 1:
-                    if (WifiUtil.isEnabled())
-                        WifiUtil.enableWifi();
-                case 2:
-                    WifiUtil.enableAP();
-                    break;
-            }
             wifiController.setSelected(newState);
+            final int state = newState;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    switch (state) {
+                        case 0:
+                            if(WifiUtil.isEnabled() || WifiUtil.isWiFiApEnabled())
+                                WifiUtil.disableWifi();
+                            break;
+                        case 1:
+                            if(!WifiUtil.isEnabled())
+                                WifiUtil.enableWifi();
+                            break;
+                        case 2:
+                            if(WifiUtil.isEnabled())
+                                WifiUtil.disableWifi();
+                            if(!WifiUtil.isWiFiApEnabled())
+                                WifiUtil.enableAP();
+                            break;
+                    }
+                }
+            }).start();
         }
     };
 
@@ -244,6 +260,11 @@ public class FragmentNetworkDrawer extends Fragment {
                 } else {
                     bluetoothController.setSelected(0);
                 }
+                if(BluetoothUtil.isWorking()) {
+                    bluetoothController.disable();
+                } else {
+                    bluetoothController.enable();
+                }
             }
         });
     }
@@ -256,6 +277,11 @@ public class FragmentNetworkDrawer extends Fragment {
                     wifiController.setSelected(2);
                 } if (WifiUtil.isEnabled()) {
                     wifiController.setSelected(1);
+                    if(WifiUtil.isConnected()) {
+                        wifiController.setStateResource(1,R.drawable.ic_signal_wifi_4_bar_white_18dp);
+                    } else {
+                        wifiController.setStateResource(1,R.drawable.ic_signal_wifi_statusbar_connected_no_internet_4_white_18dp);
+                    }
                 } else {
                     wifiController.setSelected(0);
                 }

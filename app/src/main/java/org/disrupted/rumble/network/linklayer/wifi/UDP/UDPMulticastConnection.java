@@ -113,6 +113,7 @@ public class UDPMulticastConnection implements MulticastConnection {
         try {
             socket.joinGroup(multicastAddr);
             socket.setReuseAddress(true);
+            socket.setNetworkInterface(WifiUtil.getWlanEth());
         } catch ( IOException io) {
             throw  new UDPMulticastSocketException();
         }

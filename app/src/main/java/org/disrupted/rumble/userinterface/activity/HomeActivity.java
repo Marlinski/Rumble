@@ -35,6 +35,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.jeremyfeinstein.slidingmenu.lib.CustomViewAbove;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.R;
@@ -67,18 +68,16 @@ public class HomeActivity extends AppCompatActivity {
     private FragmentNetworkDrawer mNetworkDrawerFragment;
     public  SlidingMenu slidingMenu;
 
-    private Fragment statusFragment;
-    private Fragment chatFragment;
     private View notifStatus;
     private View notifChat;
-    private boolean chatHasFocus;
+    private ViewPager viewPager;
+    private HomePagerAdapter pagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.home_layout);
-
         mTitle = getTitle();
 
         /* sliding menu with both right and left drawer */
@@ -92,7 +91,6 @@ public class HomeActivity extends AppCompatActivity {
         slidingMenu.setMenu(R.layout.navigation_frame);
         slidingMenu.setSecondaryMenu(R.layout.network_frame);
         slidingMenu.setSecondaryShadowDrawable(R.drawable.shadowright);
-
         if (savedInstanceState == null) {
             mNavigationDrawerFragment = new FragmentNavigationDrawer();
             mNetworkDrawerFragment    = new FragmentNetworkDrawer();
@@ -106,57 +104,18 @@ public class HomeActivity extends AppCompatActivity {
         }
         slidingMenu.attachToActivity(this, SlidingMenu.SLIDING_WINDOW);
 
-        /* populate the container
-        statusFragment = new FragmentStatusList();
-        chatFragment = new FragmentChatMessageList();
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.container, statusFragment)
-                .commit();
-        chatHasFocus = false;
-
-        notifStatus = renderTabView(this, R.drawable.ic_world);
-        notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setCustomView(notifStatus));
-        tabLayout.addTab(tabLayout.newTab().setCustomView(notifChat));
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                Fragment fragment = chatHasFocus ? statusFragment : chatFragment;
-                if(chatHasFocus) {
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.container, fragment)
-                            .commit();
-                    chatHasFocus = false;
-                } else {
-                    getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.container, fragment)
-                            .commit();
-                    chatHasFocus = true;
-                }
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-                Fragment fragment = chatHasFocus ? chatFragment : statusFragment;
-                FragmentManager fragmentManager = getSupportFragmentManager();
-                fragmentManager.beginTransaction()
-                        .remove(fragment)
-                        .commit();
-            }
-        });
-        tabLayout.setSelectedTabIndicatorHeight(10);
-        */
-
+        /*
+         * the tablayout for status and chat message with a viewpager.
+         * note that we cannot swipe views with the viewpager as the swipe
+         * gesture is catched by slidingmenu to slide the panel
+         */
         TabLayout tabLayout = (TabLayout) findViewById(R.id.home_tab_layout);
-        ViewPager viewPager = (ViewPager) findViewById(R.id.home_viewpager);
-        HomePagerAdapter pagerAdapter = new HomePagerAdapter(getSupportFragmentManager());
+        viewPager = (ViewPager) findViewById(R.id.home_viewpager);
+        pagerAdapter = new HomePagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(pagerAdapter);
+        viewPager.addOnPageChangeListener(onPageChangeListener);
         tabLayout.setupWithViewPager(viewPager);
+
         // little hack to set the icons instead of text
         notifStatus = renderTabView(this, R.drawable.ic_world);
         notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
@@ -194,6 +153,7 @@ public class HomeActivity extends AppCompatActivity {
 
     /*
      * Receive Bluetooth Enable/Disable
+     * We forward it to the FragmentNetworkDrawer
      */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -265,8 +225,26 @@ public class HomeActivity extends AppCompatActivity {
         }
     };
 
+    ViewPager.OnPageChangeListener onPageChangeListener = new ViewPager.OnPageChangeListener() {
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            //ignore
+        }
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            // ignore
+        }
+        @Override
+        public void onPageSelected(int position) {
+            if(position == 1) {
+                FragmentChatMessageList fragment = (FragmentChatMessageList) pagerAdapter.getItem(position);
+                fragment.refreshChatMessages();
+            }
+        }
+    };
+
     public boolean isChatHasFocus() {
-        return chatHasFocus;
+        return (viewPager.getCurrentItem() == 1);
     }
 
     /*

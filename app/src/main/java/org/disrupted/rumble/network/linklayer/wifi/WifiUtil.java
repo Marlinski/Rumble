@@ -31,8 +31,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
+import java.util.Enumeration;
 
 /**
  * @author Marlinski
@@ -46,8 +49,14 @@ public class WifiUtil {
     }
 
     public static boolean isEnabled() {
-        return (getWifiManager().isWifiEnabled() || isWiFiApEnabled());
+        return getWifiManager().isWifiEnabled();
     }
+
+    public static boolean isConnected() {
+        WifiInfo info = getWifiManager().getConnectionInfo();
+        return (info.getNetworkId() > 0);
+    }
+
 
     public static String getIPAddress() {
         WifiInfo wifiInfo = getWifiManager().getConnectionInfo();
@@ -86,6 +95,7 @@ public class WifiUtil {
         }
         catch (final Throwable ignored)
         {
+            ignored.printStackTrace();
         }
         return false;
     }
@@ -135,6 +145,28 @@ public class WifiUtil {
             Log.d("Splash Activity",
                     "cannot configure an access point");
         }
+    }
+
+    public static NetworkInterface getWlanEth() {
+        Enumeration<NetworkInterface> enumeration = null;
+        try {
+            enumeration = NetworkInterface.getNetworkInterfaces();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        NetworkInterface wlan0 = null;
+        StringBuilder sb = new StringBuilder();
+        while (enumeration.hasMoreElements()) {
+            wlan0 = enumeration.nextElement();
+            sb.append(wlan0.getName() + " ");
+            if (wlan0.getName().equals("wlan0")) {
+                //there is probably a better way to find ethernet interface
+                Log.i(TAG, "wlan0 found");
+                return wlan0;
+            }
+        }
+
+        return null;
     }
 
 }

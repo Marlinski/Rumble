@@ -26,14 +26,14 @@ import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 /**
  * @author Marlinski
  */
-public class WifiP2PLinkLayerAdapter implements LinkLayerAdapter {
+public class WifiAdHocLayerAdapter implements LinkLayerAdapter {
 
-    private static final String ID = "Wifi-P2P";
+    private static final String ID = "Wifi-AdHoc";
 
     private NetworkCoordinator networkCoordinator;
     private boolean activated;
 
-    public WifiP2PLinkLayerAdapter(NetworkCoordinator networkCoordinator) {
+    public WifiAdHocLayerAdapter(NetworkCoordinator networkCoordinator) {
         this.networkCoordinator = networkCoordinator;
     }
 

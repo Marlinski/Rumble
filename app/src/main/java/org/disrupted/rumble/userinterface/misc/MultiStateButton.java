@@ -141,6 +141,22 @@ public class MultiStateButton extends LinearLayout {
         this.onMultiStateClickListener = callback;
     }
 
+
+    public void setStateResource(int state, int resource) {
+        ImageView button   = buttonList.get(state);
+        button.setImageResource(resource);
+    }
+
+
+    /*
+     * disable and enable are suppose to lock the button when switching state can take a while
+     */
+    public void disable() {
+    }
+
+    public void enable () {
+    }
+
     /*
      * tried to slide the button but it is not very convenient
     public int _xDelta;

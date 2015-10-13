@@ -144,7 +144,7 @@ public class FragmentChatMessageList extends Fragment {
                             FragmentChatMessageList.this);
                     messageRecyclerAdapter.swap(answer);
                     mRecyclerView.setAdapter(messageRecyclerAdapter);
-                    mRecyclerView.smoothScrollToPosition(messageRecyclerAdapter.getItemCount());
+                    mRecyclerView.smoothScrollToPosition(messageRecyclerAdapter.getItemCount()-1);
                     //if (getActivity() != null)
                     //    ((HomeActivity)getActivity()).refreshNotifications();
                 }
