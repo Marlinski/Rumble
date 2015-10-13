@@ -28,8 +28,10 @@ import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
+import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
+import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -106,8 +108,11 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
             Log.d(TAG, "[+] ----- Rumble UDP Scanner started -----");
             wifiNeighborhood = new LinkedHashSet<WifiNeighbour>();
+            if(!EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().register(this);
             receiverThread.start();
             sendBeacon();
+
         }
     }
 
@@ -117,6 +122,9 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
             if (scanningState.equals(ScanningState.SCANNING_OFF))
                 return;
             scanningState = ScanningState.SCANNING_OFF;
+
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
 
             Log.d(TAG, "[+] ----- Rumble UDP Scanner stopped -----");
             handler.removeCallbacksAndMessages(null);
@@ -269,5 +277,15 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
     }
 
+    public void onEvent(NeighbourDisconnected event) {
+        if(!event.neighbour.getLinkLayerIdentifier().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+            return;
+        Runnable callback = timeouts.get(event.neighbour);
+        if(callback == null) {
+            callback = new RemoveNeighbour((WifiNeighbour)event.neighbour);
+            timeouts.put((WifiNeighbour)event.neighbour, callback);
+            handler.postDelayed(callback, NEIGHBOUR_TIMEOUT);
+        }
+    }
 
 }
