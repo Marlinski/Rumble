@@ -15,20 +15,22 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.services.events;
+package org.disrupted.rumble.network.events;
 
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.events.NetworkEvent;
+import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 /**
  * @author Marlinski
  */
-public class ContactUnreachable extends NetworkEvent {
+public class ContactConnected extends NetworkEvent {
 
     public Contact contact;
+    public ProtocolChannel channel;
 
-    public ContactUnreachable(Contact contact) {
+    public ContactConnected(Contact contact, ProtocolChannel channel) {
         this.contact = contact;
+        this.channel = channel;
     }
 
 }

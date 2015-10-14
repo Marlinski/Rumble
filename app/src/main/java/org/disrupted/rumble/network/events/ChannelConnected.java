@@ -17,20 +17,23 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.network.events;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 /**
  * @author Marlinski
+ *
+ * This event is sent by a ProtocolChannel whenever a LinkLayerConnection has successfully
+ * opened and that thus, a channel is open to reach a certain neighbour
  */
-public class NeighbourDisconnected {
+public class ChannelConnected {
 
     public final LinkLayerNeighbour neighbour;
     public final ProtocolChannel worker;
 
-    public NeighbourDisconnected(LinkLayerNeighbour neighbour, ProtocolChannel worker) {
+    public ChannelConnected(LinkLayerNeighbour neighbour, ProtocolChannel worker) {
         this.neighbour = neighbour;
         this.worker = worker;
     }

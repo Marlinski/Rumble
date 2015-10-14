@@ -31,6 +31,8 @@ import java.util.concurrent.locks.ReentrantLock;
  *                      |  NOT CONNECTED  |
  *                      +-----------------+
  *                         |          |
+ *                   connection      connection
+ *                    received       initiated
  *                         |          |
  *              +----------+          +-----------+
  *              |                                 |
@@ -39,6 +41,9 @@ import java.util.concurrent.locks.ReentrantLock;
  *     | CONNECTION ACCEPTED |      | CONNECTION SCHEDULED |
  *     +---------------------+      +---------------------+
  *              |      ^              |            ^    |
+ *              |      |         connection        |    |
+ *              |      |          received         |    |
+ *              |      |              |            |    |
  *              |      |              v            |    |
  *              |      |       +============+      |    |
  *              |      |       | is current |      |    |

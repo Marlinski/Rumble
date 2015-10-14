@@ -18,8 +18,6 @@
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
@@ -37,8 +35,8 @@ import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformatio
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.ChannelConnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
@@ -148,7 +146,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
         try {
             Log.d(TAG, "[+] connected");
-            EventBus.getDefault().post(new NeighbourConnected(
+            EventBus.getDefault().post(new ChannelConnected(
                             con.getLinkLayerNeighbour(),
                             this)
             );
@@ -156,7 +154,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             onChannelConnected();
         } finally {
             Log.d(TAG, "[+] disconnected");
-            EventBus.getDefault().post(new NeighbourDisconnected(
+            EventBus.getDefault().post(new ChannelDisconnected(
                             con.getLinkLayerNeighbour(),
                             this)
             );

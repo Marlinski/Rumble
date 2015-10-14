@@ -23,11 +23,9 @@ import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
-import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.ChannelConnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.services.ServiceLayer;
-import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +84,7 @@ public class ChatService implements ServiceLayer {
         }
     }
 
-    public void onEvent(NeighbourConnected event) {
+    public void onEvent(ChannelConnected event) {
         synchronized (lock) {
             ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
             if (dispatcher != null) {
@@ -98,13 +96,13 @@ public class ChatService implements ServiceLayer {
             dispatcher.startDispatcher();
         }
     }
-    public void onEvent(NeighbourDisconnected event) {
+    public void onEvent(ChannelDisconnected event) {
         synchronized (lock) {
-            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.channel.getWorkerIdentifier());
             if (dispatcher == null)
                 return;
             dispatcher.stopDispatcher();
-            workerIdentifierTodispatcher.remove(event.worker.getWorkerIdentifier());
+            workerIdentifierTodispatcher.remove(event.channel.getWorkerIdentifier());
         }
     }
 

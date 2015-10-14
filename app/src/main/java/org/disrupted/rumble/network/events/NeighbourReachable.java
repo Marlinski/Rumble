@@ -17,19 +17,22 @@
  * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.linklayer.events;
+package org.disrupted.rumble.network.events;
 
 import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
  * @author Marlinski
+ *
+ * This event is sent by NeighbourManager whenever a neighbour is within reach. It is not sent
+ * if the neighbour was already discover or if a connection already exists to this neighbour.
  */
-public class NeighbourUnreachable extends NetworkEvent {
+public class NeighbourReachable extends NetworkEvent {
 
     public final LinkLayerNeighbour neighbour;
 
-    public NeighbourUnreachable(LinkLayerNeighbour neighbour) {
+    public NeighbourReachable(LinkLayerNeighbour neighbour) {
         this.neighbour = neighbour;
     }
 }

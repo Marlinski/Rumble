@@ -17,16 +17,12 @@
 
 package org.disrupted.rumble.network.linklayer.wifi.TCP;
 
-import android.content.Context;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.text.format.Formatter;
 import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.Worker;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
@@ -112,7 +108,7 @@ public abstract class TCPServer implements Worker {
 
                     onClientConnected(mmConnectedSocket);
 
-                    EventBus.getDefault().post(new NeighbourReachable(neighbour));
+                    EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
                 }
             }
         } catch (IOException e) {

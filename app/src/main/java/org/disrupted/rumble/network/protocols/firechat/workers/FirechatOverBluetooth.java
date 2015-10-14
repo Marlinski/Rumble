@@ -31,8 +31,8 @@ import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.ChannelConnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -140,7 +140,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
             ((BluetoothConnection)con).getOutputStream().write(("{}").getBytes());
 
             connectionState.connected(this.getWorkerIdentifier());
-            EventBus.getDefault().post(new NeighbourConnected(
+            EventBus.getDefault().post(new ChannelConnected(
                             new BluetoothNeighbour(((BluetoothConnection)con).getRemoteLinkLayerAddress()),
                             this)
             );
@@ -148,7 +148,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
             onChannelConnected();
 
             connectionState.notConnected();
-            EventBus.getDefault().post(new NeighbourDisconnected(
+            EventBus.getDefault().post(new ChannelDisconnected(
                             new BluetoothNeighbour(((BluetoothConnection)con).getRemoteLinkLayerAddress()),
                             this)
             );

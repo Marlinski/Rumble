@@ -32,10 +32,10 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.command.CommandSendChatMessage;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.firechat.FirechatMessageParser;
 import org.disrupted.rumble.network.protocols.firechat.FirechatProtocol;
-import org.disrupted.rumble.network.services.events.ContactConnected;
-import org.disrupted.rumble.network.services.events.ContactDisconnected;
+import org.disrupted.rumble.network.events.ContactDisconnected;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -214,8 +214,8 @@ public class FirechatOverUDPMulticast extends ProtocolChannel {
     public Set<Contact> getRecipientList() {
         return (Set)((HashSet)recipientList).clone();
     }
-    public void onEvent(ContactConnected event) {
-        if(event.worker.equals(this))
+    public void onEvent(ContactInformationReceived event) {
+        if(event.channel.equals(this))
             recipientList.add(event.contact);
     }
     public void onEvent(ContactDisconnected event) {

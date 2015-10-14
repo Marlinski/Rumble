@@ -15,23 +15,21 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.services.events;
+package org.disrupted.rumble.network.events;
 
-import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
  * @author Marlinski
+ *
+ * This event is sent by Scanner whenever a neighbour has timeouted
+ * (hasn't been sensed for a while)
  */
-public class ContactReachable extends NetworkEvent {
+public class ScannerNeighbourTimeout extends NetworkEvent {
 
-    public Contact contact;
-    public LinkLayerNeighbour neighbour;
+    public final LinkLayerNeighbour neighbour;
 
-    public ContactReachable(Contact contact, LinkLayerNeighbour neighbour) {
-        this.contact = contact;
-        this.neighbour  = neighbour;
+    public ScannerNeighbourTimeout(LinkLayerNeighbour neighbour) {
+        this.neighbour = neighbour;
     }
-
 }

@@ -54,9 +54,8 @@ public class WifiUtil {
 
     public static boolean isConnected() {
         WifiInfo info = getWifiManager().getConnectionInfo();
-        return (info.getNetworkId() > 0);
+        return (info.getNetworkId() >= 0);
     }
-
 
     public static String getIPAddress() {
         WifiInfo wifiInfo = getWifiManager().getConnectionInfo();

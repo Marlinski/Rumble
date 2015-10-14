@@ -28,9 +28,9 @@ import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.command.Command;
 import org.disrupted.rumble.network.protocols.events.CommandExecuted;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
-import org.disrupted.rumble.network.services.events.ContactConnected;
-import org.disrupted.rumble.network.services.events.ContactDisconnected;
+import org.disrupted.rumble.network.events.ContactDisconnected;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -138,8 +138,8 @@ public class RumbleOverUDPMulticast extends ProtocolChannel {
     public Set<Contact> getRecipientList() {
         return (Set)((HashSet)recipientList).clone();
     }
-    public void onEvent(ContactConnected event) {
-        if(event.worker.equals(this))
+    public void onEvent(ContactInformationReceived event) {
+        if(event.channel.equals(this))
             recipientList.add(event.contact);
     }
     public void onEvent(ContactDisconnected event) {

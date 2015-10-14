@@ -21,17 +21,17 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
+import org.disrupted.rumble.network.events.ScannerNeighbourTimeout;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
-import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -222,7 +222,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
                     WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress().getHostAddress());
                     if(wifiNeighborhood.add(neighbour)) {
-                        EventBus.getDefault().post(new NeighbourReachable(neighbour));
+                        EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
                     } else {
                         Log.d(TAG, "beacon from "+neighbour.getLinkLayerAddress());
                         Runnable callback = timeouts.get(neighbour);
@@ -255,7 +255,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
             Log.d(TAG, "[-] neighbour "+neighbour.getLinkLayerAddress()+" timeouted");
             timeouts.remove(neighbour);
             if( wifiNeighborhood.remove(neighbour) )
-                EventBus.getDefault().post(new NeighbourUnreachable(neighbour));
+                EventBus.getDefault().post(new ScannerNeighbourTimeout(neighbour));
         }
 
         @Override
@@ -277,7 +277,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
     }
 
-    public void onEvent(NeighbourDisconnected event) {
+    public void onEvent(ChannelDisconnected event) {
         if(!event.neighbour.getLinkLayerIdentifier().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
             return;
         Runnable callback = timeouts.get(event.neighbour);

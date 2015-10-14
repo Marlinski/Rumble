@@ -35,12 +35,14 @@ import android.os.*;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
+import org.disrupted.rumble.network.events.ScannerNeighbourTimeout;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
-import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.events.ChannelConnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
 
@@ -384,7 +386,7 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
          * Then we detect for neighbour that disappeared inconsistency
          */
         for (BluetoothNeighbour neighbor : lastTrickleState) {
-            EventBus.getDefault().post(new NeighbourUnreachable(neighbor));
+            EventBus.getDefault().post(new ScannerNeighbourTimeout(neighbor));
             inconsistency++;
         }
 
@@ -430,7 +432,7 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
                     lock.lock();
                     if(btNeighborhood.add(btPeerDevice)) {
                         Log.d(TAG, "[+] device " + device.getName() + " [" + device.getAddress() + "] discovered");
-                        EventBus.getDefault().post(new NeighbourReachable(btPeerDevice));
+                        EventBus.getDefault().post(new ScannerNeighbourSensed(btPeerDevice));
                     }
                 } finally {
                     lock.unlock();
@@ -560,7 +562,7 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
      * discovering node disrupt connections...
      * when a neighbour is connected,  we scan much less
      */
-    public void onEvent(NeighbourConnected event) {
+    public void onEvent(ChannelConnected event) {
         if (!event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
             return;
         try {
@@ -604,7 +606,7 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
     }
 
 
-    public void onEvent(NeighbourDisconnected event) {
+    public void onEvent(ChannelDisconnected event) {
         if (!event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier))
             return;
         try {

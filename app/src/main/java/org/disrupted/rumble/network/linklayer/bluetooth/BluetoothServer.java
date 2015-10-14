@@ -25,7 +25,8 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.Worker;
 
@@ -117,7 +118,7 @@ public abstract class BluetoothServer implements Worker {
 
                     onClientConnected(mmConnectedSocket);
 
-                    EventBus.getDefault().post(new NeighbourReachable(neighbour));
+                    EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
                 }
             }
         } catch (IOException e) {

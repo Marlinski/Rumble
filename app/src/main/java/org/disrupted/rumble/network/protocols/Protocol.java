@@ -23,8 +23,8 @@ package org.disrupted.rumble.network.protocols;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
-import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
 
 /**
  * @author Marlinski

@@ -19,15 +19,13 @@ import org.disrupted.rumble.network.protocols.events.CommandExecuted;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
+import org.disrupted.rumble.network.events.ChannelConnected;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.services.ServiceLayer;
-import org.disrupted.rumble.network.services.events.ContactConnected;
-import org.disrupted.rumble.network.services.events.ContactDisconnected;
+import org.disrupted.rumble.network.events.ContactDisconnected;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -102,7 +100,7 @@ public class PushService implements ServiceLayer {
      * unless this contact has already been connected in which case this would allow
      * to add a new channel of communication
      */
-    public void onEvent(NeighbourConnected event) {
+    public void onEvent(ChannelConnected event) {
         if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
             return;
 

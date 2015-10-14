@@ -22,20 +22,21 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Interface;
+import org.disrupted.rumble.network.events.ContactConnected;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
+import org.disrupted.rumble.network.events.ScannerNeighbourTimeout;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
-import org.disrupted.rumble.network.linklayer.events.NeighbourReachable;
-import org.disrupted.rumble.network.linklayer.events.NeighbourUnreachable;
+import org.disrupted.rumble.network.events.NeighbourReachable;
+import org.disrupted.rumble.network.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.events.NeighbourConnected;
-import org.disrupted.rumble.network.protocols.events.NeighbourDisconnected;
-import org.disrupted.rumble.network.services.events.ContactConnected;
-import org.disrupted.rumble.network.services.events.ContactDisconnected;
-import org.disrupted.rumble.network.services.events.ContactReachable;
-import org.disrupted.rumble.network.services.events.ContactUnreachable;
+import org.disrupted.rumble.network.events.ChannelConnected;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
+import org.disrupted.rumble.network.events.ContactDisconnected;
+import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.util.NetUtil;
 
 import java.util.HashMap;
@@ -49,12 +50,17 @@ import java.util.Set;
 import de.greenrobot.event.EventBus;
 
 /*
- * This class keeps an up-do-date view of the neighborhood
- * - the physical neighborhood comprised of all the nodes discovered by the scanners
- * - the connected neighborhood comprised of all the nodes connected with the protocols
- * - the contact neighborhood which is a rearrangement of the physical and connected neighborhood
- *   relevant to a certain contact
+ * This class keeps an up-do-date view of the neighborhood on both a LinkLayer level and a
+ * "Contact" level. NeighbourManager merges multiple linklayerneighbour together if it is
+ * the same contact (like bluetooth and wifi for the same ContactNeighbour).
+ * It works by listenning to the different events:
+ *   - NeighbourReachable / NeighbourUnreachable throws by the Scanner
+ *   - NeighbourConnected / NeighbourDisconnected throws by the LinkLayerConnection
+ *   - ContactInformationReceived throws by ProtocolChannel which identifies a LinkLayerNeighbour
  *
+ * NeighbourManager is also the only one to throw a ContactDisconnected event which is thrown
+ * whenever a NeighbourDisconnected (for instance a bluetooth connection ended) and no other
+ * channels exists to reach the given Contact.
  */
 public class NeighbourManager {
 
@@ -63,25 +69,16 @@ public class NeighbourManager {
 
     private final Object managerLock = new Object();
 
-    public static class NeighbourEntry {
-        public LinkLayerNeighbour linkLayerNeighbour;
-        public boolean reachable;
-        public Set<ProtocolChannel> channels;
-
-        public NeighbourEntry(LinkLayerNeighbour linkLayerNeighbour) {
-            this.linkLayerNeighbour = linkLayerNeighbour;
-            this.reachable = true;
-            this.channels = new HashSet<ProtocolChannel>();
-        }
-    }
-    private  Map<String, NeighbourEntry> neighborhood;
+    private  Map<LinkLayerNeighbour, Set<ProtocolChannel>> neighborhood;
+    private  Map<Contact, Set<ProtocolChannel>>   contacts;
 
     public NeighbourManager() {
-        this.neighborhood = new HashMap<String, NeighbourEntry>();
+        this.neighborhood = new HashMap<>();
+        this.contacts = new HashMap<>();
     }
 
     /*
-     * Starting/Stopping the manager
+     * Starting/Stopping the neighbour manager
      */
     public void startMonitoring() {
         EventBus.getDefault().register(this);
@@ -92,112 +89,113 @@ public class NeighbourManager {
             if (EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
 
-            for (Map.Entry<String, NeighbourEntry> entry : neighborhood.entrySet()) {
-                entry.getValue().channels.clear();
-            }
             neighborhood.clear();
+            contacts.clear();
         }
-    }
-
-    /*
-     * Using Events to manage the neighborhood
-     */
-    public void onEvent(NeighbourReachable event) {
-        synchronized (managerLock) {
-            if (neighborhood.get(event.neighbour.getLinkLayerAddress()) != null)
-                return;
-            NeighbourEntry entry = new NeighbourEntry(event.neighbour);
-            neighborhood.put(event.neighbour.getLinkLayerAddress(), entry);
-
-            // throw ContactReachable event if any
-            Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                    .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
-            if(!contacts.isEmpty()) {
-                for (Contact contact : contacts)
-                    EventBus.getDefault().post(new ContactReachable(contact, event.neighbour));
-            }
-        }
-        EventBus.getDefault().post(new NeighborhoodChanged());
-    }
-
-    public void onEvent(NeighbourUnreachable event) {
-        synchronized (managerLock) {
-            NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
-            if (entry == null)
-                return;
-            if (entry.channels.isEmpty()) {
-                neighborhood.remove(event.neighbour.getLinkLayerAddress());
-
-                // throw ContactUnreachable event if any
-                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerAddress());
-                if(!contacts.isEmpty()) {
-                    for (Contact contact : contacts)
-                        EventBus.getDefault().post(new ContactUnreachable(contact));
-                }
-
-            } else
-                entry.reachable = false;
-        }
-        EventBus.getDefault().post(new NeighborhoodChanged());
-    }
-
-    public void onEvent(NeighbourConnected event) {
-        synchronized (managerLock) {
-            NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
-            if (entry == null) {
-                entry = new NeighbourEntry(event.neighbour);
-                neighborhood.put(event.neighbour.getLinkLayerAddress(), entry);
-            }
-            entry.channels.add(event.worker);
-        }
-        EventBus.getDefault().post(new NeighborhoodChanged());
-    }
-
-    public void onEvent(NeighbourDisconnected event) {
-        synchronized (managerLock) {
-            NeighbourEntry entry = neighborhood.get(event.neighbour.getLinkLayerAddress());
-            if (entry == null)
-                return;
-            entry.channels.remove(event.worker);
-
-            try {
-                // throw ContactDisconnected event if any
-                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                        .getContactsUsingMacAddress(event.neighbour.getLinkLayerMacAddress());
-                if (!contacts.isEmpty()) {
-                    for (Contact contact : contacts)
-                        EventBus.getDefault().post(new ContactDisconnected(contact));
-                }
-                if (entry.channels.isEmpty() && !entry.reachable) {
-                    if (!contacts.isEmpty()) {
-                        for (Contact contact : contacts)
-                            EventBus.getDefault().post(new ContactUnreachable(contact));
-                    }
-                }
-            } catch(NetUtil.NoMacAddressException ignore) {
-            }
-
-            if (entry.channels.isEmpty() && !entry.reachable)
-                neighborhood.remove(entry);
-        }
-        EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
     public void onEvent(LinkLayerStopped event) {
         synchronized (managerLock) {
-            Iterator<Map.Entry<String, NeighbourEntry>> it = neighborhood.entrySet().iterator();
+            Iterator<Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>>> it = neighborhood.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry<String,NeighbourEntry> mapEntry = it.next();
-                NeighbourEntry neighbourEntry = mapEntry.getValue();
-                if (neighbourEntry.linkLayerNeighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier))
+                Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>> mapEntry = it.next();
+                LinkLayerNeighbour neighbour = mapEntry.getKey();
+                if (neighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier))
                     it.remove();
             }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
-    public void onEvent(ContactInterfaceInserted event) {
+    /*
+     * Events thrown by Scanner classes
+     */
+    public void onEvent(ScannerNeighbourSensed event) {
+        synchronized (managerLock) {
+            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
+            if(channels != null)
+                return;
+            neighborhood.put(event.neighbour, new HashSet<ProtocolChannel>());
+        }
+        EventBus.getDefault().post(new NeighbourReachable(event.neighbour));
+        EventBus.getDefault().post(new NeighborhoodChanged());
+    }
+
+    public void onEvent(ScannerNeighbourTimeout event) {
+        synchronized (managerLock) {
+            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
+            if (channels == null)
+                return;
+
+            if (!channels.isEmpty())
+                return;
+
+            neighborhood.remove(event.neighbour);
+        }
+        EventBus.getDefault().post(new NeighbourUnreachable(event.neighbour));
+        EventBus.getDefault().post(new NeighborhoodChanged());
+    }
+
+    /*
+     * Events thrown by ProtocolChannel
+     */
+    public void onEvent(ChannelConnected event) {
+        synchronized (managerLock) {
+            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
+            if(channels == null) {
+                // it is possible that a peer connect to us before we even detect it
+                channels = new HashSet<>();
+                neighborhood.put(event.neighbour, channels);
+            }
+            channels.add(event.worker);
+        }
+        EventBus.getDefault().post(new NeighborhoodChanged());
+    }
+
+    public void onEvent(ChannelDisconnected event) {
+        synchronized (managerLock) {
+            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
+            if(channels == null)
+                return;
+            channels.remove(event.channel);
+
+            // throw ContactDisconnected event if a Contact doesn't have any channel left
+            Iterator<Map.Entry<Contact, Set<ProtocolChannel>>> it = contacts.entrySet().iterator();
+            while(it.hasNext()) {
+                Map.Entry<Contact, Set<ProtocolChannel>> contactEntry = it.next();
+                if(contactEntry.getValue().contains(event.channel)) {
+                    contactEntry.getValue().remove(event.channel);
+                    if(contactEntry.getValue().isEmpty()) {
+                        EventBus.getDefault().post(new ContactDisconnected(contactEntry.getKey()));
+                        it.remove();
+                    }
+                }
+            }
+
+            /*
+             * should we trigger a force scan ?
+             */
+            if (channels.isEmpty())
+                neighborhood.remove(event.neighbour);
+
+        }
+        EventBus.getDefault().post(new NeighborhoodChanged());
+    }
+
+    public void onEvent(ContactInformationReceived event) {
+        boolean connected = false;
+        synchronized (managerLock) {
+            Set<ProtocolChannel> channels = contacts.get(event.contact);
+            if (channels == null) {
+                channels = new HashSet<>();
+                contacts.put(event.contact, channels);
+                connected = true;
+            }
+            if (!channels.contains(event.channel))
+                channels.add(event.channel);
+        }
+        if(connected)
+            EventBus.getDefault().post(new ContactConnected(event.contact, event.channel));
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
@@ -209,32 +207,33 @@ public class NeighbourManager {
         public String getSecondName();
         public boolean isReachable(String linkLayerIdentifier);
         public boolean isConnected(String linkLayerIdentifier);
-        public boolean is(String linkLayerAddress);
     }
 
     public static class UnknowNeighbour implements Neighbour {
 
-        private NeighbourEntry neighbour;
+        private LinkLayerNeighbour   neighbour;
+        private Set<ProtocolChannel> channels;
 
-        public UnknowNeighbour(NeighbourEntry entry) {
-            this.neighbour = entry;
+        public UnknowNeighbour(LinkLayerNeighbour neighbour, Set<ProtocolChannel> channels) {
+            this.neighbour = neighbour;
+            this.channels  = new HashSet<>(channels);
         }
 
         @Override
         public String getFirstName() {
-            if(neighbour.linkLayerNeighbour instanceof BluetoothNeighbour)
-                return ((BluetoothNeighbour)neighbour.linkLayerNeighbour).getBluetoothDeviceName();
+            if(neighbour instanceof BluetoothNeighbour)
+                return ((BluetoothNeighbour)neighbour).getBluetoothDeviceName();
             else
-                return neighbour.linkLayerNeighbour.getLinkLayerAddress();
+                return neighbour.getLinkLayerAddress();
         }
 
         @Override
         public String getSecondName() {
-            if (neighbour.linkLayerNeighbour instanceof BluetoothNeighbour)
-                return ((BluetoothNeighbour) neighbour.linkLayerNeighbour).getLinkLayerAddress();
+            if (neighbour instanceof BluetoothNeighbour)
+                return ((BluetoothNeighbour) neighbour).getLinkLayerAddress();
             try {
-                if (neighbour.linkLayerNeighbour instanceof WifiNeighbour)
-                    return neighbour.linkLayerNeighbour.getLinkLayerMacAddress();
+                if (neighbour instanceof WifiNeighbour)
+                    return neighbour.getLinkLayerMacAddress();
             } catch(NetUtil.NoMacAddressException ignore) {
             }
             return "";
@@ -242,43 +241,39 @@ public class NeighbourManager {
 
         @Override
         public boolean isReachable(String linkLayerIdentifier) {
-            return neighbour.linkLayerNeighbour.getLinkLayerIdentifier()
+            return neighbour.getLinkLayerIdentifier()
                     .equals(linkLayerIdentifier);
         }
 
         @Override
         public boolean isConnected(String linkLayerIdentifier) {
-            for(ProtocolChannel channel : neighbour.channels) {
+            for(ProtocolChannel channel : channels) {
                 if(channel.getLinkLayerConnection().getLinkLayerIdentifier()
                         .equals(linkLayerIdentifier))
                     return true;
             }
             return false;
         }
-
-        @Override
-        public boolean is(String linkLayerAddress) {
-            return neighbour.linkLayerNeighbour.getLinkLayerAddress()
-                    .equals(linkLayerAddress);
-        }
     }
 
     public static class ContactNeighbour implements Neighbour {
 
         private Contact contact;
-        private List<NeighbourEntry> neighbourEntries;
+        private Set<ProtocolChannel> channels;
+
 
         public ContactNeighbour(Contact contact) {
             this.contact = contact;
-            neighbourEntries = new LinkedList<NeighbourEntry>();
+            this.channels = new HashSet<>();
         }
 
-        public void addNeighbourEntry(NeighbourEntry entry) {
-            this.neighbourEntries.add(entry);
+        public ContactNeighbour(Contact contact, Set<ProtocolChannel> channels) {
+            this.contact = contact;
+            this.channels = new HashSet<>(channels);
         }
 
-        public List<NeighbourEntry> getNeighbourEntries() {
-            return neighbourEntries;
+        public void addChannel(ProtocolChannel channel) {
+            this.channels.add(channel);
         }
 
         @Override
@@ -293,9 +288,8 @@ public class NeighbourManager {
 
         @Override
         public boolean isReachable(String linkLayerIdentifier) {
-            for(NeighbourEntry entry : neighbourEntries) {
-                if(entry.linkLayerNeighbour.getLinkLayerIdentifier()
-                        .equals(linkLayerIdentifier))
+            for(ProtocolChannel channel : channels) {
+                if(channel.getLinkLayerIdentifier().equals(linkLayerIdentifier))
                     return true;
             }
             return false;
@@ -303,20 +297,8 @@ public class NeighbourManager {
 
         @Override
         public boolean isConnected(String linkLayerIdentifier) {
-            for(NeighbourEntry entry : neighbourEntries) {
-                if(entry.linkLayerNeighbour.getLinkLayerIdentifier()
-                        .equals(linkLayerIdentifier)) {
-                    return (!entry.channels.isEmpty());
-                }
-            }
-            return false;
-        }
-
-        @Override
-        public boolean is(String linkLayerAddress) {
-            for(NeighbourEntry neighbourEntry : neighbourEntries) {
-                if(neighbourEntry.linkLayerNeighbour.getLinkLayerAddress()
-                        .equals(linkLayerAddress))
+            for(ProtocolChannel channel : channels) {
+                if(channel.getLinkLayerIdentifier().equals(linkLayerIdentifier))
                     return true;
             }
             return false;
@@ -327,64 +309,33 @@ public class NeighbourManager {
         Set<Neighbour> ret = new HashSet<Neighbour>();
 
         synchronized (managerLock) {
-            for(Map.Entry<String, NeighbourEntry> mapEntry : neighborhood.entrySet()) {
-                NeighbourEntry neighbourEntry = mapEntry.getValue();
 
-                // we might know some of the entries already, either because we are already
-                // connected to them, or because we met them in the past
-                String macAddress = "";
-                try {
-                    macAddress = neighbourEntry.linkLayerNeighbour.getLinkLayerMacAddress();
-                } catch(NetUtil.NoMacAddressException e){
-                    continue;
-                }
+            for(Map.Entry<Contact, Set<ProtocolChannel>> mapEntry : contacts.entrySet()) {
+                Contact contact = mapEntry.getKey();
+                Set<ProtocolChannel> channels = mapEntry.getValue();
+                ret.add(new ContactNeighbour(contact, channels));
+            }
 
-                Set<Contact> contacts = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
-                        .getContactsUsingMacAddress(macAddress);
+            for(Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>> mapEntry : neighborhood.entrySet()) {
+                LinkLayerNeighbour neighbour = mapEntry.getKey();
+                Set<ProtocolChannel> channels = mapEntry.getValue();
+                boolean found = false;
 
-                if(contacts.isEmpty()) {
-                    // this neighbour entry is unknown
-                    Neighbour unknowNeighbour = new UnknowNeighbour(neighbourEntry);
-                    ret.add(unknowNeighbour);
-                } else {
-                    // we know one or more contact that match this neighbourEntry.
-                    // this is because a certain linkLayerNeighbour can be accessed by multiple
-                    // protocols (Rumble, Firechat) each of them being a different contact
-                    // every contact will have its own ContactNeighbour entry
-                    ContactNeighbour contactNeighbour = null;
-                    for (Contact contact : contacts) {
-                        // now we might have created this contact already (with another interface)
-                        boolean found = false;
-                        Iterator<Neighbour> it = ret.iterator();
-                        while (it.hasNext() && !found) {
-                            Neighbour neighbour = it.next();
-                            if (neighbour instanceof ContactNeighbour) {
-                                if (((ContactNeighbour) neighbour).contact.equals(contact)) {
-                                    // the contact was created already
-                                    contactNeighbour = (ContactNeighbour) neighbour;
-                                    found = true;
-                                }
-                            }
+                // we only add this linklayerneighbour if no contact is bound to it
+                outer:
+                for(ProtocolChannel channel : channels) {
+                    Iterator<Map.Entry<Contact,Set<ProtocolChannel>>> it = contacts.entrySet().iterator();
+                    while(it.hasNext()) {
+                        Map.Entry<Contact,Set<ProtocolChannel>> entry = it.next();
+                        Set<ProtocolChannel> contactChannels = entry.getValue();
+                        if(contactChannels.contains(channel)) {
+                            found = true;
+                            break outer;
                         }
-                        if(!found) {
-                            // the contact wasn't already created
-                            contactNeighbour = new ContactNeighbour(contact);
-                            ret.add(contactNeighbour);
-                        }
-
-                        // now we add the channels to our ContactNeighbour
-                        // but only with the ProtocolChannel relevant to our contact
-                        NeighbourEntry newNeighbourEntry = new NeighbourEntry(neighbourEntry.linkLayerNeighbour);
-                        for(ProtocolChannel channel : neighbourEntry.channels) {
-                            Interface iface = new Interface(
-                                    macAddress,
-                                    channel.getProtocolIdentifier());
-                            if(contact.getInterfaces().contains(iface))
-                                newNeighbourEntry.channels.add(channel);
-                        }
-                        contactNeighbour.addNeighbourEntry(newNeighbourEntry);
                     }
                 }
+                if(!found)
+                    ret.add(new UnknowNeighbour(neighbour,channels));
             }
         }
 
@@ -393,27 +344,16 @@ public class NeighbourManager {
 
     public ProtocolChannel chooseBestChannel(Contact contact) {
         ProtocolChannel ret = null;
-        
         synchronized (managerLock) {
-            Set<Neighbour> neighbourList = getNeighbourList();
-            Iterator<Neighbour> it = neighbourList.iterator();
-            while (it.hasNext()) {
-                Neighbour neighbour = it.next();
-                if (!(neighbour instanceof ContactNeighbour))
-                    continue;
-
-                if (((ContactNeighbour) neighbour).contact.equals(contact)) {
-                    for (NeighbourEntry neighbourEntry : ((ContactNeighbour) neighbour).getNeighbourEntries()) {
-                        for (ProtocolChannel channel : neighbourEntry.channels) {
-                            if (ret == null)
-                                ret = channel;
-                            else
-                                ret = (ret.getChannelPriority() >
-                                        channel.getChannelPriority() ? ret : channel);
-                        }
-                    }
-                }
+            Set<ProtocolChannel> channels = contacts.get(contact);
+            for (ProtocolChannel channel : channels) {
+                if (ret == null)
+                    ret = channel;
+                else
+                    ret = (ret.getChannelPriority() >
+                            channel.getChannelPriority() ? ret : channel);
             }
+
         }
         return ret;
     }
