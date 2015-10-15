@@ -62,6 +62,7 @@
                 android:focusable="false"
                 android:focusableInTouchMode="false"
                 android:clickable="false"
+                android:scrollbars="vertical"
                 android:smoothScrollbar="true"
                 android:scrollingCache="false"
                 android:animationCache="false"
