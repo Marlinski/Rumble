@@ -62,7 +62,6 @@ public class FragmentGroupList extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
     }
 
     @Override
@@ -81,26 +80,6 @@ public class FragmentGroupList extends Fragment {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
         super.onDestroy();
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.group_list_menu, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_scan_qrcode:
-                IntentIntegrator.initiateScan(getActivity());
-                return true;
-            case R.id.action_create_group:
-                Intent create_group = new Intent(getActivity(), PopupCreateGroup.class );
-                startActivity(create_group);
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     public void getGroupList() {

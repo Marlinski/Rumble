@@ -21,6 +21,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
@@ -335,8 +336,6 @@ public class BlockContact extends Block {
      */
     private class GroupEntry  extends Entry {
 
-        public static final int GROUP_GID_SIZE = HashUtil.GROUP_ID_SIZE;
-
         private String group_id_base64;
 
         public GroupEntry(int entrySize) {
@@ -345,16 +344,16 @@ public class BlockContact extends Block {
         }
 
         public GroupEntry(String gid) {
-            super(GROUP_GID_SIZE);
+            super(Group.GROUP_GID_SIZE);
             this.group_id_base64 = gid;
         }
 
         @Override
         public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException {
-            byte[] gid = new byte[GROUP_GID_SIZE];
-            buffer.get(gid,0,GROUP_GID_SIZE);
-            this.group_id_base64 = Base64.encodeToString(gid,0,GROUP_GID_SIZE,Base64.NO_WRAP);
-            return  GROUP_GID_SIZE;
+            byte[] gid = new byte[Group.GROUP_GID_SIZE];
+            buffer.get(gid,0,Group.GROUP_GID_SIZE);
+            this.group_id_base64 = Base64.encodeToString(gid,0,Group.GROUP_GID_SIZE,Base64.NO_WRAP);
+            return  Group.GROUP_GID_SIZE;
         }
 
         @Override
@@ -365,7 +364,7 @@ public class BlockContact extends Block {
 
             /* write entry payload */
             byte[] gid = Base64.decode(group_id_base64, Base64.NO_WRAP);
-            buffer.put(gid,0,GROUP_GID_SIZE);
+            buffer.put(gid,0,Group.GROUP_GID_SIZE);
             return (HEADER_SIZE+entrySize);
         }
     }

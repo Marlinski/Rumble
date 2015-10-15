@@ -188,6 +188,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         block = new BlockChatMessage(header);
                         break;
                     case BlockHeader.BLOCKTYPE_KEEPALIVE:
+                        Log.d(TAG, "keep-alive received");
                         block = new BlockKeepAlive(header);
                         break;
                     default:
@@ -313,6 +314,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     private Runnable socketTimeoutFires = new Runnable() {
         @Override
         public void run() {
+            Log.d(TAG, "channel seems dead");
             stopWorker();
         }
     };

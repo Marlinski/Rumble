@@ -103,7 +103,8 @@
 
         <activity
             android:name=".userinterface.activity.GroupListActivity"
-            android:uiOptions="splitActionBarWhenNarrow">
+            android:uiOptions="splitActionBarWhenNarrow"
+            android:theme="@style/Theme.AppCompat.NoActionBar">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
         </activity>

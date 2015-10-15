@@ -27,6 +27,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.amulyakhare.textdrawable.TextDrawable;
+import com.amulyakhare.textdrawable.util.ColorGenerator;
+
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
@@ -45,6 +48,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
 
     private final LayoutInflater inflater;
     private List<NeighbourManager.Neighbour> neighborhood;
+    private static final TextDrawable.IBuilder builder = TextDrawable.builder().rect();
 
     public NeighborhoodListAdapter(Activity activity, Set<NeighbourManager.Neighbour> neighborhood) {
         this.inflater     = LayoutInflater.from(activity);
@@ -61,9 +65,21 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
         TextView id = (TextView) neighborView.findViewById(R.id.neighbour_item_link_layer_name);
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);
         ImageView wifiIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_wifi);
+        ImageView avatarView = (ImageView) neighborView.findViewById(R.id.neighbour_item_avatar);
 
         name.setText(neighbour.getFirstName());
         id.setText(neighbour.getSecondName());
+
+        if(neighbour instanceof NeighbourManager.ContactNeighbour) {
+            ColorGenerator generator = ColorGenerator.DEFAULT;
+            avatarView.setImageDrawable(
+                    builder.build(
+                            neighbour.getFirstName().substring(0, 1),
+                            generator.getColor(neighbour.getSecondName()))
+            );
+        } else {
+
+        }
 
         if(neighbour.isReachable(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
             bluetoothIcon.setVisibility(View.VISIBLE);

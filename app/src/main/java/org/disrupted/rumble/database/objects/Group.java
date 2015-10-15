@@ -32,6 +32,10 @@ public class Group {
     public static final String TAG = "Group";
 
     public static final String DEFAULT_PUBLIC_GROUP = "rumble.public";
+    public static final int GROUP_NAME_MAX_SIZE = 50;
+    public static final int GROUP_DESC_MAX_SIZE = 140;
+    public static final int GROUP_GID_SIZE = 8;
+    public static final int GROUP_KEY_SIZE = 256;
 
     private String    name;
     private String    gid;

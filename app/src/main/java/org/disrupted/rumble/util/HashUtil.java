@@ -21,6 +21,8 @@ package org.disrupted.rumble.util;
 
 import android.util.Base64;
 
+import org.disrupted.rumble.database.objects.Group;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,7 +36,10 @@ public class HashUtil {
 
     public static final int STATUS_ID_SIZE = 16;
     public static final int USER_ID_SIZE   = 8;
-    public static final int GROUP_ID_SIZE  = 8;
+
+    public static final int expectedEncodedSize(int size) {
+        return (int)(4*Math.ceil((double) size/3));
+    }
 
     public static final String computeInterfaceID(String linkLayerAddress,String protocol) {
         try {
@@ -93,7 +98,7 @@ public class HashUtil {
             md.update(name.getBytes());
             if(isPrivate)
                 md.update(ByteBuffer.allocate(8).putLong(System.currentTimeMillis()).array());
-            return Base64.encodeToString(md.digest(),0,GROUP_ID_SIZE,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0, Group.GROUP_GID_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
