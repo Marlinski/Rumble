@@ -44,7 +44,7 @@ import java.util.List;
 import de.greenrobot.event.EventBus;
 
 /**
- * A BlockStatus holds all the information necessary to retrieve a Status
+ * A BlockChat holds all the information necessary to retrieve a ChatMessage
  *
  * +-------------------------------------------+
  * |               User ID                     |  8 byte Author UID
@@ -63,7 +63,7 @@ public class BlockChatMessage extends Block {
     /*
      * Byte size
      */
-    private static final int FIELD_UID_SIZE             = HashUtil.USER_ID_SIZE;
+    private static final int FIELD_UID_SIZE             = ChatMessage.MSG_ID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
     private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
 
@@ -73,8 +73,10 @@ public class BlockChatMessage extends Block {
             FIELD_AUTHOR_LENGTH_SIZE +
             FIELD_STATUS_LENGTH_SIZE);
 
-    private static final int MAX_CHAT_MESSAGE_SIZE = 255; // limiting status to 500 character;
-    private static final int MAX_BLOCK_CHAT_MESSAGE_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_CHAT_MESSAGE_SIZE;
+    private static final int MAX_PAYLOAD_SIZE = (
+            MIN_PAYLOAD_SIZE +
+            Contact.CONTACT_NAME_MAX_SIZE +
+            ChatMessage.MSG_MAX_SIZE);
 
     private ChatMessage chatMessage;
 
@@ -97,11 +99,10 @@ public class BlockChatMessage extends Block {
             throw new MalformedBlockPayload("Block type BLOCK_CHAT expected", 0);
 
         long readleft = header.getBlockLength();
-        if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_CHAT_MESSAGE_SIZE))
+        if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
 
         long timeToTransfer = System.currentTimeMillis();
-
 
         /* read the block */
         InputStream in = con.getInputStream();
@@ -122,7 +123,7 @@ public class BlockChatMessage extends Block {
 
             short authorLength = byteBuffer.get();
             readleft -= FIELD_AUTHOR_LENGTH_SIZE;
-            if ((authorLength <= 0) || (authorLength > readleft))
+            if ((authorLength <= 0) || (authorLength > readleft) || (authorLength > Contact.CONTACT_NAME_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong author.length parameter: " + authorLength, header.getBlockLength()-readleft);
             byte[] author_name = new byte[authorLength];
             byteBuffer.get(author_name, 0, authorLength);
@@ -130,7 +131,7 @@ public class BlockChatMessage extends Block {
 
             short messageLength = byteBuffer.getShort();
             readleft -= FIELD_STATUS_LENGTH_SIZE;
-            if ((messageLength <= 0) || (messageLength > readleft))
+            if ((messageLength <= 0) || (messageLength > readleft) || (messageLength > ChatMessage.MSG_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong message.length parameter: " + messageLength, header.getBlockLength()-readleft);
             byte[] message = new byte[messageLength];
             byteBuffer.get(message, 0, messageLength);

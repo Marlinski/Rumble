@@ -188,7 +188,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         block = new BlockChatMessage(header);
                         break;
                     case BlockHeader.BLOCKTYPE_KEEPALIVE:
-                        Log.d(TAG, "keep-alive received");
                         block = new BlockKeepAlive(header);
                         break;
                     default:

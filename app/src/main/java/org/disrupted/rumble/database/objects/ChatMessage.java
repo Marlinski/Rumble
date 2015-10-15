@@ -24,6 +24,10 @@ import org.disrupted.rumble.util.HashUtil;
  */
 public class ChatMessage {
 
+    public static final int MSG_MAX_SIZE         = 1000;
+    public static final int MSG_ID_RAW_SIZE      = 16;
+    public static final int MSG_HASHTAG_MAX_SIZE = 50;
+
     protected Contact     contact;
     protected String      uuid;
     protected String      message;

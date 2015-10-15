@@ -157,7 +157,7 @@ public class BlockContact extends Block {
             // read the namesize field
             int author_name_length = (byteBuffer.get() & 0xFF);
             readleft -= FIELD_AUTHOR_LENGTH_SIZE;
-            if((author_name_length < 0) || (author_name_length > Contact.CONTACT_NAME_MAX_SIZE))
+            if((author_name_length < 0) || (author_name_length > readleft) || (author_name_length > Contact.CONTACT_NAME_MAX_SIZE))
                 throw new MalformedBlockPayload("contact name length is too long:", author_name_length);
 
             // read the name
@@ -168,9 +168,11 @@ public class BlockContact extends Block {
             Contact tempcontact = new Contact(new String(author_name),user_id_base64,false);
 
             // read the optional fields
-            while(readleft > 0) {
+            while(readleft > 2) {
                 int entryType = byteBuffer.get();          // FIELD_TYPE_SIZE
                 int entrySize = (byteBuffer.get() & 0xff); // FIELD_LENGTH_SIZE
+                if(entrySize > readleft)
+                    throw new MalformedBlockPayload("entry larger than what's left to read",readleft);
                 Entry entry;
                 switch (entryType) {
                     case Entry.ENTRY_TYPE_GROUP:

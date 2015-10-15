@@ -21,7 +21,9 @@ package org.disrupted.rumble.util;
 
 import android.util.Base64;
 
+import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -31,9 +33,6 @@ import java.security.NoSuchAlgorithmException;
  * @author Marlinski
  */
 public class HashUtil {
-
-    public static final int STATUS_ID_SIZE = 16;
-    public static final int USER_ID_SIZE   = 8;
 
     public static final int expectedEncodedSize(int size) {
         return (int)(4*Math.ceil((double) size/3));
@@ -58,7 +57,7 @@ public class HashUtil {
             md.update(group_gid.getBytes());
             md.update(post.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
-            return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0, PushStatus.STATUS_ID_RAW_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
@@ -71,7 +70,7 @@ public class HashUtil {
             md.update(author_uid.getBytes());
             md.update(message.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(timeOfCreation).array());
-            return Base64.encodeToString(md.digest(),0,STATUS_ID_SIZE,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0,PushStatus.STATUS_ID_RAW_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
@@ -83,7 +82,7 @@ public class HashUtil {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(name.getBytes());
             md.update(ByteBuffer.allocate(8).putLong(time).array());
-            return Base64.encodeToString(md.digest(),0,USER_ID_SIZE,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0, Contact.CONTACT_UID_RAW_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;
