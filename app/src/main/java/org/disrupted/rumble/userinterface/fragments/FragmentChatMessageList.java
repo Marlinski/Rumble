@@ -77,7 +77,9 @@ public class FragmentChatMessageList extends Fragment {
         mView = inflater.inflate(R.layout.fragment_chatmessage_list, container, false);
 
         mRecyclerView = (RecyclerView) mView.findViewById(R.id.chat_message_list);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager.setReverseLayout(true);
+        mRecyclerView.setLayoutManager(linearLayoutManager);
         messageRecyclerAdapter = new ChatMessageRecyclerAdapter(getActivity(), this);
         mRecyclerView.setAdapter(messageRecyclerAdapter);
 
@@ -140,13 +142,9 @@ public class FragmentChatMessageList extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    messageRecyclerAdapter = new ChatMessageRecyclerAdapter(getActivity(),
-                            FragmentChatMessageList.this);
                     messageRecyclerAdapter.swap(answer);
-                    mRecyclerView.setAdapter(messageRecyclerAdapter);
-                    mRecyclerView.smoothScrollToPosition(messageRecyclerAdapter.getItemCount()-1);
-                    //if (getActivity() != null)
-                    //    ((HomeActivity)getActivity()).refreshNotifications();
+                    messageRecyclerAdapter.notifyDataSetChanged();
+                    mRecyclerView.smoothScrollToPosition(0);
                 }
             });
         }

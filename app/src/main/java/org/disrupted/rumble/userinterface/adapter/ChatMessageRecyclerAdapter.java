@@ -191,8 +191,8 @@ public class ChatMessageRecyclerAdapter extends RecyclerView.Adapter<ChatMessage
     }
 
     public int addChatMessage(ChatMessage message) {
-        messages.add(message);
-        return (messages.size()-1);
+        messages.add(0,message);
+        return (0);
     }
 
     public void swap(List<ChatMessage> chatMessageList) {
