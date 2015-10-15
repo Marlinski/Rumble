@@ -76,7 +76,7 @@ public class BlockPushStatus extends Block{
     /*
      * Byte size
      */
-    private static final int FIELD_UID_SIZE             = HashUtil.USER_ID_SIZE;
+    private static final int FIELD_UID_SIZE             = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
     private static final int FIELD_GID_SIZE             = Group.GROUP_GID_RAW_SIZE;
     private static final int FIELD_GROUP_LENGTH_SIZE    = 1;

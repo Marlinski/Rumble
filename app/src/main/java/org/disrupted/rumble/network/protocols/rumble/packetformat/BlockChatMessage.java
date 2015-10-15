@@ -63,7 +63,7 @@ public class BlockChatMessage extends Block {
     /*
      * Byte size
      */
-    private static final int FIELD_UID_SIZE             = ChatMessage.MSG_ID_RAW_SIZE;
+    private static final int FIELD_UID_SIZE             = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
     private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
 

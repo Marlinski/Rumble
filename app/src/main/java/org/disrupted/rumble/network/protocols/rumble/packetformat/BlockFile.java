@@ -23,6 +23,7 @@ import android.util.Base64;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.FileReceived;
@@ -76,7 +77,7 @@ public class BlockFile extends Block {
     /*
      * Byte size
      */
-    private static final int STATUS_ID_SIZE   = HashUtil.STATUS_ID_SIZE;
+    private static final int STATUS_ID_SIZE   = PushStatus.STATUS_ID_RAW_SIZE;
     private static final int MIME_TYPE_SIZE   = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = ( STATUS_ID_SIZE + MIME_TYPE_SIZE);
