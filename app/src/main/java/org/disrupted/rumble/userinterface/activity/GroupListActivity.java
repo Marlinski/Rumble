@@ -22,13 +22,11 @@ import android.os.Bundle;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 
 import com.google.zxing.integration.android.IntentIntegrator;
@@ -133,14 +131,14 @@ public class GroupListActivity extends AppCompatActivity {
 
                 // extract group ID
                 int gidsize = byteBuffer.get();
-                if ((gidsize < 0) || (gidsize > HashUtil.expectedEncodedSize(Group.GROUP_GID_SIZE)))
+                if ((gidsize < 0) || (gidsize > HashUtil.expectedEncodedSize(Group.GROUP_GID_RAW_SIZE)))
                     throw new Exception();
                 byte[] gid = new byte[gidsize];
                 byteBuffer.get(gid, 0, gidsize);
 
                 // extract group Key
                 int keysize = (resultbytes.length - 2 - namesize - gidsize);
-                if((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_SIZE)))
+                if((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_AES_SIZE)))
                     throw new Exception();
                 byte[] key = new byte[keysize];
                 byteBuffer.get(key, 0, keysize);

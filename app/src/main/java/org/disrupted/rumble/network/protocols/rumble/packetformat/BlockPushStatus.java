@@ -28,7 +28,6 @@ import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 import org.disrupted.rumble.network.protocols.events.PushStatusSent;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
@@ -41,8 +40,6 @@ import java.io.InputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import de.greenrobot.event.EventBus;
@@ -81,7 +78,7 @@ public class BlockPushStatus extends Block{
      */
     private static final int FIELD_UID_SIZE             = HashUtil.USER_ID_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
-    private static final int FIELD_GID_SIZE             = Group.GROUP_GID_SIZE;
+    private static final int FIELD_GID_SIZE             = Group.GROUP_GID_RAW_SIZE;
     private static final int FIELD_GROUP_LENGTH_SIZE    = 1;
     private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
     private static final int FIELD_TOC_SIZE             = 8;

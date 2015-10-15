@@ -27,8 +27,6 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import javax.crypto.SecretKey;
-
 /**
  * @author Marlinski
  */
@@ -98,7 +96,7 @@ public class HashUtil {
             md.update(name.getBytes());
             if(isPrivate)
                 md.update(ByteBuffer.allocate(8).putLong(System.currentTimeMillis()).array());
-            return Base64.encodeToString(md.digest(),0, Group.GROUP_GID_SIZE,Base64.NO_WRAP);
+            return Base64.encodeToString(md.digest(),0, Group.GROUP_GID_RAW_SIZE,Base64.NO_WRAP);
         }
         catch (NoSuchAlgorithmException ignore) {
             return null;

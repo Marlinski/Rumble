@@ -22,15 +22,14 @@ import android.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
-import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.HashUtil;
 
@@ -42,7 +41,6 @@ import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
@@ -100,7 +98,7 @@ public class BlockContact extends Block {
     /*
      * Byte size
      */
-    private static final int FIELD_UID_SIZE            = HashUtil.USER_ID_SIZE;
+    private static final int FIELD_UID_SIZE            = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE  = 1;
 
     private static final int MIN_PAYLOAD_SIZE       = (
@@ -148,20 +146,28 @@ public class BlockContact extends Block {
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
 
+            // read the UID raw
             byte[] uid = new byte[FIELD_UID_SIZE];
             byteBuffer.get(uid,0,FIELD_UID_SIZE);
+
+            // encode the UID in base64
+            String user_id_base64 = Base64.encodeToString(uid, 0, FIELD_UID_SIZE,Base64.NO_WRAP);
             readleft -= FIELD_UID_SIZE;
 
-            String user_id_base64 = Base64.encodeToString(uid, 0, FIELD_UID_SIZE,Base64.NO_WRAP);
-            byte author_name_length = byteBuffer.get();
+            // read the namesize field
+            int author_name_length = (byteBuffer.get() & 0xFF);
             readleft -= FIELD_AUTHOR_LENGTH_SIZE;
+            if((author_name_length < 0) || (author_name_length > Contact.CONTACT_NAME_MAX_SIZE))
+                throw new MalformedBlockPayload("contact name length is too long:", author_name_length);
 
+            // read the name
             byte[] author_name = new byte[author_name_length];
             byteBuffer.get(author_name,0,author_name_length);
             readleft -= author_name_length;
 
             Contact tempcontact = new Contact(new String(author_name),user_id_base64,false);
 
+            // read the optional fields
             while(readleft > 0) {
                 int entryType = byteBuffer.get();          // FIELD_TYPE_SIZE
                 int entrySize = (byteBuffer.get() & 0xff); // FIELD_LENGTH_SIZE
@@ -184,7 +190,7 @@ public class BlockContact extends Block {
                         entry.read(byteBuffer);
                         break;
                 }
-                readleft -= (Entry.HEADER_SIZE+entry.getEntrySize());
+                readleft -= (entry.getEntrySize());
             }
 
             tempcontact.lastMet(System.currentTimeMillis() / 1000L);
@@ -223,14 +229,14 @@ public class BlockContact extends Block {
             for (Map.Entry<String, Integer> entry : contact.getHashtagInterests().entrySet()) {
                 TagInterestEntry bufferEntry = new TagInterestEntry(entry.getKey(), entry.getValue().byteValue());
                 entries.add(bufferEntry);
-                buffersize += bufferEntry.getEntrySize() + Entry.HEADER_SIZE;
+                buffersize += bufferEntry.getEntrySize();
             }
         }
         if((flags & Contact.FLAG_GROUP_LIST) == Contact.FLAG_GROUP_LIST) {
             for (String gid : contact.getJoinedGroupIDs()) {
                 GroupEntry bufferEntry = new GroupEntry(gid);
                 entries.add(bufferEntry);
-                buffersize += bufferEntry.getEntrySize() + Entry.HEADER_SIZE;
+                buffersize += bufferEntry.getEntrySize();
             }
         }
         header.setPayloadLength(buffersize);
@@ -240,8 +246,8 @@ public class BlockContact extends Block {
         ByteBuffer blockBuffer = ByteBuffer.wrap(buffer);
 
         blockBuffer.put(author_id, 0, FIELD_UID_SIZE);
-        blockBuffer.put((byte)author_name.length);
-        blockBuffer.put(author_name, 0, author_name.length);
+        blockBuffer.put((byte)Math.min(author_name.length, Contact.CONTACT_NAME_MAX_SIZE));
+        blockBuffer.put(author_name, 0, Math.min(author_name.length, Contact.CONTACT_NAME_MAX_SIZE));
 
         for( Entry entry : entries ) {
             try {
@@ -293,15 +299,15 @@ public class BlockContact extends Block {
         /* Entry payload size (without EntryHeader) */
         int entrySize;
 
-        public Entry(int entrySize) {
+        public Entry(int entrySize){
             this.entrySize = entrySize;
         }
 
         public long getEntrySize() {
-            return entrySize;
+            return entrySize+HEADER_SIZE;
         }
 
-        public abstract long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException;
+        public abstract long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException, MalformedBlockPayload;
 
         public abstract long write(ByteBuffer buffer) throws BufferOverflowException, ReadOnlyBufferException;
 
@@ -309,7 +315,7 @@ public class BlockContact extends Block {
 
     public class NullEntry extends Entry {
 
-        public NullEntry(int entrySize) {
+        public NullEntry(int entrySize) throws MalformedBlockPayload{
             super(entrySize);
         }
 
@@ -338,22 +344,24 @@ public class BlockContact extends Block {
 
         private String group_id_base64;
 
-        public GroupEntry(int entrySize) {
+        public GroupEntry(int entrySize) throws MalformedBlockPayload{
             super(entrySize);
+            if((entrySize < 0) || (entrySize > (Group.GROUP_GID_RAW_SIZE)))
+                throw new MalformedBlockPayload("wrong group entry size ",entrySize);
             this.group_id_base64 = null;
         }
 
-        public GroupEntry(String gid) {
-            super(Group.GROUP_GID_SIZE);
+        public GroupEntry(String gid){
+            super(Group.GROUP_GID_RAW_SIZE);
             this.group_id_base64 = gid;
         }
 
         @Override
-        public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException {
-            byte[] gid = new byte[Group.GROUP_GID_SIZE];
-            buffer.get(gid,0,Group.GROUP_GID_SIZE);
-            this.group_id_base64 = Base64.encodeToString(gid,0,Group.GROUP_GID_SIZE,Base64.NO_WRAP);
-            return  Group.GROUP_GID_SIZE;
+        public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException, MalformedBlockPayload {
+            byte[] gid = new byte[Group.GROUP_GID_RAW_SIZE];
+            buffer.get(gid, 0, Group.GROUP_GID_RAW_SIZE);
+            this.group_id_base64 = Base64.encodeToString(gid,0,Group.GROUP_GID_RAW_SIZE,Base64.NO_WRAP);
+            return  Group.GROUP_GID_RAW_SIZE;
         }
 
         @Override
@@ -364,7 +372,7 @@ public class BlockContact extends Block {
 
             /* write entry payload */
             byte[] gid = Base64.decode(group_id_base64, Base64.NO_WRAP);
-            buffer.put(gid,0,Group.GROUP_GID_SIZE);
+            buffer.put(gid,0,Group.GROUP_GID_RAW_SIZE);
             return (HEADER_SIZE+entrySize);
         }
     }
@@ -374,9 +382,9 @@ public class BlockContact extends Block {
 
     /*
      * ENTRY TYPE TAG INTEREST (Header + Payload)
-     * +-------+--------+----------+--------------------------------+
-     * | TYPE  | length | Interest |           hashtag              |
-     * +-------+--------+----------+--------------------------------+
+     * +-------+----------+----------+--------------------------------+
+     * | TYPE  |  length  | Interest |           hashtag              |
+     * +-------+----------+----------+--------------------------------+
      *     1       1         1                   8
      */
     private class TagInterestEntry extends Entry {
@@ -385,8 +393,10 @@ public class BlockContact extends Block {
         private int    levelOfInterest;
         private String hashtag;
 
-        public TagInterestEntry(int entrySize) {
+        public TagInterestEntry(int entrySize)  throws MalformedBlockPayload {
             super(entrySize);
+            if((entrySize < 1) || (entrySize > (PushStatus.STATUS_HASHTAG_MAX_SIZE+1)))
+                throw new MalformedBlockPayload("wrong TagInterest entry size",entrySize);
             this.hashtag = null;
             this.levelOfInterest = -1;
         }
@@ -398,13 +408,13 @@ public class BlockContact extends Block {
         }
 
         @Override
-        public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException{
+        public long read(ByteBuffer buffer) throws IndexOutOfBoundsException, BufferUnderflowException, MalformedBlockPayload{
             this.levelOfInterest = (buffer.get() & 0xFF);
-            int hashtagsize = entrySize-1;
-            byte[] hashtagbytes = new byte[hashtagsize];
-            buffer.get(hashtagbytes,0,hashtagsize);
-            this.hashtag = new String(hashtagbytes);
-            return (TAG_INTEREST_SIZE+hashtagsize);
+            int hashtagSize = entrySize-1;
+            byte[] hashtagBytes = new byte[hashtagSize];
+            buffer.get(hashtagBytes,0,hashtagSize);
+            this.hashtag = new String(hashtagBytes);
+            return (TAG_INTEREST_SIZE+hashtagSize);
         }
 
         @Override
