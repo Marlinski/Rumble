@@ -142,12 +142,13 @@ public class BlockFile extends Block {
                 );
 
                 FileOutputStream fos = null;
+                Log.d(TAG, "to read: "+readleft);
                 long total = 0;
                 try {
                     fos = new FileOutputStream(attachedFile);
                     final int BUFFER_SIZE = 1024;
                     byte[] buffer = new byte[BUFFER_SIZE];
-                    while (readleft > 0) {
+                    while (readleft >= 0) {
                         long max_read = Math.min((long)BUFFER_SIZE,readleft);
                         int bytesread = in.read(buffer, 0, (int)max_read);
                         if (bytesread < 0)
@@ -231,11 +232,10 @@ public class BlockFile extends Block {
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
-            total+=bytesread;
             while (bytesread > 0) {
+                total+=bytesread;
                 out.write(fileBuffer, 0, bytesread);
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
-                total+=bytesread;
             }
         } finally {
             if (fis != null)
