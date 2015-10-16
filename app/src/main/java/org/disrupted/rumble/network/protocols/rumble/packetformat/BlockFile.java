@@ -142,6 +142,7 @@ public class BlockFile extends Block {
                 );
 
                 FileOutputStream fos = null;
+                long total = 0;
                 try {
                     fos = new FileOutputStream(attachedFile);
                     final int BUFFER_SIZE = 1024;
@@ -152,12 +153,14 @@ public class BlockFile extends Block {
                         if (bytesread < 0)
                             throw new IOException("End of stream reached before downloading was complete");
                         readleft -= bytesread;
+                        total += bytesread;
                         fos.write(buffer, 0, bytesread);
                     }
                 } finally {
                     if (fos != null)
                         fos.close();
                 }
+                Log.d(TAG, "total: "+total);
 
                 // add the photo to the media library
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -221,20 +224,24 @@ public class BlockFile extends Block {
         con.getOutputStream().write(bufferBlockFilePseudoHeader.array());
 
         BufferedInputStream fis = null;
+        long total = 0;
         try {
             OutputStream out = con.getOutputStream();
             final int BUFFER_SIZE = 1024;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
+            total+=bytesread;
             while (bytesread > 0) {
                 out.write(fileBuffer, 0, bytesread);
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
+                total+=bytesread;
             }
         } finally {
             if (fis != null)
                 fis.close();
         }
+        Log.d(TAG,"total: "+total);
 
         timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
