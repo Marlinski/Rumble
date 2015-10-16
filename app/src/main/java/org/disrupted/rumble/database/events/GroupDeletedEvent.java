@@ -28,4 +28,8 @@ public class GroupDeletedEvent extends DatabaseEvent {
         this.gid = gid;
     }
 
+    @Override
+    public String shortDescription() {
+        return "gid="+gid;
+    }
 }

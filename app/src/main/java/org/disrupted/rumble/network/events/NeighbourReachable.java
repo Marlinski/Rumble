@@ -35,4 +35,12 @@ public class NeighbourReachable extends NetworkEvent {
     public NeighbourReachable(LinkLayerNeighbour neighbour) {
         this.neighbour = neighbour;
     }
+
+    @Override
+    public String shortDescription() {
+        if(neighbour != null)
+            return neighbour.getLinkLayerAddress();
+        else
+            return "";
+    }
 }

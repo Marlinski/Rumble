@@ -33,4 +33,11 @@ public class ContactConnected extends NetworkEvent {
         this.channel = channel;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName() + "("+contact.getUid()+")";
+        else
+            return "";
+    }
 }

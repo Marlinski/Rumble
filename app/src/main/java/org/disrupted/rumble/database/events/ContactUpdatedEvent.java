@@ -30,4 +30,11 @@ public class ContactUpdatedEvent extends StatusDatabaseEvent {
         this.contact = contact;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName() + " ("+contact.getUid()+")";
+        else
+            return "";
+    }
 }

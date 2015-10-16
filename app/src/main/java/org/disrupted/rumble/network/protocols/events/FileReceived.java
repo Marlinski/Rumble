@@ -42,4 +42,8 @@ public class FileReceived extends NetworkEvent {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        return filename;
+    }
 }

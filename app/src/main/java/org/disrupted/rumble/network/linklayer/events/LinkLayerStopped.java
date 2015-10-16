@@ -27,8 +27,13 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 public class LinkLayerStopped extends NetworkEvent {
 
     public String linkLayerIdentifier;
+
     public LinkLayerStopped(String linkLayerIdentifier) {
         this.linkLayerIdentifier = linkLayerIdentifier;
     }
 
+    @Override
+    public String shortDescription() {
+        return linkLayerIdentifier;
+    }
 }

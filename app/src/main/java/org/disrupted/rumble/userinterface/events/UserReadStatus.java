@@ -35,4 +35,12 @@ public class UserReadStatus extends UserInteractionEvent {
         this.status = status;
     }
 
+    @Override
+    public String shortDescription() {
+        if(status != null)
+            return status.getPost()+" ("+status.getAuthor()+")";
+        else
+            return "";
+    }
+
 }

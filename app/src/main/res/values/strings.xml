@@ -52,6 +52,8 @@
     <string name="contact_detail_name">Name</string>
     <string name="contact_detail_uid">UserID</string>
     <string name="contact_detail_last_met">Last Met</string>
+    <string name="contact_detail_nb_status_sent">Nb of messages sent</string>
+    <string name="contact_detail_nb_status_rcvd">Nb of message received</string>
     <string name="contact_detail_message_sent">Messages sent</string>
     <string name="contact_detail_message_received">Messages Received</string>
     <string name="contact_detail_interface">Interface</string>

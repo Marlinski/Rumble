@@ -40,5 +40,12 @@ public class ChatMessageReceived extends NetworkEvent {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        if(chatMessage != null)
+            return chatMessage.getMessage()+" ("+chatMessage.getAuthor().getName()+")";
+        else
+            return null;
+    }
 
 }

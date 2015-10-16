@@ -280,7 +280,6 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
                  */
                 if (!mBluetoothAdapter.isDiscovering())
                     mBluetoothAdapter.startDiscovery();
-                Log.d(TAG, "[+] bluetooth scan procedure started");
                 scanningState = ScanningState.SCANNING_IN_PROGRESS;
                 EventBus.getDefault().post(new BluetoothScanStarted());
 
@@ -430,10 +429,8 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
                 BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
                 try {
                     lock.lock();
-                    if(btNeighborhood.add(btPeerDevice)) {
-                        Log.d(TAG, "[+] device " + device.getName() + " [" + device.getAddress() + "] discovered");
+                    if(btNeighborhood.add(btPeerDevice))
                         EventBus.getDefault().post(new ScannerNeighbourSensed(btPeerDevice));
-                    }
                 } finally {
                     lock.unlock();
                 }
@@ -483,7 +480,6 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
                             break;
                     }
 
-                    Log.d(TAG, "[-] bluetooth scan procedure has finished");
                     handler.removeCallbacks(scanTimeoutFires);
                     EventBus.getDefault().post(new BluetoothScanEnded());
 

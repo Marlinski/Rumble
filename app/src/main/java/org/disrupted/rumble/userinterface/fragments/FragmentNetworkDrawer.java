@@ -319,7 +319,6 @@ public class FragmentNetworkDrawer extends Fragment {
     /*
      *          Event management
      */
-
     public void onEvent(LinkLayerStarted event) {
         refreshBluetoothController();
         refreshWifiController();

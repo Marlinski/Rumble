@@ -2,6 +2,7 @@ package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.events.NetworkEvent;
 
 /**
  * This event holds every information known on a received transmission that happened successfully.
@@ -23,7 +24,7 @@ import org.disrupted.rumble.database.objects.PushStatus;
  *
  * @author Marlinski
  */
-public class PushStatusReceived {
+public class PushStatusReceived extends NetworkEvent{
 
     public PushStatus status;
     public Contact sender;
@@ -41,4 +42,11 @@ public class PushStatusReceived {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        if(status != null)
+            return status.getPost()+" ("+status.getAuthor()+")";
+        else
+            return "";
+    }
 }

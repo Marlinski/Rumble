@@ -29,4 +29,12 @@ public class UserReadChatMessage extends UserInteractionEvent {
     public UserReadChatMessage(ChatMessage chatMessage) {
         this.chatMessage = chatMessage;
     }
+
+    @Override
+    public String shortDescription() {
+        if(chatMessage != null)
+            return chatMessage.getMessage()+" ("+chatMessage.getAuthor().getName()+")";
+        else
+            return null;
+    }
 }

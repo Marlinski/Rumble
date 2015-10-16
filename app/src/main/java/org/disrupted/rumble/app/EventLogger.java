@@ -34,8 +34,8 @@ public class EventLogger {
         EventBus.getDefault().register(this,10);
     }
 
-    public void onEvent(Object event) {
-        Log.d(TAG, "---> event: "+event.getClass().getSimpleName());
+    public void onEvent(RumbleEvent event) {
+        Log.d(TAG, "---> "+event.getClass().getSimpleName()+" : "+event.shortDescription());
     }
 
 }

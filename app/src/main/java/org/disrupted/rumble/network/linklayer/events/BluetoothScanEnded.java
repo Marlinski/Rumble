@@ -19,8 +19,14 @@
 
 package org.disrupted.rumble.network.linklayer.events;
 
+import org.disrupted.rumble.network.events.NetworkEvent;
+
 /**
  * @author Marlinski
  */
-public class BluetoothScanEnded {
+public class BluetoothScanEnded extends NetworkEvent {
+    @Override
+    public String shortDescription() {
+        return "";
+    }
 }

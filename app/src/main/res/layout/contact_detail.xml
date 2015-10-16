@@ -26,7 +26,7 @@
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
-        android:layout_height="192dp"
+        android:layout_height="250dp"
         android:fitsSystemWindows="true"
         app:titleEnabled="false"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">

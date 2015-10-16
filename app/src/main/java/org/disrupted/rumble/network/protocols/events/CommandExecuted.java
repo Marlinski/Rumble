@@ -35,4 +35,12 @@ public class CommandExecuted extends NetworkEvent {
         this.command = command;
         this.success = success;
     }
+
+    @Override
+    public String shortDescription() {
+        if((worker != null) && (command != null))
+            return worker.getWorkerIdentifier()+" ("+command.getClass().getSimpleName()+")";
+        else
+            return "";
+    }
 }

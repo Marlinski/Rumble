@@ -32,4 +32,12 @@ public class ScannerNeighbourTimeout extends NetworkEvent {
     public ScannerNeighbourTimeout(LinkLayerNeighbour neighbour) {
         this.neighbour = neighbour;
     }
+
+    @Override
+    public String shortDescription() {
+        if(neighbour != null)
+            return null;
+        else
+            return "";
+    }
 }

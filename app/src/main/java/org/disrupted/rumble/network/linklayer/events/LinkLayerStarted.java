@@ -31,4 +31,8 @@ public class LinkLayerStarted extends NetworkEvent {
         this.linkLayerIdentifier = linkLayerIdentifier;
     }
 
+    @Override
+    public String shortDescription() {
+        return linkLayerIdentifier;
+    }
 }

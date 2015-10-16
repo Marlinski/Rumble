@@ -86,13 +86,13 @@ public class ChatService implements ServiceLayer {
 
     public void onEvent(ChannelConnected event) {
         synchronized (lock) {
-            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.worker.getWorkerIdentifier());
+            ChatMessageDispatcher dispatcher = workerIdentifierTodispatcher.get(event.channel.getWorkerIdentifier());
             if (dispatcher != null) {
                 Log.e(TAG, "worker already binded ?!");
                 return;
             }
-            dispatcher = new ChatMessageDispatcher(event.worker);
-            workerIdentifierTodispatcher.put(event.worker.getWorkerIdentifier(), dispatcher);
+            dispatcher = new ChatMessageDispatcher(event.channel);
+            workerIdentifierTodispatcher.put(event.channel.getWorkerIdentifier(), dispatcher);
             dispatcher.startDispatcher();
         }
     }

@@ -25,4 +25,8 @@ import org.disrupted.rumble.network.events.NetworkEvent;
  * @author Marlinski
  */
 public class BluetoothScanStarted extends NetworkEvent {
+    @Override
+    public String shortDescription() {
+        return "";
+    }
 }

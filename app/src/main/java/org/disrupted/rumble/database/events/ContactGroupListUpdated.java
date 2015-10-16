@@ -22,7 +22,7 @@ import org.disrupted.rumble.database.objects.Contact;
 /**
  * @author Marlinski
  */
-public class ContactGroupListUpdated {
+public class ContactGroupListUpdated extends DatabaseEvent{
 
     public final Contact contact;
 
@@ -30,4 +30,11 @@ public class ContactGroupListUpdated {
         this.contact = contact;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName() + " ("+contact.getUid()+")";
+        else
+            return "";
+    }
 }

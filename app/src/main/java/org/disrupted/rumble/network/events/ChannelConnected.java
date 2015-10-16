@@ -28,13 +28,21 @@ import org.disrupted.rumble.network.protocols.ProtocolChannel;
  * This event is sent by a ProtocolChannel whenever a LinkLayerConnection has successfully
  * opened and that thus, a channel is open to reach a certain neighbour
  */
-public class ChannelConnected {
+public class ChannelConnected extends NetworkEvent{
 
     public final LinkLayerNeighbour neighbour;
-    public final ProtocolChannel worker;
+    public final ProtocolChannel channel;
 
-    public ChannelConnected(LinkLayerNeighbour neighbour, ProtocolChannel worker) {
+    public ChannelConnected(LinkLayerNeighbour neighbour, ProtocolChannel channel) {
         this.neighbour = neighbour;
-        this.worker = worker;
+        this.channel = channel;
+    }
+
+    @Override
+    public String shortDescription() {
+        if((channel != null) && (neighbour != null))
+            return channel.getWorkerIdentifier() + "("+neighbour.getLinkLayerAddress()+")";
+        else
+            return "";
     }
 }

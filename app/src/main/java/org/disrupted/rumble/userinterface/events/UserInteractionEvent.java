@@ -19,8 +19,10 @@
 
 package org.disrupted.rumble.userinterface.events;
 
+import org.disrupted.rumble.app.RumbleEvent;
+
 /**
  * @author Marlinski
  */
-public abstract class UserInteractionEvent {
+public abstract class UserInteractionEvent implements RumbleEvent {
 }

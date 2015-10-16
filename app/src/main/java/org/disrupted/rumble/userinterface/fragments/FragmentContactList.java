@@ -88,15 +88,15 @@ public class FragmentContactList  extends Fragment {
     }
 
     public void getContactList() {
-        ContactDatabase.StatusQueryOption options = new ContactDatabase.StatusQueryOption();
+        ContactDatabase.ContactQueryOption options = new ContactDatabase.ContactQueryOption();
         options.answerLimit = 20;
-        options.order_by = ContactDatabase.StatusQueryOption.ORDER_BY.LAST_TIME_MET;
+        options.order_by = ContactDatabase.ContactQueryOption.ORDER_BY.LAST_TIME_MET;
 
         if(filter_gid != null) {
-            options.filterFlags |= ContactDatabase.StatusQueryOption.FILTER_GROUP;
+            options.filterFlags |= ContactDatabase.ContactQueryOption.FILTER_GROUP;
             options.gid = filter_gid;
         } else {
-            options.filterFlags |= ContactDatabase.StatusQueryOption.FILTER_LOCAL;
+            options.filterFlags |= ContactDatabase.ContactQueryOption.FILTER_LOCAL;
             options.local = false;
         }
         DatabaseFactory.getContactDatabase(getActivity())

@@ -30,4 +30,12 @@ public class ContactDeletedEvent extends DatabaseEvent {
         this.contact = contact;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName();
+        else
+            return "";
+    }
+
 }

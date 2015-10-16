@@ -147,7 +147,7 @@ public class NeighbourManager {
                 channels = new HashSet<>();
                 neighborhood.put(event.neighbour, channels);
             }
-            channels.add(event.worker);
+            channels.add(event.channel);
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }

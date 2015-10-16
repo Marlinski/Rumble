@@ -52,6 +52,8 @@ public class ContactDatabase extends Database  {
     public static final String UID          = "uid";
     public static final String NAME         = "name";
     public static final String LAST_MET     = "last_met";
+    public static final String NB_STATUS_SENT  = "nb_status_sent";
+    public static final String NB_STATUS_RCVD  = "nb_status_received";
     public static final String AVATAR       = "avatar";
     public static final String LOCALUSER    = "local";
     public static final String TRUSTNESS    = "trustness";
@@ -62,6 +64,8 @@ public class ContactDatabase extends Database  {
                  + UID       + " TEXT, "
                  + NAME      + " TEXT, "
                  + AVATAR    + " TEXT, "
+                 + NB_STATUS_SENT  + " INTEGER, "
+                 + NB_STATUS_RCVD  + " INTEGER, "
                  + LAST_MET  + " INTEGER, "
                  + LOCALUSER + " INTEGER, "
                  + TRUSTNESS + " INTEGER, "
@@ -69,7 +73,7 @@ public class ContactDatabase extends Database  {
                  + "UNIQUE( " + UID + " ) "
                  + " );";
 
-    public static class StatusQueryOption {
+    public static class ContactQueryOption {
         public static final long FILTER_GROUP  = 0x0001;
         public static final long FILTER_MET    = 0x0002;
         public static final long FILTER_FRIEND = 0x0004;
@@ -77,7 +81,9 @@ public class ContactDatabase extends Database  {
 
         public enum ORDER_BY {
             NO_ORDERING,
-            LAST_TIME_MET
+            LAST_TIME_MET,
+            NB_STATUS_SENT,
+            NB_STATUS_RECEIVED
         }
 
         public long         filterFlags;
@@ -89,7 +95,7 @@ public class ContactDatabase extends Database  {
         public int      answerLimit;
         public ORDER_BY order_by;
 
-        public StatusQueryOption() {
+        public ContactQueryOption() {
             filterFlags = 0x00;
             gid         = null;
             met = false;
@@ -99,7 +105,6 @@ public class ContactDatabase extends Database  {
             order_by = ORDER_BY.NO_ORDERING;
         }
     }
-
 
 
     public ContactDatabase(Context context, SQLiteOpenHelper databaseHelper) {
@@ -121,7 +126,7 @@ public class ContactDatabase extends Database  {
         }
     }
 
-    public boolean getContacts(final StatusQueryOption options,DatabaseExecutor.ReadableQueryCallback callback){
+    public boolean getContacts(final ContactQueryOption options,DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override
@@ -130,9 +135,9 @@ public class ContactDatabase extends Database  {
                     }
                 }, callback);
     }
-    private ArrayList<Contact> getContacts(StatusQueryOption options) {
+    private ArrayList<Contact> getContacts(ContactQueryOption options) {
         if(options == null)
-            options = new StatusQueryOption();
+            options = new ContactQueryOption();
 
         /* 1st:  configure what the query will return */
         String select = " c.* ";
@@ -147,7 +152,7 @@ public class ContactDatabase extends Database  {
 
         /* 2nd:  Join The tables as needed */
         boolean groupJoined = false;
-        if (((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.gid != null)) {
+        if (((options.filterFlags & ContactQueryOption.FILTER_GROUP) == ContactQueryOption.FILTER_GROUP) && (options.gid != null)) {
             query.append(
                     " JOIN " + ContactGroupDatabase.TABLE_NAME + " cg" +
                     " ON c." + ContactDatabase.ID + " = cg." + ContactGroupDatabase.UDBID +
@@ -160,7 +165,7 @@ public class ContactDatabase extends Database  {
         if (options.filterFlags > 0)
             query.append(" WHERE ( ");
 
-        if(groupJoined && ((options.filterFlags & StatusQueryOption.FILTER_GROUP) == StatusQueryOption.FILTER_GROUP) && (options.gid != null)) {
+        if(groupJoined && ((options.filterFlags & ContactQueryOption.FILTER_GROUP) == ContactQueryOption.FILTER_GROUP) && (options.gid != null)) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -168,7 +173,7 @@ public class ContactDatabase extends Database  {
             argumentList.add(options.gid);
             groupby = true;
         }
-        if((options.filterFlags & StatusQueryOption.FILTER_MET) == StatusQueryOption.FILTER_MET) {
+        if((options.filterFlags & ContactQueryOption.FILTER_MET) == ContactQueryOption.FILTER_MET) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -177,7 +182,7 @@ public class ContactDatabase extends Database  {
             else
                 query.append(" c."+ContactDatabase.LAST_MET +" = 0 ");
         }
-        if((options.filterFlags & StatusQueryOption.FILTER_FRIEND) == StatusQueryOption.FILTER_FRIEND) {
+        if((options.filterFlags & ContactQueryOption.FILTER_FRIEND) == ContactQueryOption.FILTER_FRIEND) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -186,7 +191,7 @@ public class ContactDatabase extends Database  {
             else
                 query.append(" c."+ContactDatabase.TRUSTNESS +" = 0 ");
         }
-        if((options.filterFlags & StatusQueryOption.FILTER_LOCAL) == StatusQueryOption.FILTER_LOCAL) {
+        if((options.filterFlags & ContactQueryOption.FILTER_LOCAL) == ContactQueryOption.FILTER_LOCAL) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
@@ -203,7 +208,7 @@ public class ContactDatabase extends Database  {
             query.append(" GROUP BY c." + ContactDatabase.ID);
 
         /* 5th: ordering as requested */
-        if(options.order_by != StatusQueryOption.ORDER_BY.NO_ORDERING) {
+        if(options.order_by != ContactQueryOption.ORDER_BY.NO_ORDERING) {
             switch (options.order_by) {
                 case LAST_TIME_MET:
                     query.append(" ORDER BY " + ContactDatabase.LAST_MET + " DESC ");
@@ -272,12 +277,12 @@ public class ContactDatabase extends Database  {
         }
     }
 
-    public long getContactDBID(String contact_id) {
+    public long getContactDBID(String uid) {
         long ret = -1;
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            cursor = database.query(TABLE_NAME, new String[] {ID}, UID+ " = ?", new String[] {contact_id}, null, null, null);
+            cursor = database.query(TABLE_NAME, new String[] {ID}, UID+ " = ?", new String[] {uid}, null, null, null);
             if(cursor == null)
                 return ret;
             if(cursor.moveToFirst() && !cursor.isAfterLast())
@@ -302,11 +307,9 @@ public class ContactDatabase extends Database  {
 
         if(contactDBID < 0) {
             contactDBID = databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
-            Log.d(TAG, "new contact inserted: " + contact.toString());
             EventBus.getDefault().post(new ContactInsertedEvent(contact));
         } else {
             databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
-            Log.d(TAG, "contact updated: " + contact.toString());
             EventBus.getDefault().post(new ContactUpdatedEvent(contact));
         }
 
@@ -316,17 +319,21 @@ public class ContactDatabase extends Database  {
     private Contact cursorToContact(final Cursor cursor) {
         if(cursor == null)
             return null;
-        long contactDBID = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        String author    = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
-        String uid       = cursor.getString(cursor.getColumnIndexOrThrow(UID));
-        boolean local    = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
-        long date        = cursor.getInt(cursor.getColumnIndexOrThrow(LAST_MET));
+        long contactDBID   = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        String author      = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
+        String uid         = cursor.getString(cursor.getColumnIndexOrThrow(UID));
+        boolean local      = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
+        long date          = cursor.getInt(cursor.getColumnIndexOrThrow(LAST_MET));
+        int nb_status_sent = cursor.getInt(cursor.getColumnIndexOrThrow(NB_STATUS_SENT));
+        int nb_status_rcvd = cursor.getInt(cursor.getColumnIndexOrThrow(NB_STATUS_RCVD));
 
         Contact contact  = new Contact(author, uid, local);
         contact.lastMet(date);
         contact.setHashtagInterests(getHashtagsOfInterest(contactDBID));
         contact.setJoinedGroupIDs(getJoinedGroupIDs(contactDBID));
         contact.setInterfaces(getInterfaces(contactDBID));
+        contact.setStatusSent(nb_status_sent);
+        contact.setStatusReceived(nb_status_rcvd);
         return contact;
     }
 
@@ -344,7 +351,7 @@ public class ContactDatabase extends Database  {
             Map<String, Integer> ret = new HashMap<String, Integer>();
             if (cursor != null) {
                 for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                    ret.put(cursor.getString(cursor.getColumnIndexOrThrow(HashtagDatabase.HASHTAG )),
+                    ret.put(cursor.getString(cursor.getColumnIndexOrThrow(HashtagDatabase.HASHTAG)),
                             cursor.getInt(cursor.getColumnIndexOrThrow(ContactHashTagInterestDatabase.INTEREST))
                     );
                 }
@@ -380,7 +387,6 @@ public class ContactDatabase extends Database  {
         }
     }
 
-
     public Set<Interface> getInterfaces(long contactDBID) {
         Cursor cursor = null;
         try {
@@ -397,31 +403,6 @@ public class ContactDatabase extends Database  {
             if (cursor != null) {
                 for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                     ret.add(InterfaceDatabase.cursorToInterface(cursor));
-                }
-            }
-            return ret;
-        } finally {
-            if(cursor != null)
-                cursor.close();
-        }
-    }
-
-    public Set<Contact> getContactsUsingMacAddress(String macAddress) {
-        Cursor cursor = null;
-        try {
-            SQLiteDatabase database = databaseHelper.getReadableDatabase();
-            StringBuilder query = new StringBuilder(
-                    "SELECT c.* FROM " + ContactDatabase.TABLE_NAME + " c" +
-                            " JOIN " + ContactInterfaceDatabase.TABLE_NAME + " ci" +
-                            " ON c." + ContactDatabase.ID + " = ci." + ContactInterfaceDatabase.CONTACT_DBID +
-                            " JOIN " + InterfaceDatabase.TABLE_NAME + " i" +
-                            " ON i." + InterfaceDatabase.ID + " = ci." + ContactInterfaceDatabase.INTERFACE_DBID +
-                            " WHERE i." + InterfaceDatabase.MACADDRESS + " = ?");
-            cursor = database.rawQuery(query.toString(), new String[]{macAddress});
-            Set<Contact> ret = new HashSet<Contact>();
-            if (cursor != null) {
-                for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
-                    ret.add(cursorToContact(cursor));
                 }
             }
             return ret;

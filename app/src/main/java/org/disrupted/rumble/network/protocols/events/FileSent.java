@@ -42,4 +42,8 @@ public class FileSent extends NetworkEvent {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        return filepath;
+    }
 }

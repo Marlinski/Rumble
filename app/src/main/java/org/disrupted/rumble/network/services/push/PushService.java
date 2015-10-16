@@ -101,12 +101,12 @@ public class PushService implements ServiceLayer {
      * to add a new channel of communication
      */
     public void onEvent(ChannelConnected event) {
-        if(!event.worker.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
+        if(!event.channel.getProtocolIdentifier().equals(RumbleProtocol.protocolID))
             return;
 
         Contact local = Contact.getLocalContact();
         CommandSendLocalInformation command = new CommandSendLocalInformation(local,Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST);
-        event.worker.execute(command);
+        event.channel.execute(command);
     }
 
     /*

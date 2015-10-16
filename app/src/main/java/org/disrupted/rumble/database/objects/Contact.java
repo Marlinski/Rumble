@@ -41,6 +41,8 @@ public class Contact {
     protected boolean               local;
     protected boolean               friend;
     protected long                  last_met;
+    protected int                   nb_status_sent;
+    protected int                   nb_status_received;
 
     /* dynamic attributes */
     protected Set<String>           joinedGroupIDs;
@@ -65,22 +67,26 @@ public class Contact {
     }
 
     public Contact(Contact contact) {
-        this.name             = contact.name;
-        this.uid              = contact.uid;
-        this.local            = contact.local;
-        this.joinedGroupIDs   = new HashSet<String>(contact.joinedGroupIDs);
-        this.hashtagInterests = new HashMap<String, Integer>(contact.hashtagInterests);
-        this.interfaces       = new HashSet<Interface>(contact.interfaces);
+        this.name               = contact.name;
+        this.uid                = contact.uid;
+        this.local              = contact.local;
+        this.joinedGroupIDs     = new HashSet<String>(contact.joinedGroupIDs);
+        this.hashtagInterests   = new HashMap<String, Integer>(contact.hashtagInterests);
+        this.interfaces         = new HashSet<Interface>(contact.interfaces);
+        this.nb_status_received = contact.nb_status_received;
+        this.nb_status_sent     = contact.nb_status_sent;
     }
 
     public Contact(String name, String uid, boolean local) {
-        this.name        = name;
-        this.uid         = uid;
-        this.local       = local;
-        joinedGroupIDs   = new HashSet<String>();
-        hashtagInterests = new HashMap<String, Integer>();
-        interfaces       = new HashSet<Interface>();
-        last_met         = 0;
+        this.name               = name;
+        this.uid                = uid;
+        this.local              = local;
+        joinedGroupIDs          = new HashSet<String>();
+        hashtagInterests        = new HashMap<String, Integer>();
+        interfaces              = new HashSet<Interface>();
+        last_met                = 0;
+        this.nb_status_received = 0;
+        this.nb_status_sent     = 0;
     }
 
     public String getUid()    { return uid;}
@@ -88,12 +94,16 @@ public class Contact {
     public String getAvatar() { return avatar;}
     public boolean isLocal()  { return local;}
     public boolean isFriend() { return friend; }
-    public long   lastMet()   { return last_met; }
+    public long    lastMet()   { return last_met; }
+    public int     nbStatusSent() { return nb_status_sent; }
+    public int     nbStatusReceived() { return nb_status_received; }
     public Set<String> getJoinedGroupIDs() {             return joinedGroupIDs;   }
     public Map<String, Integer> getHashtagInterests() {  return hashtagInterests; }
     public Set<Interface> getInterfaces() {              return interfaces;       }
 
     public void lastMet(long date)   { this.last_met = date; }
+    public void setStatusSent(int nb) {this.nb_status_sent = nb;}
+    public void setStatusReceived(int nb) {this.nb_status_received = nb;}
     public void setAvatar(String avatar) { this.avatar = avatar; }
     public void addGroup(String groupID) {
         joinedGroupIDs.add(groupID);

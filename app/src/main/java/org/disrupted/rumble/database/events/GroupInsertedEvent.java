@@ -24,7 +24,7 @@ import org.disrupted.rumble.database.objects.Group;
 /**
  * @author Marlinski
  */
-public class GroupInsertedEvent {
+public class GroupInsertedEvent extends DatabaseEvent {
 
     public final Group group;
 
@@ -32,4 +32,11 @@ public class GroupInsertedEvent {
         this.group = group;
     }
 
+    @Override
+    public String shortDescription() {
+        if(group != null)
+            return group.getName()+" ("+group.getGid()+")";
+        else
+            return "";
+    }
 }

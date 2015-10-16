@@ -108,33 +108,37 @@ public class CacheManager {
 
 
     /*
-     * Managing Network Interaction
+     * Managing Network Interaction, onEventAsync to avoid slowing down network
      */
-    public void onEvent(PushStatusSent event) {
+    public void onEventAsync(PushStatusSent event) {
         if(event.status == null)
             return;
-        Log.d(TAG, " [.] status sent: "+event.status.toString());
         PushStatus status = new PushStatus(event.status);
         status.addReplication(event.recipients.size());
         // first we update the status
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
-        // then the StatusContact database
+        // then the Contact database
         if(status.getdbId() > 0) {
             for(Contact recipient : event.recipients) {
-                long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(recipient.getUid());
-                if(contactDBID < 0)
+                Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(recipient.getUid());
+                long contactDBID;
+                if(contact == null) {
+                    recipient.setStatusSent(1);
                     contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(recipient);
+                } else {
+                    contact.setStatusSent(contact.nbStatusSent()+1);
+                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
+                }
                 DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(status.getdbId(), contactDBID);
             }
         }
     }
-    public void onEvent(PushStatusReceived event) {
+    public void onEventAsync(PushStatusReceived event) {
         if(event.status == null)
             return;
         if((event.status.getAuthor() == null) || (event.status.getGroup() == null))
             return;
 
-        Log.d(TAG, " [.] status received: "+event.status.toString());
         Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
         if(group == null) {
             // we do not accept message for group we do not belong to
@@ -154,11 +158,15 @@ public class CacheManager {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
         if(contact == null) {
             contact = event.status.getAuthor();
+            contact.setStatusReceived(1);
             DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         } else if(!contact.getName().equals(event.status.getAuthor().getName())) {
             // we do not accept message for which the author has changed since we last known of (UID/name)
             Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.status.getAuthor().getName());
             return;
+        } else {
+            contact.setStatusReceived(contact.nbStatusReceived()+1);
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         }
 
         // we add the status to the database
@@ -180,15 +188,13 @@ public class CacheManager {
             DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), contactDBID);
         }
     }
-    public void onEvent(FileReceived event) {
+    public void onEventAsync(FileReceived event) {
         if(event.filename == null)
             return;
-        Log.d(TAG, " [.] file received: "+event.filename);
         PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
         if((exists != null) && !exists.hasAttachedFile()) {
             exists.setFileName(event.filename);
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
-            Log.d(TAG, "[+] status updated: " + exists.getUuid());
             return;
         }
         try {
@@ -198,11 +204,9 @@ public class CacheManager {
         }catch(IOException ignore){
         }
     }
-    public void onEvent(ContactInformationSent event) {
-        Log.d(TAG, "[.] local preferences sent: "+event.contact.toString());
+    public void onEventAsync(ContactInformationSent event) {
     }
-    public void onEvent(ContactInformationReceived event) {
-        Log.d(TAG, "[.] receive contact update: "+event.contact.toString());
+    public void onEventAsync(ContactInformationReceived event) {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.contact.getUid());
         if(contact == null) {
             contact = event.contact;
@@ -270,10 +274,9 @@ public class CacheManager {
         } catch(NetUtil.NoMacAddressException ignore) {
         }
     }
-    public void onEvent(ChatMessageReceived event) {
+    public void onEventAsync(ChatMessageReceived event) {
         if(event.chatMessage == null)
             return;
-        Log.d(TAG, " [.] chat message received: "+event.chatMessage.toString());
 
         long existsDBID = DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getChatMessageDBID(event.chatMessage.getUUID());
         if(existsDBID > 0)
@@ -295,12 +298,11 @@ public class CacheManager {
     }
 
     /*
-     * Managing User Interaction
+     * Managing User Interaction, onEventAsync to avoid slowing down UI
      */
-    public void onEvent(UserSetHashTagInterest event) {
+    public void onEventAsync(UserSetHashTagInterest event) {
         if(event.hashtag == null)
             return;
-        Log.d(TAG, " [.] tag interest "+event.hashtag+": "+event.levelOfInterest);
         Contact contact = Contact.getLocalContact();
         long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(contact.getUid());
         long tagDBID     = DatabaseFactory.getHashtagDatabase(RumbleApplication.getContext()).getHashtagDBID(event.hashtag);
@@ -314,47 +316,42 @@ public class CacheManager {
         EventBus.getDefault().post(new ContactTagInterestUpdatedEvent(contact));
 
     }
-    public void onEvent(UserReadStatus event) {
+    public void onEventAsync(UserReadStatus event) {
         if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.status.getUuid()+" read");
         event.status.setUserRead(true);
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus( event.status);
         //todo trow an event
     }
-    public void onEvent(UserLikedStatus event) {
+    public void onEventAsync(UserLikedStatus event) {
         if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.status.getUuid()+" liked");
         event.status.setUserLike(true);
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status);
         //todo trow an event
     }
-    public void onEvent(UserSavedStatus event) {
+    public void onEventAsync(UserSavedStatus event) {
         if(event.status == null)
             return;
-        Log.d(TAG, " [.] status "+event.status.getUuid()+" saved");
         event.status.setUserSaved(true);
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status);
         //todo trow an event
     }
-    public void onEvent(UserDeleteStatus event) {
+    public void onEventAsync(UserDeleteStatus event) {
         if(event.status == null)
             return;
         if(DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.status.getUuid()))
             EventBus.getDefault().post(new StatusDeletedEvent(event.status.getUuid(), event.status.getdbId()));
     }
-    public void onEvent(UserComposeStatus event) {
+    public void onEventAsync(UserComposeStatus event) {
         if(event.status == null)
             return;
-        Log.d(TAG, " [.] user composed status: "+event.status.toString());
         PushStatus status = new PushStatus(event.status);
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
     }
-    public void onEvent(UserCreateGroup event) {
+    public void onEventAsync(UserCreateGroup event) {
         if(event.group == null)
             return;
-        Log.d(TAG, " [.] user created group: "+event.group.getName());
         if(DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group)) {
             Contact local = Contact.getLocalContact();
             local.addGroup(event.group.getGid());
@@ -364,10 +361,9 @@ public class CacheManager {
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
     }
-    public void onEvent(UserJoinGroup event) {
+    public void onEventAsync(UserJoinGroup event) {
         if(event.group == null)
             return;
-        Log.d(TAG, " [.] user joined group: "+event.group.getName());
         if(DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).insertGroup(event.group)) {
             Contact local = Contact.getLocalContact();
             local.addGroup(event.group.getGid());
@@ -378,32 +374,30 @@ public class CacheManager {
         }
 
     }
-    public void onEvent(UserDeleteGroup event) {
+    public void onEventAsync(UserDeleteGroup event) {
         if(event.gid == null)
             return;
         DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).deleteGroup(event.gid);
     }
-    public void onEvent(UserWipeStatuses event) {
+    public void onEventAsync(UserWipeStatuses event) {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
     }
 
-    public void onEvent(UserComposeChatMessage event) {
+    public void onEventAsync(UserComposeChatMessage event) {
         if(event.chatMessage == null)
             return;
-        Log.d(TAG, " [.] user composed chat message: "+event.chatMessage.toString());
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
             EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
     }
-    public void onEvent(UserReadChatMessage event) {
+    public void onEventAsync(UserReadChatMessage event) {
         if(event.chatMessage == null)
             return;
-        Log.d(TAG, " [.] user read chat message: "+event.chatMessage.toString());
         event.chatMessage.setUserRead(true);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).updateMessage(event.chatMessage) > 0)
             EventBus.getDefault().post(new ChatMessageUpdatedEvent(event.chatMessage));
     }
-    public void onEvent(UserWipeChatMessages event) {
+    public void onEventAsync(UserWipeChatMessages event) {
         DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();
     }
 }

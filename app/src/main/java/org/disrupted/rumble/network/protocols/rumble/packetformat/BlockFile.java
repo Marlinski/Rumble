@@ -81,6 +81,7 @@ public class BlockFile extends Block {
     private static final int MIME_TYPE_SIZE   = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = ( STATUS_ID_SIZE + MIME_TYPE_SIZE);
+    private  static final int MAX_PAYLOAD_SIZE = ( MIN_PAYLOAD_SIZE + PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE);
 
     public final static int MIME_TYPE_IMAGE = 0x01;
 
@@ -105,8 +106,8 @@ public class BlockFile extends Block {
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
 
         long readleft = header.getBlockLength();
-        if(readleft < 0)
-            throw new MalformedBlockPayload("Header.length is < 0 in BlockFile", 0);
+        if((readleft < 0) || (readleft > MAX_PAYLOAD_SIZE))
+            throw new MalformedBlockPayload("wrong payload size", readleft);
 
         long timeToTransfer = System.currentTimeMillis();
 
@@ -153,8 +154,6 @@ public class BlockFile extends Block {
                         readleft -= bytesread;
                         fos.write(buffer, 0, bytesread);
                     }
-                } catch (IOException e) {
-                    throw e;
                 } finally {
                     if (fos != null)
                         fos.close();
@@ -169,14 +168,14 @@ public class BlockFile extends Block {
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 // update the database
                 String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
-                Log.e(TAG, "[+] "+(header.getBlockLength()+header.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
+                Log.e(TAG, "[+] "+(header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
                 EventBus.getDefault().post(new FileReceived(
                                 attachedFile.getName(),
                                 status_id_base64,
                                 con.getRemoteLinkLayerAddress(),
                                 RumbleProtocol.protocolID,
                                 con.getLinkLayerIdentifier(),
-                                header.getBlockLength()+header.BLOCK_HEADER_LENGTH,
+                                header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                                 timeToTransfer)
                 );
             } catch (IOException e) {

@@ -29,4 +29,12 @@ public class UserComposeStatus extends UserInteractionEvent  {
     public UserComposeStatus(PushStatus status) {
         this.status = status;
     }
+
+    @Override
+    public String shortDescription() {
+        if(status != null)
+            return status.getPost()+" ("+status.getAuthor()+")";
+        else
+            return "";
+    }
 }

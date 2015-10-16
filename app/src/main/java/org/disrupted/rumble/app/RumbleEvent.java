@@ -1,8 +1,6 @@
 /*
  * Copyright (C) 2014 Disrupted Systems
- *
  * This file is part of Rumble.
- *
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,22 +11,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License along
+ * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.database.events;
-
-
-import org.disrupted.rumble.app.RumbleEvent;
+package org.disrupted.rumble.app;
 
 /**
- * A ResourceEvent is published to the event bus whenever a new resource is available.
- * A resource is understood to be an element from the database such as a Status, a contact
- * a picture, an attached file, etc.
- *
  * @author Marlinski
  */
-public abstract class DatabaseEvent implements RumbleEvent {
+public interface RumbleEvent {
+
+    public String shortDescription();
 
 }

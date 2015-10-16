@@ -61,4 +61,11 @@ public class PushStatusSent extends NetworkEvent {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        if(status != null)
+            return status.getPost()+" ("+status.getAuthor()+")";
+        else
+            return "";
+    }
 }

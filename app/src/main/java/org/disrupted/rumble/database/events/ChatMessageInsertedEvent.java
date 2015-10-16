@@ -38,4 +38,11 @@ public class ChatMessageInsertedEvent extends DatabaseEvent {
         this.channel = channel;
     }
 
+    @Override
+    public String shortDescription() {
+        if(chatMessage != null)
+            return chatMessage.getMessage()+" ("+chatMessage.getAuthor().getName()+")";
+        else
+            return "";
+    }
 }

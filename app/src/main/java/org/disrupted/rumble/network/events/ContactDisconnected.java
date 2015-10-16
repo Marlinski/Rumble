@@ -31,4 +31,12 @@ public class ContactDisconnected extends NetworkEvent {
         this.contact = contact;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName() + "("+contact.getUid()+")";
+        else
+            return "";
+    }
+
 }

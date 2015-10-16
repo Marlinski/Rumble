@@ -28,4 +28,9 @@ public class UserDeleteContact extends UserInteractionEvent {
         this.uid = uid;
     }
 
+    @Override
+    public String shortDescription() {
+        return "uid="+uid;
+    }
+
 }

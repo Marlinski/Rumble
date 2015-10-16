@@ -30,4 +30,8 @@ public class UserSetHashTagInterest extends UserInteractionEvent {
         this.levelOfInterest = levelOfInterest;
     }
 
+    @Override
+    public String shortDescription() {
+        return hashtag + "("+levelOfInterest+")";
+    }
 }

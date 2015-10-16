@@ -21,4 +21,8 @@ package org.disrupted.rumble.database.events;
  * @author Marlinski
  */
 public class ChatWipedEvent extends DatabaseEvent {
+    @Override
+    public String shortDescription() {
+        return "";
+    }
 }

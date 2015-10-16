@@ -104,6 +104,14 @@ public class FragmentContactInfo extends Fragment {
                 resources.getString(R.string.contact_detail_last_met),
                 TimeUtil.timeElapsed(contact.lastMet())
         ));
+        infoList.add(new ContactInfoItem(
+                resources.getString(R.string.contact_detail_nb_status_rcvd),
+                contact.nbStatusReceived()+""
+        ));
+        infoList.add(new ContactInfoItem(
+                resources.getString(R.string.contact_detail_nb_status_sent),
+                contact.nbStatusSent()+""
+        ));
         Set<Interface> interfaces = contact.getInterfaces();
         for(Interface iface : interfaces) {
             infoList.add(new ContactInfoItem(

@@ -40,5 +40,12 @@ public class ContactInformationSent extends NetworkEvent {
         this.duration = duration;
     }
 
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName()+" ("+contact.getUid()+")";
+        else
+            return "";
+    }
 
 }

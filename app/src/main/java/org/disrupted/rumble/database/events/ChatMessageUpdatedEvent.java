@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 /**
  * @author Marlinski
  */
-public class ChatMessageUpdatedEvent extends NetworkEvent {
+public class ChatMessageUpdatedEvent extends DatabaseEvent {
 
     public final ChatMessage chatMessage;
 
@@ -31,5 +31,12 @@ public class ChatMessageUpdatedEvent extends NetworkEvent {
         this.chatMessage = chatMessage;
     }
 
+    @Override
+    public String shortDescription() {
+        if(chatMessage != null)
+            return chatMessage.getMessage()+" ("+chatMessage.getAuthor().getName()+")";
+        else
+            return "";
+    }
 
 }

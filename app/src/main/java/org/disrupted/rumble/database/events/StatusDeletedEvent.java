@@ -31,4 +31,9 @@ public class StatusDeletedEvent extends StatusDatabaseEvent {
         this.uuid = uuid;
         this.dbid = dbid;
     }
+
+    @Override
+    public String shortDescription() {
+        return "uuid="+uuid+" dbid="+dbid;
+    }
 }

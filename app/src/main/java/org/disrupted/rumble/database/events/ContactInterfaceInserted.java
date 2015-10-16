@@ -37,5 +37,11 @@ public class ContactInterfaceInserted extends DatabaseEvent {
         this.channel   = channel;
     }
 
-
+    @Override
+    public String shortDescription() {
+        if((contact != null) && (neighbour != null))
+            return contact.getName() + " ("+contact.getUid()+") -> " +neighbour.getLinkLayerAddress() + "("+channel.getLinkLayerIdentifier()+")" ;
+        else
+            return "";
+    }
 }

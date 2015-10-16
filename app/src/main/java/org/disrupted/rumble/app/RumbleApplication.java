@@ -39,8 +39,6 @@ public class RumbleApplication extends Application{
 
     // name of the Rumble Image directory as it appears on Photo Album
     public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
-    // minimum 10 MB available for Rumble to save files
-    public static long MINIMUM_FREE_SPACE_AVAILABLE = 10000000;
 
     public  static boolean LOG_EVENT = true;
     private static EventLogger logger;

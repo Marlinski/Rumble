@@ -101,8 +101,10 @@ public class BlockPushStatus extends Block{
                     FIELD_REPLICATION_SIZE +
                     FIELD_LIKE_SIZE);
 
-    private static final int MAX_STATUS_SIZE = 255; // limiting status to 500 character;
-    private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE + 255*2 + MAX_STATUS_SIZE;
+    private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE +
+            Contact.CONTACT_NAME_MAX_SIZE +
+            Group.GROUP_NAME_MAX_SIZE +
+            PushStatus.STATUS_POST_MAX_SIZE;
 
     private PushStatus   status;
     private Set<Contact> recipientList;
@@ -136,7 +138,7 @@ public class BlockPushStatus extends Block{
         /* read the block */
         InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
-        int count =in.read(blockBuffer, 0, (int)header.getBlockLength());
+        int count=in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
             throw new IOException("end of stream reached");
         if (count < (int)header.getBlockLength())
@@ -152,7 +154,7 @@ public class BlockPushStatus extends Block{
 
             short authorLength = byteBuffer.get();
             readleft -= FIELD_AUTHOR_LENGTH_SIZE;
-            if ((authorLength <= 0) || (authorLength > readleft))
+            if ((authorLength <= 0) || (authorLength > readleft) || (authorLength > Contact.CONTACT_NAME_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong author.length parameter: " + authorLength, header.getBlockLength()-readleft);
             byte[] author_name = new byte[authorLength];
             byteBuffer.get(author_name, 0, authorLength);
@@ -164,7 +166,7 @@ public class BlockPushStatus extends Block{
 
             short groupLength = byteBuffer.get();
             readleft -= FIELD_GROUP_LENGTH_SIZE;
-            if ((groupLength <= 0) || (groupLength > readleft))
+            if ((groupLength <= 0) || (groupLength > readleft) || (groupLength > Group.GROUP_NAME_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong group.length parameter: " + groupLength, header.getBlockLength()-readleft);
             byte[] group_name = new byte[groupLength];
             byteBuffer.get(group_name, 0, groupLength);
@@ -172,7 +174,7 @@ public class BlockPushStatus extends Block{
 
             short postLength = byteBuffer.getShort();
             readleft -= FIELD_STATUS_LENGTH_SIZE;
-            if ((postLength <= 0) || (postLength > readleft))
+            if ((postLength <= 0) || (postLength > readleft) || (postLength > PushStatus.STATUS_POST_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong status.length parameter: " + postLength, header.getBlockLength()-readleft);
             byte[] post = new byte[postLength];
             byteBuffer.get(post, 0, postLength);
@@ -278,10 +280,6 @@ public class BlockPushStatus extends Block{
         if(blockFile != null)
             blockFile.writeBlock(channel);
 
-        /*
-         * It is very important to post an event as it will be catch by the
-         * CacheManager and will update the database accordingly
-         */
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
         EventBus.getDefault().post(new PushStatusSent(
                         status,

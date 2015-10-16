@@ -22,6 +22,7 @@ package org.disrupted.rumble.util;
 import android.os.Environment;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.objects.PushStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,8 +62,8 @@ public class FileUtil {
                 Environment.DIRECTORY_PICTURES), RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);
         file.mkdirs();
 
-        if(file.getFreeSpace() < RumbleApplication.MINIMUM_FREE_SPACE_AVAILABLE)
-            throw  new IOException("not enough space available ("+file.getFreeSpace()+"/"+RumbleApplication.MINIMUM_FREE_SPACE_AVAILABLE+")");
+        if(file.getFreeSpace() < PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE)
+            throw  new IOException("not enough space available ("+file.getFreeSpace()+"/"+PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE+")");
 
         return file;
     }

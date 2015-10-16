@@ -28,7 +28,7 @@ import org.disrupted.rumble.network.protocols.ProtocolChannel;
  * This event is sent by a ProtocolChannel whenever a LinkLayerConnection has
  * opened and that thus, this channel can no longer reach a certain neighbour
  */
-public class ChannelDisconnected {
+public class ChannelDisconnected extends NetworkEvent{
 
     public final LinkLayerNeighbour neighbour;
     public final ProtocolChannel channel;
@@ -36,5 +36,13 @@ public class ChannelDisconnected {
     public ChannelDisconnected(LinkLayerNeighbour neighbour, ProtocolChannel channel) {
         this.neighbour = neighbour;
         this.channel = channel;
+    }
+
+    @Override
+    public String shortDescription() {
+        if((channel != null) && (neighbour != null))
+            return channel.getWorkerIdentifier() + "("+neighbour.getLinkLayerAddress()+")";
+        else
+            return "";
     }
 }

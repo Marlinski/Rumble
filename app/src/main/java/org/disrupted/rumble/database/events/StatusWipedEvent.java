@@ -23,4 +23,8 @@ import org.disrupted.rumble.database.DatabaseExecutor;
  * @author Marlinski
  */
 public class StatusWipedEvent extends DatabaseEvent{
+    @Override
+    public String shortDescription() {
+        return "";
+    }
 }

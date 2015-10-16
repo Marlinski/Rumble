@@ -30,4 +30,9 @@ public class HashtagInsertedEvent extends DatabaseEvent {
         this.hashtag = hashtag;
     }
 
+
+    @Override
+    public String shortDescription() {
+        return hashtag;
+    }
 }

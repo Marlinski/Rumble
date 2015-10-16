@@ -18,6 +18,7 @@
 package org.disrupted.rumble.network.protocols.events;
 
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Marlinski
  */
-public class ContactInformationReceived {
+public class ContactInformationReceived extends NetworkEvent{
 
     public Contact contact;
     public int     flags;   // see class Contact
@@ -44,6 +45,14 @@ public class ContactInformationReceived {
         this.authenticated = false;
         this.size = size;
         this.duration = duration;
+    }
+
+    @Override
+    public String shortDescription() {
+        if(contact != null)
+            return contact.getName()+" ("+contact.getUid()+")";
+        else
+            return "";
     }
 
 }

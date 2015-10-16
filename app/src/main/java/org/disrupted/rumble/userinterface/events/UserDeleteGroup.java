@@ -28,5 +28,8 @@ public class UserDeleteGroup extends UserInteractionEvent {
         this.gid = gid;
     }
 
-
+    @Override
+    public String shortDescription() {
+        return "gid="+gid;
+    }
 }
