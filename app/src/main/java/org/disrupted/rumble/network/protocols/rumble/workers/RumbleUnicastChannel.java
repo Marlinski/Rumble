@@ -223,7 +223,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         } catch (InputOutputStreamException silentlyCloseConnection) {
             Log.d(TAG, ""+silentlyCloseConnection.getMessage());
         } catch (MalformedBlock e) {
-            Log.d(TAG, "[!] malformed block: " + e.getMessage());
+            Log.d(TAG, "[!] malformed block: " + e.reason + "("+e.bytesRead+")");
         }
     }
 

@@ -346,6 +346,9 @@ public class NeighbourManager {
         ProtocolChannel ret = null;
         synchronized (managerLock) {
             Set<ProtocolChannel> channels = contacts.get(contact);
+            if(channels == null)
+                return null;
+
             for (ProtocolChannel channel : channels) {
                 if (ret == null)
                     ret = channel;
@@ -353,7 +356,6 @@ public class NeighbourManager {
                     ret = (ret.getChannelPriority() >
                             channel.getChannelPriority() ? ret : channel);
             }
-
         }
         return ret;
     }

@@ -473,6 +473,11 @@ public class PushService implements ServiceLayer {
 
             ProtocolChannel channel = PushService.networkCoordinator.neighbourManager.chooseBestChannel(contact);
             this.tmpchannel = channel;
+            if(this.tmpchannel == null) {
+                // the contact must have disconnected
+                stopDispatcher();
+                return;
+            }
             channel.execute(command);
         }
 

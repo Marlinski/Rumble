@@ -168,7 +168,6 @@ public class BlockFile extends Block {
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 // update the database
                 String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
-                Log.e(TAG, "[+] "+(header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH)+" received in "+(timeToTransfer/1000L)+" milliseconds");
                 EventBus.getDefault().post(new FileReceived(
                                 attachedFile.getName(),
                                 status_id_base64,
