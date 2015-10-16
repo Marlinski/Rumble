@@ -255,7 +255,7 @@ public class PushService implements ServiceLayer {
                 if (result != null) {
                     try {
                         takeLock.lock();
-                        Log.d(TAG, "[+] update status list");
+                        Log.d(TAG, "[+] update status list: "+result.toString());
                         statuses.clear();
                         final ArrayList<Integer> answer = (ArrayList<Integer>)result;
                         for (Integer s : answer) {
