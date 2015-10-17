@@ -218,7 +218,7 @@ public class BlockPushStatus extends Block{
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
             Group   group_tmp = new Group(new String(group_name), group_id_base64, null);
-            status = new PushStatus(contact_tmp, group_tmp, new String(post), toc);
+            status = new PushStatus(contact_tmp, group_tmp, new String(post), toc, sender_id_base64);
 
             status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setTimeOfCreation(toc);

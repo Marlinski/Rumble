@@ -224,7 +224,7 @@ public class PopupComposeStatus extends Activity {
 
                 Contact localContact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getLocalContact();
                 long now = (System.currentTimeMillis() / 1000L);
-                PushStatus pushStatus = new PushStatus(localContact, group, message, now);
+                PushStatus pushStatus = new PushStatus(localContact, group, message, now, localContact.getUid());
                 pushStatus.setUserRead(true);
 
                 if (mCurrentPhotoFile != null) {
