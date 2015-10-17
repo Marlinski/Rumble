@@ -106,21 +106,30 @@ public class ContactDatabase extends Database  {
         }
     }
 
+    // caching the localContact as it is accessed very often
+    private Contact localContact;
+
 
     public ContactDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
+        localContact = null;
     }
 
     public Contact getLocalContact() {
+        if(localContact != null)
+            return localContact;
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.query(TABLE_NAME, null, LOCALUSER+" = 1", null, null, null, null);
         if(cursor == null)
             return null;
         try {
-            if(cursor.moveToFirst() && !cursor.isAfterLast())
-                return cursorToContact(cursor);
-            else
+            if(cursor.moveToFirst() && !cursor.isAfterLast()) {
+                localContact = cursorToContact(cursor);
+                return localContact;
+            } else {
+                localContact = null;
                 return null;
+            }
         } finally {
             cursor.close();
         }
@@ -302,6 +311,8 @@ public class ContactDatabase extends Database  {
         contentValues.put(AVATAR, contact.getAvatar());
         contentValues.put(LOCALUSER, contact.isLocal() ? 1 : 0);
         contentValues.put(LAST_MET, contact.lastMet());
+        contentValues.put(NB_STATUS_SENT, contact.nbStatusSent());
+        contentValues.put(NB_STATUS_RCVD, contact.nbStatusReceived());
 
         long contactDBID = getContactDBID(contact.getUid());
 
@@ -312,6 +323,10 @@ public class ContactDatabase extends Database  {
             databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UID + " = ?", new String[]{contact.getUid()});
             EventBus.getDefault().post(new ContactUpdatedEvent(contact));
         }
+
+        // if we update the local contact, we delete the cache
+        if(contact.isLocal())
+            localContact = null;
 
         return contactDBID;
     }

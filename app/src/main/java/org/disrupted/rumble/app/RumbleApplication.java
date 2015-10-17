@@ -22,8 +22,12 @@ package org.disrupted.rumble.app;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 
+import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.ContactInsertedEvent;
 import org.disrupted.rumble.database.events.DatabaseEvent;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.database.CacheManager;
@@ -42,6 +46,7 @@ public class RumbleApplication extends Application{
 
     public  static boolean LOG_EVENT = true;
     private static EventLogger logger;
+
     public RumbleApplication() {
         instance = this;
     }
@@ -56,9 +61,24 @@ public class RumbleApplication extends Application{
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
 
-        Intent startIntent = new Intent(this, NetworkCoordinator.class);
-        startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
-        startService(startIntent);
+        if(DatabaseFactory.getContactDatabase(this).getLocalContact() != null) {
+            Intent startIntent = new Intent(this, NetworkCoordinator.class);
+            startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
+            startService(startIntent);
+        } else {
+            if(!EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().register(this);
+        }
+    }
+
+    public void onEvent(ContactInsertedEvent event) {
+        if(event.contact.isLocal()) {
+            Intent startIntent = new Intent(this, NetworkCoordinator.class);
+            startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
+            startService(startIntent);
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
+        }
     }
 
     public static Context getContext() {

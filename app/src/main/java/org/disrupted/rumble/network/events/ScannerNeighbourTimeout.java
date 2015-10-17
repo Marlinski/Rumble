@@ -36,7 +36,7 @@ public class ScannerNeighbourTimeout extends NetworkEvent {
     @Override
     public String shortDescription() {
         if(neighbour != null)
-            return null;
+            return neighbour.getLinkLayerAddress();
         else
             return "";
     }

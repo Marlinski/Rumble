@@ -184,8 +184,9 @@ public class CacheManager {
 
         // then the StatusContact database
         if(exists.getdbId() > 0) {
-            long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(contact.getUid());
-            DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), contactDBID);
+            long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(event.senderID);
+            if(contactDBID > 0)
+                DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), contactDBID);
         }
     }
     public void onEventAsync(FileReceived event) {

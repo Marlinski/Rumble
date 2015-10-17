@@ -21,6 +21,9 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
 
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.Database;
+import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
@@ -33,7 +36,6 @@ import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamExcepti
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
-import org.disrupted.rumble.util.HashUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +49,8 @@ import de.greenrobot.event.EventBus;
 /**
  * A BlockStatus holds all the information necessary to retrieve a Status
  *
+ * +-------------------------------------------+
+ * |               User ID                     |  8 byte Sender UID
  * +-------------------------------------------+
  * |               User ID                     |  8 byte Author UID
  * +--------+----------------------------------+
@@ -76,7 +80,8 @@ public class BlockPushStatus extends Block{
     /*
      * Byte size
      */
-    private static final int FIELD_UID_SIZE             = Contact.CONTACT_UID_RAW_SIZE;
+    private static final int FIELD_SENDER_UID_SIZE      = Contact.CONTACT_UID_RAW_SIZE;
+    private static final int FIELD_AUTHOR_UID_SIZE      = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
     private static final int FIELD_GID_SIZE             = Group.GROUP_GID_RAW_SIZE;
     private static final int FIELD_GROUP_LENGTH_SIZE    = 1;
@@ -89,7 +94,8 @@ public class BlockPushStatus extends Block{
     private static final int FIELD_LIKE_SIZE            = 1;
 
     private  static final int MIN_PAYLOAD_SIZE = (
-                    FIELD_UID_SIZE +
+                    FIELD_SENDER_UID_SIZE +
+                    FIELD_AUTHOR_UID_SIZE +
                     FIELD_AUTHOR_LENGTH_SIZE +
                     FIELD_GID_SIZE +
                     FIELD_GROUP_LENGTH_SIZE +
@@ -148,9 +154,13 @@ public class BlockPushStatus extends Block{
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
 
-            byte[] author_id = new byte[FIELD_UID_SIZE];
-            byteBuffer.get(author_id, 0, FIELD_UID_SIZE);
-            readleft -= FIELD_UID_SIZE;
+            byte[] sender_id = new byte[FIELD_SENDER_UID_SIZE];
+            byteBuffer.get(sender_id, 0, FIELD_SENDER_UID_SIZE);
+            readleft -= FIELD_SENDER_UID_SIZE;
+
+            byte[] author_id = new byte[FIELD_AUTHOR_UID_SIZE];
+            byteBuffer.get(author_id, 0, FIELD_AUTHOR_UID_SIZE);
+            readleft -= FIELD_AUTHOR_UID_SIZE;
 
             short authorLength = byteBuffer.get();
             readleft -= FIELD_AUTHOR_LENGTH_SIZE;
@@ -202,7 +212,8 @@ public class BlockPushStatus extends Block{
                 throw new MalformedBlockPayload("wrong header.length parameter, no more data to read: " + (header.getBlockLength()-readleft), header.getBlockLength()-readleft);
 
             /* assemble the status */
-            String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_UID_SIZE,Base64.NO_WRAP);
+            String sender_id_base64 = Base64.encodeToString(sender_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
+            String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
             String group_id_base64  = Base64.encodeToString(group_id,0, FIELD_GID_SIZE,Base64.NO_WRAP);
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
@@ -220,7 +231,7 @@ public class BlockPushStatus extends Block{
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new PushStatusReceived(
                             status,
-                            contact_tmp,
+                            sender_id_base64,
                             RumbleProtocol.protocolID,
                             con.getLinkLayerIdentifier(),
                             header.getBlockLength(),
@@ -244,7 +255,9 @@ public class BlockPushStatus extends Block{
         byte[] group_name  = status.getGroup().getName().getBytes(Charset.forName("UTF-8"));
         byte[] group_id    = Base64.decode(status.getGroup().getGid(), Base64.NO_WRAP);
         byte[] author_name = status.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
-        byte[] author_id   = Base64.decode(status.getAuthor().getUid(),Base64.NO_WRAP);
+        byte[] author_id   = Base64.decode(status.getAuthor().getUid(), Base64.NO_WRAP);
+        byte[] sender_id   = Base64.decode(DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
+                .getLocalContact().getUid(),Base64.NO_WRAP);
         int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 group_name.length +
@@ -259,7 +272,8 @@ public class BlockPushStatus extends Block{
 
         /* prepare the buffer */
         ByteBuffer blockBuffer = ByteBuffer.allocate(length);
-        blockBuffer.put(author_id, 0, FIELD_UID_SIZE);
+        blockBuffer.put(sender_id, 0, FIELD_SENDER_UID_SIZE);
+        blockBuffer.put(author_id, 0, FIELD_AUTHOR_UID_SIZE);
         blockBuffer.put((byte)author_name.length);
         blockBuffer.put(author_name, 0, author_name.length);
         blockBuffer.put(group_id, 0, FIELD_GID_SIZE);

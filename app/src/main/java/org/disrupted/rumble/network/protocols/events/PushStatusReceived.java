@@ -11,7 +11,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
  * - The received status (as it was received)
  * - The name of the author as 'claimed' by the sender (see CacheManager for policy)
  * - The name of the group as 'claimed' by the sender (see CacheManager for policy)
- * - The sender
+ * - The Base64 ID of the sender
  * - The protocol used to transmit this status (rumble, firechat)
  * - The link layer used (bluetooth, wifi)
  * - The size of the data transmitted (bytes)
@@ -27,15 +27,15 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 public class PushStatusReceived extends NetworkEvent{
 
     public PushStatus status;
-    public Contact sender;
+    public String senderID;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public PushStatusReceived(PushStatus status, Contact sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusReceived(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
-        this.sender = sender;
+        this.senderID = sender;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;

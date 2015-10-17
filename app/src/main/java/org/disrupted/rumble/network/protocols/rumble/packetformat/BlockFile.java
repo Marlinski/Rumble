@@ -225,7 +225,6 @@ public class BlockFile extends Block {
         con.getOutputStream().write(bufferBlockFilePseudoHeader.array());
 
         BufferedInputStream fis = null;
-        long total = 0;
         try {
             OutputStream out = con.getOutputStream();
             final int BUFFER_SIZE = 1024;
@@ -233,7 +232,6 @@ public class BlockFile extends Block {
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             while (bytesread > 0) {
-                total+=bytesread;
                 out.write(fileBuffer, 0, bytesread);
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
@@ -241,7 +239,6 @@ public class BlockFile extends Block {
             if (fis != null)
                 fis.close();
         }
-        Log.d(TAG,"total: "+total);
 
         timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
