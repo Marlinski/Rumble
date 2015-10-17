@@ -496,8 +496,8 @@ public class PushService implements ServiceLayer {
             }
         }
         public void onEvent(StatusInsertedEvent event) {
-            if((!event.status.getAuthor().equals(this.contact))
-                    && (!event.status.receivedBy().equals(this.contact.getUid()))) {
+            if(!event.status.getAuthor().equals(this.contact) &&
+               !event.status.receivedBy().equals(this.contact.getUid())) {
                 PushStatus message = new PushStatus(event.status);
                 add(message);
                 message.discard();
@@ -505,8 +505,7 @@ public class PushService implements ServiceLayer {
         }
 
         /*
-         * we don't send any status until we received an Interest Vector and thus, until
-         * we bound the interface with a contact.
+         * we don't send any status until we received an Interest Vector
          *
          * this event only bind the contact uid with the interface
          * we wait for the related DatabaseEvent (if any) for updating the status list

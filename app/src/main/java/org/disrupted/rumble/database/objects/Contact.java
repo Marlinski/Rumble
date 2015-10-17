@@ -67,14 +67,17 @@ public class Contact {
     }
 
     public Contact(Contact contact) {
-        this.name               = contact.name;
         this.uid                = contact.uid;
+        this.name               = contact.name;
+        this.avatar             = contact.avatar;
         this.local              = contact.local;
+        this.friend             = contact.friend;
+        this.last_met           = contact.last_met;
+        this.nb_status_sent     = contact.nb_status_sent;
+        this.nb_status_received = contact.nb_status_received;
         this.joinedGroupIDs     = new HashSet<String>(contact.joinedGroupIDs);
         this.hashtagInterests   = new HashMap<String, Integer>(contact.hashtagInterests);
         this.interfaces         = new HashSet<Interface>(contact.interfaces);
-        this.nb_status_received = contact.nb_status_received;
-        this.nb_status_sent     = contact.nb_status_sent;
     }
 
     public Contact(String name, String uid, boolean local) {

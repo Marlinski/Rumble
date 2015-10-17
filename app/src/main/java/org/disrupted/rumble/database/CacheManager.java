@@ -221,7 +221,7 @@ public class CacheManager {
     public void onEventAsync(ContactInformationReceived event) {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.contact.getUid());
         if(contact == null) {
-            contact = event.contact;
+            contact = new Contact(event.contact);
             // first time we meet this fellow, we add it to the database
             DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         } else {
