@@ -113,10 +113,13 @@ public class CacheManager {
     public void onEventAsync(PushStatusSent event) {
         if(event.status == null)
             return;
+
         PushStatus status = new PushStatus(event.status);
         status.addReplication(event.recipients.size());
+
         // first we update the status
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
+
         // then the Contact database
         if(status.getdbId() > 0) {
             for(Contact recipient : event.recipients) {
@@ -136,7 +139,7 @@ public class CacheManager {
     public void onEventAsync(PushStatusReceived event) {
         if(event.status == null)
             return;
-        if((event.status.getAuthor() == null) || (event.status.getGroup() == null))
+        if((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
             return;
 
         Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
@@ -154,19 +157,27 @@ public class CacheManager {
             }
         }
 
-        // we insert/update the contact to the database
+        Contact sender = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.receivedBy());
+        if(sender == null) {
+            // we do not accept message from unknown sender, that should never happen as the protocol starts by exchange
+            // ContactInformation blocks
+            Log.d(TAG, "[!] unknown sender: refusing the message");
+            return;
+        }
+
+        // we update the sender statistics
+        sender.setStatusReceived(sender.nbStatusReceived()+1);
+        DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(sender);
+
+        // we insert/update the status author
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
         if(contact == null) {
             contact = event.status.getAuthor();
-            contact.setStatusReceived(1);
             DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         } else if(!contact.getName().equals(event.status.getAuthor().getName())) {
-            // we do not accept message for which the author has changed since we last known of (UID/name)
-            Log.d(TAG, "[!] AuthorID: "+contact.getUid()+ " CONFLICT: db="+contact.getName()+" status="+event.status.getAuthor().getName());
+            // we do not accept message if the author has changed since we last known of (UID/name)
+            Log.d(TAG, "[!] AuthorID: " + contact.getUid() + " CONFLICT: db=" + contact.getName() + " status=" + event.status.getAuthor().getName());
             return;
-        } else {
-            contact.setStatusReceived(contact.nbStatusReceived()+1);
-            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
         }
 
         // we add the status to the database
