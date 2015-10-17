@@ -173,6 +173,10 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         try {
             while (true) {
                 BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
+
+                // channel is alive
+                socketTimeout.removeCallbacks(socketTimeoutFires);
+
                 Block block;
                 switch (header.getBlockType()) {
                     case BlockHeader.BLOCKTYPE_PUSH_STATUS:
@@ -193,9 +197,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     default:
                         throw new MalformedBlockHeader("Unknown header type", 0);
                 }
-
-                // channel is alive
-                socketTimeout.removeCallbacks(socketTimeoutFires);
 
                 long bytesread = 0;
                 try {
