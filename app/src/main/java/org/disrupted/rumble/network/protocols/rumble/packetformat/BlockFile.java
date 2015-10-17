@@ -142,8 +142,6 @@ public class BlockFile extends Block {
                 );
 
                 FileOutputStream fos = null;
-                Log.d(TAG, "to read: "+readleft);
-                long total = 0;
                 try {
                     fos = new FileOutputStream(attachedFile);
                     final int BUFFER_SIZE = 1024;
@@ -154,14 +152,12 @@ public class BlockFile extends Block {
                         if (bytesread < 0)
                             throw new IOException("End of stream reached before downloading was complete");
                         readleft -= bytesread;
-                        total += bytesread;
                         fos.write(buffer, 0, bytesread);
                     }
                 } finally {
                     if (fos != null)
                         fos.close();
                 }
-                Log.d(TAG, "total: "+total);
 
                 // add the photo to the media library
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -181,6 +177,8 @@ public class BlockFile extends Block {
                                 header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                                 timeToTransfer)
                 );
+
+                return header.getBlockLength();
             } catch (IOException e) {
                 Log.e(TAG, "[-] file has not been downloaded "+e.getMessage());
             }
