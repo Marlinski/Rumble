@@ -148,7 +148,7 @@ public class BlockFile extends Block {
                     fos = new FileOutputStream(attachedFile);
                     final int BUFFER_SIZE = 1024;
                     byte[] buffer = new byte[BUFFER_SIZE];
-                    while (readleft >= 0) {
+                    while (readleft > 0) {
                         long max_read = Math.min((long)BUFFER_SIZE,readleft);
                         int bytesread = in.read(buffer, 0, (int)max_read);
                         if (bytesread < 0)

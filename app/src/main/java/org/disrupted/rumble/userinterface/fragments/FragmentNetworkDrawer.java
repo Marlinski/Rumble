@@ -290,6 +290,8 @@ public class FragmentNetworkDrawer extends Fragment {
     }
 
     public void initializeNeighbourview() {
+        if (mNetworkCoordinator == null)
+            return;
         mDrawerNeighbourList = (ListView) mDrawerFragmentLayout.findViewById(R.id.neighbours_list_view);
         Set<NeighbourManager.Neighbour> neighborhood = mNetworkCoordinator.neighbourManager.getNeighbourList();
         listAdapter = new NeighborhoodListAdapter(getActivity(), neighborhood);
@@ -297,12 +299,16 @@ public class FragmentNetworkDrawer extends Fragment {
         neighborhood.clear();
     }
     public void initializeProgressBar() {
+        if (mNetworkCoordinator == null)
+            return;
         if (mNetworkCoordinator.isScanning()) {
             ((ImageButton) mDrawerFragmentLayout.findViewById(R.id.scanningButton)).setVisibility(View.GONE);
             ((ProgressBar) mDrawerFragmentLayout.findViewById(R.id.scanningProgressBar)).setVisibility(View.VISIBLE);
         }
     }
     private void refreshNeighborhood() {
+        if (mNetworkCoordinator == null)
+            return;
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
