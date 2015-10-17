@@ -285,28 +285,28 @@ public class PushStatusDatabase extends Database {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " > ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " >= ? ");
             argumentList.add(Long.toString(options.after_toc));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_AFTER_TOA) == StatusQueryOption.FILTER_AFTER_TOA) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " > ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " >= ? ");
             argumentList.add(Long.toString(options.after_toa));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_BEFORE_TOC) == StatusQueryOption.FILTER_BEFORE_TOC) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " < ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_CREATION + " <= ? ");
             argumentList.add(Long.toString(options.before_toc));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_BEFORE_TOA) == StatusQueryOption.FILTER_BEFORE_TOA) {
             if(!firstwhere)
                 query.append(" AND ");
             firstwhere = false;
-            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " < ? ");
+            query.append(" ps." + PushStatusDatabase.TIME_OF_ARRIVAL + " <= ? ");
             argumentList.add(Long.toString(options.before_toa));
         }
         if ((options.filterFlags & StatusQueryOption.FILTER_HOPS) == StatusQueryOption.FILTER_HOPS) {

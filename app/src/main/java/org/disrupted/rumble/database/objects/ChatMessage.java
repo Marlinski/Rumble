@@ -78,6 +78,23 @@ public class ChatMessage {
 
 
     @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+        if(o instanceof ChatMessage) {
+            ChatMessage msg = (ChatMessage)o;
+            return this.uuid.equals(msg.uuid);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.uuid.hashCode();
+    }
+
+
+    @Override
     public String toString() {
         return message;
     }

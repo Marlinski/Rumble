@@ -174,6 +174,23 @@ public class PushStatus {
         hashtagSet.clear();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if(o == null)
+            return false;
+        if(o instanceof PushStatus) {
+            PushStatus status = (PushStatus)o;
+            return this.uuid.equals(status.uuid);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.uuid.hashCode();
+    }
+
+    @Override
     public String toString() {
         String s = new String();
         s += "Author: "+this.author.getUid()+" ("+this.author.getName()+")\n";

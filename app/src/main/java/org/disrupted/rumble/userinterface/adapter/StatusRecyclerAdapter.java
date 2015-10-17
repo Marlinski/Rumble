@@ -308,8 +308,15 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
         return 0;
     }
 
-    public void addStatusAtBottom(List<PushStatus> statuses) {
-        this.statuses.addAll(statuses);
+    public int addStatusesAtBottom(List<PushStatus> statusesToAdd) {
+        int loaded = 0;
+        for(PushStatus status : statusesToAdd) {
+            if(!this.statuses.contains(status)) {
+                this.statuses.add(status);
+                loaded++;
+            }
+        }
+        return loaded;
     }
 
     public int deleteStatus(String uuid) {

@@ -99,7 +99,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
          * However for ContactDetail activity, I need a CoordinatorLayout for the whole activity
          * in order to hide the collapsingtoolbar whenever I scroll down. Unfortunately it conflicts
          * with the coordinatorlayout I use for this very fragmentStatusList. Because I don't need
-         * the compose button to display the status of a specific contact, I created two different
+         * the compose button to display the status to a specific contact, I created two different
          * layout to avoid conflicts and use the argument noCoordinatorLayout to decide which one.
          */
         if(noCoordinatorLayout) {
@@ -249,11 +249,12 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if(answer.size() > 0) {
-                        statusRecyclerAdapter.addStatusAtBottom(answer);
+                    int before = statusRecyclerAdapter.getItemCount();
+                    int loaded = statusRecyclerAdapter.addStatusesAtBottom(answer);
+                    if(loaded > 0) {
                         statusRecyclerAdapter.notifyItemRangeInserted(
-                                statusRecyclerAdapter.getItemCount()-answer.size(),
-                                statusRecyclerAdapter.getItemCount()-1
+                                before,
+                                statusRecyclerAdapter.getItemCount() - 1
                         );
                     } else {
                         noMoreStatusToLoad = true;
