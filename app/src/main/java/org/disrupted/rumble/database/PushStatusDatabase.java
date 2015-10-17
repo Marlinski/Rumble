@@ -53,22 +53,23 @@ public class PushStatusDatabase extends Database {
 
     public static final String TABLE_NAME       = "push_status";
     public static final String ID               = "_id";
-    public static final String UUID             = "uuid";        // unique ID 128 bits
-    public static final String AUTHOR_DBID      = "author_db_id";   // unique ID 64  bits stored in Base64
+    public static final String UUID             = "uuid";         // unique ID 128 bits
+    public static final String AUTHOR_DBID      = "author_db_id"; // unique ID 64  bits stored in Base64
     public static final String GROUP_DBID       = "group_db_id";  // the name of the group it belongs to
-    public static final String POST             = "post";        // the post itself
-    public static final String FILE_NAME        = "filename";    // the name of the attached file
-    public static final String TIME_OF_CREATION = "toc";         // time of creation of the post
-    public static final String TIME_OF_ARRIVAL  = "toa";         // time of arrival at current node
-    public static final String TTL              = "ttl";         // time to live (in second since toc)
-    public static final String HOP_COUNT        = "hopcount";    // number of device it has traversed
-    public static final String HOP_LIMIT        = "hoplimit";    // number of device it has traversed
-    public static final String LIKE             = "like";        // number of like (in the path)
-    public static final String REPLICATION      = "replication"; // number of replications
-    public static final String DUPLICATE        = "duplicate";   // number of copies received
-    public static final String USERREAD         = "read";        // has the user read it already ?
-    public static final String USERLIKED         = "liked";        // has the user liked it ?
-    public static final String USERSAVED         = "saved";        // has the user liked it ?
+    public static final String POST             = "post";         // the post itself
+    public static final String FILE_NAME        = "filename";     // the name of the attached file
+    public static final String TIME_OF_CREATION = "toc";          // time of creation of the post
+    public static final String TIME_OF_ARRIVAL  = "toa";          // time of arrival at current node
+    public static final String SENDER_DBID      = "sender_db_id"; // unique ID 64  bits stored in Base64
+    public static final String TTL              = "ttl";          // time to live (in second since toc)
+    public static final String HOP_COUNT        = "hopcount";     // number of device it has traversed
+    public static final String HOP_LIMIT        = "hoplimit";     // number of device it has traversed
+    public static final String LIKE             = "like";         // number of like (in the path)
+    public static final String REPLICATION      = "replication";  // number of replications
+    public static final String DUPLICATE        = "duplicate";    // number of copies received
+    public static final String USERREAD         = "read";         // has the user read it already ?
+    public static final String USERLIKED         = "liked";       // has the user liked it ?
+    public static final String USERSAVED         = "saved";       // has the user liked it ?
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
@@ -79,6 +80,7 @@ public class PushStatusDatabase extends Database {
                  + FILE_NAME   + " TEXT, "
                  + TIME_OF_CREATION  + " INTEGER, "
                  + TIME_OF_ARRIVAL   + " INTEGER, "
+                 + SENDER_DBID + " INTEGER, "
                  + TTL         + " INTEGER, "
                  + HOP_LIMIT   + " INTEGER, "
                  + LIKE        + " INTEGER, "
@@ -90,6 +92,7 @@ public class PushStatusDatabase extends Database {
                  + USERSAVED   + " INTEGER, "
                  + "UNIQUE ( " + UUID + " ), "
                  + "FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ), "
+                 + "FOREIGN KEY ( "+ SENDER_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ), "
                  + "FOREIGN KEY ( "+ GROUP_DBID  + " ) REFERENCES " + GroupDatabase.TABLE_NAME   + " ( " + GroupDatabase.ID   + " ) "
           + " );";
 
@@ -501,6 +504,7 @@ public class PushStatusDatabase extends Database {
         ContentValues contentValues = new ContentValues();
 
         long contact_DBID = DatabaseFactory.getContactDatabase(context).getContactDBID(status.getAuthor().getUid());
+        long sender_DBID  = DatabaseFactory.getContactDatabase(context).getContactDBID(status.receivedBy());
         long group_DBID   = DatabaseFactory.getGroupDatabase(context).getGroupDBID(status.getGroup().getGid());
 
         if((contact_DBID <0) || (group_DBID < 0))
@@ -511,8 +515,9 @@ public class PushStatusDatabase extends Database {
         contentValues.put(GROUP_DBID, group_DBID);
         contentValues.put(POST, status.getPost());
         contentValues.put(FILE_NAME, status.getFileName());
-        contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
         contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
+        contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
+        contentValues.put(SENDER_DBID, sender_DBID);
         contentValues.put(HOP_COUNT, status.getHopCount());
         contentValues.put(LIKE, status.getLike());
         contentValues.put(TTL, status.getTTL());
@@ -565,15 +570,16 @@ public class PushStatusDatabase extends Database {
         if(cursor.isAfterLast())
             return null;
 
-        long statusDBID  = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-        long author_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
-        Contact contact  = DatabaseFactory.getContactDatabase(context).getContact(author_dbid);
-        long group_dbid  = cursor.getLong(cursor.getColumnIndexOrThrow(GROUP_DBID));
-        Group group      = DatabaseFactory.getGroupDatabase(context).getGroup(group_dbid);
-        long toc         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
-        String post      = cursor.getString(cursor.getColumnIndexOrThrow(POST));
+        long statusDBID    = cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+        long author_dbid   = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
+        Contact contact    = DatabaseFactory.getContactDatabase(context).getContact(author_dbid);
+        long group_dbid    = cursor.getLong(cursor.getColumnIndexOrThrow(GROUP_DBID));
+        Group group        = DatabaseFactory.getGroupDatabase(context).getGroup(group_dbid);
+        long toc           = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
+        String post        = cursor.getString(cursor.getColumnIndexOrThrow(POST));
+        String sender_dbid = cursor.getString(cursor.getColumnIndexOrThrow(SENDER_DBID));
 
-        PushStatus message = new PushStatus(contact, group, post, toc);
+        PushStatus message = new PushStatus(contact, group, post, toc, sender_dbid);
         message.setdbId(statusDBID);
         message.setTimeOfArrival(cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL)));
         message.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME)));

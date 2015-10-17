@@ -56,6 +56,7 @@ public class PushStatus {
     protected int         like;
     protected int         replication;
     protected int         duplicate;
+    protected String      received_by; // sender UID
 
     // local user preference for this message
     protected boolean hasUserRead;
@@ -63,37 +64,39 @@ public class PushStatus {
     protected boolean hasUserSaved;
 
     public PushStatus(PushStatus message) {
-        this.author = message.getAuthor();
-        this.group  = message.getGroup();
-        this.status = message.getPost();
-        this.timeOfCreation = message.getTimeOfCreation();
+        this.author          = message.author;
+        this.group           = message.group;
+        this.status          = message.status;
+        this.timeOfCreation  = message.timeOfCreation;
 
-        this.uuid = message.getUuid();
-        this.dbid = message.getdbId();
+        this.uuid = message.uuid;
+        this.dbid = message.dbid;
         if(message.getHashtagSet() != null)
-            this.hashtagSet = new HashSet<String>(message.getHashtagSet());
+            this.hashtagSet  = new HashSet<String>(message.hashtagSet);
         else
-            this.hashtagSet = new HashSet<String>();
-        this.attachedFile = message.getFileName();
-        this.fileSize = message.getFileSize();
-        this.timeOfArrival = message.getTimeOfArrival();
-        this.ttl = message.getTTL();
-        this.hopCount = message.getHopCount();
-        this.hopLimit = message.getHopLimit();
-        this.like = message.getLike();
-        this.replication  = message.getReplication();
-        this.duplicate = message.getDuplicate();
-        this.hasUserRead = message.hasUserReadAlready();
-        this.hasUserLiked = message.hasUserLiked();
-        this.hasUserSaved = message.hasUserSaved();
+            this.hashtagSet  = new HashSet<String>();
+        this.attachedFile    = message.attachedFile;
+        this.fileSize        = message.fileSize;
+        this.timeOfArrival   = message.timeOfArrival;
+        this.ttl             = message.ttl;
+        this.hopCount        = message.hopCount;
+        this.hopLimit        = message.hopLimit;
+        this.like            = message.like;
+        this.replication     = message.replication;
+        this.duplicate       = message.duplicate;
+        this.hasUserRead     = message.hasUserRead;
+        this.hasUserLiked    = message.hasUserLiked;
+        this.hasUserSaved    = message.hasUserSaved;
+        this.received_by     = message.received_by;
     }
 
-    public PushStatus(Contact author, Group group, String post, long timeOfCreation) {
+    public PushStatus(Contact author, Group group, String post, long timeOfCreation, String received_by) {
         this.uuid = HashUtil.computeStatusUUID(author.getUid(), group.getGid(), post, timeOfCreation);
         this.dbid   = -1;
         this.status = post;
         this.author = author;
         this.group  = group;
+        this.received_by = received_by;
         hashtagSet  = new HashSet<String>();
         Pattern hashtagPattern = Pattern.compile("#(\\w+|\\W+)");
         Matcher hashtagMatcher = hashtagPattern.matcher(post);
@@ -138,6 +141,7 @@ public class PushStatus {
     public boolean hasUserLiked() {         return hasUserLiked;               }
     public boolean hasUserReadAlready() {   return hasUserRead;                }
     public boolean hasUserSaved() {         return hasUserSaved;               }
+    public String  receivedBy() {           return received_by;                }
 
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
