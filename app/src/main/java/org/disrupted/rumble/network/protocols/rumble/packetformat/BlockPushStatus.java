@@ -197,10 +197,10 @@ public class BlockPushStatus extends Block{
 
             short filenameLength = byteBuffer.get();
             readleft -= FIELD_FILENAME_LENGTH_SIZE;
-            if ((filenameLength < 0) || (filenameLength > readleft) || (filenameLength > PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE))
+            if ((filenameLength < 0) || (filenameLength > readleft) || (filenameLength > PushStatus.STATUS_FILENAME_MAX_SIZE))
                 throw new MalformedBlockPayload("wrong filename.length parameter: " + filenameLength, header.getBlockLength()-readleft);
             byte[] filename = new byte[filenameLength];
-            byteBuffer.get(post, 0, filenameLength);
+            byteBuffer.get(filename, 0, filenameLength);
             readleft -= filenameLength;
 
             long toc = byteBuffer.getLong();
