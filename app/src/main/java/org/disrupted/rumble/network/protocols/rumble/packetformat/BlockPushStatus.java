@@ -61,7 +61,9 @@ import de.greenrobot.event.EventBus;
  * | Length |         Group (String)           |  1 byte + VARIABLE
  * +--------+---------+------------------------+
  * |      Length      |     Status (String)    |  2 bytes + VARIABLE
- * +------------------+------------------------+
+ * +--------+---------+------------------------+
+ * | Length |           FileName               |  1 byte + VARIABLE
+ * +--------+---------+------------------------+
  * |             Time of Creation              |  8 bytes
  * +-------------------------------------------+
  * |              Time to Live                 |  8 bytes
@@ -86,6 +88,7 @@ public class BlockPushStatus extends Block{
     private static final int FIELD_GID_SIZE             = Group.GROUP_GID_RAW_SIZE;
     private static final int FIELD_GROUP_LENGTH_SIZE    = 1;
     private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
+    private static final int FIELD_FILENAME_LENGTH_SIZE = 1;
     private static final int FIELD_TOC_SIZE             = 8;
     private static final int FIELD_TTL_SIZE             = 8;
     private static final int FIELD_HOPCOUNT_SIZE        = 2;
@@ -100,6 +103,7 @@ public class BlockPushStatus extends Block{
                     FIELD_GID_SIZE +
                     FIELD_GROUP_LENGTH_SIZE +
                     FIELD_STATUS_LENGTH_SIZE +
+                    FIELD_FILENAME_LENGTH_SIZE +
                     FIELD_TOC_SIZE +
                     FIELD_TTL_SIZE +
                     FIELD_HOPCOUNT_SIZE +
@@ -110,7 +114,8 @@ public class BlockPushStatus extends Block{
     private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE +
             Contact.CONTACT_NAME_MAX_SIZE +
             Group.GROUP_NAME_MAX_SIZE +
-            PushStatus.STATUS_POST_MAX_SIZE;
+            PushStatus.STATUS_POST_MAX_SIZE +
+            PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE;
 
     private PushStatus   status;
     private Set<Contact> recipientList;
@@ -190,6 +195,14 @@ public class BlockPushStatus extends Block{
             byteBuffer.get(post, 0, postLength);
             readleft -= postLength;
 
+            short filenameLength = byteBuffer.get();
+            readleft -= FIELD_FILENAME_LENGTH_SIZE;
+            if ((filenameLength < 0) || (filenameLength > readleft) || (filenameLength > PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE))
+                throw new MalformedBlockPayload("wrong filename.length parameter: " + filenameLength, header.getBlockLength()-readleft);
+            byte[] filename = new byte[filenameLength];
+            byteBuffer.get(post, 0, filenameLength);
+            readleft -= filenameLength;
+
             long toc = byteBuffer.getLong();
             readleft -= FIELD_TOC_SIZE;
 
@@ -220,6 +233,7 @@ public class BlockPushStatus extends Block{
             Group   group_tmp = new Group(new String(group_name), group_id_base64, null);
             status = new PushStatus(contact_tmp, group_tmp, new String(post), toc, sender_id_base64);
 
+            status.setFileName(new String(filename));
             status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
             status.setTimeOfCreation(toc);
             status.setHopCount((int) hopCount);
@@ -252,16 +266,19 @@ public class BlockPushStatus extends Block{
 
         /* calculate the total block size */
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
+        byte[] filename = status.getFileName().getBytes(Charset.forName("UTF-8"));
         byte[] group_name  = status.getGroup().getName().getBytes(Charset.forName("UTF-8"));
         byte[] group_id    = Base64.decode(status.getGroup().getGid(), Base64.NO_WRAP);
         byte[] author_name = status.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
         byte[] author_id   = Base64.decode(status.getAuthor().getUid(), Base64.NO_WRAP);
         byte[] sender_id   = Base64.decode(DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                 .getLocalContact().getUid(),Base64.NO_WRAP);
+
         int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 group_name.length +
-                post.length;
+                post.length +
+                filename.length;
         header.setPayloadLength(length);
 
         BlockFile blockFile = null;
@@ -281,6 +298,8 @@ public class BlockPushStatus extends Block{
         blockBuffer.put(group_name, 0, group_name.length);
         blockBuffer.putShort((short) post.length);
         blockBuffer.put(post, 0, post.length);
+        blockBuffer.put((byte) filename.length);
+        blockBuffer.put(filename, 0, filename.length);
         blockBuffer.putLong(status.getTimeOfCreation());
         blockBuffer.putLong(status.getTTL());
         blockBuffer.putShort((short) status.getHopCount());

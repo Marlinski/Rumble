@@ -34,10 +34,10 @@ public class PushStatus {
 
     private static final String TAG  = "StatusMessage";
 
-
-    public static final int STATUS_ID_RAW_SIZE      = 16;
-    public static final int STATUS_POST_MAX_SIZE    = 20000;
-    public static final int STATUS_HASHTAG_MAX_SIZE = 50;
+    public static final int STATUS_ID_RAW_SIZE       = 16;
+    public static final int STATUS_POST_MAX_SIZE     = 20000;
+    public static final int STATUS_HASHTAG_MAX_SIZE  = 50;
+    public static final int STATUS_FILENAME_MAX_SIZE = 50;
     public static final int STATUS_ATTACHED_FILE_MAX_SIZE = 16000000; // limit 16Mb file
 
     protected long        dbid;

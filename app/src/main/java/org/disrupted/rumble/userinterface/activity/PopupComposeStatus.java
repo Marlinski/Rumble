@@ -230,7 +230,6 @@ public class PopupComposeStatus extends Activity {
                     // rename the file with the Status UUID
                     File tempFile = new File(FileUtil.getWritableAlbumStorageDir(), mCurrentPhotoFile);
                     String cleanedUuid = FileUtil.cleanBase64(pushStatus.getUuid());
-
                     File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(),
                             "JPEG_" + cleanedUuid + ".jpg");
                     if(!tempFile.renameTo(attachedFile))
