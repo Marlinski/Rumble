@@ -161,6 +161,7 @@ public class PopupComposeStatus extends Activity {
             if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
                 File photoFile;
                 try {
+                    //todo change file name
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                     File storageDir = FileUtil.getWritableAlbumStorageDir();
                     String imageFileName = "JPEG_" + timeStamp + "_";
