@@ -45,7 +45,8 @@ public class FileUtil {
     }
 
     public static boolean isFileNameClean(String input) {
-        return (input.equals(input.replaceAll("[^a-zA-Z0-9_-]", "")));
+        String nameWithoutExtension = input.substring(0, input.lastIndexOf('.'));
+        return (nameWithoutExtension.equals(nameWithoutExtension.replaceAll("[^a-zA-Z0-9_-]", "")));
     }
 
     private static boolean isExternalStorageWritable() {
