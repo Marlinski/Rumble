@@ -37,6 +37,17 @@ public class FileUtil {
 
     private static final String TAG = "FileUtil";
 
+    public static String cleanBase64(String uuid) {
+        String ret = uuid.replace('/','_');
+        ret = ret.replace('+','-');
+        ret = ret.replaceAll("[^a-zA-Z0-9_-]", "");
+        return ret;
+    }
+
+    public static boolean isFileNameClean(String input) {
+        return (input.equals(input.replaceAll("[^a-zA-Z0-9_-]", "")));
+    }
+
     private static boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {

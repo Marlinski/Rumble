@@ -206,26 +206,30 @@ public class CacheManager {
         if(event.filename == null)
             return;
         PushStatus status = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if((status == null) && !status.hasAttachedFile()) {
+        if((status != null) && status.hasAttachedFile()) {
             try {
+                // we check if filename is healthy
+                if(!FileUtil.isFileNameClean(status.getFileName()))
+                    throw new Exception("filename is suspicious");
+
                 // we check if we already received the attached file
-                File attached = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+                File attached = new File(FileUtil.getWritableAlbumStorageDir(), status.getFileName());
                 if(attached.exists())
                     throw new Exception("file already exists");
 
-                // if so, we rename the temporary file to its name
+                // if we didn't, we rename the temporary file to its name
                 File from = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
                 if(!from.renameTo(attached))
                     throw new IOException("cannot rename the file");
 
-                // add the file to the media library
+                // and we add the file to the media library
                 Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                 Uri contentUri = Uri.fromFile(attached);
                 mediaScanIntent.setData(contentUri);
                 RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
 
                 return;
-            } catch(Exception e) {
+            } catch(Exception ignore) {
             }
         }
         try {

@@ -228,20 +228,18 @@ public class PopupComposeStatus extends Activity {
 
                 if (mCurrentPhotoFile != null) {
                     // rename the file with the Status UUID
-                    File from = new File(FileUtil.getWritableAlbumStorageDir(), mCurrentPhotoFile);
-                    String imageFileName = "JPEG_" + pushStatus.getUuid() + "_";
-                    File to = File.createTempFile(
-                            imageFileName,  /* prefix */
-                            ".jpg",         /* suffix */
-                            FileUtil.getWritableAlbumStorageDir() /* directory */
-                    );
-                    if(!from.renameTo(to))
+                    File tempFile = new File(FileUtil.getWritableAlbumStorageDir(), mCurrentPhotoFile);
+                    String cleanedUuid = FileUtil.cleanBase64(pushStatus.getUuid());
+
+                    File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(),
+                            "JPEG_" + cleanedUuid + ".jpg");
+                    if(!tempFile.renameTo(attachedFile))
                         throw new IOException("cannot rename the file");
-                    pushStatus.setFileName(to.getName());
+                    pushStatus.setFileName(attachedFile.getName());
 
                     // add the photo to the media library
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    Uri contentUri = Uri.fromFile(to);
+                    Uri contentUri = Uri.fromFile(attachedFile);
                     mediaScanIntent.setData(contentUri);
                     sendBroadcast(mediaScanIntent);
 
