@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.database;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -203,13 +205,31 @@ public class CacheManager {
     public void onEventAsync(FileReceived event) {
         if(event.filename == null)
             return;
-        PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if((exists != null) && !exists.hasAttachedFile()) {
-            exists.setFileName(event.filename);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
-            return;
+        PushStatus status = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
+        if((status == null) && !status.hasAttachedFile()) {
+            try {
+                // we check if we already received the attached file
+                File attached = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+                if(attached.exists())
+                    throw new Exception("file already exists");
+
+                // if so, we rename the temporary file to its name
+                File from = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
+                if(!from.renameTo(attached))
+                    throw new IOException("cannot rename the file");
+
+                // add the file to the media library
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                Uri contentUri = Uri.fromFile(attached);
+                mediaScanIntent.setData(contentUri);
+                RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
+
+                return;
+            } catch(Exception e) {
+            }
         }
         try {
+            // we delete the temporary file if a problem occured
             File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
             if (toDelete.exists() && toDelete.isFile())
                 toDelete.delete();

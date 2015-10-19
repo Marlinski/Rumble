@@ -172,13 +172,11 @@ public class PopupComposeStatus extends Activity {
                             storageDir      /* directory */
                     );
                     mCurrentPhotoFile = photoFile.getName();
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+                    activity.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (IOException error) {
                     Log.e(TAG, "[!] cannot create photo file "+error.getMessage());
                     return;
-                }
-                if(photoFile != null) {
-                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
-                    activity.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 }
             }
         }
@@ -229,12 +227,21 @@ public class PopupComposeStatus extends Activity {
                 pushStatus.setUserRead(true);
 
                 if (mCurrentPhotoFile != null) {
-                    pushStatus.setFileName(mCurrentPhotoFile);
+                    // rename the file with the Status UUID
+                    File from = new File(FileUtil.getWritableAlbumStorageDir(), mCurrentPhotoFile);
+                    String imageFileName = "JPEG_" + pushStatus.getUuid() + "_";
+                    File to = File.createTempFile(
+                            imageFileName,  /* prefix */
+                            ".jpg",         /* suffix */
+                            FileUtil.getWritableAlbumStorageDir() /* directory */
+                    );
+                    if(!from.renameTo(to))
+                        throw new IOException("cannot rename the file");
+                    pushStatus.setFileName(to.getName());
 
                     // add the photo to the media library
                     Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    File f = new File(FileUtil.getReadableAlbumStorageDir(), mCurrentPhotoFile);
-                    Uri contentUri = Uri.fromFile(f);
+                    Uri contentUri = Uri.fromFile(to);
                     mediaScanIntent.setData(contentUri);
                     sendBroadcast(mediaScanIntent);
 

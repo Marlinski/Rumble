@@ -159,12 +159,6 @@ public class BlockFile extends Block {
                         fos.close();
                 }
 
-                // add the photo to the media library
-                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                Uri contentUri = Uri.fromFile(attachedFile);
-                mediaScanIntent.setData(contentUri);
-                RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
-
                 timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 // update the database
                 String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
