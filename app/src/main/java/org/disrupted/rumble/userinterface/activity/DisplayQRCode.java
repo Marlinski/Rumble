@@ -17,19 +17,14 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
 
@@ -43,7 +38,7 @@ public class DisplayQRCode extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.display_qrcode_layout);
+        setContentView(R.layout.activity_display_qrcode);
 
         Intent intent = getIntent();
         bitmap = (Bitmap) intent.getParcelableExtra("EXTRA_QRCODE");

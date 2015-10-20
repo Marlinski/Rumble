@@ -38,12 +38,10 @@ public class IconTextListAdapter extends BaseAdapter {
 
     private static final String TAG = "NeighborListAdapter";
 
-    private final Activity activity;
     private final LayoutInflater inflater;
     private List<IconTextItem> itemlist;
 
     public IconTextListAdapter(Activity activity, List<IconTextItem> itemlist) {
-        this.activity = activity;
         this.inflater = LayoutInflater.from(activity);
         this.itemlist = itemlist;
     }

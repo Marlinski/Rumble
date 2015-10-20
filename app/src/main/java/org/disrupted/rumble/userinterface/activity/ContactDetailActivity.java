@@ -20,7 +20,6 @@ package org.disrupted.rumble.userinterface.activity;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -32,7 +31,6 @@ import com.amulyakhare.textdrawable.util.ColorGenerator;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.adapter.ContactDetailPagerAdapter;
-import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 /**
  * @author Marlinski
@@ -56,7 +54,7 @@ public class ContactDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.contact_detail);
+        setContentView(R.layout.activity_contact_detail);
 
         Bundle args = getIntent().getExtras();
         String contactName = args.getString("ContactName");

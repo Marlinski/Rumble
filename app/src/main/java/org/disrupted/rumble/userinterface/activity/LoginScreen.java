@@ -49,7 +49,7 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.login_layout);
+        setContentView(R.layout.activity_login_screen);
 
         usernameView = (TextView) this.findViewById(R.id.login_username);
         loginButton = (Button) this.findViewById(R.id.login_button);

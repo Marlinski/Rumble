@@ -22,8 +22,6 @@ package org.disrupted.rumble.userinterface.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -35,7 +33,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.jeremyfeinstein.slidingmenu.lib.CustomViewAbove;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.R;
@@ -52,7 +49,6 @@ import org.disrupted.rumble.userinterface.adapter.HomePagerAdapter;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessageList;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
-import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 import de.greenrobot.event.EventBus;
 
@@ -77,7 +73,7 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.home_layout);
+        setContentView(R.layout.activity_home);
         mTitle = getTitle();
 
         /* sliding menu with both right and left drawer */
@@ -88,8 +84,8 @@ public class HomeActivity extends AppCompatActivity {
         slidingMenu.setFadeDegree(0.35f);
         slidingMenu.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
         slidingMenu.setMode(SlidingMenu.LEFT_RIGHT);
-        slidingMenu.setMenu(R.layout.navigation_frame);
-        slidingMenu.setSecondaryMenu(R.layout.network_frame);
+        slidingMenu.setMenu(R.layout.slidingmenu_navigation_drawer);
+        slidingMenu.setSecondaryMenu(R.layout.slidingmenu_network_drawer);
         slidingMenu.setSecondaryShadowDrawable(R.drawable.shadowright);
         if (savedInstanceState == null) {
             mNavigationDrawerFragment = new FragmentNavigationDrawer();

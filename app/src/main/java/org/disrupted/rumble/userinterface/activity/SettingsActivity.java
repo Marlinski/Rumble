@@ -56,7 +56,7 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings);
+        setContentView(R.layout.activity_settings);
         setTitle("Settings");
 
         ActionBar actionBar = getSupportActionBar();
@@ -64,6 +64,7 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
+        // memory cleaning actions
         settingsList = new LinkedList<IconTextItem>();
         settingsList.add(new IconTextItem(
                 R.drawable.ic_delete_white_24dp,
@@ -73,7 +74,6 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
                 R.drawable.ic_delete_white_24dp,
                 getResources().getString(R.string.settings_action_wipe_chat),
                 2));
-
         listAdapter = new IconTextListAdapter(this, settingsList);
         settingsListView = (ListView) findViewById(R.id.settings_list);
         settingsListView.setAdapter(listAdapter);

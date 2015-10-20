@@ -19,16 +19,10 @@ package org.disrupted.rumble.userinterface.activity;
 
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.userinterface.adapter.GroupDetailPagerAdapter;
@@ -58,7 +52,7 @@ public class GroupDetailActivity extends AppCompatActivity {
         Bundle args = getIntent().getExtras();
         String name = args.getString("GroupName");
 
-        setContentView(R.layout.group_detail);
+        setContentView(R.layout.activity_group_detail);
         setTitle(name);
 
         /* setting up the toolbar */

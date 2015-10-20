@@ -60,9 +60,7 @@ public class GroupListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.group_list_layout);
-
-        setTitle(R.string.navigation_drawer_group);
+        setContentView(R.layout.activity_group_list);
         coordinatorLayout = (CoordinatorLayout)findViewById(R.id.coordinator_layout);
 
         /* setting up the toolbar */
@@ -70,6 +68,7 @@ public class GroupListActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+        setTitle(R.string.navigation_drawer_group);
 
         /* setting up the list */
         Fragment fragmentGroupList = new FragmentGroupList();
@@ -94,7 +93,7 @@ public class GroupListActivity extends AppCompatActivity {
                 Intent create_group = new Intent(this, PopupCreateGroup.class );
                 startActivity(create_group);
                 return true;
-            case R.id.home:
+            case android.R.id.home:
                 finish();
                 overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
         }
