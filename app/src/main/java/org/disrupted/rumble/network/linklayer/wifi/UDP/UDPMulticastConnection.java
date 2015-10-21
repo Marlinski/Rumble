@@ -102,14 +102,10 @@ public class UDPMulticastConnection implements MulticastConnection {
         }
 
         socket = tmp;
-        /*
         try {
-            // to avoid a strange race condition in which multicastsocket cannot be created
-            Thread.sleep(1000);
-        } catch (InterruptedException ie) {}
-        */
-        try {
-            socket.joinGroup(multicastAddr);
+            // for some reason, join group sometime throw ENODEV, it doesn't seem to be
+            // necessary though so I just remove tue call to joingroup.
+            //socket.joinGroup(multicastAddr);
             socket.setReuseAddress(true);
             socket.setNetworkInterface(WifiUtil.getWlanEth());
         } catch ( IOException io) {
