@@ -18,6 +18,7 @@
 package org.disrupted.rumble.network.linklayer.wifi.UDP;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
+import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 import org.disrupted.rumble.util.NetUtil;
 
 /**
@@ -34,6 +35,18 @@ public class UDPMulticastNeighbour implements LinkLayerNeighbour {
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.multicastAddress = multicastAddress;
         this.port = port;
+    }
+
+    @Override
+    public boolean isLocal() {
+        if(multicastAddress.equals("127.0.0.1"))
+            return true;
+        if(multicastAddress.equals("0.0.0.0"))
+            return true;
+        if(multicastAddress.equals(WifiUtil.getIPAddress()))
+            return true;
+
+        return false;
     }
 
     @Override
