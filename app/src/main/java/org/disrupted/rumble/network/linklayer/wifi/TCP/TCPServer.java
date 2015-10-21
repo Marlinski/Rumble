@@ -22,8 +22,7 @@ import android.util.Log;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
 import java.io.IOException;
@@ -57,7 +56,7 @@ public abstract class TCPServer implements Worker {
     @Override
     public String getLinkLayerIdentifier() {
         // todo how to make it independant ?
-        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
+        return WifiLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override

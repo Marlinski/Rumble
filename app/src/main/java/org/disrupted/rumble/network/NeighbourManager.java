@@ -107,10 +107,12 @@ public class NeighbourManager {
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
-    /*
+    /**
      * Events thrown by Scanner classes
      */
     public void onEvent(ScannerNeighbourSensed event) {
+        if(event.neighbour.isLocal())
+            return;
         synchronized (managerLock) {
             Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
             if(channels != null)
@@ -122,6 +124,8 @@ public class NeighbourManager {
     }
 
     public void onEvent(ScannerNeighbourTimeout event) {
+        if(event.neighbour.isLocal())
+            return;
         synchronized (managerLock) {
             Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
             if (channels == null)

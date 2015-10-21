@@ -29,14 +29,17 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.linklayer.events.AccessPointDisabled;
+import org.disrupted.rumble.network.linklayer.events.AccessPointEnabled;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.events.WifiModeChanged;
+
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
 
@@ -44,12 +47,13 @@ import de.greenrobot.event.EventBus;
 /**
  * @author Marlinski
  */
-public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
+public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 
     private static final String TAG = "WifiLinkLayerAdapter";
 
-    public static final String LinkLayerIdentifier = "WIFIManagedMode";
+    public static final String LinkLayerIdentifier = "WIFI";
 
+    private static final ReentrantLock lock = new ReentrantLock();
     private String macAddress;
     private WifiManager wifiMan;
     private WifiInfo wifiInf;
@@ -57,13 +61,19 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
     public boolean register;
     public boolean activated;
 
-    public WifiManagedLinkLayerAdapter() {
+    public enum WIFIMODE {
+        WIFIMANAGED, WIFIAP
+    }
+    public WIFIMODE mode;
+
+    public WifiLinkLayerAdapter() {
         super(TAG);
         macAddress = null;
         wifiMan    = null;
         wifiInf    = null;
         register   = false;
         activated  = false;
+        mode       = WifiUtil.isWiFiApEnabled() ? WIFIMODE.WIFIAP : WIFIMODE.WIFIMANAGED;
         super.start();
     }
 
@@ -88,17 +98,13 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
         if(register)
             return;
         register = true;
-        Log.d(TAG, "[+] Starting Wifi Managed");
+        Log.d(TAG, "[+] Starting Wifi");
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
 
-        if (WifiUtil.isEnabled()) {
+        if (WifiUtil.isWiFiApEnabled() || WifiUtil.isEnabled()) {
             linkConnected();
-        } else {
-            // we could enable wifi but better to let the user decide
-            // instead we will listen to intent and start the link whenever the wifi is ready
-            // wifiMan.setWifiEnabled(true);
         }
 
         IntentFilter filter = new IntentFilter();
@@ -108,6 +114,8 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
 
         Handler handler = new Handler(getLooper());
         RumbleApplication.getContext().registerReceiver(mReceiver, filter, null, handler);
+        if(!EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().register(this);
     }
 
     @Override
@@ -116,7 +124,10 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
             return;
         register = false;
 
-        Log.d(TAG, "[-] Stopping Wifi Managed");
+        Log.d(TAG, "[-] Stopping Wifi");
+        if(EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
+
         RumbleApplication.getContext().unregisterReceiver(mReceiver);
         linkDisconnected();
 
@@ -164,12 +175,47 @@ public class WifiManagedLinkLayerAdapter extends HandlerThread implements LinkLa
                          if (!activated)
                              return;
 
-                         Log.d(TAG, "[-] disconnected from a wifi access point");
-                         linkDisconnected();
+                         if(mode != WIFIMODE.WIFIAP) {
+                             Log.d(TAG, "[-] disconnected from a wifi access point");
+                             linkDisconnected();
+                         }
                      }
                 }
             }
         }
     };
 
+    public void onEvent(AccessPointEnabled event) {
+        if(activated)
+            return;
+        linkConnected();
+    }
+
+    public void onEvent(AccessPointDisabled event) {
+        if(!activated)
+            return;
+        linkDisconnected();
+    }
+
+    public void onEventAsync(WifiModeChanged event) {
+        lock.lock();
+        try {
+            this.mode = event.mode;
+            if(event.mode.equals(WIFIMODE.WIFIAP)) {
+                if (WifiUtil.isEnabled()) {
+                    WifiUtil.disableWifi();
+                    linkDisconnected();
+                }
+                WifiUtil.enableAP();
+            } else {
+                if(WifiUtil.isWiFiApEnabled()) {
+                    WifiUtil.disableAP();
+                }
+                if(!WifiUtil.isEnabled())
+                    WifiUtil.enableWifi();
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
 }

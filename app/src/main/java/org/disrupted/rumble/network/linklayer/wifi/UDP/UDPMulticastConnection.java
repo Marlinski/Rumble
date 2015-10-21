@@ -20,19 +20,16 @@
 package org.disrupted.rumble.network.linklayer.wifi.UDP;
 
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.MulticastConnection;
-import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -76,7 +73,7 @@ public class UDPMulticastConnection implements MulticastConnection {
 
     @Override
     public String getLinkLayerIdentifier() {
-        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
+        return WifiLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override
@@ -105,6 +102,12 @@ public class UDPMulticastConnection implements MulticastConnection {
         }
 
         socket = tmp;
+        /*
+        try {
+            // to avoid a strange race condition in which multicastsocket cannot be created
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {}
+        */
         try {
             socket.joinGroup(multicastAddr);
             socket.setReuseAddress(true);
@@ -117,7 +120,6 @@ public class UDPMulticastConnection implements MulticastConnection {
     public DatagramPacket receive(DatagramPacket packet) throws IOException, UDPMulticastSocketException {
         if(!multicastLock.isHeld())
             throw  new UDPMulticastSocketException();
-
         socket.receive(packet);
         if(packet == null)
             throw new IOException();
@@ -139,12 +141,12 @@ public class UDPMulticastConnection implements MulticastConnection {
                 socket.leaveGroup(multicastAddr);
                 socket.close();
             }
-        } catch(IOException e) {
+        } catch(IOException io) {
+            Log.d(TAG, io.getMessage());
             throw new UDPMulticastSocketException();
+        } finally {
+            multicastLock.release();
         }
-
-        multicastLock.release();
-
     }
 
     @Override

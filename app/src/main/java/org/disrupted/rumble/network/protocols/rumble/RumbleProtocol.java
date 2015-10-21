@@ -33,7 +33,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPClientConnection;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPConnection;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
@@ -130,7 +130,7 @@ public class RumbleProtocol implements Protocol {
             EventBus.getDefault().unregister(this);
 
         networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
-        networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
+        networkCoordinator.stopWorkers(WifiLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         conState.clear();
     }
 
@@ -144,7 +144,7 @@ public class RumbleProtocol implements Protocol {
             networkCoordinator.addWorker(BTServer);
         }
 
-        if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(event.linkLayerIdentifier.equals(WifiLinkLayerAdapter.LinkLayerIdentifier)) {
             Worker TCPServer = new RumbleTCPServer(this, networkCoordinator);
             networkCoordinator.addWorker(TCPServer);
 
@@ -160,7 +160,7 @@ public class RumbleProtocol implements Protocol {
             return;
 
         networkCoordinator.stopWorkers(event.linkLayerIdentifier, protocolID);
-        if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(event.linkLayerIdentifier.equals(WifiLinkLayerAdapter.LinkLayerIdentifier)) {
             if(scanner != null) {
                 networkCoordinator.delScanner(scanner);
                 scanner.stopScanner();

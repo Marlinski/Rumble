@@ -26,6 +26,8 @@ import android.text.format.Formatter;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.linklayer.events.AccessPointDisabled;
+import org.disrupted.rumble.network.linklayer.events.AccessPointEnabled;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,6 +38,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 import java.util.Enumeration;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -85,14 +89,12 @@ public class WifiUtil {
 
     public static boolean isWiFiApEnabled()
     {
-        try
-        {
+        try {
             final Method method = getWifiManager().getClass().getDeclaredMethod("isWifiApEnabled");
             method.setAccessible(true);
-            return (Boolean) method.invoke(getWifiManager());
-        }
-        catch (final Throwable ignored)
-        {
+            boolean ret =  (Boolean) method.invoke(getWifiManager());
+            return ret;
+        } catch (final Throwable ignored) {
             ignored.printStackTrace();
         }
         return false;
@@ -102,7 +104,7 @@ public class WifiUtil {
         Method[] wmMethods = getWifiManager().getClass().getDeclaredMethods();
         boolean methodFound = false;
         for (Method method: wmMethods) {
-            Log.d(TAG, method.getName());
+            //Log.d(TAG, method.getName());
             if (method.getName().equals("setWifiApEnabled")) {
                 methodFound = true;
                 WifiConfiguration netConfig = new WifiConfiguration();
@@ -114,7 +116,6 @@ public class WifiUtil {
 
                     for (Method isWifiApEnabledmethod: wmMethods) {
                         if (isWifiApEnabledmethod.getName().equals("isWifiApEnabled")) {
-
                             while (!(Boolean) isWifiApEnabledmethod.invoke( getWifiManager())) {};
                             for (Method method1: wmMethods) {
                                 if (method1.getName().equals("getWifiApState")) {
@@ -126,7 +127,7 @@ public class WifiUtil {
                     }
 
                     if (apstatus) {
-                        Log.d(TAG, "Access Point created");
+                        EventBus.getDefault().post(new AccessPointEnabled());
                     } else {
                         Log.d(TAG, "Access Point creation failed");
                     }
@@ -140,9 +141,23 @@ public class WifiUtil {
             }
         }
         if (!methodFound) {
-            Log.d("Splash Activity",
-                    "cannot configure an access point");
+            Log.d(TAG, "cannot configure an access point");
         }
+    }
+
+    public static void disableAP() {
+        WifiManager wifiManager = getWifiManager();
+        Method[] methods = wifiManager.getClass().getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.getName().equals("setWifiApEnabled")) {
+                try {
+                    method.invoke(wifiManager, null, false);
+                } catch (Exception ex) {
+                }
+                break;
+            }
+        }
+        EventBus.getDefault().post(new AccessPointDisabled());
     }
 
     public static NetworkInterface getWlanEth() {

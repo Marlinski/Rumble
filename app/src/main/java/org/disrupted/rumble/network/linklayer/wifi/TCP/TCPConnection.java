@@ -17,14 +17,13 @@
 
 package org.disrupted.rumble.network.linklayer.wifi.TCP;
 
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.NullSocketException;
 import org.disrupted.rumble.network.linklayer.exception.SocketAlreadyClosedException;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 
 import java.io.IOException;
@@ -55,7 +54,7 @@ public abstract class TCPConnection implements UnicastConnection {
 
     @Override
     public String getLinkLayerIdentifier() {
-        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
+        return WifiLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override

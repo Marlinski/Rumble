@@ -30,7 +30,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.protocols.firechat.workers.FirechatOverUDPMulticast;
@@ -124,7 +124,7 @@ public class FirechatProtocol implements Protocol {
 
         EventBus.getDefault().unregister(this);
         networkCoordinator.stopWorkers(BluetoothLinkLayerAdapter.LinkLayerIdentifier, protocolID);
-        networkCoordinator.stopWorkers(WifiManagedLinkLayerAdapter.LinkLayerIdentifier, protocolID);
+        networkCoordinator.stopWorkers(WifiLinkLayerAdapter.LinkLayerIdentifier, protocolID);
         started = false;
     }
 
@@ -138,7 +138,7 @@ public class FirechatProtocol implements Protocol {
             //networkCoordinator.addWorker(BTServer);
         }
 
-        if(event.linkLayerIdentifier.equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(event.linkLayerIdentifier.equals(WifiLinkLayerAdapter.LinkLayerIdentifier)) {
             UDPMulticastConnection con = new UDPMulticastConnection(
                     FirechatOverUDPMulticast.MULTICAST_UDP_PORT,
                     FirechatOverUDPMulticast.MULTICAST_ADDRESS);

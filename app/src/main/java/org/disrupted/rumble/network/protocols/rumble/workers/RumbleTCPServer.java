@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServer;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServerConnection;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
@@ -80,7 +80,7 @@ public class RumbleTCPServer extends TCPServer {
                     } else {
                         Log.d(TAG, "[-] cancelling connection " + connectionState.getWorkerID());
                         networkCoordinator.stopWorker(
-                                WifiManagedLinkLayerAdapter.LinkLayerIdentifier,
+                                WifiLinkLayerAdapter.LinkLayerIdentifier,
                                 connectionState.getWorkerID());
                         break;
                     }

@@ -36,7 +36,7 @@ import org.disrupted.rumble.userinterface.activity.RoutingActivity;
 import org.disrupted.rumble.network.linklayer.Scanner;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
@@ -111,7 +111,7 @@ public class NetworkCoordinator extends Service {
                             BluetoothLinkLayerAdapter.getInstance(NetworkCoordinator.this);
                     adapters.add(bluetoothLinkLayerAdapter);
                     workerPools.put(BluetoothLinkLayerAdapter.LinkLayerIdentifier, new WorkerPool(5));
-                    WifiManagedLinkLayerAdapter wifiAdapter = new WifiManagedLinkLayerAdapter();
+                    WifiLinkLayerAdapter wifiAdapter = new WifiLinkLayerAdapter();
                     adapters.add(wifiAdapter);
                     workerPools.put(wifiAdapter.getLinkLayerIdentifier(), new WorkerPool(10));
 

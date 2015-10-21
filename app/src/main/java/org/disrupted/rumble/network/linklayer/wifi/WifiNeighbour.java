@@ -53,7 +53,7 @@ public class WifiNeighbour implements LinkLayerNeighbour {
 
     @Override
     public String getLinkLayerIdentifier() {
-        return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
+        return WifiLinkLayerAdapter.LinkLayerIdentifier;
     }
 
     @Override

@@ -24,7 +24,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -39,9 +38,10 @@ import android.widget.ProgressBar;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourManager;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
+import org.disrupted.rumble.network.linklayer.events.WifiModeChanged;
 import org.disrupted.rumble.userinterface.adapter.NeighborhoodListAdapter;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
@@ -49,7 +49,6 @@ import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
 import org.disrupted.rumble.userinterface.misc.MultiStateButton;
 
 import java.util.Set;
@@ -116,7 +115,7 @@ public class FragmentNetworkDrawer extends Fragment {
         wifiController   = (MultiStateButton)mDrawerFragmentLayout.findViewById(R.id.wifi_controller);
         wifiController.addState(R.drawable.ic_signal_wifi_off_white_18dp);
         wifiController.addState(R.drawable.ic_signal_wifi_4_bar_white_18dp);
-        //wifiController.addState(R.drawable.ic_wifi_tethering_white_18dp);
+        wifiController.addState(R.drawable.ic_wifi_tethering_white_18dp);
         wifiController.setOnMultiStateClickListener(wifiControllerClick);
 
         // set the force scan button to refresh neighborhood
@@ -200,7 +199,7 @@ public class FragmentNetworkDrawer extends Fragment {
 
     MultiStateButton.OnMultiStateClickListener wifiControllerClick = new MultiStateButton.OnMultiStateClickListener() {
         @Override
-        public void onMultiStateClick(int oldState, int newState) {
+        public void onMultiStateClick(final int oldState, int newState) {
             if(newState == oldState)
                 return;
             wifiController.setSelected(newState);
@@ -210,18 +209,16 @@ public class FragmentNetworkDrawer extends Fragment {
                 public void run() {
                     switch (state) {
                         case 0:
-                            if(WifiUtil.isEnabled() || WifiUtil.isWiFiApEnabled())
-                                WifiUtil.disableWifi();
-                            break;
-                        case 1:
-                            if(!WifiUtil.isEnabled())
-                                WifiUtil.enableWifi();
-                            break;
-                        case 2:
                             if(WifiUtil.isEnabled())
                                 WifiUtil.disableWifi();
-                            if(!WifiUtil.isWiFiApEnabled())
-                                WifiUtil.enableAP();
+                            if(WifiUtil.isWiFiApEnabled())
+                                WifiUtil.disableAP();
+                            break;
+                        case 1:
+                            EventBus.getDefault().post(new WifiModeChanged(WifiLinkLayerAdapter.WIFIMODE.WIFIMANAGED));
+                            break;
+                        case 2:
+                            EventBus.getDefault().post(new WifiModeChanged(WifiLinkLayerAdapter.WIFIMODE.WIFIAP));
                             break;
                     }
                 }
@@ -275,7 +272,7 @@ public class FragmentNetworkDrawer extends Fragment {
             public void run() {
                 if(WifiUtil.isWiFiApEnabled()) {
                     wifiController.setSelected(2);
-                } if (WifiUtil.isEnabled()) {
+                } else if (WifiUtil.isEnabled()) {
                     wifiController.setSelected(1);
                     if(WifiUtil.isConnected()) {
                         wifiController.setStateResource(1,R.drawable.ic_signal_wifi_4_bar_white_18dp);

@@ -43,7 +43,7 @@ import de.greenrobot.event.EventBus;
  */
 public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 
-    private static final String TAG = "BluetoothLinkLayerAdapter";
+    private static final String TAG = "BTLinkLayerAdapter";
 
     public static final String LinkLayerIdentifier = "BLUETOOTH";
 

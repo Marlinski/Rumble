@@ -120,7 +120,7 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
         try {
             lock.lock();
             if(instance == null)
-                return new BluetoothScanner();
+                instance = new BluetoothScanner();
 
             return instance;
         } finally {
@@ -427,8 +427,8 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
                 if (device.getAddress() == null)
                     return;
                 BluetoothNeighbour btPeerDevice = new BluetoothNeighbour(device.getAddress());
+                lock.lock();
                 try {
-                    lock.lock();
                     if(btNeighborhood.add(btPeerDevice))
                         EventBus.getDefault().post(new ScannerNeighbourSensed(btPeerDevice));
                 } finally {

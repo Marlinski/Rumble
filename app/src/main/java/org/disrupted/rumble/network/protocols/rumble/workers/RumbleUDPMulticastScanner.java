@@ -25,10 +25,11 @@ import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.events.ScannerNeighbourTimeout;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
+import org.disrupted.rumble.network.linklayer.events.AccessPointEnabled;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;
 import org.disrupted.rumble.network.linklayer.exception.UDPMulticastSocketException;
 import org.disrupted.rumble.network.linklayer.wifi.UDP.UDPMulticastConnection;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiNeighbour;
 import org.disrupted.rumble.network.linklayer.wifi.WifiUtil;
 import org.disrupted.rumble.network.events.ChannelDisconnected;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
 
@@ -66,7 +68,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
         SCANNING_OFF, SCANNING_ON,
     }
     private ScanningState scanningState;
-    private static Object lock = new Object();
+    private static ReentrantLock lock = new ReentrantLock();
 
     private Handler handler;
     private HashSet<WifiNeighbour>  wifiNeighborhood;
@@ -89,7 +91,8 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
 
     @Override
     public void startScanner() {
-        synchronized (lock) {
+        lock.lock();
+        try {
             if (scanningState.equals(ScanningState.SCANNING_ON))
                 return;
             scanningState = ScanningState.SCANNING_ON;
@@ -103,6 +106,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                 );
                 con.connect();
             } catch (LinkLayerConnectionException e) {
+                scanningState = ScanningState.SCANNING_OFF;
                 return;
             }
 
@@ -112,31 +116,38 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                 EventBus.getDefault().register(this);
             receiverThread.start();
             sendBeacon();
-
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void stopScanner() {
-        synchronized (lock) {
+        lock.lock();
+        try {
             if (scanningState.equals(ScanningState.SCANNING_OFF))
                 return;
             scanningState = ScanningState.SCANNING_OFF;
 
-            if(EventBus.getDefault().isRegistered(this))
-                EventBus.getDefault().unregister(this);
+            for(Map.Entry<WifiNeighbour, Runnable> entry : timeouts.entrySet()) {
+                handler.removeCallbacks(entry.getValue());
+            }
 
-            Log.d(TAG, "[+] ----- Rumble UDP Scanner stopped -----");
-            handler.removeCallbacksAndMessages(null);
-
-            if (wifiNeighborhood != null)
-                wifiNeighborhood.clear();
-            wifiNeighborhood = null;
-
+            // we disconnect the socket
             try {
                 con.disconnect();
             } catch (LinkLayerConnectionException ignore) {
             }
+
+            if(EventBus.getDefault().isRegistered(this))
+                EventBus.getDefault().unregister(this);
+            Log.d(TAG, "[-] ----- Rumble UDP Scanner stopped -----");
+
+            if (wifiNeighborhood != null)
+                wifiNeighborhood.clear();
+            wifiNeighborhood = null;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -183,10 +194,13 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
     Runnable scheduleBeaconFires = new Runnable() {
         @Override
         public void run() {
-            synchronized (lock) {
+            lock.lock();
+            try {
                 if (scanningState.equals(ScanningState.SCANNING_OFF))
                     return;
                 sendBeacon();
+            } finally {
+                lock.unlock();
             }
         }
     };
@@ -197,7 +211,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
             try {
                 while(scanningState.equals(ScanningState.SCANNING_ON)) {
                     byte[] buffer = new byte[17];
-                    DatagramPacket packet = new DatagramPacket(buffer,  17);
+                    DatagramPacket packet = new DatagramPacket(buffer, 17);
                     con.receive(packet);
 
                     if(packet.getAddress().getHostAddress().equals(WifiUtil.getIPAddress()))
@@ -219,20 +233,26 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                     if(version > RUMBLE_VERSION)
                         continue;
 
+                    lock.lock();
+                    try {
+                        if(wifiNeighborhood == null)
+                            return;
+                        WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress().getHostAddress());
+                        if (wifiNeighborhood.add(neighbour)) {
+                            EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
+                        } else {
+                            Log.d(TAG, "beacon from " + neighbour.getLinkLayerAddress());
+                            Runnable callback = timeouts.get(neighbour);
+                            if (callback != null)
+                                handler.removeCallbacks(callback);
+                        }
 
-                    WifiNeighbour neighbour = new WifiNeighbour(packet.getAddress().getHostAddress());
-                    if(wifiNeighborhood.add(neighbour)) {
-                        EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
-                    } else {
-                        Log.d(TAG, "beacon from "+neighbour.getLinkLayerAddress());
-                        Runnable callback = timeouts.get(neighbour);
-                        if(callback != null)
-                            handler.removeCallbacks(callback);
+                        Runnable callback = new RemoveNeighbour(neighbour);
+                        timeouts.put(neighbour, callback);
+                        handler.postDelayed(callback, NEIGHBOUR_TIMEOUT);
+                    } finally {
+                        lock.unlock();
                     }
-
-                    Runnable callback = new RemoveNeighbour(neighbour);
-                    timeouts.put(neighbour, callback);
-                    handler.postDelayed(callback, NEIGHBOUR_TIMEOUT);
                 }
             } catch(UDPMulticastSocketException e) {
                 stopScanner();
@@ -254,8 +274,13 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
         public void run() {
             Log.d(TAG, "[-] neighbour "+neighbour.getLinkLayerAddress()+" timeouted");
             timeouts.remove(neighbour);
-            if( wifiNeighborhood.remove(neighbour) )
-                EventBus.getDefault().post(new ScannerNeighbourTimeout(neighbour));
+            lock.lock();
+            try {
+                if ((wifiNeighborhood != null) && wifiNeighborhood.remove(neighbour))
+                    EventBus.getDefault().post(new ScannerNeighbourTimeout(neighbour));
+            } finally {
+                lock.unlock();
+            }
         }
 
         @Override
@@ -278,7 +303,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
     }
 
     public void onEvent(ChannelDisconnected event) {
-        if(!event.neighbour.getLinkLayerIdentifier().equals(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+        if(!event.neighbour.getLinkLayerIdentifier().equals(WifiLinkLayerAdapter.LinkLayerIdentifier))
             return;
         Runnable callback = timeouts.get(event.neighbour);
         if(callback == null) {

@@ -33,7 +33,7 @@ import com.amulyakhare.textdrawable.util.ColorGenerator;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.NeighbourManager;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
-import org.disrupted.rumble.network.linklayer.wifi.WifiManagedLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -91,9 +91,9 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
             bluetoothIcon.setVisibility(View.GONE);
         }
  
-        if(neighbour.isReachable(WifiManagedLinkLayerAdapter.LinkLayerIdentifier)) {
+        if(neighbour.isReachable(WifiLinkLayerAdapter.LinkLayerIdentifier)) {
             wifiIcon.setVisibility(View.VISIBLE);
-            if(neighbour.isConnected(WifiManagedLinkLayerAdapter.LinkLayerIdentifier))
+            if(neighbour.isConnected(WifiLinkLayerAdapter.LinkLayerIdentifier))
                 wifiIcon.setImageResource(R.drawable.ic_signal_wifi_4_bar_white_18dp);
             else
                 wifiIcon.setImageResource(R.drawable.ic_signal_wifi_0_bar_grey600_18dp);
