@@ -33,4 +33,6 @@ public interface LinkLayerNeighbour {
 
     public String getLinkLayerMacAddress() throws NetUtil.NoMacAddressException;
 
+    public boolean isLocal();
+
 }

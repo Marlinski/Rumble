@@ -53,6 +53,14 @@ public class BluetoothNeighbour implements LinkLayerNeighbour {
         return bluetoothMacAddress;
     }
 
+    @Override
+    public boolean isLocal() {
+        if(bluetoothMacAddress.equals(BluetoothUtil.getBluetoothMacAddress()))
+            return true;
+
+        return false;
+    }
+
     public String getBluetoothDeviceName() {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if(adapter != null) {

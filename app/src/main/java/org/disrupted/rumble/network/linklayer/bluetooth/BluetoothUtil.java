@@ -53,6 +53,15 @@ public class BluetoothUtil {
         return adapter;
     }
 
+    public static String getBluetoothMacAddress() {
+        BluetoothAdapter mBluetoothAdapter = getBluetoothAdapter(RumbleApplication.getContext());
+
+        if(mBluetoothAdapter==null)
+            return null;
+
+        return mBluetoothAdapter.getAddress();
+    }
+
     public static boolean isWorking() {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if ( adapter == null)

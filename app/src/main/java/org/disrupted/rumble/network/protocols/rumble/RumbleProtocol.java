@@ -173,6 +173,8 @@ public class RumbleProtocol implements Protocol {
     public void onEvent(NeighbourReachable event) {
         if(!started)
             return;
+        if(event.neighbour.isLocal())
+            return;
 
         LinkLayerNeighbour neighbour = event.neighbour;
         if (neighbour instanceof BluetoothNeighbour) {

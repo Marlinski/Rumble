@@ -40,6 +40,18 @@ public class WifiNeighbour implements LinkLayerNeighbour {
     }
 
     @Override
+    public boolean isLocal() {
+        if(remoteIPAddress.equals("127.0.0.1"))
+            return true;
+        if(remoteIPAddress.equals("0.0.0.0"))
+            return true;
+        if(remoteIPAddress.equals(WifiUtil.getIPAddress()))
+            return true;
+
+        return false;
+    }
+
+    @Override
     public String getLinkLayerIdentifier() {
         return WifiManagedLinkLayerAdapter.LinkLayerIdentifier;
     }

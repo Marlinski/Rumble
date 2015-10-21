@@ -66,8 +66,7 @@ public class WifiUtil {
         }
 
         byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
-
-        String ipAddressString;
+        
         try {
             return InetAddress.getByAddress(ipByteArray).getHostAddress();
         } catch (UnknownHostException ex) {

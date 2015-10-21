@@ -65,7 +65,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     private static final String TAG = "RumbleUnicastChannel";
 
     private static final int KEEP_ALIVE_TIME = 2000;
-    private static final int SOCKET_TIMEOUT  = 5000;
+    private static final int SOCKET_TIMEOUT_UDP  = 5000;
+    private static final int SOCKET_TIMEOUT_BLUETOOTH  = 20000;
 
     private boolean working;
     private Contact remoteContact;
@@ -217,7 +218,10 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     }
                 }
                 block.dismiss();
-                socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT);
+                if(con instanceof BluetoothConnection)
+                    socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT_BLUETOOTH);
+                else
+                    socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT_UDP);
             }
         } catch (IOException silentlyCloseConnection) {
             Log.d(TAG, ""+silentlyCloseConnection.getMessage());
