@@ -57,7 +57,7 @@
     <string name="contact_detail_message_sent">Messages sent</string>
     <string name="contact_detail_message_received">Messages Received</string>
     <string name="contact_detail_interface">Interface</string>
-    <string name="contact_detail_message_bluetooth_mac">Bluetooth Mac Address</string>
+    <string name="contact_detail_message_bluetooth_mac">Bluetooth MAC Address</string>
     <string name="contact_detail_message_bluetooth_name">Bluetooth Device Name</string>
     <string name="contact_detail_message_wifi_mac">Wifi Mac Address</string>
 
@@ -92,7 +92,7 @@
     <string name="bluetooth_enabled">enable</string>
     <string name="bluetooth_discoverable">discoverable</string>
     <string name="interface_wifi">WiFi</string>
-    <string name="wifi_disabled">disable</string>
+    <string name="wifi_disabled">disabled</string>
     <string name="wifi_normal">normal</string>
     <string name="wifi_AP">access point</string>
     <string name="drawer_force_scan">Force Scan</string>

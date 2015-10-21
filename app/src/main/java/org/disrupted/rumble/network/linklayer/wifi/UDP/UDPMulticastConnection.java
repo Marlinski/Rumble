@@ -105,7 +105,7 @@ public class UDPMulticastConnection implements MulticastConnection {
         try {
             // for some reason, join group sometime throw ENODEV, it doesn't seem to be
             // necessary though so I just remove tue call to joingroup.
-            //socket.joinGroup(multicastAddr);
+            socket.joinGroup(multicastAddr);
             socket.setReuseAddress(true);
             socket.setNetworkInterface(WifiUtil.getWlanEth());
         } catch ( IOException io) {

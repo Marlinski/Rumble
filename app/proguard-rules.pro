@@ -17,9 +17,11 @@
 #}
 -dontpreverify
 -repackageclasses ''
--allowaccessmodification
--optimizations !code/simplification/arithmetic
+-dontskipnonpubliclibraryclasses
 -keepattributes *Annotation*
+-optimizations !code/simplification/cast,!field/*,!class/merging/*,!class/unboxing/enum,!code/allocation/variable,!method/marking/private
+-optimizationpasses 5
+-allowaccessmodification
 
 -keep public class * extends android.app.Activity
 -keep public class * extends android.app.Application
@@ -56,9 +58,17 @@
     static android.os.Parcelable$Creator CREATOR;
 }
 
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+-keepattributes InnerClasses
+
 -keepclassmembers class **.R$* {
     public static <fields>;
 }
+-keep class **.R$*
 
 -keepclasseswithmembernames class * {
     native <methods>;
@@ -72,5 +82,18 @@
     public void onEvent(**);
 }
 
+-keepclassmembers class ** {
+    public void onEventAsync(**);
+}
 
 -dontwarn com.squareup.picasso.**
+-dontwarn com.jeremyfeinstein.slidingmenu.**
+
+# support design
+-dontwarn android.support.design.**
+-keep class android.support.design.** { *; }
+-keep interface android.support.design.** { *; }
+-keep public class android.support.design.R$* { *; }
+-keep public class * extends android.support.design.widget.CoordinatorLayout$Behavior {
+    public <init>(android.content.Context, android.util.AttributeSet);
+}
