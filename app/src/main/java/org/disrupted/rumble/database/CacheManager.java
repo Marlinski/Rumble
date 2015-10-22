@@ -36,6 +36,7 @@ import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
+import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.protocols.events.FileReceived;
@@ -331,6 +332,18 @@ public class CacheManager {
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
             EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage, event.channel));
+    }
+    public void onEventAsync(ChatMessageSent event) {
+        if(event.chatMessage == null)
+            return;
+
+        ChatMessage chatMessage = DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getChatMessage(event.chatMessage.getUUID());
+        if(chatMessage == null)
+            return;
+
+        chatMessage.setNbRecipients(chatMessage.getNbRecipients()+1);
+        DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).updateMessage(chatMessage);
+        EventBus.getDefault().post(new ChatMessageUpdatedEvent(chatMessage));
     }
 
     /*

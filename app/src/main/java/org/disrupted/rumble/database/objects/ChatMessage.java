@@ -36,6 +36,7 @@ public class ChatMessage {
     protected long        timestamp;
     protected boolean     read;
     protected String      protocolID;
+    protected int         nbRecipients;
 
     public ChatMessage(Contact contact, String message, long timestamp, String protocolID) {
         this.uuid = HashUtil.computeChatMessageUUID(contact.getUid(), message, timestamp);
@@ -47,6 +48,7 @@ public class ChatMessage {
         this.read = false;
         this.attachedFile = "";
         this.fileSize = 0;
+        this.nbRecipients = 0;
     }
 
     public ChatMessage(ChatMessage message) {
@@ -59,6 +61,7 @@ public class ChatMessage {
         this.read = message.read;
         this.attachedFile = message.attachedFile;
         this.fileSize = message.fileSize;
+        this.nbRecipients = nbRecipients;
     }
 
     public String  getUUID() {            return uuid;                     }
@@ -70,12 +73,13 @@ public class ChatMessage {
     public boolean hasUserReadAlready() { return read;                     }
     public boolean hasAttachedFile()    { return !attachedFile.equals(""); }
     public String  getProtocolID() {      return protocolID;               }
+    public int     getNbRecipients() {    return nbRecipients;                }
 
     public void setUUID(String UUID) {                 this.uuid = UUID;                 }
     public void setFileSize(long fileSize) {           this.fileSize = fileSize;         }
     public void setAttachedFile(String attachedFile) { this.attachedFile = attachedFile; }
     public void setUserRead(boolean read) {            this.read = read;                 }
-
+    public void setNbRecipients(int nb) {              this.nbRecipients = nb;           }
 
     @Override
     public boolean equals(Object o) {

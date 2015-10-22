@@ -32,6 +32,7 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.ContactDatabase;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Contact;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.Interface;
 import org.disrupted.rumble.userinterface.adapter.ContactInfoRecyclerAdapter;
 import org.disrupted.rumble.util.TimeUtil;
@@ -88,6 +89,12 @@ public class FragmentContactInfo extends Fragment {
         // get the contact from DB
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                 .getContact(contact_uid);
+        String groupMembership = "";
+        for(String gid : contact.getJoinedGroupIDs()) {
+            groupMembership += DatabaseFactory.getGroupDatabase(getActivity()).getGroup(gid).getName();
+            groupMembership += ", ";
+        }
+        groupMembership = groupMembership.substring(0,groupMembership.length()-2);
 
         // create the list of information to be displayed
         Resources resources = getActivity().getResources();
@@ -103,6 +110,10 @@ public class FragmentContactInfo extends Fragment {
         infoList.add(new ContactInfoItem(
                 resources.getString(R.string.contact_detail_last_met),
                 TimeUtil.timeElapsed(contact.lastMet())
+        ));
+        infoList.add(new ContactInfoItem(
+                resources.getString(R.string.contact_detail_group_membership),
+                groupMembership
         ));
         infoList.add(new ContactInfoItem(
                 resources.getString(R.string.contact_detail_nb_status_rcvd),

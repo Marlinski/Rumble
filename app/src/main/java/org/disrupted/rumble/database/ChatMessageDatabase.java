@@ -40,14 +40,15 @@ public class ChatMessageDatabase extends Database {
     private static final String TAG = "ChatMessageDatabase";
 
     public static final String TABLE_NAME        = "chat_message";
-    public static final  String ID               = "_id";
-    public static final  String UUID             = "uuid";
-    public static final  String AUTHOR_DBID      = "cdbid";       // author foreign key
-    public static final  String MESSAGE          = "message";     // the post itself
-    public static final  String FILE_NAME        = "filename";    // the name of the attached file
-    public static final  String TIME_OF_ARRIVAL  = "toa";         // time of arrival at current node
-    public static final  String PROTOCOL         = "protocol";    // the protocol from which we receive the message
-    public static final  String USERREAD         = "read";
+    public static final String ID               = "_id";
+    public static final String UUID             = "uuid";
+    public static final String AUTHOR_DBID      = "cdbid";       // author foreign key
+    public static final String MESSAGE          = "message";     // the post itself
+    public static final String FILE_NAME        = "filename";    // the name of the attached file
+    public static final String TIME_OF_ARRIVAL  = "toa";         // time of arrival at current node
+    public static final String PROTOCOL         = "protocol";    // the protocol from which we receive the message
+    public static final String USERREAD         = "read";
+    public static final String RECIPENTS        = "nb_recipients";
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
@@ -58,6 +59,7 @@ public class ChatMessageDatabase extends Database {
                  + TIME_OF_ARRIVAL   + " INTEGER, "
                  + USERREAD          + " INTEGER, "
                  + PROTOCOL          + " TEXT, "
+                 + RECIPENTS         + " INTEGER, "
                  + " UNIQUE ( "+UUID+" ), "
                  + " FOREIGN KEY ( "+ AUTHOR_DBID + " ) REFERENCES " + ContactDatabase.TABLE_NAME + " ( " + ContactDatabase.ID   + " ) "
             + " );";
@@ -192,6 +194,22 @@ public class ChatMessageDatabase extends Database {
        }
     }
 
+    public ChatMessage getChatMessage(String uuid) {
+        Cursor cursor = null;
+        try {
+            SQLiteDatabase database = databaseHelper.getReadableDatabase();
+            cursor = database.query(TABLE_NAME, null, UUID+" = ?",new String[]{uuid}, null, null, null);
+            if(cursor == null)
+                return null;
+            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return cursorToChatMessage(cursor);
+        } finally {
+            if(cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
     public long getChatMessageDBID(String uuid) {
         Cursor cursor = null;
         try {
@@ -216,24 +234,25 @@ public class ChatMessageDatabase extends Database {
         if(contact_DBID <0)
             return -1;
 
-        contentValues.put(AUTHOR_DBID,     contact_DBID);
         contentValues.put(UUID,            chatMessage.getUUID());
+        contentValues.put(AUTHOR_DBID,     contact_DBID);
         contentValues.put(MESSAGE,         chatMessage.getMessage());
         contentValues.put(FILE_NAME,       chatMessage.getAttachedFile());
         contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimestamp());
-        contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
         contentValues.put(PROTOCOL,        chatMessage.getProtocolID());
+        contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(RECIPENTS,       chatMessage.getNbRecipients());
 
         return  databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
     }
 
     public long updateMessage(ChatMessage chatMessage){
         ContentValues contentValues  = new ContentValues();
-        contentValues.put(UUID,            chatMessage.getUUID());
-        contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(UUID,      chatMessage.getUUID());
+        contentValues.put(USERREAD,  chatMessage.hasUserReadAlready() ? 1 : 0);
+        contentValues.put(RECIPENTS, chatMessage.getNbRecipients());
         return databaseHelper.getWritableDatabase().update(TABLE_NAME, contentValues, UUID + " = ? ", new String[]{chatMessage.getUUID()});
     }
-
 
     private ChatMessage cursorToChatMessage(final Cursor cursor) {
         if(cursor == null)
@@ -241,18 +260,21 @@ public class ChatMessageDatabase extends Database {
         if(cursor.isAfterLast())
             return null;
 
-        long contact_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
-        Contact contact  = DatabaseFactory.getContactDatabase(context).getContact(contact_dbid);
-        long toa         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL));
-        String message   = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
-        String filename  = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
-        String protocol  = cursor.getString(cursor.getColumnIndexOrThrow(PROTOCOL));
-        String uuid      = cursor.getString(cursor.getColumnIndexOrThrow(UUID));
+        String  uuid        = cursor.getString(cursor.getColumnIndexOrThrow(UUID));
+        long    author_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
+        String  message     = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
+        String  filename    = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
+        long    toa         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL));
+        String  protocol    = cursor.getString(cursor.getColumnIndexOrThrow(PROTOCOL));
+        boolean userRead    = (cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1);
+        int     recipients  = cursor.getInt(cursor.getColumnIndexOrThrow(RECIPENTS));
 
-        ChatMessage chatMessage = new ChatMessage(contact, message, toa, protocol);
-        chatMessage.setUserRead(cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1);
+        Contact author   = DatabaseFactory.getContactDatabase(context).getContact(author_dbid);
+        ChatMessage chatMessage = new ChatMessage(author, message, toa, protocol);
+        chatMessage.setUserRead(userRead);
         chatMessage.setAttachedFile(filename);
         chatMessage.setUUID(uuid);
+        chatMessage.setNbRecipients(recipients);
 
         return chatMessage;
     }

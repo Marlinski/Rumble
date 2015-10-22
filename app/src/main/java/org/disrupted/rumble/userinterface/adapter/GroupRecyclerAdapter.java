@@ -68,26 +68,28 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
 
     public class GroupHolder extends RecyclerView.ViewHolder {
 
-        private Group group;
-        private int   unread;
+        LinearLayout title;
+        ImageView group_lock;
+        TextView  group_name;
+        TextView  group_unread;
+        TextView  group_desc;
+        ImageView group_invite;
 
         public GroupHolder(View itemView) {
             super(itemView);
+
+            title        = (LinearLayout) itemView.findViewById(R.id.group_title);
+            group_lock   = (ImageView)    itemView.findViewById(R.id.group_lock_image);
+            group_name   = (TextView)     itemView.findViewById(R.id.group_name);
+            group_unread = (TextView)     itemView.findViewById(R.id.group_unread_msg);
+            group_desc   = (TextView)     itemView.findViewById(R.id.group_desc);
+            group_invite = (ImageView)   itemView.findViewById(R.id.group_invite);
         }
 
         public void bindGroup(Group group, int unread) {
-            this.group = group;
-            this.unread = unread;
-
-            LinearLayout title     = (LinearLayout) itemView.findViewById(R.id.group_title);
-            ImageView group_lock   = (ImageView)    itemView.findViewById(R.id.group_lock_image);
-            TextView  group_name   = (TextView)     itemView.findViewById(R.id.group_name);
-            TextView  group_unread = (TextView)     itemView.findViewById(R.id.group_unread_msg);
-            TextView  group_desc   = (TextView)     itemView.findViewById(R.id.group_desc);
-            ImageView group_invite  = (ImageView)   itemView.findViewById(R.id.group_invite);
 
             //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
-            if(this.group.isIsprivate())
+            if(group.isIsprivate())
                 Picasso.with(activity)
                         .load(R.drawable.ic_lock_grey600_24dp)
                         .into(group_lock);
@@ -107,16 +109,16 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
             if(group.getDesc().equals(""))
                 group_desc.setVisibility(View.GONE);
             else
-                group_desc.setText("Description: "+this.group.getDesc());
+                group_desc.setText("Description: "+group.getDesc());
 
 
             /*
              * Manage click events
              */
-            final String    gid          = this.group.getGid();
-            final boolean   privateGroup = this.group.isIsprivate();
-            final SecretKey key          = this.group.getGroupKey();
-            final String    name         = this.group.getName();
+            final String    gid          = group.getGid();
+            final boolean   privateGroup = group.isIsprivate();
+            final SecretKey key          = group.getGroupKey();
+            final String    name         = group.getName();
 
             title.setOnClickListener(new View.OnClickListener() {
                 @Override

@@ -20,6 +20,7 @@ package org.disrupted.rumble.userinterface.adapter;
 import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -84,7 +85,8 @@ public class ChatMessageRecyclerAdapter extends RecyclerView.Adapter<ChatMessage
 
         public void bindChatMessage(ChatMessage message) {
             ImageView avatar;
-            Contact author = Contact.getLocalContact();
+            Contact local = Contact.getLocalContact();
+            Contact author = local;
             String receivedOrSent = "";
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             if(message.getAuthor().equals(author)) {
@@ -150,7 +152,14 @@ public class ChatMessageRecyclerAdapter extends RecyclerView.Adapter<ChatMessage
                 attachedView.setVisibility(View.GONE);
             }
 
-            dateView.setText(receivedOrSent+ TimeUtil.timeElapsed(message.getTimestamp()));
+            String date = receivedOrSent+ TimeUtil.timeElapsed(message.getTimestamp()) + "  ";
+            if(message.getAuthor().equals(local)) {
+                if(message.getNbRecipients() > 0)
+                    date += "" + Html.fromHtml("&#x2714;") + message.getNbRecipients() + "+";
+                else
+                    date += "" + Html.fromHtml("&#x2718;") + message.getNbRecipients();
+            }
+            dateView.setText(date);
 
             if(!message.hasUserReadAlready())
                 EventBus.getDefault().post(new UserReadChatMessage(message));
@@ -193,6 +202,18 @@ public class ChatMessageRecyclerAdapter extends RecyclerView.Adapter<ChatMessage
     public int addChatMessage(ChatMessage message) {
         messages.add(0,message);
         return (0);
+    }
+
+    public int updateChatMessage(ChatMessage message) {
+        int pos = 0;
+        for(ChatMessage msg : messages) {
+            if(msg.getUUID().equals(message.getUUID())) {
+                messages.set(pos, message);
+                return (pos);
+            }
+            pos++;
+        }
+        return -1;
     }
 
     public void swap(List<ChatMessage> chatMessageList) {

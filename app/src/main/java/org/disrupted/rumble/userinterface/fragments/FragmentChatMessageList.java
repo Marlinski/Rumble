@@ -39,6 +39,7 @@ import org.disrupted.rumble.database.ChatMessageDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
+import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.ChatWipedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
@@ -150,6 +151,17 @@ public class FragmentChatMessageList extends Fragment {
         }
     };
 
+    public void onEvent(final ChatMessageUpdatedEvent event) {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                final ChatMessage message = event.chatMessage;
+                int pos = messageRecyclerAdapter.updateChatMessage(message);
+                if(pos >= 0)
+                    messageRecyclerAdapter.notifyItemChanged(pos);
+            }
+        });
+    }
     public void onEvent(final ChatMessageInsertedEvent event) {
         getActivity().runOnUiThread(new Runnable() {
             @Override

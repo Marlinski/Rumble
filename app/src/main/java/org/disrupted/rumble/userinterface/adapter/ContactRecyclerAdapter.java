@@ -46,41 +46,39 @@ public class ContactRecyclerAdapter extends RecyclerView.Adapter<ContactRecycler
 
     public class ContactHolder extends RecyclerView.ViewHolder {
 
-        private Contact contact;
+        ImageView contact_avatar;
+        TextView  contact_name;
+        TextView  contact_last_met;
 
         public ContactHolder(View itemView) {
             super(itemView);
+            contact_avatar   = (ImageView) itemView.findViewById(R.id.contact_avatar);
+            contact_name     = (TextView) itemView.findViewById(R.id.contact_name);
+            contact_last_met = (TextView) itemView.findViewById(R.id.contact_last_met);
         }
 
         public void bindContact(Contact contact) {
-            this.contact = contact;
-
-            ImageView contact_avatar  = (ImageView) itemView.findViewById(R.id.contact_avatar);
-            TextView contact_name     = (TextView) itemView.findViewById(R.id.contact_name);
-            TextView contact_last_met = (TextView) itemView.findViewById(R.id.contact_last_met);
-            //ImageView contact_delete = (ImageView)    layout.findViewById(R.id.contact_delete);
-
             ColorGenerator generator = ColorGenerator.DEFAULT;
             contact_avatar.setImageDrawable(
-                    builder.build(this.contact.getName().substring(0, 1),
-                            generator.getColor(this.contact.getUid())));
-            contact_name.setText(this.contact.getName());
-            if (this.contact.isLocal()) {
+                    builder.build(contact.getName().substring(0, 1),
+                            generator.getColor(contact.getUid())));
+            contact_name.setText(contact.getName());
+            if (contact.isLocal()) {
                 contact_last_met.setText(R.string.contact_is_local);
             } else {
-                if(this.contact.lastMet() == 0)
+                if(contact.lastMet() == 0)
                     contact_last_met.setText(R.string.contact_has_never_been_met);
                 else
                     contact_last_met.setText(activity.getResources()
                             .getString(R.string.contact_last_met)
-                            + " " + TimeUtil.timeElapsed(this.contact.lastMet()));
+                            + " " + TimeUtil.timeElapsed(contact.lastMet()));
             }
 
             /*
              * Manage click events
              */
-            final String    uid  = this.contact.getUid();
-            final String    name = this.contact.getName();
+            final String    uid  = contact.getUid();
+            final String    name = contact.getName();
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

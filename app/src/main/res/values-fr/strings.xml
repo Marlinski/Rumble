@@ -124,5 +124,6 @@
     <string name="wifi_normal">Normal</string>
     <string name="group_action_delete">supprimer le groupe</string>
     <string name="group_action_invite_user">inviter un nouveau membre</string>
+    <string name="contact_detail_group_membership">Membre des groupes</string>
 
 </resources>
