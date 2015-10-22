@@ -22,6 +22,7 @@ package org.disrupted.rumble.userinterface.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
@@ -77,7 +78,7 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             // user join default group
             long contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(localContact.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
-            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID);
+            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID, SQLiteDatabase.CONFLICT_IGNORE);
 
             // do not show loginscreen next time
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
