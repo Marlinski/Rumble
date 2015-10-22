@@ -101,15 +101,26 @@ public class UDPMulticastConnection implements MulticastConnection {
             throw  new UDPMulticastSocketException();
         }
 
+        /*
+         * sometimes, when switching from AP mode to Managed (or the way around), the interface
+         * may take some time to be fully operational. In this case, joinGroup will throw the
+         * ENODEV exception. We thus tests up to 10 times with 500ms sleep to let some time
+         * for the interface to be set up.
+         */
         socket = tmp;
-        try {
-            // for some reason, join group sometime throw ENODEV, it doesn't seem to be
-            // necessary though so I just remove tue call to joingroup.
-            socket.joinGroup(multicastAddr);
-            socket.setReuseAddress(true);
-            socket.setNetworkInterface(WifiUtil.getWlanEth());
-        } catch ( IOException io) {
-            throw  new UDPMulticastSocketException();
+        int nbretries;
+        for(nbretries = 0; nbretries < 10; nbretries++) {
+            try {
+                socket.setReuseAddress(true);
+                socket.setNetworkInterface(WifiUtil.getWlanEth());
+                socket.joinGroup(multicastAddr);
+                break;
+            } catch (IOException io) {
+                if(nbretries == 4)
+                    throw new UDPMulticastSocketException();
+                Log.d(TAG, "fail, try again");
+                try { Thread.sleep(500); } catch (InterruptedException ie) {}
+            }
         }
     }
 

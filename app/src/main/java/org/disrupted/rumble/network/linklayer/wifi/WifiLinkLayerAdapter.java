@@ -158,9 +158,9 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                Log.d(TAG, intent.toString());
                 NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
                 NetworkInfo.State state = networkInfo.getState();
+                //Log.d(TAG, intent.toString() + "-" + networkInfo.toString());
 
                 if(state == NetworkInfo.State.CONNECTED){
                     if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI) {
@@ -175,6 +175,14 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
                          if (!activated)
                              return;
 
+                         /*
+                          * When switching from managed mode to AP, we first disconnect from the
+                          * access point we were already connected (if any) and then we create
+                          * the tethering access point. However Android sends the DISCONNECTED
+                          * intent too late, after the access point creation. So if the mode is
+                          * AP, we ignore this intent, instead, we already called linkDisconnected
+                          * in onEventAsync(WifiModeChanged event)
+                          */
                          if(mode != WIFIMODE.WIFIAP) {
                              Log.d(TAG, "[-] disconnected from a wifi access point");
                              linkDisconnected();
