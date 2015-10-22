@@ -29,11 +29,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -263,7 +260,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
     @Override
     public StatusRecyclerAdapter.StatusHolder onCreateViewHolder(ViewGroup parent, int i) {
         LinearLayout layout = (LinearLayout) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.status_list_item, parent, false);
+                .inflate(R.layout.item_status_list, parent, false);
         return new StatusHolder(layout);
     }
 

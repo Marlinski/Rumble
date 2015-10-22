@@ -79,7 +79,7 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
 
         /* set the header */
         localContact = Contact.getLocalContact();
-        RelativeLayout header = (RelativeLayout) mDrawerFragmentLayout.findViewById(R.id.header);
+        RelativeLayout header = (RelativeLayout) mDrawerFragmentLayout.findViewById(R.id.header_layout);
         TextView  user_name   = (TextView)  mDrawerFragmentLayout.findViewById(R.id.header_user_name);
         TextView  user_id     = (TextView)  mDrawerFragmentLayout.findViewById(R.id.header_user_id);
 

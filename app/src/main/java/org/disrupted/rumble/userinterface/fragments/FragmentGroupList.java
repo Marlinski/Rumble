@@ -19,21 +19,15 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseExecutor;
@@ -41,8 +35,7 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.userinterface.activity.PopupCreateGroup;
-import org.disrupted.rumble.userinterface.adapter.GroupListAdapter;
+import org.disrupted.rumble.userinterface.adapter.GroupRecyclerAdapter;
 
 import java.util.ArrayList;
 
@@ -56,8 +49,8 @@ public class FragmentGroupList extends Fragment {
     public static final String TAG = "FragmentGroupList";
 
     private View mView;
-    private ListView groupList;
-    private GroupListAdapter groupListAdapter;
+    private RecyclerView groupRecycler;
+    private GroupRecyclerAdapter groupRecyclerAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,10 +59,13 @@ public class FragmentGroupList extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
         mView = inflater.inflate(R.layout.fragment_group_list, container, false);
-        groupList = (ListView) mView.findViewById(R.id.group_list);
-        groupListAdapter = new GroupListAdapter(getActivity());
-        groupList.setAdapter(groupListAdapter);
+        groupRecycler = (RecyclerView) mView.findViewById(R.id.group_list);
+        groupRecycler.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        groupRecyclerAdapter = new GroupRecyclerAdapter(getActivity());
+        groupRecycler.setAdapter(groupRecyclerAdapter);
         EventBus.getDefault().register(this);
         getGroupList();
         return mView;
@@ -94,7 +90,7 @@ public class FragmentGroupList extends Fragment {
                     @Override
                     public void run() {
                         ArrayList<Group> answer = (ArrayList<Group>)(result);
-                        groupListAdapter.swap(answer);
+                        groupRecyclerAdapter.swap(answer);
                     }
                 }
             );

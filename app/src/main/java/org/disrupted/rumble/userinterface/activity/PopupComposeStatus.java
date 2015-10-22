@@ -84,7 +84,7 @@ public class PopupComposeStatus extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.popup_compose_status);
+        setContentView(R.layout.activity_popup_compose_status);
 
         Bundle args = getIntent().getExtras();
         if(args != null)

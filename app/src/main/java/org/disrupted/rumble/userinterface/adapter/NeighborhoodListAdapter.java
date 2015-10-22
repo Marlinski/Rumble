@@ -60,7 +60,7 @@ public class NeighborhoodListAdapter extends BaseAdapter implements View.OnClick
     public View getView(int i, View view, ViewGroup viewGroup) {
         NeighbourManager.Neighbour neighbour = neighborhood.get(i);
 
-        View neighborView = inflater.inflate(R.layout.neighbour_item, null, true);
+        View neighborView = inflater.inflate(R.layout.item_neighbour_list, null, true);
         TextView name = (TextView) neighborView.findViewById(R.id.neighbour_item_name);
         TextView id = (TextView) neighborView.findViewById(R.id.neighbour_item_link_layer_name);
         ImageView bluetoothIcon = (ImageView) neighborView.findViewById(R.id.neighbour_item_bluetooth);

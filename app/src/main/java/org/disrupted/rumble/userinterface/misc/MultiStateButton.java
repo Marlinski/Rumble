@@ -21,7 +21,6 @@ import android.content.Context;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
@@ -67,7 +66,7 @@ public class MultiStateButton extends LinearLayout {
     }
 
     private void init() {
-        inflate(getContext(), R.layout.multistate_button_layout, this);
+        inflate(getContext(), R.layout.view_multistate_button_layout, this);
         mTableLayout    = (TableLayout)findViewById(R.id.multistate_table_layout);
         mTableRow       = (TableRow)findViewById(R.id.multi_state_description);
         mToggleSelector = (ImageView)findViewById(R.id.toggle_selector);
@@ -120,7 +119,7 @@ public class MultiStateButton extends LinearLayout {
 
     public void addState(int resource) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        RelativeLayout buttonItem = (RelativeLayout)inflater.inflate(R.layout.multistate_button_item, null, false);
+        RelativeLayout buttonItem = (RelativeLayout)inflater.inflate(R.layout.item_multistate_button, null, false);
         ImageView button   = (ImageView)buttonItem.findViewById(R.id.item_image);
         button.setImageResource(resource);
         mTableRow.addView(buttonItem);

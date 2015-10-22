@@ -48,7 +48,7 @@ public class IconTextListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
-        View item = inflater.inflate(R.layout.icontext_item, null, true);
+        View item = inflater.inflate(R.layout.item_icontext, null, true);
         ImageView icon = (ImageView) item.findViewById(R.id.item_icon);
         TextView text = (TextView) item.findViewById(R.id.item_text);
         icon.setImageResource(itemlist.get(i).getIcon());

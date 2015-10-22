@@ -20,7 +20,6 @@ package org.disrupted.rumble.userinterface.activity;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -56,7 +55,7 @@ public class PopupCreateGroup extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.popup_create_group);
+        setContentView(R.layout.activity_popup_create_group);
 
         dismiss              = (LinearLayout)(findViewById(R.id.new_group_dismiss));
         groupNameView        = (EditText)(findViewById(R.id.popup_group_name));

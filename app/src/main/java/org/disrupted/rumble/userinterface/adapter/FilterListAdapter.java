@@ -18,7 +18,6 @@
 package org.disrupted.rumble.userinterface.adapter;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,7 +109,7 @@ public class FilterListAdapter extends BaseAdapter {
 
         if(view == null) {
             view = LayoutInflater.from(viewGroup.getContext())
-                    .inflate(R.layout.filter_item, viewGroup, false);
+                    .inflate(R.layout.item_hashtag_filter_list, viewGroup, false);
             holder = new FilterHolder(view);
             view.setTag(holder);
         } else {

@@ -169,7 +169,7 @@ public class ChatMessageRecyclerAdapter extends RecyclerView.Adapter<ChatMessage
     @Override
     public ChatMessageHolder onCreateViewHolder(ViewGroup parent, int i) {
         LinearLayout layout = (LinearLayout) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.chatmessage_list_item, parent, false);
+                .inflate(R.layout.item_chatmessage_list, parent, false);
         return new ChatMessageHolder(layout);
     }
 

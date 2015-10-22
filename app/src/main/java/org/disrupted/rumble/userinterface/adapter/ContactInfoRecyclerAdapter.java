@@ -17,8 +17,6 @@
 
 package org.disrupted.rumble.userinterface.adapter;
 
-import android.app.Activity;
-import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,7 +60,7 @@ public class ContactInfoRecyclerAdapter extends RecyclerView.Adapter<ContactInfo
     @Override
     public ContactInfoRecyclerAdapter.ContactInfoItemHolder onCreateViewHolder(ViewGroup parent, int i) {
         LinearLayout layout = (LinearLayout) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.contact_info_item, parent, false);
+                .inflate(R.layout.item_contact_info_list, parent, false);
         return new ContactInfoItemHolder(layout);
     }
 
