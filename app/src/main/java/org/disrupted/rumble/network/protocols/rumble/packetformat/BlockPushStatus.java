@@ -36,7 +36,9 @@ import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamExcepti
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.FileUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
@@ -283,8 +285,11 @@ public class BlockPushStatus extends Block{
 
         BlockFile blockFile = null;
         if(status.hasAttachedFile()) {
-            header.setLastBlock(false);
-            blockFile = new BlockFile(status.getFileName(), status.getUuid());
+            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+            if(attachedFile.exists() && attachedFile.isFile()) {
+                header.setLastBlock(false);
+                blockFile = new BlockFile(status.getFileName(), status.getUuid());
+            }
         }
 
         /* prepare the buffer */
