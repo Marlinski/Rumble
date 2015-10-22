@@ -78,7 +78,7 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             // user join default group
             long contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(localContact.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
-            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID, SQLiteDatabase.CONFLICT_IGNORE);
+            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID);
 
             // do not show loginscreen next time
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());

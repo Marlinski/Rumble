@@ -179,7 +179,7 @@ public class CacheManager {
         // we add the author to the group if it doesn't already belong
         long authorDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(author.getUid());
         long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.status.getGroup().getGid());
-        if(DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(authorDBID, groupDBID, SQLiteDatabase.CONFLICT_FAIL) >= 0)
+        if(DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(authorDBID, groupDBID) >= 0)
             EventBus.getDefault().post(new ContactGroupListUpdated(author));
 
         // we add the status to the database
@@ -281,7 +281,7 @@ public class CacheManager {
             for(String group : contact.getJoinedGroupIDs()) {
                 long groupDBID   = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(group);
                 if(groupDBID > 0)
-                    DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID, groupDBID, SQLiteDatabase.CONFLICT_IGNORE);
+                    DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID, groupDBID);
             }
             EventBus.getDefault().post(new ContactGroupListUpdated(contact));
         }
@@ -393,7 +393,7 @@ public class CacheManager {
             local.addGroup(event.group.getGid());
             long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(local.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.group.getGid());
-            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID, groupDBID, SQLiteDatabase.CONFLICT_IGNORE);
+            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID, groupDBID);
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
     }
@@ -405,7 +405,7 @@ public class CacheManager {
             local.addGroup(event.group.getGid());
             long contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(local.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.group.getGid());
-            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID,groupDBID,SQLiteDatabase.CONFLICT_IGNORE);
+            DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(contactDBID,groupDBID);
             EventBus.getDefault().post(new ContactGroupListUpdated(local));
         }
     }

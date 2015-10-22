@@ -20,6 +20,7 @@ package org.disrupted.rumble.database;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -57,10 +58,14 @@ public class ContactGroupDatabase extends Database {
         db.delete(TABLE_NAME, GDBID + " = ?" , new String[] {Long.toString(groupID)});
     }
 
-    public long insertContactGroup(long contactID, long groupID, int conflictAlgorithm){
+    public long insertContactGroup(long contactID, long groupID){
         ContentValues contentValues = new ContentValues();
         contentValues.put(UDBID, contactID);
         contentValues.put(GDBID, groupID);
-        return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, conflictAlgorithm);
+        try {
+            return databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_FAIL);
+        } catch(SQLiteConstraintException ce) {
+            return -1;
+        }
     }
 }
