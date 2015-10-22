@@ -28,16 +28,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
+import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 import org.disrupted.rumble.userinterface.adapter.GroupRecyclerAdapter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import de.greenrobot.event.EventBus;
 
@@ -72,6 +78,12 @@ public class FragmentGroupList extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        getGroupList();
+    }
+
+    @Override
     public void onDestroy() {
         if(EventBus.getDefault().isRegistered(this))
             EventBus.getDefault().unregister(this);
@@ -81,22 +93,59 @@ public class FragmentGroupList extends Fragment {
     public void getGroupList() {
         DatabaseFactory.getGroupDatabase(getActivity()).getGroups(onGroupsLoaded);
     }
+
     private DatabaseExecutor.ReadableQueryCallback onGroupsLoaded = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(final Object result) {
             if(getActivity() == null)
                 return;
             getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ArrayList<Group> answer = (ArrayList<Group>)(result);
-                        groupRecyclerAdapter.swap(answer);
-                    }
-                }
+                                            @Override
+                                            public void run() {
+                                                ArrayList<Group> answer = (ArrayList<Group>) (result);
+                                                groupRecyclerAdapter.swap(answer);
+                                            }
+                                        }
             );
+
+            // update the number of unread message for every group
+            for(Group group : (ArrayList<Group>)(result)) {
+                refreshBadge(group.getGid());
+            }
         }
     };
 
+    public void refreshBadge(String gid) {
+        PushStatusDatabase.StatusQueryOption statusQueryOption = new PushStatusDatabase.StatusQueryOption();
+        statusQueryOption.filterFlags = PushStatusDatabase.StatusQueryOption.FILTER_READ;
+        statusQueryOption.read = false;
+        statusQueryOption.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
+        statusQueryOption.groupIDFilters = new HashSet<>();
+        statusQueryOption.groupIDFilters.add(gid);
+        statusQueryOption.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.COUNT;
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext())
+                .getStatuses(statusQueryOption, new GroupUnreadCallback(gid));
+    }
+    private class GroupUnreadCallback implements DatabaseExecutor.ReadableQueryCallback {
+        String gid;
+        public GroupUnreadCallback(String gid) {
+            this.gid = gid;
+        }
+        @Override
+        public void onReadableQueryFinished(Object object) {
+            final Integer count = (Integer)object;
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    groupRecyclerAdapter.updateUnread(gid, count);
+                }
+            });
+        }
+    }
+
+    public void onEvent(StatusInsertedEvent event) {
+        refreshBadge(event.status.getGroup().getGid());
+    }
     public void onEvent(GroupInsertedEvent event) {
         getGroupList();
     }

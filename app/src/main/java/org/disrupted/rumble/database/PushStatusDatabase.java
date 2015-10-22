@@ -337,7 +337,7 @@ public class PushStatusDatabase extends Database {
             query.append(" ) ");
 
         /* 4th: group by if necessary */
-        if (groupby)
+        if (groupby && (options.query_result != StatusQueryOption.QUERY_RESULT.COUNT))
             query.append(" GROUP BY ps." + PushStatusDatabase.ID);
 
         /* 5th: ordering as requested */

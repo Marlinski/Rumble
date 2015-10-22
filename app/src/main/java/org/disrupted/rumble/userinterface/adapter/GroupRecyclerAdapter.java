@@ -55,6 +55,7 @@ import org.disrupted.rumble.userinterface.activity.GroupDetailActivity;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import javax.crypto.SecretKey;
 
@@ -68,13 +69,15 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
     public class GroupHolder extends RecyclerView.ViewHolder {
 
         private Group group;
+        private int   unread;
 
         public GroupHolder(View itemView) {
             super(itemView);
         }
 
-        public void bindGroup(Group group) {
+        public void bindGroup(Group group, int unread) {
             this.group = group;
+            this.unread = unread;
 
             LinearLayout title     = (LinearLayout) itemView.findViewById(R.id.group_title);
             ImageView group_lock   = (ImageView)    itemView.findViewById(R.id.group_lock_image);
@@ -94,6 +97,13 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
                         .into(group_lock);
 
             group_name.setText(group.getName());
+            group_unread.setText(""+unread);
+            if(unread == 0) {
+                group_unread.setVisibility(View.INVISIBLE);
+            } else {
+                group_unread.setVisibility(View.VISIBLE);
+            }
+
             if(group.getDesc().equals(""))
                 group_desc.setVisibility(View.GONE);
             else
@@ -180,6 +190,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
 
     private Activity activity;
     private ArrayList<Group> groupList;
+    private ArrayList<Integer> unreadList;
 
     public GroupRecyclerAdapter(Activity activity) {
         this.activity = activity;
@@ -196,8 +207,9 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
 
     @Override
     public void onBindViewHolder(GroupHolder groupHolder, int position) {
-        Group contact = groupList.get(position);
-        groupHolder.bindGroup(contact);
+        Group contact  = groupList.get(position);
+        Integer unread = unreadList.get(position);
+        groupHolder.bindGroup(contact, unread);
     }
 
     @Override
@@ -211,8 +223,21 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
     public void swap(ArrayList<Group> groupList) {
         if(this.groupList != null)
             this.groupList.clear();
-        this.groupList = groupList;
+        this.groupList  = groupList;
+        this.unreadList = new ArrayList<>(groupList.size());
+        for(int i = 0; i < groupList.size(); i++) {
+            unreadList.add(0);
+        }
         notifyDataSetChanged();
+    }
+
+    public void updateUnread(String gid, int unread) {
+        for(int i = 0; i < groupList.size(); i++) {
+            if(groupList.get(i).getGid().equals(gid)) {
+                unreadList.set(i, unread);
+                notifyItemChanged(i);
+            }
+        }
     }
 
 }
