@@ -122,5 +122,7 @@
     <string name="wifi_AP">Point d\'accès Wifi</string>
     <string name="wifi_disabled">Désactivé</string>
     <string name="wifi_normal">Normal</string>
+    <string name="group_action_delete">supprimer le groupe</string>
+    <string name="group_action_invite_user">inviter un nouveau membre</string>
 
 </resources>

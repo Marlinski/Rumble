@@ -61,6 +61,9 @@
     <string name="contact_detail_message_bluetooth_name">Bluetooth Device Name</string>
     <string name="contact_detail_message_wifi_mac">Wifi Mac Address</string>
 
+    <string name="group_action_invite_user">invite a user</string>
+    <string name="group_action_delete">delete group</string>
+
     <string name="contact_is_local">local contact</string>
     <string name="contact_has_never_been_met">contact never met</string>
     <string name="contact_last_met">last met:</string>

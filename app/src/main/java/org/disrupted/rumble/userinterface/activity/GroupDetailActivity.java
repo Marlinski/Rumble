@@ -17,17 +17,37 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
+import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.adapter.GroupDetailPagerAdapter;
 import org.disrupted.rumble.userinterface.fragments.FragmentContactList;
 import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
+
+import java.nio.ByteBuffer;
+import java.util.Hashtable;
 
 /**
  * @author Marlinski
@@ -36,9 +56,8 @@ public class GroupDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "GroupStatusActivity";
 
-    private boolean message_has_focus;
-    FragmentStatusList  statusFragment;
-    FragmentContactList contactFragment;
+    private String groupName;
+    private String groupID;
 
     @Override
     protected void onDestroy() {
@@ -50,10 +69,11 @@ public class GroupDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         Bundle args = getIntent().getExtras();
-        String name = args.getString("GroupName");
+        groupName = args.getString("GroupName");
+        groupID = args.getString("GroupID");
 
         setContentView(R.layout.activity_group_detail);
-        setTitle(name);
+        setTitle(groupName);
 
         /* setting up the toolbar */
         Toolbar toolbar = (Toolbar) findViewById(R.id.group_toolbar);
@@ -70,9 +90,21 @@ public class GroupDetailActivity extends AppCompatActivity {
         tabLayout.setSelectedTabIndicatorHeight(10);
     }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.group_detail_menu, menu);
+        return true;
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
+        if (id==R.id.group_action_invite) {
+            invite();
+        }
+        if (id==R.id.group_action_delete) {
+        }
         if (id==android.R.id.home) {
             finish();
             overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
@@ -84,6 +116,59 @@ public class GroupDetailActivity extends AppCompatActivity {
     public void onBackPressed() {
         finish();
         overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
+    }
+
+    public void invite() {
+        Group group = DatabaseFactory.getGroupDatabase(this).getGroup(groupID);
+        ByteBuffer byteBuffer;
+        byte[] keybytes;
+        if(group.isIsprivate())
+            keybytes = group.getGroupKey().getEncoded();
+        else
+            keybytes = new byte[0];
+
+        byteBuffer = ByteBuffer.allocate(2 + group.getName().length() + group.getGid().length() + keybytes.length);
+
+        // send group name
+        byteBuffer.put((byte) group.getName().length());
+        byteBuffer.put(group.getName().getBytes(),0,group.getName().length());
+
+        // send group ID
+        byteBuffer.put((byte)group.getGid().length());
+        byteBuffer.put(group.getGid().getBytes());
+
+        // send key
+        byteBuffer.put(keybytes);
+        String buffer = Base64.encodeToString(byteBuffer.array(), Base64.NO_WRAP);
+
+        try {
+            IntentIntegrator.shareText(this, buffer);
+        } catch(ActivityNotFoundException notexists) {
+            Log.d(TAG, "Barcode scanner is not installed on this device");
+            int size = 200;
+            Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
+            hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+            QRCodeWriter qrCodeWriter = new QRCodeWriter();
+            try {
+                BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
+                Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+
+                if(image != null) {
+                    for (int i = 0; i < size; i++) {
+                        for (int j = 0; j < size; j++) {
+                            image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
+                        }
+                    }
+                    Intent intent = new Intent(this, DisplayQRCode.class);
+                    intent.putExtra("EXTRA_GROUP_NAME", groupName);
+                    intent.putExtra("EXTRA_BUFFER", buffer);
+                    intent.putExtra("EXTRA_QRCODE", image);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+                }
+            }catch(WriterException ignore) {
+            }
+        }
     }
 
 }
