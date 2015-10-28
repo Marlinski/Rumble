@@ -231,6 +231,8 @@ public class CacheManager {
             } catch(Exception ignore) {
                 Log.d(TAG, ignore.getMessage());
             }
+        } else {
+            Log.d(TAG, "Status does not exist");
         }
         try {
             // we delete the temporary file if a problem occured
