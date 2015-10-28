@@ -150,7 +150,8 @@ public class FirechatOverBluetooth extends ProtocolChannel {
             connectionState.notConnected();
             EventBus.getDefault().post(new ChannelDisconnected(
                             new BluetoothNeighbour(((BluetoothConnection)con).getRemoteLinkLayerAddress()),
-                            this)
+                            this,
+                            error)
             );
         } catch (IOException exception) {
             Log.d(TAG, "[!] FAILED CON: "+ exception.getMessage());

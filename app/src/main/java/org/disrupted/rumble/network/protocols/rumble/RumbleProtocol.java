@@ -22,6 +22,7 @@ package org.disrupted.rumble.network.protocols.rumble;
 import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.events.NeighbourReachable;
@@ -175,8 +176,23 @@ public class RumbleProtocol implements Protocol {
             return;
         if(event.neighbour.isLocal())
             return;
+        openChannel(event.neighbour);
+    }
 
-        LinkLayerNeighbour neighbour = event.neighbour;
+    @Override
+    public void onEvent(NeighbourUnreachable event) {
+        if(!started)
+            return;
+        conState.remove(event.neighbour.getLinkLayerAddress());
+    }
+
+    public void onEvent(ChannelDisconnected event) {
+        if(event.channel.getProtocolIdentifier().equals(getProtocolIdentifier()) && event.error) {
+            openChannel(event.neighbour);
+        }
+    }
+
+    private void openChannel(LinkLayerNeighbour neighbour) {
         if (neighbour instanceof BluetoothNeighbour) {
             try {
                 BluetoothConnection con = new BluetoothClientConnection(
@@ -206,12 +222,4 @@ public class RumbleProtocol implements Protocol {
             }
         }
     }
-
-    @Override
-    public void onEvent(NeighbourUnreachable event) {
-        if(!started)
-            return;
-        conState.remove(event.neighbour.getLinkLayerAddress());
-    }
-
 }

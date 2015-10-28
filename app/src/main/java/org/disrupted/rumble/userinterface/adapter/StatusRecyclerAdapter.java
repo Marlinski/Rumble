@@ -19,6 +19,7 @@ package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
@@ -157,6 +158,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
                 /* we draw the attached file (if any) */
                 if (status.hasAttachedFile()) {
+                    attachedView.setVisibility(View.VISIBLE);
                     try {
                         File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
 
@@ -169,8 +171,6 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                                 .centerCrop()
                                 .into(attachedView);
 
-                        attachedView.setVisibility(View.VISIBLE);
-
                         final String filename =  status.getFileName();
                         attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -182,6 +182,18 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                             }
                         });
                     } catch (IOException ignore) {
+                        Picasso.with(activity)
+                                .load(R.drawable.ic_close_black_48dp)
+                                .resize(96, 96)
+                                .centerCrop()
+                                .into(attachedView);
+                        attachedView.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                Snackbar.make(itemView, "attached image not found", Snackbar.LENGTH_SHORT)
+                                        .show();
+                            }
+                        });
                     }
                 } else {
                     attachedView.setVisibility(View.GONE);

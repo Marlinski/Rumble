@@ -31,11 +31,13 @@ import org.disrupted.rumble.network.protocols.ProtocolChannel;
 public class ChannelDisconnected extends NetworkEvent{
 
     public final LinkLayerNeighbour neighbour;
-    public final ProtocolChannel channel;
+    public final ProtocolChannel    channel;
+    public final boolean            error;
 
-    public ChannelDisconnected(LinkLayerNeighbour neighbour, ProtocolChannel channel) {
+    public ChannelDisconnected(LinkLayerNeighbour neighbour, ProtocolChannel channel, boolean error) {
         this.neighbour = neighbour;
         this.channel = channel;
+        this.error   = error;
     }
 
     @Override

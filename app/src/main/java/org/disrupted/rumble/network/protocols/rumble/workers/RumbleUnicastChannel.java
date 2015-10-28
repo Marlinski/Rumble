@@ -157,7 +157,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             Log.d(TAG, "[+] disconnected");
             EventBus.getDefault().post(new ChannelDisconnected(
                             con.getLinkLayerNeighbour(),
-                            this)
+                            this,
+                            error)
             );
             stopWorker();
             connectionState.notConnected();
@@ -228,6 +229,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         } catch (InputOutputStreamException silentlyCloseConnection) {
             Log.d(TAG, ""+silentlyCloseConnection.getMessage());
         } catch (MalformedBlock e) {
+            error = true;
             Log.d(TAG, "[!] malformed block: " + e.reason + "("+e.bytesRead+")");
         }
     }

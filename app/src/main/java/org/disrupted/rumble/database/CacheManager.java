@@ -212,7 +212,7 @@ public class CacheManager {
                     throw new Exception("filename is suspicious");
 
                 // we check if we already received the attached file
-                File attached = new File(status.getFileName());
+                File attached = new File(FileUtil.getWritableAlbumStorageDir(), status.getFileName());
                 if(attached.exists())
                     throw new Exception("file already exists");
 
@@ -229,6 +229,7 @@ public class CacheManager {
 
                 return;
             } catch(Exception ignore) {
+                Log.d(TAG, ignore.getMessage());
             }
         }
         try {

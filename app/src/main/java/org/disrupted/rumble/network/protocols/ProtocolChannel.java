@@ -50,9 +50,12 @@ public abstract class ProtocolChannel implements Worker {
     protected LinkLayerConnection con;
     protected Thread processingCommandFromQueue;
 
+    protected boolean error;
+
     public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {
         this.protocol = protocol;
         this.con = con;
+        this.error = false;
         commandQueue = new LinkedBlockingQueue<Command>();
         this.processingCommandFromQueue = new Thread("CommandThread for "+con.getConnectionID()) {
             @Override
