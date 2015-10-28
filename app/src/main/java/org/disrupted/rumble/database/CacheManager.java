@@ -106,34 +106,10 @@ public class CacheManager {
 
     /*
      * Managing Network Interaction, onEventAsync to avoid slowing down network
+     * PushStatusReceived, FileReceived and ContactInformationReceived are not Async
+     * to prevent receiving file or status before user/status has been created
      */
-    public void onEventAsync(PushStatusSent event) {
-        if(event.status == null)
-            return;
-
-        PushStatus status = new PushStatus(event.status);
-        status.addReplication(event.recipients.size());
-
-        // first we update the status
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
-
-        // then the Contact database
-        if(status.getdbId() > 0) {
-            for(Contact recipient : event.recipients) {
-                Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(recipient.getUid());
-                long contactDBID;
-                if(contact == null) {
-                    recipient.setStatusSent(1);
-                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(recipient);
-                } else {
-                    contact.setStatusSent(contact.nbStatusSent()+1);
-                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
-                }
-                DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(status.getdbId(), contactDBID);
-            }
-        }
-    }
-    public void onEventAsync(PushStatusReceived event) {
+    public void onEvent(PushStatusReceived event) {
         if(event.status == null)
             return;
         if((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
@@ -202,7 +178,7 @@ public class CacheManager {
                 DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), senderDBID);
         }
     }
-    public void onEventAsync(FileReceived event) {
+    public void onEvent(FileReceived event) {
         if(event.filename == null)
             return;
         PushStatus status = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
@@ -242,9 +218,7 @@ public class CacheManager {
         }catch(IOException ignore){
         }
     }
-    public void onEventAsync(ContactInformationSent event) {
-    }
-    public void onEventAsync(ContactInformationReceived event) {
+    public void onEvent(ContactInformationReceived event) {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.contact.getUid());
         if(contact == null) {
             contact = new Contact(event.contact);
@@ -310,6 +284,32 @@ public class CacheManager {
             if (res > 0)
                 EventBus.getDefault().post(new ContactInterfaceInserted(contact, event.neighbour, event.channel));
         } catch(NetUtil.NoMacAddressException ignore) {
+        }
+    }
+    public void onEventAsync(PushStatusSent event) {
+        if(event.status == null)
+            return;
+
+        PushStatus status = new PushStatus(event.status);
+        status.addReplication(event.recipients.size());
+
+        // first we update the status
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(status);
+
+        // then the Contact database
+        if(status.getdbId() > 0) {
+            for(Contact recipient : event.recipients) {
+                Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(recipient.getUid());
+                long contactDBID;
+                if(contact == null) {
+                    recipient.setStatusSent(1);
+                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(recipient);
+                } else {
+                    contact.setStatusSent(contact.nbStatusSent()+1);
+                    contactDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(contact);
+                }
+                DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(status.getdbId(), contactDBID);
+            }
         }
     }
     public void onEventAsync(ChatMessageReceived event) {
