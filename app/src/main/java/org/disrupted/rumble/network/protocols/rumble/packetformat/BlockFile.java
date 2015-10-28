@@ -159,9 +159,12 @@ public class BlockFile extends Block {
                         fos.close();
                 }
 
-                timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-                // update the database
                 String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
+                filename = attachedFile.getName();
+                statud_id_base64 = status_id_base64;
+
+                /*
+                timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
                 EventBus.getDefault().post(new FileReceived(
                                 attachedFile.getName(),
                                 status_id_base64,
@@ -171,6 +174,7 @@ public class BlockFile extends Block {
                                 header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                                 timeToTransfer)
                 );
+                */
 
                 return header.getBlockLength();
             } catch (IOException e) {
@@ -232,6 +236,7 @@ public class BlockFile extends Block {
                 fis.close();
         }
 
+        /*
         timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
@@ -243,6 +248,7 @@ public class BlockFile extends Block {
                         header.getBlockLength() + header.BLOCK_HEADER_LENGTH,
                         timeToTransfer)
         );
+        */
 
         return 0;
     }

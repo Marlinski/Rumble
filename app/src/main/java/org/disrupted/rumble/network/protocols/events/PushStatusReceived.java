@@ -28,14 +28,16 @@ public class PushStatusReceived extends NetworkEvent{
 
     public PushStatus status;
     public String senderID;
+    public String tempfile;
     public String protocolID;
     public String linkLayerIdentifier;
     public long size;
     public long duration;
 
-    public PushStatusReceived(PushStatus status, String sender, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusReceived(PushStatus status, String sender, String tempfile, String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
         this.senderID = sender;
+        this.tempfile = tempfile;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
         this.size = size;

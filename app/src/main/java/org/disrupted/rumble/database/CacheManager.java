@@ -29,6 +29,7 @@ import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.ContactGroupListUpdated;
 import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
+import org.disrupted.rumble.database.events.FileInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
@@ -106,10 +107,8 @@ public class CacheManager {
 
     /*
      * Managing Network Interaction, onEventAsync to avoid slowing down network
-     * PushStatusReceived, FileReceived and ContactInformationReceived are not Async
-     * to prevent receiving file or status before user/status has been created
      */
-    public void onEvent(PushStatusReceived event) {
+    public void onEventAsync(PushStatusReceived event) {
         if(event.status == null)
             return;
         if((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
@@ -119,6 +118,7 @@ public class CacheManager {
         if(group == null) {
             // we do not accept message for group we do not belong to
             // because a group can only be added manually by the user
+            // todo make it a setting to accept open group ?
             Log.d(TAG, "[!] unknown group: refusing the message");
             return;
         } else {
@@ -177,48 +177,46 @@ public class CacheManager {
             if(senderDBID > 0)
                 DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), senderDBID);
         }
-    }
-    public void onEvent(FileReceived event) {
-        if(event.filename == null)
+
+        /* now we take care of the attached file, if any */
+        if(event.tempfile.equals(""))
             return;
-        PushStatus status = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
-        if((status != null) && status.hasAttachedFile()) {
-            try {
-                if(!FileUtil.isFileNameClean(status.getFileName()))
-                    throw new Exception("filename is suspicious");
 
-                // we check if we already received the attached file
-                File attached = new File(FileUtil.getWritableAlbumStorageDir(), status.getFileName());
-                if(attached.exists())
-                    throw new Exception("file already exists");
+        try {
+            if(!FileUtil.isFileNameClean(exists.getFileName()))
+                throw new Exception("filename is suspicious");
 
-                // we rename the temporary file to its name
-                File from = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
-                if(!from.renameTo(attached))
-                    throw new IOException("cannot rename the file");
+            /*
+             * we check if we already received the attached file. We don't want to overwrite as
+             * it would enable an attack that would overwrite every status
+             */
+            File attached = new File(FileUtil.getWritableAlbumStorageDir(), exists.getFileName());
+            if(attached.exists())
+                throw new Exception("file already exists");
 
-                // and we add the file to the media library
-                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                Uri contentUri = Uri.fromFile(attached);
-                mediaScanIntent.setData(contentUri);
-                RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
+            // we rename the temporary file to its name
+            File from = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
+            if(!from.renameTo(attached))
+                throw new IOException("cannot rename the file");
 
-                return;
-            } catch(Exception ignore) {
-                Log.d(TAG, ignore.getMessage());
-            }
-        } else {
-            Log.d(TAG, "Status does not exist");
+            // and we add the file to the media library
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            Uri contentUri = Uri.fromFile(attached);
+            mediaScanIntent.setData(contentUri);
+            RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
+            EventBus.getDefault().post(new FileInsertedEvent(attached.getName(), exists.getUuid()));
+        } catch(Exception ignore) {
+            Log.d(TAG, ignore.getMessage());
         }
         try {
             // we delete the temporary file if a problem occured
-            File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
+            File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
             if (toDelete.exists() && toDelete.isFile())
                 toDelete.delete();
         }catch(IOException ignore){
         }
     }
-    public void onEvent(ContactInformationReceived event) {
+    public void onEventAsync(ContactInformationReceived event) {
         Contact contact = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.contact.getUid());
         if(contact == null) {
             contact = new Contact(event.contact);

@@ -34,6 +34,7 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -243,10 +244,25 @@ public class BlockPushStatus extends Block{
             status.addReplication((int) replication);
             status.setLike((int) like);
 
+            String tempfile = "";
+            if(status.hasAttachedFile()) {
+                try {
+                    BlockHeader header = BlockHeader.readBlock(in);
+                    if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
+                        throw new MalformedBlockPayload("FileBlock Header expected", readleft);
+                    BlockFile block = new BlockFile(header);
+                    block.readBlock(channel);
+                    tempfile = block.filename;
+                } catch (MalformedBlockHeader e) {
+                    throw new MalformedBlockPayload("FileBlock Header expected", readleft);
+                }
+            }
+
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new PushStatusReceived(
                             status,
                             sender_id_base64,
+                            tempfile,
                             RumbleProtocol.protocolID,
                             con.getLinkLayerIdentifier(),
                             header.getBlockLength(),
