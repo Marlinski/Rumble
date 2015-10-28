@@ -20,8 +20,11 @@
 package org.disrupted.rumble.database.objects;
 
 
+import android.net.Uri;
+
 import org.disrupted.rumble.util.HashUtil;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -145,7 +148,7 @@ public class PushStatus {
 
 
     public void setdbId(long dbid) {              this.dbid           = dbid;     }
-    public void setFileName(String filename){     this.attachedFile   = filename; }
+    public void setFileName(String name){         this.attachedFile   = name;      }
     public void setFileSize(long fileSize) {      this.fileSize = fileSize;       }
     public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
     public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }

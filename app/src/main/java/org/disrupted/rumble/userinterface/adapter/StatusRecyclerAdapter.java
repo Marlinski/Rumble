@@ -158,9 +158,8 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                 /* we draw the attached file (if any) */
                 if (status.hasAttachedFile()) {
                     try {
-                        File attachedFile = new File(
-                                FileUtil.getReadableAlbumStorageDir(),
-                                status.getFileName());
+                        File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+
                         if (!attachedFile.isFile() || !attachedFile.exists())
                             throw new IOException("file does not exists");
 

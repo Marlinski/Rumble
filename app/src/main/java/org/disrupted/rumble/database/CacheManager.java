@@ -20,7 +20,6 @@
 package org.disrupted.rumble.database;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.util.Log;
 
@@ -209,16 +208,15 @@ public class CacheManager {
         PushStatus status = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.uuid);
         if((status != null) && status.hasAttachedFile()) {
             try {
-                // we check if filename is healthy
                 if(!FileUtil.isFileNameClean(status.getFileName()))
                     throw new Exception("filename is suspicious");
 
                 // we check if we already received the attached file
-                File attached = new File(FileUtil.getWritableAlbumStorageDir(), status.getFileName());
+                File attached = new File(status.getFileName());
                 if(attached.exists())
                     throw new Exception("file already exists");
 
-                // if we didn't, we rename the temporary file to its name
+                // we rename the temporary file to its name
                 File from = new File(FileUtil.getWritableAlbumStorageDir(), event.filename);
                 if(!from.renameTo(attached))
                     throw new IOException("cannot rename the file");
@@ -389,8 +387,22 @@ public class CacheManager {
     public void onEventAsync(UserDeleteStatus event) {
         if(event.status == null)
             return;
-        if(DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.status.getUuid()))
+        if(DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).deleteStatus(event.status.getUuid())) {
+            if(event.status.hasAttachedFile()) {
+                // if filename starts with a '/' it means that the file is from another album
+                // we do not delete the file in that case
+                if(!event.status.getFileName().startsWith("/")) {
+                    try {
+                        File attached = new File(FileUtil.getWritableAlbumStorageDir(), event.status.getFileName());
+                        if (attached.exists() && attached.isFile()) {
+                            attached.delete();
+                        }
+                    } catch (IOException e) {
+                    }
+                }
+            }
             EventBus.getDefault().post(new StatusDeletedEvent(event.status.getUuid(), event.status.getdbId()));
+        }
     }
     public void onEventAsync(UserComposeStatus event) {
         if(event.status == null)

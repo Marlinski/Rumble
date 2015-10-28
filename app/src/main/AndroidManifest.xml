@@ -37,14 +37,6 @@
     <uses-permission
         android:required="true"
         android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <!--
-    <uses-permission
-        android:required="true"
-        android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission
-        android:required="true"
-        android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    -->
     <uses-permission
         android:required="true"
         android:name="android.permission.CHANGE_WIFI_STATE"/>
@@ -65,10 +57,16 @@
         android:required="true"
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!--
-      ~ Permission obviously to take picture :)
+       ~ Permission to attached an image from the library
+      -->
+    <uses-permission
+        android:required="true"
+        android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!--
+      ~ Permission to take picture
       -->
     <uses-feature
-        android:required="false"
+        android:required="true"
         android:name="android.hardware.camera" />
     <!--
       ~ Permission related to the bluetooth scanning strategy

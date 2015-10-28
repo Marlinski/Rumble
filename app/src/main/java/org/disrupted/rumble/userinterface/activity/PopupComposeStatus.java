@@ -20,6 +20,7 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -51,7 +52,10 @@ import org.disrupted.rumble.userinterface.events.UserComposeStatus;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -65,6 +69,7 @@ public class PopupComposeStatus extends Activity {
 
     private static final String TAG = "PopupCompose";
     public static final int REQUEST_IMAGE_CAPTURE = 42;
+    public static final int REQUEST_PICK_IMAGE    = 52;
 
     private LinearLayout dismiss;
     private EditText    compose;
@@ -79,7 +84,8 @@ public class PopupComposeStatus extends Activity {
     private GroupSpinnerAdapter spinnerArrayAdapter;
     private String  filter_gid = null;
 
-    private String mCurrentPhotoFile;
+    private String pictureTaken;
+    private Uri pictureChosen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -171,7 +177,7 @@ public class PopupComposeStatus extends Activity {
                             suffix,         /* suffix */
                             storageDir      /* directory */
                     );
-                    mCurrentPhotoFile = photoFile.getName();
+                    pictureTaken = photoFile.getName();
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                     activity.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (IOException error) {
@@ -182,12 +188,29 @@ public class PopupComposeStatus extends Activity {
         }
     };
 
+
+    View.OnClickListener onAttachPictureClick = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            final Activity activity = PopupComposeStatus.this;
+            Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+            getIntent.setType("image/*");
+            Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            pickIntent.setType("image/*");
+            Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{pickIntent});
+            if (getIntent.resolveActivity(activity.getPackageManager()) != null) {
+                startActivityForResult(chooserIntent, REQUEST_PICK_IMAGE);
+            }
+        }
+    };
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-
             try {
-                File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(),mCurrentPhotoFile);
+                File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), pictureTaken);
+                pictureChosen = null;
                 Picasso.with(this)
                         .load("file://"+attachedFile.getAbsolutePath())
                         .fit()
@@ -196,13 +219,19 @@ public class PopupComposeStatus extends Activity {
             } catch(IOException ignore){
             }
         }
-    }
-
-    View.OnClickListener onAttachPictureClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
+        if (requestCode == REQUEST_PICK_IMAGE && resultCode == RESULT_OK) {
+            if (data == null)
+                return;
+            Uri selectedImage = data.getData();
+            pictureTaken = null;
+            pictureChosen = selectedImage;
+            Picasso.with(this)
+                    .load(selectedImage)
+                    .fit()
+                    .centerCrop()
+                    .into(compose_background);
         }
-    };
+    }
 
     View.OnClickListener onClickSend = new View.OnClickListener() {
         @Override
@@ -226,23 +255,38 @@ public class PopupComposeStatus extends Activity {
                 PushStatus pushStatus = new PushStatus(localContact, group, message, now, localContact.getUid());
                 pushStatus.setUserRead(true);
 
-                if (mCurrentPhotoFile != null) {
-                    // rename the file with the Status UUID
-                    File tempFile = new File(FileUtil.getWritableAlbumStorageDir(), mCurrentPhotoFile);
+                if((pictureChosen != null) || (pictureTaken != null)) {
                     String cleanedUuid = FileUtil.cleanBase64(pushStatus.getUuid());
                     File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(),
                             "JPEG_" + cleanedUuid + ".jpg");
-                    if(!tempFile.renameTo(attachedFile))
-                        throw new IOException("cannot rename the file");
-                    pushStatus.setFileName(attachedFile.getName());
+
+                    if (pictureTaken != null) {
+                        // rename the file with the Status UUID
+                        File tempFile = new File(FileUtil.getWritableAlbumStorageDir(), pictureTaken);
+                        if (!tempFile.renameTo(attachedFile))
+                            throw new IOException("cannot rename the file");
+                        pictureTaken = null;
+                    }
+                    if (pictureChosen != null) {
+                        // copy the file into rumble directory
+                        InputStream in = PopupComposeStatus.this.getContentResolver().openInputStream(pictureChosen);
+                        OutputStream out = new FileOutputStream(attachedFile);
+                        byte[] buf = new byte[1024];
+                        int len;
+                        while ((len = in.read(buf)) > 0) {
+                            out.write(buf, 0, len);
+                        }
+                        in.close();
+                        out.close();
+                        pictureChosen = null;
+                    }
 
                     // add the photo to the media library
-                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     Uri contentUri = Uri.fromFile(attachedFile);
+                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     mediaScanIntent.setData(contentUri);
                     sendBroadcast(mediaScanIntent);
-
-                    mCurrentPhotoFile = null;
+                    pushStatus.setFileName(attachedFile.getName());
                 }
 
                 EventBus.getDefault().post(new UserComposeStatus(pushStatus));

@@ -22,7 +22,6 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 import android.util.Base64;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.Database;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
