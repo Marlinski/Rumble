@@ -61,9 +61,4 @@ public class HomePagerAdapter extends FragmentPagerAdapter {
             return context.getResources().getString(R.string.group_detail_tab_members);
     }
 
-    public void refreshChatMessage() {
-        chatMessageFragment.refreshChatMessages();
-    }
-
-
 }

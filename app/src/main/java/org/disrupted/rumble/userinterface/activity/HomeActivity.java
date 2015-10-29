@@ -29,6 +29,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -232,9 +233,11 @@ public class HomeActivity extends AppCompatActivity {
         }
         @Override
         public void onPageSelected(int position) {
+            FragmentChatMessageList fragment = (FragmentChatMessageList) pagerAdapter.getItem(1);
             if(position == 1) {
-                FragmentChatMessageList fragment = (FragmentChatMessageList) pagerAdapter.getItem(position);
-                fragment.refreshChatMessages();
+                fragment.pageIn();
+            } else {
+                fragment.pageOut();
             }
         }
     };

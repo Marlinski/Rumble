@@ -121,14 +121,19 @@ public class FragmentChatMessageList extends Fragment {
                 Log.e(TAG, "[!] " + e.getMessage());
             } finally {
                 compose.setText("");
-                InputMethodManager imm = (InputMethodManager) RumbleApplication.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(compose.getWindowToken(), 0);
             }
         }
     };
 
+    public void pageIn() {
+        refreshChatMessages();
+    }
+    public void pageOut() {
+        InputMethodManager imm = (InputMethodManager) RumbleApplication.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(compose.getWindowToken(), 0);
+    }
 
-    public void refreshChatMessages() {
+    private void refreshChatMessages() {
         ChatMessageDatabase.ChatMessageQueryOption options = new ChatMessageDatabase.ChatMessageQueryOption();
         options.answerLimit = 20;
         DatabaseFactory.getChatMessageDatabase(getActivity())
