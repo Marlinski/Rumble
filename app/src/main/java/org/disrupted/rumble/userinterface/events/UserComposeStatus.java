@@ -25,9 +25,17 @@ import org.disrupted.rumble.database.objects.PushStatus;
 public class UserComposeStatus extends UserInteractionEvent  {
 
     public final PushStatus status;
+    public final String tempfile;
 
     public UserComposeStatus(PushStatus status) {
         this.status = status;
+        this.tempfile = "";
+    }
+
+
+    public UserComposeStatus(PushStatus status, String tempfilename) {
+        this.status = status;
+        this.tempfile = tempfilename;
     }
 
     @Override

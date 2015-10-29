@@ -167,7 +167,6 @@ public class PopupComposeStatus extends Activity {
             if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
                 File photoFile;
                 try {
-                    //todo change file name
                     String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                     File storageDir = FileUtil.getWritableAlbumStorageDir();
                     String imageFileName = "JPEG_" + timeStamp + "_";
@@ -255,41 +254,29 @@ public class PopupComposeStatus extends Activity {
                 PushStatus pushStatus = new PushStatus(localContact, group, message, now, localContact.getUid());
                 pushStatus.setUserRead(true);
 
-                if((pictureChosen != null) || (pictureTaken != null)) {
-                    String cleanedUuid = FileUtil.cleanBase64(pushStatus.getUuid());
-                    File attachedFile = new File(FileUtil.getWritableAlbumStorageDir(),
-                            "JPEG_" + cleanedUuid + ".jpg");
+                if(pictureChosen != null)  {
+                    // copy the file into rumble directory
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    File chosenFile = File.createTempFile(
+                            "JPEG_" + timeStamp + "_",  /* prefix */
+                            ".jpg",         /* suffix */
+                            FileUtil.getWritableAlbumStorageDir()      /* directory */
+                    );
 
-                    if (pictureTaken != null) {
-                        // rename the file with the Status UUID
-                        File tempFile = new File(FileUtil.getWritableAlbumStorageDir(), pictureTaken);
-                        if (!tempFile.renameTo(attachedFile))
-                            throw new IOException("cannot rename the file");
-                        pictureTaken = null;
+                    InputStream in = PopupComposeStatus.this.getContentResolver().openInputStream(pictureChosen);
+                    OutputStream out = new FileOutputStream(chosenFile);
+                    byte[] buf = new byte[1024];
+                    int len;
+                    while ((len = in.read(buf)) > 0) {
+                        out.write(buf, 0, len);
                     }
-                    if (pictureChosen != null) {
-                        // copy the file into rumble directory
-                        InputStream in = PopupComposeStatus.this.getContentResolver().openInputStream(pictureChosen);
-                        OutputStream out = new FileOutputStream(attachedFile);
-                        byte[] buf = new byte[1024];
-                        int len;
-                        while ((len = in.read(buf)) > 0) {
-                            out.write(buf, 0, len);
-                        }
-                        in.close();
-                        out.close();
-                        pictureChosen = null;
-                    }
-
-                    // add the photo to the media library
-                    Uri contentUri = Uri.fromFile(attachedFile);
-                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    mediaScanIntent.setData(contentUri);
-                    sendBroadcast(mediaScanIntent);
-                    pushStatus.setFileName(attachedFile.getName());
+                    in.close();
+                    out.close();
+                    pictureChosen = null;
+                    pictureTaken = chosenFile.getName();
                 }
 
-                EventBus.getDefault().post(new UserComposeStatus(pushStatus));
+                EventBus.getDefault().post(new UserComposeStatus(pushStatus,pictureTaken));
                 pushStatus.discard();
             } catch (Exception e) {
                 Log.e(TAG,"[!] "+e.getMessage());

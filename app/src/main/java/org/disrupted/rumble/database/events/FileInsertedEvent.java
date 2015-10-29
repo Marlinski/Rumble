@@ -32,6 +32,6 @@ public class FileInsertedEvent extends DatabaseEvent {
 
     @Override
     public String shortDescription() {
-        return null;
+        return "";
     }
 }

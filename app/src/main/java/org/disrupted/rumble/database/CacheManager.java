@@ -20,8 +20,16 @@
 package org.disrupted.rumble.database;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
+import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
@@ -38,8 +46,6 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
-import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
-import org.disrupted.rumble.network.protocols.events.FileReceived;
 import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 import org.disrupted.rumble.network.protocols.events.PushStatusSent;
 import org.disrupted.rumble.userinterface.events.UserComposeChatMessage;
@@ -59,7 +65,9 @@ import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.NetUtil;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
@@ -72,6 +80,9 @@ import de.greenrobot.event.EventBus;
 public class CacheManager {
 
     private static final String TAG = "CacheManager";
+
+    private static final int MAX_IMAGE_SIZE_ON_DISK = 500000;
+    private static final int MAX_IMAGE_BORDER_PX = 1000;
 
     private static final Object globalQueuelock = new Object();
     private static CacheManager instance;
@@ -109,81 +120,81 @@ public class CacheManager {
      * Managing Network Interaction, onEventAsync to avoid slowing down network
      */
     public void onEventAsync(PushStatusReceived event) {
-        if(event.status == null)
-            return;
-        if((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
-            return;
+        try {
+            if (event.status == null)
+                return;
+            if ((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
+                return;
 
-        Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
-        if(group == null) {
-            // we do not accept message for group we do not belong to
-            // because a group can only be added manually by the user
-            // todo make it a setting to accept open group ?
-            Log.d(TAG, "[!] unknown group: refusing the message");
-            return;
-        } else {
-            if(!group.getName().equals(event.status.getGroup().getName())) {
-                // if we manually added the group, then we refuse the message if the name conflicts
-                // A group cannot change its name
-                Log.d(TAG, "[!] GroupID: " + group.getGid() + " CONFLICT: db=" + group.getName() + " status=" + event.status.getGroup().getName());
+            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
+            if (group == null) {
+                // we do not accept message for group we do not belong to
+                // because a group can only be added manually by the user
+                // todo make it a setting to accept open group ?
+                Log.d(TAG, "[!] unknown group: refusing the message");
+                return;
+            } else {
+                if (!group.getName().equals(event.status.getGroup().getName())) {
+                    // if we manually added the group, then we refuse the message if the name conflicts
+                    // A group cannot change its name
+                    Log.d(TAG, "[!] GroupID: " + group.getGid() + " CONFLICT: db=" + group.getName() + " status=" + event.status.getGroup().getName());
+                    return;
+                }
+            }
+
+            Contact sender = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.receivedBy());
+            if (sender == null) {
+                // we do not accept message from unknown sender, that should never happen as the protocol starts by exchange
+                // ContactInformation blocks
+                Log.d(TAG, "[!] unknown sender: refusing the message");
                 return;
             }
-        }
 
-        Contact sender = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.receivedBy());
-        if(sender == null) {
-            // we do not accept message from unknown sender, that should never happen as the protocol starts by exchange
-            // ContactInformation blocks
-            Log.d(TAG, "[!] unknown sender: refusing the message");
-            return;
-        }
+            // we update the sender statistics
+            sender.setStatusReceived(sender.nbStatusReceived() + 1);
+            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(sender);
 
-        // we update the sender statistics
-        sender.setStatusReceived(sender.nbStatusReceived()+1);
-        DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(sender);
+            // we insert/update the status author
+            Contact author = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
+            if (author == null) {
+                author = event.status.getAuthor();
+                DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(author);
+            } else if (!author.getName().equals(event.status.getAuthor().getName())) {
+                // we do not accept message if the author has changed since we last known of (UID/name)
+                Log.d(TAG, "[!] AuthorID: " + author.getUid() + " CONFLICT: db=" + author.getName() + " status=" + event.status.getAuthor().getName());
+                return;
+            }
+            // we add the author to the group if it doesn't already belong
+            long authorDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(author.getUid());
+            long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.status.getGroup().getGid());
+            if (DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(authorDBID, groupDBID) >= 0)
+                EventBus.getDefault().post(new ContactGroupListUpdated(author));
 
-        // we insert/update the status author
-        Contact author = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.getAuthor().getUid());
-        if(author == null) {
-            author = event.status.getAuthor();
-            DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).insertOrUpdateContact(author);
-        } else if(!author.getName().equals(event.status.getAuthor().getName())) {
-            // we do not accept message if the author has changed since we last known of (UID/name)
-            Log.d(TAG, "[!] AuthorID: " + author.getUid() + " CONFLICT: db=" + author.getName() + " status=" + event.status.getAuthor().getName());
-            return;
-        }
-        // we add the author to the group if it doesn't already belong
-        long authorDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(author.getUid());
-        long groupDBID = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroupDBID(event.status.getGroup().getGid());
-        if(DatabaseFactory.getContactJoinGroupDatabase(RumbleApplication.getContext()).insertContactGroup(authorDBID, groupDBID) >= 0)
-            EventBus.getDefault().post(new ContactGroupListUpdated(author));
+            // we add the status to the database
+            PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
+            if (exists == null) {
+                exists = new PushStatus(event.status);
+                exists.addDuplicate(1);
+                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(exists);
+            } else {
+                exists.addDuplicate(1);
+                if (event.status.getLike() > 0)
+                    exists.addLike();
+                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
+            }
 
-        // we add the status to the database
-        PushStatus exists = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(event.status.getUuid());
-        if(exists == null) {
-            exists = new PushStatus(event.status);
-            exists.addDuplicate(1);
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(exists);
-        } else {
-            exists.addDuplicate(1);
-            if(event.status.getLike() > 0)
-                exists.addLike();
-            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
-        }
+            // then the StatusContact database
+            if (exists.getdbId() > 0) {
+                long senderDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(event.senderID);
+                if (senderDBID > 0)
+                    DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), senderDBID);
+            }
 
-        // then the StatusContact database
-        if(exists.getdbId() > 0) {
-            long senderDBID = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContactDBID(event.senderID);
-            if(senderDBID > 0)
-                DatabaseFactory.getStatusContactDatabase(RumbleApplication.getContext()).insertStatusContact(exists.getdbId(), senderDBID);
-        }
+            // now we take care of the attached file, if any
+            if (event.tempfile.equals(""))
+                return;
 
-        /* now we take care of the attached file, if any */
-        if(event.tempfile.equals(""))
-            return;
-
-        try {
-            if(!FileUtil.isFileNameClean(exists.getFileName()))
+            if (!FileUtil.isFileNameClean(exists.getFileName()))
                 throw new Exception("filename is suspicious");
 
             /*
@@ -191,29 +202,22 @@ public class CacheManager {
              * it would enable an attack that would overwrite every status
              */
             File attached = new File(FileUtil.getWritableAlbumStorageDir(), exists.getFileName());
-            if(attached.exists())
+            if (attached.exists())
                 throw new Exception("file already exists");
 
-            // we rename the temporary file to its name
-            File from = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
-            if(!from.renameTo(attached))
-                throw new IOException("cannot rename the file");
+            if (saveImageOnDisk(event.tempfile, exists.getFileName()))
+                EventBus.getDefault().post(new FileInsertedEvent(attached.getName(), exists.getUuid()));
 
-            // and we add the file to the media library
-            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-            Uri contentUri = Uri.fromFile(attached);
-            mediaScanIntent.setData(contentUri);
-            RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
-            EventBus.getDefault().post(new FileInsertedEvent(attached.getName(), exists.getUuid()));
-        } catch(Exception ignore) {
-            Log.d(TAG, ignore.getMessage());
-        }
-        try {
-            // we delete the temporary file if a problem occured
-            File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
-            if (toDelete.exists() && toDelete.isFile())
-                toDelete.delete();
-        }catch(IOException ignore){
+        } catch (Exception ignore ) {
+            ignore.printStackTrace();
+        } finally {
+            if (event.tempfile.equals("")) {
+                try {
+                    File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
+                    toDelete.delete();
+                } catch (IOException ignore) {
+                }
+            }
         }
     }
     public void onEventAsync(ContactInformationReceived event) {
@@ -368,7 +372,7 @@ public class CacheManager {
         if(event.status == null)
             return;
         event.status.setUserRead(true);
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus( event.status);
+        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(event.status);
         //todo trow an event
     }
     public void onEventAsync(UserLikedStatus event) {
@@ -406,10 +410,26 @@ public class CacheManager {
         }
     }
     public void onEventAsync(UserComposeStatus event) {
-        if(event.status == null)
-            return;
-        PushStatus status = new PushStatus(event.status);
-        DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
+        try {
+            if(event.status == null)
+                return;
+            if(!event.tempfile.equals("")) {
+                String cleanedUuid = FileUtil.cleanBase64(event.status.getUuid());
+                String filename = "JPEG_" + cleanedUuid + ".jpg";
+                if (saveImageOnDisk(event.tempfile, filename))
+                    event.status.setFileName(filename);
+            }
+            PushStatus status = new PushStatus(event.status);
+            DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
+        } finally {
+            if (event.tempfile.equals("")) {
+                try {
+                    File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
+                    toDelete.delete();
+                } catch (IOException ignore) {
+                }
+            }
+        }
     }
     public void onEventAsync(UserCreateGroup event) {
         if(event.group == null)
@@ -444,11 +464,12 @@ public class CacheManager {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();
     }
     public void onEventAsync(UserComposeChatMessage event) {
-        if(event.chatMessage == null)
+        if (event.chatMessage == null)
             return;
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
-        if(DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0);
-            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+        if (DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0)
+            ;
+        EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
     }
     public void onEventAsync(UserReadChatMessage event) {
         if(event.chatMessage == null)
@@ -459,5 +480,71 @@ public class CacheManager {
     }
     public void onEventAsync(UserWipeChatMessages event) {
         DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();
+    }
+
+    private boolean saveImageOnDisk(String from, String to) {
+        File toDelete = null;
+        File savedImage = null;
+        try {
+            toDelete = new File(FileUtil.getWritableAlbumStorageDir(), from);
+            savedImage   = new File(FileUtil.getWritableAlbumStorageDir(), to);
+            if(toDelete.exists() && toDelete.isFile() && (toDelete.length() > MAX_IMAGE_SIZE_ON_DISK)) {
+
+                // first we extrat the width and height of the image
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeFile(toDelete.getAbsolutePath(), options);
+                final int height = options.outHeight;
+                final int width = options.outWidth;
+
+                Bitmap scaled;
+                if((height > MAX_IMAGE_BORDER_PX) || (height > MAX_IMAGE_BORDER_PX)) {
+                    // we compute the new required height and width given that
+                    // we want the bigger border (Width or Height) to be 1000 px
+                    float factor = Math.max(height, width) / (float) MAX_IMAGE_BORDER_PX;
+                    int reqHeight = (int) Math.floor(height / factor);
+                    int reqWidth = (int) Math.floor(width / factor);
+
+                    Log.d(TAG, "bitmap (" + height + "," + width + ") with samplesize of" + Math.floor(factor));
+
+                    // we can create the new bitmap
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = (int) Math.floor(factor);
+                    options.inPurgeable = true;
+                    Bitmap original = BitmapFactory.decodeFile(toDelete.getAbsolutePath(), options);
+                    scaled = Bitmap.createScaledBitmap(original, reqWidth, reqHeight, false);
+                    original.recycle();
+                } else {
+                    // doesn't need to be scaled down
+                    options.inJustDecodeBounds = false;
+                    options.inSampleSize = 1;
+                    options.inPurgeable = true;
+                    scaled = BitmapFactory.decodeFile(toDelete.getAbsolutePath(), options);
+                }
+
+                // we compress 80% JPEG quality and save it to the file
+                OutputStream outputStream = new FileOutputStream(savedImage);
+                scaled.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+                outputStream.close();
+
+                scaled.recycle();
+            } else {
+                // we rename the file
+                File fromFile = new File(FileUtil.getWritableAlbumStorageDir(), from);
+                if(!fromFile.renameTo(savedImage))
+                    throw new IOException("cannot rename the file");
+            }
+
+            // we add the saved image to the library
+            Uri contentUri = Uri.fromFile(savedImage);
+            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+            mediaScanIntent.setData(contentUri);
+            RumbleApplication.getContext().sendBroadcast(mediaScanIntent);
+
+            return true;
+        } catch(IOException e) {
+            Log.d(TAG, "there was an error resizing the image: "+e.getMessage());
+        }
+        return false;
     }
 }
