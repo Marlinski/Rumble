@@ -48,11 +48,14 @@ import de.greenrobot.event.EventBus;
  *
  * +-------------------------------------------+
  * |               User ID                     |  8 byte Author UID
+   +-------------------------------------------+
  * +--------+----------------------------------+
  * | Length |         Author (String)          |  1 byte + VARIABLE
  * +--------+---------+------------------------+
  * |      Length      |     Message (String)   |  2 bytes + VARIABLE
  * +------------------+------------------------+
+ * |             Time of Creation              |  8 bytes
+ * +-------------------------------------------+
  *
  * @author Marlinski
  */
@@ -66,12 +69,14 @@ public class BlockChatMessage extends Block {
     private static final int FIELD_UID_SIZE             = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
     private static final int FIELD_STATUS_LENGTH_SIZE   = 2;
+    private static final int FIELD_TOC_SIZE             = 8;
 
 
     private  static final int MIN_PAYLOAD_SIZE = (
             FIELD_UID_SIZE +
             FIELD_AUTHOR_LENGTH_SIZE +
-            FIELD_STATUS_LENGTH_SIZE);
+            FIELD_STATUS_LENGTH_SIZE +
+            FIELD_TOC_SIZE);
 
     private static final int MAX_PAYLOAD_SIZE = (
             MIN_PAYLOAD_SIZE +
@@ -137,6 +142,9 @@ public class BlockChatMessage extends Block {
             byteBuffer.get(message, 0, messageLength);
             readleft -= messageLength;
 
+            long toc = byteBuffer.getLong();
+            readleft -= FIELD_TOC_SIZE;
+
             long receivedAt = (System.currentTimeMillis() / 1000L);
 
             if(readleft > 0)
@@ -146,7 +154,7 @@ public class BlockChatMessage extends Block {
             String author_id_base64 = Base64.encodeToString(author_id, 0, FIELD_UID_SIZE, Base64.NO_WRAP);
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
-            chatMessage = new ChatMessage(contact_tmp, new String(message), receivedAt, RumbleProtocol.protocolID);
+            chatMessage = new ChatMessage(contact_tmp, new String(message), toc, receivedAt, RumbleProtocol.protocolID);
 
             timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
             EventBus.getDefault().post(new ChatMessageReceived(
@@ -193,6 +201,7 @@ public class BlockChatMessage extends Block {
         blockBuffer.put(author_name, 0, author_name.length);
         blockBuffer.putShort((short) post.length);
         blockBuffer.put(post, 0, post.length);
+        blockBuffer.putLong(chatMessage.getAuthorTimestamp());
 
         /* send the header, the status and the attached file */
         header.writeBlock(con.getOutputStream());

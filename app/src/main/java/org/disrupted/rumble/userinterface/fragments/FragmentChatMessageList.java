@@ -113,7 +113,7 @@ public class FragmentChatMessageList extends Fragment {
 
                 Contact localContact = Contact.getLocalContact();
                 long now = (System.currentTimeMillis() / 1000L);
-                ChatMessage chatMessage = new ChatMessage(localContact, message, now, RumbleProtocol.protocolID);
+                ChatMessage chatMessage = new ChatMessage(localContact, message, now, now, RumbleProtocol.protocolID);
                 chatMessage.setUserRead(true);
 
                 EventBus.getDefault().post(new UserComposeChatMessage(chatMessage));

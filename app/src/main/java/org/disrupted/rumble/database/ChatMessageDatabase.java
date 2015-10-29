@@ -45,6 +45,7 @@ public class ChatMessageDatabase extends Database {
     public static final String AUTHOR_DBID      = "cdbid";       // author foreign key
     public static final String MESSAGE          = "message";     // the post itself
     public static final String FILE_NAME        = "filename";    // the name of the attached file
+    public static final String TIME_OF_CREATION = "toc";         // time of creation
     public static final String TIME_OF_ARRIVAL  = "toa";         // time of arrival at current node
     public static final String PROTOCOL         = "protocol";    // the protocol from which we receive the message
     public static final String USERREAD         = "read";
@@ -56,6 +57,7 @@ public class ChatMessageDatabase extends Database {
                  + AUTHOR_DBID + " INTEGER, "
                  + MESSAGE     + " TEXT, "
                  + FILE_NAME   + " TEXT, "
+                 + TIME_OF_CREATION  + " INTEGER, "
                  + TIME_OF_ARRIVAL   + " INTEGER, "
                  + USERREAD          + " INTEGER, "
                  + PROTOCOL          + " TEXT, "
@@ -238,6 +240,7 @@ public class ChatMessageDatabase extends Database {
         contentValues.put(AUTHOR_DBID,     contact_DBID);
         contentValues.put(MESSAGE,         chatMessage.getMessage());
         contentValues.put(FILE_NAME,       chatMessage.getAttachedFile());
+        contentValues.put(TIME_OF_CREATION,chatMessage.getAuthorTimestamp());
         contentValues.put(TIME_OF_ARRIVAL, chatMessage.getTimestamp());
         contentValues.put(PROTOCOL,        chatMessage.getProtocolID());
         contentValues.put(USERREAD,        chatMessage.hasUserReadAlready() ? 1 : 0);
@@ -261,16 +264,17 @@ public class ChatMessageDatabase extends Database {
             return null;
 
         String  uuid        = cursor.getString(cursor.getColumnIndexOrThrow(UUID));
-        long    author_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
-        String  message     = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
+        long author_dbid = cursor.getLong(cursor.getColumnIndexOrThrow(AUTHOR_DBID));
+        String message     = cursor.getString(cursor.getColumnIndexOrThrow(MESSAGE));
         String  filename    = cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME));
+        long toc = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_CREATION));
         long    toa         = cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL));
         String  protocol    = cursor.getString(cursor.getColumnIndexOrThrow(PROTOCOL));
         boolean userRead    = (cursor.getInt(cursor.getColumnIndexOrThrow(USERREAD)) == 1);
         int     recipients  = cursor.getInt(cursor.getColumnIndexOrThrow(RECIPENTS));
 
         Contact author   = DatabaseFactory.getContactDatabase(context).getContact(author_dbid);
-        ChatMessage chatMessage = new ChatMessage(author, message, toa, protocol);
+        ChatMessage chatMessage = new ChatMessage(author, message, toc, toa, protocol);
         chatMessage.setUserRead(userRead);
         chatMessage.setAttachedFile(filename);
         chatMessage.setUUID(uuid);

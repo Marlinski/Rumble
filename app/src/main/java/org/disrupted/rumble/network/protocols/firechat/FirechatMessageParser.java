@@ -111,7 +111,8 @@ public class FirechatMessageParser {
             author_id = HashUtil.computeContactUid(author+"FireChat",0);
 
         Contact contact = new Contact(author, author_id, false);
-        retMessage = new ChatMessage(contact, post, timestamp, FirechatProtocol.protocolID);
+        long receivedAt = (System.currentTimeMillis() / 1000L);
+        retMessage = new ChatMessage(contact, post, timestamp, receivedAt, FirechatProtocol.protocolID);
 
         // we store the message in Base64 because it is more readable
         if(HashUtil.isBase64Encoded(firechatid))
