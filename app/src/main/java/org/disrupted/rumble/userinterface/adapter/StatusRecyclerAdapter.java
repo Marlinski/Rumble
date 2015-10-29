@@ -200,7 +200,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                 }
 
                 moreView.setOnClickListener(new PopupMenuListener());
-                if (!status.hasUserReadAlready() || (((System.currentTimeMillis() / 1000L) - status.getTimeOfArrival()) < 60)) {
+                if (!status.hasUserReadAlready() || ((System.currentTimeMillis() - status.getTimeOfArrival()) < 60)) {
                     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
                         box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
                     } else {

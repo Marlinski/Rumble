@@ -107,7 +107,7 @@ public class BlockChatMessage extends Block {
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
 
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         /* read the block */
         InputStream in = con.getInputStream();
@@ -145,18 +145,17 @@ public class BlockChatMessage extends Block {
             long toc = byteBuffer.getLong();
             readleft -= FIELD_TOC_SIZE;
 
-            long receivedAt = (System.currentTimeMillis() / 1000L);
-
             if(readleft > 0)
                 throw new MalformedBlockPayload("wrong header.length parameter, no more data to read: " + (header.getBlockLength()-readleft), header.getBlockLength()-readleft);
 
             /* assemble the status */
             String author_id_base64 = Base64.encodeToString(author_id, 0, FIELD_UID_SIZE, Base64.NO_WRAP);
-
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
+            long receivedAt = (System.currentTimeMillis());
+
             chatMessage = new ChatMessage(contact_tmp, new String(message), toc, receivedAt, RumbleProtocol.protocolID);
 
-            timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
+            timeToTransfer = (System.nanoTime() - timeToTransfer);
             EventBus.getDefault().post(new ChatMessageReceived(
                             chatMessage,
                             con.getRemoteLinkLayerAddress(),
@@ -174,7 +173,7 @@ public class BlockChatMessage extends Block {
     @Override
     public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
         UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         /* calculate the total block size */
         byte[] post     = chatMessage.getMessage().getBytes(Charset.forName("UTF-8"));
@@ -213,7 +212,7 @@ public class BlockChatMessage extends Block {
          * It is very important to post an event as it will be catch by the
          * CacheManager and will update the database accordingly
          */
-        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+        timeToTransfer  = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new ChatMessageSent(

@@ -111,7 +111,7 @@ public class PushStatus {
         attachedFile   = "";
         fileSize = 0;
         this.timeOfCreation = timeOfCreation;
-        timeOfArrival  = (System.currentTimeMillis() / 1000L);
+        timeOfArrival  = System.currentTimeMillis();
         hopCount       = 0;
         hopLimit       = Integer.MAX_VALUE;
         ttl            = 0;

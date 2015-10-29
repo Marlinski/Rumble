@@ -132,7 +132,7 @@ public class BlockContact extends Block {
             throw new MalformedBlockPayload("header.length is too short: "+readleft, 0);
 
         /* read the block */
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
@@ -195,8 +195,8 @@ public class BlockContact extends Block {
                 readleft -= (entry.getEntrySize());
             }
 
-            tempcontact.lastMet(System.currentTimeMillis() / 1000L);
-            timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+            tempcontact.lastMet(System.currentTimeMillis());
+            timeToTransfer  = (System.nanoTime() - timeToTransfer);
             EventBus.getDefault().post(new ContactInformationReceived(
                             tempcontact,
                             flags,

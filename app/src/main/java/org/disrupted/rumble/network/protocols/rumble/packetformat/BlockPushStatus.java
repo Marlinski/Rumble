@@ -145,7 +145,7 @@ public class BlockPushStatus extends Block{
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
 
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
 
         /* read the block */
@@ -236,7 +236,7 @@ public class BlockPushStatus extends Block{
             status = new PushStatus(contact_tmp, group_tmp, new String(post), toc, sender_id_base64);
 
             status.setFileName(new String(filename));
-            status.setTimeOfArrival(System.currentTimeMillis() / 1000L);
+            status.setTimeOfArrival(System.currentTimeMillis());
             status.setTimeOfCreation(toc);
             status.setHopCount((int) hopCount);
             status.setHopLimit((int) hopLimit);
@@ -258,7 +258,7 @@ public class BlockPushStatus extends Block{
                 }
             }
 
-            timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
+            timeToTransfer = (System.nanoTime() - timeToTransfer);
             EventBus.getDefault().post(new PushStatusReceived(
                             status,
                             sender_id_base64,
@@ -279,7 +279,7 @@ public class BlockPushStatus extends Block{
     @Override
     public long writeBlock(ProtocolChannel channel) throws IOException,InputOutputStreamException {
         UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         /* calculate the total block size */
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
@@ -333,7 +333,7 @@ public class BlockPushStatus extends Block{
         if(blockFile != null)
             blockFile.writeBlock(channel);
 
-        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+        timeToTransfer = (System.nanoTime() - timeToTransfer);
         EventBus.getDefault().post(new PushStatusSent(
                         status,
                         recipientList,

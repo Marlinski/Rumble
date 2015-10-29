@@ -109,7 +109,7 @@ public class BlockFile extends Block {
         if((readleft < 0) || (readleft > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong payload size", readleft);
 
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         /* read the block pseudo header */
         InputStream in = con.getInputStream();
@@ -164,7 +164,7 @@ public class BlockFile extends Block {
                 statud_id_base64 = status_id_base64;
 
                 /*
-                timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
+                timeToTransfer  = (System.nanoTime() - timeToTransfer);
                 EventBus.getDefault().post(new FileReceived(
                                 attachedFile.getName(),
                                 status_id_base64,
@@ -206,7 +206,7 @@ public class BlockFile extends Block {
         if(!attachedFile.exists() || !attachedFile.isFile())
             throw new IOException(filename+" is not a file or does not exists");
 
-        long timeToTransfer = System.currentTimeMillis();
+        long timeToTransfer = System.nanoTime();
 
         /* calculate the total block size */
         long size = attachedFile.length();
@@ -237,7 +237,7 @@ public class BlockFile extends Block {
         }
 
         /*
-        timeToTransfer = (System.currentTimeMillis() - timeToTransfer);
+        timeToTransfer = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new FileSent(

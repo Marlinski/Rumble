@@ -33,8 +33,8 @@ public class TimeUtil {
     private static final long ONE_MONTH_IN_SECONDS = 30 * ONE_DAY_IN_SECONDS;
     private static final long ONE_YEAR_IN_SECONDS = 365 * ONE_DAY_IN_SECONDS;
 
-    public static String timeElapsed(long timeInSecondsSinceEpoch) {
-        long time = (System.currentTimeMillis() / 1000L) - timeInSecondsSinceEpoch;
+    public static String timeElapsed(long timeInMilliSecondsSinceEpoch) {
+        long time = ((System.currentTimeMillis() - timeInMilliSecondsSinceEpoch)/1000L);
         Resources res = RumbleApplication.getContext().getResources();
 
         if(time < ONE_MINUTE_IN_SECONDS)
