@@ -422,7 +422,7 @@ public class CacheManager {
             PushStatus status = new PushStatus(event.status);
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
         } finally {
-            if (event.tempfile.equals("")) {
+            if (!event.tempfile.equals("")) {
                 try {
                     File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
                     toDelete.delete();

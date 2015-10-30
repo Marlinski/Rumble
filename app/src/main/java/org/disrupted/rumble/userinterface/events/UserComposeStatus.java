@@ -35,7 +35,7 @@ public class UserComposeStatus extends UserInteractionEvent  {
 
     public UserComposeStatus(PushStatus status, String tempfilename) {
         this.status = status;
-        this.tempfile = tempfilename;
+        this.tempfile = (tempfilename != null) ? tempfilename : "";
     }
 
     @Override

@@ -94,9 +94,9 @@ public abstract class BluetoothServer implements Worker {
 
         try {
             if(secureSocket)
-                tmp = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).listenUsingRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
+                tmp = adapter.listenUsingRfcommWithServiceRecord(this.bt_service_name, this.bt_service_uuid);
             else
-                tmp = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext()).listenUsingInsecureRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
+                tmp = adapter.listenUsingInsecureRfcommWithServiceRecord(this.bt_service_name,this.bt_service_uuid);
         } catch (IOException e) {
             Log.d(TAG, "cannot open Listen Socket on service record "+bt_service_uuid);
             return;

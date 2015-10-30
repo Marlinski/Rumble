@@ -240,7 +240,7 @@ public class FragmentNetworkDrawer extends Fragment {
             refreshBluetoothController();
             return;
         }
-        if((requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE) && (resultCode == Activity.RESULT_OK)) {
+        if(requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE)  {
             refreshBluetoothController();
             return;
         }
