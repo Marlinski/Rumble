@@ -241,7 +241,12 @@ public class FragmentNetworkDrawer extends Fragment {
             return;
         }
         if(requestCode == BluetoothUtil.REQUEST_ENABLE_DISCOVERABLE)  {
-            refreshBluetoothController();
+            // the resultCode carries the discoverability timeout,
+            // 1 means that we are disabling the discoverability
+            if(resultCode != 1)
+                bluetoothController.setSelected(2);
+            else
+                bluetoothController.setSelected(1);
             return;
         }
     }
