@@ -356,7 +356,6 @@ public class BluetoothScanner extends HandlerThread implements SensorEventListen
         }
     };
 
-
     @Override
     public void forceDiscovery() {
         resetTrickleTimer();
