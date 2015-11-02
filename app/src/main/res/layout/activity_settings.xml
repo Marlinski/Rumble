@@ -61,11 +61,13 @@
                 android:text="11.64 MB"
                 android:textAppearance="@android:style/TextAppearance.Large"/>
 
+            <!--
             <org.disrupted.rumble.userinterface.views.CombinedHistogram
                 android:id="@+id/combined_histogram"
                 android:layout_width="fill_parent"
                 android:layout_height="10dp"
                 android:layout_marginTop="10dp"/>
+                -->
 
             <LinearLayout
                 android:layout_width="wrap_content"
