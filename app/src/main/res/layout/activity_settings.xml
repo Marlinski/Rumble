@@ -24,12 +24,151 @@
     android:gravity="top"
     android:background="#c8000000">
 
-    <ListView
-        android:id="@+id/settings_list"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:choiceMode="singleChoice"
-        android:layout_weight="1">
-    </ListView>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp">
 
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_storage_white_36dp"/>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_storage"
+                android:textAppearance="@android:style/TextAppearance.Medium"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="@string/settings_storage_total"/>
+            <TextView
+                android:id="@+id/storage_total_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="11.64 MB"
+                android:textAppearance="@android:style/TextAppearance.Large"/>
+
+            <org.disrupted.rumble.userinterface.views.CombinedHistogram
+                android:id="@+id/combined_histogram"
+                android:layout_width="fill_parent"
+                android:layout_height="10dp"
+                android:layout_marginTop="10dp"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/clear_data"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_clear_data"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:background="#ffffff"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_timelapse_white_36dp"/>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_usage"
+                android:textAppearance="@android:style/TextAppearance.Medium"/>
+
+            <TextView
+                android:id="@+id/app_detail_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textAppearance="@android:style/TextAppearance.Medium"
+                android:text="@string/settings_detail_app"/>
+            <org.disrupted.rumble.userinterface.views.SimpleHistogram
+                android:id="@+id/usage_detail_app"
+                android:layout_width="fill_parent"
+                android:layout_height="10dp"/>
+
+            <TextView
+                android:id="@+id/db_detail_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textAppearance="@android:style/TextAppearance.Medium"
+                android:text="@string/settings_detail_db"/>
+            <org.disrupted.rumble.userinterface.views.SimpleHistogram
+                android:id="@+id/usage_detail_db"
+                android:layout_width="fill_parent"
+                android:layout_height="10dp"/>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:id="@+id/clear_statuses"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_clear_push"/>
+                <Button
+                    android:id="@+id/clear_chat"
+                    android:layout_marginLeft="5dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_clear_chat"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/file_detail_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:textAppearance="@android:style/TextAppearance.Medium"
+                android:text="@string/settings_detail_file"/>
+            <org.disrupted.rumble.userinterface.views.SimpleHistogram
+                android:id="@+id/usage_detail_file"
+                android:layout_width="fill_parent"
+                android:layout_height="10dp"/>
+            <Button
+                android:id="@+id/clear_files"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_clear_files"/>
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

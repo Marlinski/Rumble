@@ -15,7 +15,7 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.userinterface.misc;
+package org.disrupted.rumble.userinterface.views;
 
 import android.content.Context;
 import android.os.Build;

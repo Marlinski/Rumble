@@ -60,6 +60,8 @@ import org.disrupted.rumble.userinterface.events.UserReadStatus;
 import org.disrupted.rumble.userinterface.events.UserSavedStatus;
 import org.disrupted.rumble.userinterface.events.UserSetHashTagInterest;
 import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
+import org.disrupted.rumble.userinterface.events.UserWipeData;
+import org.disrupted.rumble.userinterface.events.UserWipeFiles;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
 import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.NetUtil;
@@ -480,6 +482,20 @@ public class CacheManager {
     }
     public void onEventAsync(UserWipeChatMessages event) {
         DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).wipe();
+    }
+    public void onEventAsync(UserWipeFiles event) {
+        try {
+            File dir = FileUtil.getReadableAlbumStorageDir();
+            File[] files = dir.listFiles();
+            for(int i = 0; i < files.length; i++) {
+                files[i].delete();
+            }
+        }catch(IOException ie){}
+    }
+    public void onEventAsync(UserWipeData event) {
+        this.onEventAsync(new UserWipeStatuses());
+        this.onEventAsync(new UserWipeChatMessages());
+        this.onEventAsync(new UserWipeFiles());
     }
 
     private boolean saveImageOnDisk(String from, String to) {

@@ -48,12 +48,12 @@
             android:text="@string/menu_neighbors_title"
             android:textAppearance="?android:attr/textAppearanceMedium"/>
 
-        <org.disrupted.rumble.userinterface.misc.MultiStateButton
+        <org.disrupted.rumble.userinterface.views.MultiStateButton
             android:id="@+id/bluetooth_controller"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
 
-        <org.disrupted.rumble.userinterface.misc.MultiStateButton
+        <org.disrupted.rumble.userinterface.views.MultiStateButton
             android:id="@+id/wifi_controller"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>

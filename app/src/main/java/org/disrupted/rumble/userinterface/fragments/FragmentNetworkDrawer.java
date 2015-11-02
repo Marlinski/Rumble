@@ -49,7 +49,7 @@ import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.events.NeighborhoodChanged;
-import org.disrupted.rumble.userinterface.misc.MultiStateButton;
+import org.disrupted.rumble.userinterface.views.MultiStateButton;
 
 import java.util.Set;
 

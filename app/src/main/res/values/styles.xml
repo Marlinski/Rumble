@@ -41,6 +41,10 @@
     <color name="status_unread">#ffd2efdc</color>
     <color name="tab_notification">#ff0000</color>
 
+    <color name="app_size">#4349ff</color>
+    <color name="db_size">#ffec80</color>
+    <color name="file_size">#ff6464</color>
+
     <color name="grey_menu">#ff545554</color>
 
     <style name="Drawer.Interfaces.Name" parent="@android:style/TextAppearance">

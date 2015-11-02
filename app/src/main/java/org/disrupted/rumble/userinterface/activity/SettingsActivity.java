@@ -17,39 +17,50 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListView;
+import android.widget.Button;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.userinterface.adapter.IconTextItem;
-import org.disrupted.rumble.userinterface.adapter.IconTextListAdapter;
+import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
+import org.disrupted.rumble.userinterface.events.UserWipeData;
+import org.disrupted.rumble.userinterface.events.UserWipeFiles;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
+import org.disrupted.rumble.userinterface.views.CombinedHistogram;
+import org.disrupted.rumble.userinterface.views.SimpleHistogram;
+import org.disrupted.rumble.util.FileUtil;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
 import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
  */
-public class SettingsActivity extends AppCompatActivity implements ListView.OnItemClickListener {
+public class SettingsActivity extends AppCompatActivity{
 
     private static final String TAG = "Settings";
 
-    private ListView settingsListView;
-    private IconTextListAdapter listAdapter;
-    List<IconTextItem> settingsList;
+    private CombinedHistogram combinedHistogram;
+    private TextView totalData;
+    private SimpleHistogram appSizeHistogram;
+    private SimpleHistogram dbSizeHistogram;
+    private SimpleHistogram fileSizeHistogram;
+    private TextView appDetailText;
+    private TextView dbDetailText;
+    private TextView fileDetailText;
+
 
     @Override
     protected void onDestroy() {
-        settingsList.clear();
         super.onDestroy();
     }
 
@@ -64,31 +75,50 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
-        // memory cleaning actions
-        settingsList = new LinkedList<IconTextItem>();
-        settingsList.add(new IconTextItem(
-                R.drawable.ic_delete_white_24dp,
-                getResources().getString(R.string.settings_action_wipe_status),
-                1));
-        settingsList.add(new IconTextItem(
-                R.drawable.ic_delete_white_24dp,
-                getResources().getString(R.string.settings_action_wipe_chat),
-                2));
-        listAdapter = new IconTextListAdapter(this, settingsList);
-        settingsListView = (ListView) findViewById(R.id.settings_list);
-        settingsListView.setAdapter(listAdapter);
-        settingsListView.setOnItemClickListener(this);
-    }
+        totalData = (TextView)findViewById(R.id.storage_total_value);
 
-    @Override
-    public void onItemClick(AdapterView parent, View view, int position, long id) {
-        switch(settingsList.get(position).getID()) {
-            case 1:
+        appDetailText = (TextView)findViewById(R.id.app_detail_text);
+        combinedHistogram = (CombinedHistogram)findViewById(R.id.combined_histogram);
+        appSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_app);
+
+        dbDetailText = (TextView)findViewById(R.id.db_detail_text);
+        dbSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_db);
+
+        fileDetailText = (TextView)findViewById(R.id.file_detail_text);
+        fileSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_file);
+
+        // memory cleaning buttons
+        Button clearStatus = (Button)findViewById(R.id.clear_statuses);
+        clearStatus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 EventBus.getDefault().post(new UserWipeStatuses());
-            case 2:
+            }
+        });
+        Button clearChat   = (Button)findViewById(R.id.clear_chat);
+        clearChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 EventBus.getDefault().post(new UserWipeChatMessages());
-            default:
-        }
+            }
+        });
+        Button clearFiles   = (Button)findViewById(R.id.clear_files);
+        clearFiles.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EventBus.getDefault().post(new UserWipeFiles());
+            }
+        });
+        Button clearData  = (Button)findViewById(R.id.clear_data);
+        clearData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EventBus.getDefault().post(new UserWipeData());
+            }
+        });
+
+
+        computeDataUsage();
     }
 
     @Override
@@ -105,5 +135,52 @@ public class SettingsActivity extends AppCompatActivity implements ListView.OnIt
     public void onBackPressed() {
         finish();
         overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
+    }
+
+    private void computeDataUsage() {
+        long appSize = 0;
+        try {
+            final PackageManager pm = getPackageManager();
+            ApplicationInfo applicationInfo = pm.getApplicationInfo(getApplicationContext().getPackageName(), 0);
+            File file = new File(applicationInfo.publicSourceDir);
+            appSize = file.length();
+            appDetailText.setText(appDetailText.getText() + " (" + humanReadableByteCount(appSize, false) + ")");
+        } catch(PackageManager.NameNotFoundException e) {}
+
+        File database = getDatabasePath(DatabaseFactory.getDatabaseName());
+        long dbSize = database.length();
+        dbDetailText.setText(dbDetailText.getText()+" ("+humanReadableByteCount(dbSize,false)+")");
+
+        long fileSize = 0;
+        long freespace = 0;
+        try {
+            File dir = FileUtil.getReadableAlbumStorageDir();
+            File files[] = dir.listFiles();
+            for(File file : files) {
+                fileSize += file.length();
+            }
+            freespace = dir.getFreeSpace();
+            fileDetailText.setText(fileDetailText.getText()+" ("+humanReadableByteCount(fileSize,false)+")");
+        } catch(IOException ie) {}
+
+        long total = appSize+dbSize+fileSize;
+        combinedHistogram.setSize(appSize, dbSize, fileSize);
+        totalData.setText(humanReadableByteCount(total, false) + " / " +
+                          humanReadableByteCount(freespace, false));
+
+        appSizeHistogram.setSize(appSize, total);
+        appSizeHistogram.setColor(R.color.app_size);
+        dbSizeHistogram.setSize(dbSize, total);
+        dbSizeHistogram.setColor(R.color.db_size);
+        fileSizeHistogram.setSize(fileSize, total);
+        fileSizeHistogram.setColor(R.color.file_size);
+    }
+
+    public static String humanReadableByteCount(long bytes, boolean si) {
+        int unit = si ? 1000 : 1024;
+        if (bytes < unit) return bytes + " B";
+        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 }

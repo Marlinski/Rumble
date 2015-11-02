@@ -60,6 +60,10 @@ public class DatabaseFactory {
         }
     }
 
+    public static String getDatabaseName() {
+        return DATABASE_NAME;
+    }
+
     public static PushStatusDatabase getPushStatusDatabase(Context context) {
             return getInstance(context).pushStatusDatabase;
     }

@@ -104,6 +104,16 @@
     <string name="settings_title">Settings</string>
     <string name="settings_action_wipe_status">Clear status from database</string>
     <string name="settings_action_wipe_chat">Clear chat messages from database</string>
+    <string name="settings_storage">Storage</string>
+    <string name="settings_usage">Data usage</string>
+    <string name="settings_storage_total">TOTAL</string>
+    <string name="settings_clear_data">CLEAR DATA</string>
+    <string name="settings_clear_push">Clear Statuses</string>
+    <string name="settings_clear_chat">Clear Chat</string>
+    <string name="settings_clear_files">Clear Files</string>
+    <string name="settings_detail_app">Application size</string>
+    <string name="settings_detail_db">Database size</string>
+    <string name="settings_detail_file">File total size</string>
 
     <string name="status_created">created: </string>
     <string name="status_received">received: </string>
