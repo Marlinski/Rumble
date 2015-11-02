@@ -17,10 +17,12 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
+import android.content.DialogInterface;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
@@ -76,9 +78,9 @@ public class SettingsActivity extends AppCompatActivity{
         actionBar.setDisplayShowHomeEnabled(false);
 
         totalData = (TextView)findViewById(R.id.storage_total_value);
+        //combinedHistogram = (CombinedHistogram)findViewById(R.id.combined_histogram);
 
         appDetailText = (TextView)findViewById(R.id.app_detail_text);
-        combinedHistogram = (CombinedHistogram)findViewById(R.id.combined_histogram);
         appSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_app);
 
         dbDetailText = (TextView)findViewById(R.id.db_detail_text);
@@ -92,31 +94,73 @@ public class SettingsActivity extends AppCompatActivity{
         clearStatus.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EventBus.getDefault().post(new UserWipeStatuses());
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            EventBus.getDefault().post(new UserWipeStatuses());
+                        }
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
             }
         });
+
         Button clearChat   = (Button)findViewById(R.id.clear_chat);
         clearChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EventBus.getDefault().post(new UserWipeChatMessages());
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            EventBus.getDefault().post(new UserWipeChatMessages());
+                        }
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
             }
         });
+
         Button clearFiles   = (Button)findViewById(R.id.clear_files);
         clearFiles.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EventBus.getDefault().post(new UserWipeFiles());
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            EventBus.getDefault().post(new UserWipeFiles());
+                        }
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
             }
         });
+
         Button clearData  = (Button)findViewById(R.id.clear_data);
         clearData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                EventBus.getDefault().post(new UserWipeData());
+                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == DialogInterface.BUTTON_POSITIVE) {
+                            EventBus.getDefault().post(new UserWipeData());
+                        }
+                    }
+                };
+                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
+                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
             }
         });
-
 
         computeDataUsage();
     }
@@ -164,7 +208,7 @@ public class SettingsActivity extends AppCompatActivity{
         } catch(IOException ie) {}
 
         long total = appSize+dbSize+fileSize;
-        combinedHistogram.setSize(appSize, dbSize, fileSize);
+        //combinedHistogram.setSize(appSize, dbSize, fileSize);
         totalData.setText(humanReadableByteCount(total, false) + " / " +
                           humanReadableByteCount(freespace, false));
 

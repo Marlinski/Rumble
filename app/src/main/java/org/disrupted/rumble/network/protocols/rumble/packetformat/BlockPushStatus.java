@@ -268,7 +268,6 @@ public class BlockPushStatus extends Block{
                             header.getBlockLength(),
                             timeToTransfer)
             );
-            status.discard();
 
             return header.getBlockLength();
         } catch (BufferUnderflowException exception) {

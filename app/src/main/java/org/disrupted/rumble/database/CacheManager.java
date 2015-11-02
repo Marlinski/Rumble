@@ -220,6 +220,8 @@ public class CacheManager {
                 } catch (IOException ignore) {
                 }
             }
+            if(event.status != null)
+                event.status.discard();
         }
     }
     public void onEventAsync(ContactInformationReceived event) {
@@ -431,6 +433,8 @@ public class CacheManager {
                 } catch (IOException ignore) {
                 }
             }
+            if(event.status != null)
+                event.status.discard();
         }
     }
     public void onEventAsync(UserCreateGroup event) {
@@ -470,8 +474,7 @@ public class CacheManager {
             return;
         ChatMessage chatMessage = new ChatMessage(event.chatMessage);
         if (DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).insertMessage(chatMessage) > 0)
-            ;
-        EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
+            EventBus.getDefault().post(new ChatMessageInsertedEvent(chatMessage));
     }
     public void onEventAsync(UserReadChatMessage event) {
         if(event.chatMessage == null)

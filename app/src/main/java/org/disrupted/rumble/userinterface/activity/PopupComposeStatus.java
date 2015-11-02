@@ -277,7 +277,6 @@ public class PopupComposeStatus extends Activity {
                 }
 
                 EventBus.getDefault().post(new UserComposeStatus(pushStatus,pictureTaken));
-                pushStatus.discard();
             } catch (Exception e) {
                 Log.e(TAG,"[!] "+e.getMessage());
             } finally {

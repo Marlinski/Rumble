@@ -147,7 +147,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         // now get the latest status
         loadingMore = false;
         noMoreStatusToLoad = false;
-        refreshStatuses(-1,-1);
+        refreshStatuses();
 
         EventBus.getDefault().register(this);
 
@@ -175,10 +175,13 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     @Override
     public void onRefresh() {
         swipeLayout.setRefreshing(true);
-        refreshStatuses(-1,-1);
+        refreshStatuses();
     }
 
-    public void refreshStatuses(long before_toa, long after_toa) {
+    private void refreshStatuses() {
+        refreshStatuses(-1,-1);
+    }
+    private void refreshStatuses(long before_toa, long after_toa) {
         if(loadingMore)
             return;
         loadingMore = true;
@@ -295,14 +298,14 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         filterListAdapter.deleteFilter(filter);
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.GONE);
-        refreshStatuses(-1,-1);
+        refreshStatuses();
     }
     public void addFilter(String filter) {
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
 
         if(filterListAdapter.addFilter(filter)) {
-            refreshStatuses(-1,-1);
+            refreshStatuses();
         }
     }
 
@@ -310,10 +313,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
      * Status Events
      */
     public void onEvent(GroupDeletedEvent event) {
-        refreshStatuses(-1,-1);
+        refreshStatuses();
     }
     public void onEvent(StatusWipedEvent event) {
-        refreshStatuses(-1,-1);
+        refreshStatuses();
     }
     public void onEvent(UserComposeStatus event) {
         final PushStatus message = event.status;
@@ -349,7 +352,12 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     }
     public void onEvent(ContactTagInterestUpdatedEvent event) {
         if(event.contact.isLocal()) {
-            filterListAdapter.notifyDataSetChanged();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    filterListAdapter.notifyDataSetChanged();
+                }
+            });
         }
     }
 }
