@@ -83,6 +83,7 @@ public class PopupComposeStatus extends Activity {
     private Spinner spinner;
     private GroupSpinnerAdapter spinnerArrayAdapter;
     private String  filter_gid = null;
+    private String  filter_hashtag = null;
 
     private String pictureTaken;
     private Uri pictureChosen;
@@ -93,8 +94,10 @@ public class PopupComposeStatus extends Activity {
         setContentView(R.layout.activity_popup_compose_status);
 
         Bundle args = getIntent().getExtras();
-        if(args != null)
+        if(args != null) {
             this.filter_gid = args.getString("GroupID");
+            this.filter_hashtag = args.getString("Hashtag");
+        }
 
         imageBitmap = null;
         dismiss = (LinearLayout)(findViewById(R.id.popup_dismiss));
@@ -115,6 +118,10 @@ public class PopupComposeStatus extends Activity {
             getGroupList();
         } else {
             spinner.setVisibility(View.INVISIBLE);
+        }
+
+        if(filter_hashtag != null) {
+            compose.setText(filter_hashtag);
         }
 
         dismiss.setOnClickListener(onDiscardClick);
@@ -276,7 +283,7 @@ public class PopupComposeStatus extends Activity {
                     pictureTaken = chosenFile.getName();
                 }
 
-                EventBus.getDefault().post(new UserComposeStatus(pushStatus,pictureTaken));
+                EventBus.getDefault().post(new UserComposeStatus(pushStatus, pictureTaken));
             } catch (Exception e) {
                 Log.e(TAG,"[!] "+e.getMessage());
             } finally {

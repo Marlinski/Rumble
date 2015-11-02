@@ -57,7 +57,7 @@ public class HashtagDatabase extends  Database{
         super(context, databaseHelper);
     }
 
-    private boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
+    public boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
                     @Override

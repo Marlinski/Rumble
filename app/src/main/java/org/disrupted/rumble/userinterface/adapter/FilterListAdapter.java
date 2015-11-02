@@ -166,5 +166,4 @@ public class FilterListAdapter extends BaseAdapter {
         return filters;
     }
 
-
 }

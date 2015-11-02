@@ -41,6 +41,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.userinterface.activity.ContactListActivity;
 import org.disrupted.rumble.userinterface.activity.GroupListActivity;
+import org.disrupted.rumble.userinterface.activity.HashtagListActivity;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.userinterface.activity.SettingsActivity;
 import org.disrupted.rumble.userinterface.adapter.IconTextItem;
@@ -96,8 +97,9 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
         firstList = new LinkedList<IconTextItem>();
         firstList.add(new IconTextItem(R.drawable.ic_group_white_24dp, res.getString(R.string.navigation_drawer_group), 1));
         firstList.add(new IconTextItem(R.drawable.ic_person_white_24dp, res.getString(R.string.navigation_drawer_contacts), 2));
-        firstList.add(new IconTextItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 3));
-        firstList.add(new IconTextItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 4));
+        firstList.add(new IconTextItem(R.drawable.ic_hashtag, res.getString(R.string.navigation_drawer_hashtag), 3));
+        firstList.add(new IconTextItem(R.drawable.ic_settings_applications_white_24dp, res.getString(R.string.navigation_drawer_settings), 4));
+        firstList.add(new IconTextItem(R.drawable.ic_close_white_24dp, res.getString(R.string.navigation_drawer_exit), 5));
 
         mFirstListAdapter = new IconTextListAdapter(getActivity(), firstList);
         mFirstListView.setAdapter(mFirstListAdapter);
@@ -131,11 +133,16 @@ public class FragmentNavigationDrawer extends Fragment implements ListView.OnIte
                 getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
             case 3:
+                Intent hashtagActivity = new Intent(getActivity(), HashtagListActivity.class );
+                startActivity(hashtagActivity);
+                getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+                break;
+            case 4:
                 Intent settings = new Intent(getActivity(), SettingsActivity.class );
                 startActivity(settings);
                 getActivity().overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
                 break;
-            case 4:
+            case 5:
                 Intent stopIntent = new Intent(getActivity(), NetworkCoordinator.class);
                 getActivity().stopService(stopIntent);
                 getActivity().finish();

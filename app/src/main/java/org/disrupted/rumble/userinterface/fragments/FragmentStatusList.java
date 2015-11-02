@@ -73,6 +73,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
 
     private String   filter_gid = null;
     private String   filter_uid = null;
+    private String   filter_hashtag = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -87,6 +88,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         if(args != null) {
             this.filter_gid = args.getString("GroupID");
             this.filter_uid = args.getString("ContactID");
+            this.filter_hashtag = args.getString("Hashtag");
             this.noCoordinatorLayout = args.getBoolean("noCoordinatorLayout");
         }
 
@@ -168,6 +170,8 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             Intent compose = new Intent(getActivity(), PopupComposeStatus.class );
             if(filter_gid != null)
                 compose.putExtra("GroupID",filter_gid);
+            if(filter_hashtag != null)
+                compose.putExtra("Hashtag",filter_hashtag);
             startActivity(compose);
         }
     };
@@ -208,9 +212,11 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_AUTHOR;
             options.uid = filter_uid;
         }
-        if (filterListAdapter.getCount() != 0) {
+        if ((filterListAdapter.getCount() != 0) || (filter_hashtag != null)) {
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_TAG;
             options.hashtagFilters = filterListAdapter.getFilterList();
+            if(filter_hashtag != null)
+                options.hashtagFilters.add(filter_hashtag);
         }
         if(before_toa <= 0) {
             DatabaseFactory.getPushStatusDatabase(getActivity())
@@ -301,9 +307,10 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         refreshStatuses();
     }
     public void addFilter(String filter) {
+        if((filter_hashtag != null) && (filter_hashtag.toLowerCase().equals(filter.toLowerCase())))
+            return;
         if(filterListAdapter.getCount() == 0)
             filters.setVisibility(View.VISIBLE);
-
         if(filterListAdapter.addFilter(filter)) {
             refreshStatuses();
         }

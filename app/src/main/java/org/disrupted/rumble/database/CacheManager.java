@@ -425,6 +425,13 @@ public class CacheManager {
             }
             PushStatus status = new PushStatus(event.status);
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).insertStatus(status);
+
+            // we subscribe the user to every hashtag he used in his message
+            if(status.getHashtagSet().size() > 0) {
+                for(String hashtag : status.getHashtagSet()) {
+                    onEventAsync(new UserSetHashTagInterest(hashtag,255));
+                }
+            }
         } finally {
             if (!event.tempfile.equals("")) {
                 try {
