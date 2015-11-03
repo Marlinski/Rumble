@@ -50,8 +50,6 @@ public class RumbleApplication extends Application{
     // name of the Rumble Image directory as it appears on Photo Album
     public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
 
-    private static String RUMBLE_AUTHOR_NAME = "Marlinski (http://disruptedsystems.org)";
-
     public  static boolean LOG_EVENT = true;
     private static EventLogger logger;
 
@@ -81,22 +79,6 @@ public class RumbleApplication extends Application{
 
     public void onEvent(ContactInsertedEvent event) {
         if(event.contact.isLocal()) {
-            Contact marlinski = new Contact(RUMBLE_AUTHOR_NAME, "/Marlinski/=", false);
-            Group publicGroup = new Group(Group.DEFAULT_PUBLIC_GROUP, HashUtil.computeGroupUid(Group.DEFAULT_PUBLIC_GROUP,false),null);
-
-            long time = System.nanoTime();
-            PushStatus message1 = new PushStatus(marlinski, publicGroup,getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message1);
-            time = System.nanoTime();
-            PushStatus message2 = new PushStatus(marlinski, publicGroup,getResources().getString(R.string.swipe_left),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message2);
-            time = System.nanoTime();
-            PushStatus message3 = new PushStatus(marlinski, publicGroup,getResources().getString(R.string.swipe_right),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message3);
-            PushStatus message4 = new PushStatus(marlinski, publicGroup,getResources().getString(R.string.swipe_down),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message4);
-
-
             Intent startIntent = new Intent(this, NetworkCoordinator.class);
             startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
             startService(startIntent);

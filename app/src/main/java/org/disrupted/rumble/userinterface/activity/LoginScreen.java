@@ -33,9 +33,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
+import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.util.HashUtil;
 
 /**
  * @author Marlinski
@@ -43,6 +46,7 @@ import org.disrupted.rumble.database.objects.Group;
 public class LoginScreen extends Activity implements View.OnClickListener{
 
     private static final String TAG = "LoginScreen";
+    private static String RUMBLE_AUTHOR_NAME = "Marlinski (http://disruptedsystems.org)";
 
     private Button loginButton;
     private EditText username;
@@ -70,17 +74,37 @@ public class LoginScreen extends Activity implements View.OnClickListener{
     public void onClick(View view) {
         String username = this.username.getText().toString();
         if(!username.equals("")) {
-            // create user
-            Contact localContact = Contact.createLocalContact(username);
-            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact);
-
             // create default public group
             Group defaultPublicGroup = Group.getDefaultGroup();
             DatabaseFactory.getGroupDatabase(this).insertGroup(defaultPublicGroup);
 
-            // user join default group
-            long contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(localContact.getUid());
+            // create Marlinski user
+            Contact marlinski = new Contact(RUMBLE_AUTHOR_NAME, "/Marlinski/=", false);
+            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(marlinski);
+            long contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(marlinski.getUid());
             long groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
+            DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID, groupDBID);
+
+            // add few helping messages
+            long time = System.nanoTime();
+            PushStatus message1 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message1);
+            time = System.nanoTime();
+            PushStatus message2 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_left),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message2);
+            time = System.nanoTime();
+            PushStatus message3 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_right),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message3);
+            PushStatus message4 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_down),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message4);
+
+            // create user
+            Contact localContact = Contact.createLocalContact(username);
+            DatabaseFactory.getContactDatabase(this).insertOrUpdateContact(localContact);
+
+            // user join default group
+            contactDBID = DatabaseFactory.getContactDatabase(this).getContactDBID(localContact.getUid());
+            groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
             DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID);
 
             // do not show loginscreen next time
