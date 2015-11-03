@@ -86,17 +86,21 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID, groupDBID);
 
             // add few helping messages
-            long time = System.nanoTime();
-            PushStatus message1 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message1);
-            time = System.nanoTime();
+            long time = System.currentTimeMillis();
             PushStatus message2 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_left),time,marlinski.getUid());
             DatabaseFactory.getPushStatusDatabase(this).insertStatus(message2);
-            time = System.nanoTime();
+
+            time = System.currentTimeMillis();
             PushStatus message3 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_right),time,marlinski.getUid());
             DatabaseFactory.getPushStatusDatabase(this).insertStatus(message3);
+
+            time = System.currentTimeMillis();
             PushStatus message4 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_down),time,marlinski.getUid());
             DatabaseFactory.getPushStatusDatabase(this).insertStatus(message4);
+
+            time = System.currentTimeMillis();
+            PushStatus message1 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message1);
 
             // create user
             Contact localContact = Contact.createLocalContact(username);
