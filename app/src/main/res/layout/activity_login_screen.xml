@@ -22,24 +22,38 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/login_screen"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:background="#39a6e6"
     android:layout_gravity="center_horizontal"
     android:gravity="center_horizontal|center_vertical"
     tools:context=".LoginScreen">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:src="@drawable/title_without_shadow"/>
 
         <EditText
             android:id="@+id/login_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:minWidth="200dp"
+            android:textAppearance="@android:style/TextAppearance.Medium"
             android:hint="username" />
+
 
         <Button
             android:id="@+id/login_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
             android:text="@string/login"/>
 
 </LinearLayout>

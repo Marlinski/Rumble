@@ -139,5 +139,6 @@
     <string name="welcome_notice">I there! Welcome to the Rumble network, where speech is free and uncensored!</string>
     <string name="warning_notice">All messages submitted to the network are meant to be public so better take a pseudonym!</string>
     <string name="login">Log in!</string>
+    <string name="login_username">Username</string>
 
 </resources>
