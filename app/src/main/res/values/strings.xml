@@ -137,11 +137,11 @@
     <string name="toast_subscribed_to">Subscribed to</string>
 
 
-    <string name="welcome_notice">Hi there, Welcome to the Rumble network, where the infrastructure is carried by the hand of the users! every message here will be forwarded to devices around you</string>
+    <string name="welcome_notice">Hi there, Welcome to the Rumble network, where the infrastructure is carried by the hand of the users! Every message here will be forwarded to devices around you</string>
     <string name="swipe_left">&lt;&lt;&lt;--- Navigation drawer is accessible on the left pane, swipe to discover</string>
     <string name="swipe_right">Network drawer is accessible on the right pane, swipe to discover ---&gt;&gt;&gt;</string>
     <string name="swipe_down">Whenever you receive new message, you can refresh the list by swiping down</string>
-    <string name="chat_message_tuto">Here is the chat window to send and receive real time message with the people around you. Those messages aren't forwarded any further. Open the network drawer to see if there is people around you and start chatting with them.</string>
+    <string name="chat_message_tuto">Here is the chat window to send and receive real time message with the people around you. Those messages aren\'t forwarded any further. Open the network drawer to see if there is people around you and start chatting with them.</string>
     <string name="login">Log in!</string>
     <string name="login_username">Username</string>
 
