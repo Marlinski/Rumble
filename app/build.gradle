@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.1"
     defaultConfig {
         applicationId 'org.disrupted.rumble'
-        minSdkVersion 10
+        minSdkVersion 11
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
@@ -49,6 +49,7 @@ dependencies {
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.google.zxing:core:3.2.0'
     compile 'com.embarkmobile:zxing-android-minimal:1.2.1@aar'
+    compile 'com.github.amlcurran.showcaseview:library:5.0.0'
     /*
             // barcode scanner libraries
             // Supports Android 4.0.3 and later (API level 15)

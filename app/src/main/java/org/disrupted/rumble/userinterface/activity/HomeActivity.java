@@ -34,6 +34,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.github.amlcurran.showcaseview.ShowcaseView;
+import com.github.amlcurran.showcaseview.targets.ActionViewTarget;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.R;
@@ -124,6 +126,7 @@ public class HomeActivity extends AppCompatActivity {
         refreshStatusNotifications();
         refreshChatNotifications();
         EventBus.getDefault().register(this);
+
     }
 
     @Override
