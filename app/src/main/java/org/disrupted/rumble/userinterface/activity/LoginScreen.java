@@ -35,9 +35,11 @@ import android.widget.LinearLayout;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.util.HashUtil;
 
 /**
@@ -87,20 +89,24 @@ public class LoginScreen extends Activity implements View.OnClickListener{
 
             // add few helping messages
             long time = System.currentTimeMillis();
-            PushStatus message2 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_left),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message2);
-
-            time = System.currentTimeMillis();
-            PushStatus message3 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_right),time,marlinski.getUid());
-            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message3);
-
-            time = System.currentTimeMillis();
-            PushStatus message4 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.swipe_down),time,marlinski.getUid());
+            PushStatus message4 = new PushStatus(marlinski, defaultPublicGroup, getResources().getString(R.string.swipe_down),time,marlinski.getUid());
             DatabaseFactory.getPushStatusDatabase(this).insertStatus(message4);
 
             time = System.currentTimeMillis();
-            PushStatus message1 = new PushStatus(marlinski, defaultPublicGroup,getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
+            PushStatus message3 = new PushStatus(marlinski, defaultPublicGroup, getResources().getString(R.string.swipe_right),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message3);
+
+            time = System.currentTimeMillis();
+            PushStatus message2 = new PushStatus(marlinski, defaultPublicGroup, getResources().getString(R.string.swipe_left),time,marlinski.getUid());
+            DatabaseFactory.getPushStatusDatabase(this).insertStatus(message2);
+
+            time = System.currentTimeMillis();
+            PushStatus message1 = new PushStatus(marlinski, defaultPublicGroup, getResources().getString(R.string.welcome_notice),time,marlinski.getUid());
             DatabaseFactory.getPushStatusDatabase(this).insertStatus(message1);
+
+            time = System.currentTimeMillis();
+            ChatMessage message5 = new ChatMessage(marlinski, getResources().getString(R.string.chat_message_tuto), time, time, RumbleProtocol.protocolID);
+            DatabaseFactory.getChatMessageDatabase(this).insertMessage(message5);
 
             // create user
             Contact localContact = Contact.createLocalContact(username);
