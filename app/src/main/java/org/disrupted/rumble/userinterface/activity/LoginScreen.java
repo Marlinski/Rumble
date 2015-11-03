@@ -22,13 +22,15 @@ package org.disrupted.rumble.userinterface.activity;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -43,7 +45,8 @@ public class LoginScreen extends Activity implements View.OnClickListener{
     private static final String TAG = "LoginScreen";
 
     private Button loginButton;
-    private TextView usernameView;
+    private EditText username;
+    private LinearLayout loginScreen;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +55,10 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_login_screen);
 
-        usernameView = (TextView) this.findViewById(R.id.login_username);
-        loginButton = (Button) this.findViewById(R.id.login_button);
+        loginScreen  = (LinearLayout)this.findViewById(R.id.login_screen);
+        username = (EditText) this.findViewById(R.id.login_username);
+        loginButton  = (Button) this.findViewById(R.id.login_button);
         loginButton.setOnClickListener(this);
-
     }
 
     @Override
@@ -65,7 +68,7 @@ public class LoginScreen extends Activity implements View.OnClickListener{
 
     @Override
     public void onClick(View view) {
-        String username = usernameView.getText().toString();
+        String username = this.username.getText().toString();
         if(!username.equals("")) {
             // create user
             Contact localContact = Contact.createLocalContact(username);
