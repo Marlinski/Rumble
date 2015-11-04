@@ -159,7 +159,7 @@ public class StatisticManager {
     }
 
     public void onEventAsync(ConnectedToAP event) {
-        if(SharedPreferenceUtil.isTimeToSync()) {
+        if(SharedPreferenceUtil.UserOkWithSharingAnonymousData() && SharedPreferenceUtil.isTimeToSync()) {
             if(!NetUtil.isURLReachable("http://disruptedsystems.org/"))
                 return;
 

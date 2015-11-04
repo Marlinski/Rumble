@@ -20,7 +20,6 @@ package org.disrupted.rumble.util;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 
 /**
@@ -28,8 +27,15 @@ import org.disrupted.rumble.app.RumbleApplication;
  */
 public class SharedPreferenceUtil {
 
+    public static final String OK_SYNC   = "ok_sync";
     public static final String LAST_SYNC = "last_sync";
     private static final int   SYNC_EVERY_DAY = 3600*24*1000;
+
+    public static boolean UserOkWithSharingAnonymousData() {
+        SharedPreferences prefs = PreferenceManager
+                .getDefaultSharedPreferences(RumbleApplication.getContext());
+        return prefs.getBoolean(OK_SYNC, true);
+    }
 
     public static boolean isTimeToSync() {
         SharedPreferences prefs = PreferenceManager
@@ -37,5 +43,4 @@ public class SharedPreferenceUtil {
         long last = prefs.getLong(LAST_SYNC,0);
         return ((System.currentTimeMillis() - last) > SYNC_EVERY_DAY);
     }
-
 }
