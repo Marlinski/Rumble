@@ -33,8 +33,22 @@ import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.util.HashUtil;
 import org.disrupted.rumble.util.NetUtil;
 import org.disrupted.rumble.util.SharedPreferenceUtil;
+import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Random;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 
 import de.greenrobot.event.EventBus;
 
@@ -118,7 +132,7 @@ public class StatisticManager {
         }
         // then the statistic
         DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
-                .insertReachability(rowId, event.unreachable_time_nano, false, event.unreachable_time_nano-event.reachable_time_nano);
+                .insertReachability(rowId, event.unreachable_time_nano, false, event.unreachable_time_nano - event.reachable_time_nano);
     }
     public void onEvent(ChannelDisconnected event) {
         String mac;
@@ -146,8 +160,39 @@ public class StatisticManager {
 
     public void onEventAsync(ConnectedToAP event) {
         if(SharedPreferenceUtil.isTimeToSync()) {
-            if(!NetUtil.isURLReachable("http://stats.disruptedsystems.org/"))
+            if(!NetUtil.isURLReachable("http://disruptedsystems.org/"))
                 return;
+
+            try {
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                InputStream caInput = new BufferedInputStream(RumbleApplication.getContext()
+                        .getAssets().open("certs/disruptedsystemsCA.pem"));
+                Certificate ca = cf.generateCertificate(caInput);
+
+                String keyStoreType = KeyStore.getDefaultType();
+                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
+                keyStore.load(null, null);
+                keyStore.setCertificateEntry("ca", ca);
+
+                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+                tmf.init(keyStore);
+
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, tmf.getTrustManagers(), null);
+
+                URL url = new URL("https://data.disruptedsystems.org");
+                HttpsURLConnection urlConnection = (HttpsURLConnection)url.openConnection();
+                urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+                urlConnection.setConnectTimeout(10 * 1000);
+                urlConnection.connect();
+                if (urlConnection.getResponseCode() != 200)
+                    throw new IOException("website down");
+            } catch (Exception ex)
+            {
+                //Log.e(TAG, "Failed to establish SSL connection to server: " + ex.toString());
+            }
         }
     }
 
