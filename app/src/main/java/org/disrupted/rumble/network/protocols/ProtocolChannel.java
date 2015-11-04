@@ -49,13 +49,34 @@ public abstract class ProtocolChannel implements Worker {
     protected Protocol protocol;
     protected LinkLayerConnection con;
     protected Thread processingCommandFromQueue;
-
     protected boolean error;
+
+    // statistics
+    public long connection_start_time;
+    public long connection_end_time;
+    public long bytes_received;
+    public long in_transmission_time;
+    public long bytes_sent;
+    public long out_transmission_time;
+    public int  status_sent;
+    public int  status_received;
 
     public ProtocolChannel(Protocol protocol, LinkLayerConnection con) {
         this.protocol = protocol;
         this.con = con;
         this.error = false;
+
+        // initialising statistics
+        this.connection_start_time = System.nanoTime();
+        this.connection_end_time = System.nanoTime();
+        this.bytes_received = 0;
+        this.bytes_sent = 0;
+        this.status_received = 0;
+        this.status_sent = 0;
+        this.in_transmission_time = 0;
+        this.out_transmission_time = 0;
+
+        // starting network receiving thread + command thread
         commandQueue = new LinkedBlockingQueue<Command>();
         this.processingCommandFromQueue = new Thread("CommandThread for "+con.getConnectionID()) {
             @Override
@@ -109,11 +130,13 @@ public abstract class ProtocolChannel implements Worker {
      * - execute is public method to be called by upper layer
      */
     protected final void onChannelConnected() {
+        connection_start_time = System.nanoTime();
         processingCommandFromQueue.start();
         try {
             processingPacketFromNetwork();
         }finally {
             processingCommandFromQueue.interrupt();
+            connection_end_time = System.nanoTime();
         }
     }
 

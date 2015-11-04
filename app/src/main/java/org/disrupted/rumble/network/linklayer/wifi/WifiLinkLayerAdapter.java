@@ -32,6 +32,7 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.network.events.ConnectedToAP;
 import org.disrupted.rumble.network.linklayer.events.AccessPointDisabled;
 import org.disrupted.rumble.network.linklayer.events.AccessPointEnabled;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
@@ -58,8 +59,9 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
     private WifiManager wifiMan;
     private WifiInfo wifiInf;
 
-    public boolean register;
-    public boolean activated;
+    private long started_time_nano;
+    private boolean register;
+    private boolean activated;
 
     public enum WIFIMODE {
         WIFIMANAGED, WIFIAP
@@ -99,6 +101,7 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
             return;
         register = true;
         Log.d(TAG, "[+] Starting Wifi");
+
         wifiMan = (WifiManager) RumbleApplication.getContext().getSystemService(Context.WIFI_SERVICE);
         wifiInf = wifiMan.getConnectionInfo();
         macAddress = wifiInf.getMacAddress();
@@ -140,7 +143,7 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
             return;
         activated = true;
         Log.d(TAG, "[+] Wifi Activated");
-
+        started_time_nano = System.nanoTime();
         EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
     }
 
@@ -150,7 +153,8 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
         activated = false;
 
         Log.d(TAG, "[-] Wifi De-activated");
-        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
+        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier(),
+                started_time_nano, System.nanoTime()));
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -167,6 +171,7 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
                         if(activated)
                             return;
                         Log.d(TAG, "[+] connected to a wifi access point");
+                        EventBus.getDefault().post(new ConnectedToAP());
                         linkConnected();
                     }
                 }

@@ -18,6 +18,8 @@
 package org.disrupted.rumble.util;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.util.Log;
 
@@ -26,9 +28,12 @@ import org.disrupted.rumble.app.RumbleApplication;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URL;
 import java.util.Enumeration;
 
 /**
@@ -107,5 +112,29 @@ public class NetUtil {
         WifiManager wifiManager = (WifiManager) RumbleApplication.getContext()
                 .getSystemService(Context.WIFI_SERVICE);
         return wifiManager.getConnectionInfo().getRssi();
+    }
+
+    public static boolean isURLReachable(String server) {
+        ConnectivityManager cm = (ConnectivityManager) RumbleApplication.getContext()
+                .getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        if (netInfo != null && netInfo.isConnected()) {
+            try {
+                URL url = new URL(server);
+                HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                urlc.setConnectTimeout(10 * 1000);
+                urlc.connect();
+                if (urlc.getResponseCode() == 200) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (MalformedURLException e1) {
+                return false;
+            } catch (IOException e) {
+                return false;
+            }
+        }
+        return false;
     }
 }

@@ -31,9 +31,13 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 public class NeighbourUnreachable extends NetworkEvent {
 
     public final LinkLayerNeighbour neighbour;
+    public final long reachable_time_nano;
+    public final long unreachable_time_nano;
 
-    public NeighbourUnreachable(LinkLayerNeighbour neighbour) {
+    public NeighbourUnreachable(LinkLayerNeighbour neighbour, long in, long out) {
         this.neighbour = neighbour;
+        this.reachable_time_nano = in;
+        this.unreachable_time_nano = out;
     }
 
     @Override

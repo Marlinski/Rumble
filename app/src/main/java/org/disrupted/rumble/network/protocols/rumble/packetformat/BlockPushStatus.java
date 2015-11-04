@@ -253,12 +253,17 @@ public class BlockPushStatus extends Block{
                     BlockFile block = new BlockFile(header);
                     block.readBlock(channel);
                     tempfile = block.filename;
+                    channel.bytes_received += header.getBlockLength();
                 } catch (MalformedBlockHeader e) {
                     throw new MalformedBlockPayload("FileBlock Header expected", readleft);
                 }
             }
 
             timeToTransfer = (System.nanoTime() - timeToTransfer);
+            channel.status_received++;
+            channel.bytes_received += header.getBlockLength();
+            channel.in_transmission_time += timeToTransfer;
+
             EventBus.getDefault().post(new PushStatusReceived(
                             status,
                             sender_id_base64,
@@ -313,7 +318,7 @@ public class BlockPushStatus extends Block{
         blockBuffer.put((byte)author_name.length);
         blockBuffer.put(author_name, 0, author_name.length);
         blockBuffer.put(group_id, 0, FIELD_GID_SIZE);
-        blockBuffer.put((byte)group_name.length);
+        blockBuffer.put((byte) group_name.length);
         blockBuffer.put(group_name, 0, group_name.length);
         blockBuffer.putShort((short) post.length);
         blockBuffer.put(post, 0, post.length);
@@ -329,10 +334,16 @@ public class BlockPushStatus extends Block{
         /* send the header, the status and the attached file */
         header.writeBlock(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(),0,length);
-        if(blockFile != null)
+        if(blockFile != null) {
             blockFile.writeBlock(channel);
+            channel.bytes_sent += blockFile.header.getBlockLength();
+        }
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
+        channel.status_sent++;
+        channel.bytes_sent+=header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
+        channel.out_transmission_time += timeToTransfer;
+
         EventBus.getDefault().post(new PushStatusSent(
                         status,
                         recipientList,

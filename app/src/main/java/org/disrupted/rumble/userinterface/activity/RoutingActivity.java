@@ -27,6 +27,7 @@ import android.preference.PreferenceManager;
 import android.view.Window;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.database.DatabaseFactory;
 
 /**
  * @author Marlinski
@@ -41,15 +42,13 @@ public class RoutingActivity extends Activity {
 
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        boolean previouslyStarted = prefs.getBoolean(getString(R.string.pref_previously_started), false);
-        if(!previouslyStarted) {
-            Intent loginScreen = new Intent(this, LoginScreen.class );
-            startActivity(loginScreen);
-            finish();
-        }else{
+        if(DatabaseFactory.getContactDatabase(this).getLocalContact() != null) {
             Intent homeActivity = new Intent(this, HomeActivity.class );
             startActivity(homeActivity);
+            finish();
+        } else {
+            Intent loginScreen = new Intent(this, LoginScreen.class );
+            startActivity(loginScreen);
             finish();
         }
     }

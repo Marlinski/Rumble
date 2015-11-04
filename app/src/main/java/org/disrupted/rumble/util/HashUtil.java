@@ -28,6 +28,7 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Random;
 
 /**
  * @author Marlinski
@@ -106,11 +107,22 @@ public class HashUtil {
     {
         try
         {
-            byte[] data = Base64.decode(str,Base64.NO_WRAP);
+            byte[] data = Base64.decode(str, Base64.NO_WRAP);
             return true;
         } catch(Exception e)
         {
             return false;
         }
+    }
+
+    public static String generateRandomSuffix(int size) {
+        char[] chars = "ABCDEF012GHIJKL345MNOPQR678STUVWXYZ9".toCharArray();
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < size; i++) {
+            char c1 = chars[random.nextInt(chars.length)];
+            sb.append(c1);
+        }
+        return sb.toString();
     }
 }

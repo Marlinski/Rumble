@@ -69,7 +69,17 @@ public class NeighbourManager {
 
     private final Object managerLock = new Object();
 
-    private  Map<LinkLayerNeighbour, Set<ProtocolChannel>> neighborhood;
+    private class NeighbourDetail {
+        public long reachable_time_nano;
+        public Set<ProtocolChannel> channels;
+
+        public NeighbourDetail() {
+            this.reachable_time_nano = System.nanoTime();
+            this.channels = new HashSet<ProtocolChannel>();
+        }
+    }
+
+    private  Map<LinkLayerNeighbour, NeighbourDetail> neighborhood;
     private  Map<Contact, Set<ProtocolChannel>>   contacts;
 
     public NeighbourManager() {
@@ -96,9 +106,9 @@ public class NeighbourManager {
 
     public void onEvent(LinkLayerStopped event) {
         synchronized (managerLock) {
-            Iterator<Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>>> it = neighborhood.entrySet().iterator();
+            Iterator<Map.Entry<LinkLayerNeighbour, NeighbourDetail>> it = neighborhood.entrySet().iterator();
             while (it.hasNext()) {
-                Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>> mapEntry = it.next();
+                Map.Entry<LinkLayerNeighbour, NeighbourDetail> mapEntry = it.next();
                 LinkLayerNeighbour neighbour = mapEntry.getKey();
                 if (neighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier))
                     it.remove();
@@ -113,30 +123,32 @@ public class NeighbourManager {
     public void onEvent(ScannerNeighbourSensed event) {
         if(event.neighbour.isLocal())
             return;
+        NeighbourDetail detail;
         synchronized (managerLock) {
-            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
-            if(channels != null)
+            detail = neighborhood.get(event.neighbour);
+            if(detail != null)
                 return;
-            neighborhood.put(event.neighbour, new HashSet<ProtocolChannel>());
+            detail = new NeighbourDetail();
+            neighborhood.put(event.neighbour, detail);
         }
-        EventBus.getDefault().post(new NeighbourReachable(event.neighbour));
+        EventBus.getDefault().post(new NeighbourReachable(event.neighbour, detail.reachable_time_nano));
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
     public void onEvent(ScannerNeighbourTimeout event) {
         if(event.neighbour.isLocal())
             return;
+        NeighbourDetail detail;
         synchronized (managerLock) {
-            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
-            if (channels == null)
+            detail = neighborhood.get(event.neighbour);
+            if (detail == null)
                 return;
-
-            if (!channels.isEmpty())
+            if (!detail.channels.isEmpty())
                 return;
-
             neighborhood.remove(event.neighbour);
         }
-        EventBus.getDefault().post(new NeighbourUnreachable(event.neighbour));
+        EventBus.getDefault().post(new NeighbourUnreachable(event.neighbour,
+                detail.reachable_time_nano, System.nanoTime()));
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
@@ -145,23 +157,23 @@ public class NeighbourManager {
      */
     public void onEvent(ChannelConnected event) {
         synchronized (managerLock) {
-            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
-            if(channels == null) {
+            NeighbourDetail detail = neighborhood.get(event.neighbour);
+            if(detail == null) {
                 // it is possible that a peer connect to us before we even detect it
-                channels = new HashSet<>();
-                neighborhood.put(event.neighbour, channels);
+                detail = new NeighbourDetail();
+                neighborhood.put(event.neighbour, detail);
             }
-            channels.add(event.channel);
+            detail.channels.add(event.channel);
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }
 
     public void onEvent(ChannelDisconnected event) {
         synchronized (managerLock) {
-            Set<ProtocolChannel> channels = neighborhood.get(event.neighbour);
-            if(channels == null)
+            NeighbourDetail detail = neighborhood.get(event.neighbour);
+            if(detail == null)
                 return;
-            channels.remove(event.channel);
+            detail.channels.remove(event.channel);
 
             // throw ContactDisconnected event if a Contact doesn't have any channel left
             Iterator<Map.Entry<Contact, Set<ProtocolChannel>>> it = contacts.entrySet().iterator();
@@ -179,7 +191,7 @@ public class NeighbourManager {
             /*
              * should we trigger a force scan ?
              */
-            if (channels.isEmpty())
+            if (detail.channels.isEmpty())
                 neighborhood.remove(event.neighbour);
 
         }
@@ -206,7 +218,7 @@ public class NeighbourManager {
     /*
      * List of neighbour for the UI Adapter
      */
-    public static interface Neighbour {
+    public interface Neighbour {
         public String getFirstName();
         public String getSecondName();
         public boolean isReachable(String linkLayerIdentifier);
@@ -265,12 +277,6 @@ public class NeighbourManager {
         private Contact contact;
         private Set<ProtocolChannel> channels;
 
-
-        public ContactNeighbour(Contact contact) {
-            this.contact = contact;
-            this.channels = new HashSet<>();
-        }
-
         public ContactNeighbour(Contact contact, Set<ProtocolChannel> channels) {
             this.contact = contact;
             this.channels = new HashSet<>(channels);
@@ -320,14 +326,14 @@ public class NeighbourManager {
                 ret.add(new ContactNeighbour(contact, channels));
             }
 
-            for(Map.Entry<LinkLayerNeighbour, Set<ProtocolChannel>> mapEntry : neighborhood.entrySet()) {
+            for(Map.Entry<LinkLayerNeighbour, NeighbourDetail> mapEntry : neighborhood.entrySet()) {
                 LinkLayerNeighbour neighbour = mapEntry.getKey();
-                Set<ProtocolChannel> channels = mapEntry.getValue();
+                NeighbourDetail detail = mapEntry.getValue();
                 boolean found = false;
 
                 // we only add this linklayerneighbour if no contact is bound to it
                 outer:
-                for(ProtocolChannel channel : channels) {
+                for(ProtocolChannel channel : detail.channels) {
                     Iterator<Map.Entry<Contact,Set<ProtocolChannel>>> it = contacts.entrySet().iterator();
                     while(it.hasNext()) {
                         Map.Entry<Contact,Set<ProtocolChannel>> entry = it.next();
@@ -339,7 +345,7 @@ public class NeighbourManager {
                     }
                 }
                 if(!found)
-                    ret.add(new UnknowNeighbour(neighbour,channels));
+                    ret.add(new UnknowNeighbour(neighbour, detail.channels));
             }
         }
 

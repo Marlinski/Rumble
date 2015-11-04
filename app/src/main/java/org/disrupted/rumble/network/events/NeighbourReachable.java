@@ -31,9 +31,11 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 public class NeighbourReachable extends NetworkEvent {
 
     public final LinkLayerNeighbour neighbour;
+    public final long reachable_time_nano;
 
-    public NeighbourReachable(LinkLayerNeighbour neighbour) {
+    public NeighbourReachable(LinkLayerNeighbour neighbour, long reachable_time_nano) {
         this.neighbour = neighbour;
+        this.reachable_time_nano = reachable_time_nano;
     }
 
     @Override

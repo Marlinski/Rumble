@@ -39,17 +39,19 @@ public abstract class TCPConnection implements UnicastConnection {
 
     private static final String TAG = "TCPConnection";
 
-    protected String       remoteAddress;
-    protected InetAddress  remoteInetAddress;
-    protected Socket       mmConnectedSocket;
-    protected InputStream  inputStream;
-    protected OutputStream outputStream;
-    protected boolean      socketConnected;
+    protected String        remoteAddress;
+    protected InetAddress   remoteInetAddress;
+    protected Socket        mmConnectedSocket;
+    protected InputStream   inputStream;
+    protected OutputStream  outputStream;
+    protected boolean       socketConnected;
+    protected WifiNeighbour wifiNeighbour;
 
     public TCPConnection(String remoteAddress) {
         this.remoteAddress = remoteAddress;
         this.remoteInetAddress = null;
         this.mmConnectedSocket = null;
+        this.wifiNeighbour     = new WifiNeighbour(remoteAddress);
     }
 
     @Override
@@ -69,7 +71,7 @@ public abstract class TCPConnection implements UnicastConnection {
 
     @Override
     public LinkLayerNeighbour getLinkLayerNeighbour() {
-        return new WifiNeighbour(remoteAddress);
+        return new WifiNeighbour(wifiNeighbour);
     }
 
     @Override

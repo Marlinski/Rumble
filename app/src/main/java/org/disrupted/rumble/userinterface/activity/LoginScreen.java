@@ -117,12 +117,6 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             groupDBID = DatabaseFactory.getGroupDatabase(this).getGroupDBID(defaultPublicGroup.getGid());
             DatabaseFactory.getContactJoinGroupDatabase(this).insertContactGroup(contactDBID,groupDBID);
 
-            // do not show loginscreen next time
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-            SharedPreferences.Editor ed = prefs.edit();
-            ed.putBoolean(getString(R.string.pref_previously_started), true);
-            ed.commit();
-
             // start activity
             Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
             startActivity(routingActivity);

@@ -52,6 +52,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
 
     private NetworkCoordinator networkCoordinator;
     private BluetoothScanner btScanner;
+    private long started_time_nano;
     private boolean register;
     private boolean activated;
 
@@ -118,6 +119,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
             return;
         activated = true;
         Log.d(TAG, "[+] Bluetooth Activated");
+        started_time_nano = System.nanoTime();
         btScanner.startScanner();
         networkCoordinator.addScanner(btScanner);
         EventBus.getDefault().post(new LinkLayerStarted(getLinkLayerIdentifier()));
@@ -128,7 +130,8 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
             return;
         activated = false;
         Log.d(TAG, "[-] Bluetooth De-activated");
-        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier()));
+        EventBus.getDefault().post(new LinkLayerStopped(getLinkLayerIdentifier(),
+                started_time_nano, System.nanoTime()));
         btScanner.stopScanner();
         networkCoordinator.delScanner(btScanner);
     }

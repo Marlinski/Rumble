@@ -33,6 +33,7 @@ import org.disrupted.rumble.database.events.DatabaseEvent;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
+import org.disrupted.rumble.database.statistics.StatisticManager;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.database.CacheManager;
 import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
@@ -66,6 +67,7 @@ public class RumbleApplication extends Application{
 
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
+        StatisticManager.getInstance().start();
 
         if(DatabaseFactory.getContactDatabase(this).getLocalContact() != null) {
             Intent startIntent = new Intent(this, NetworkCoordinator.class);

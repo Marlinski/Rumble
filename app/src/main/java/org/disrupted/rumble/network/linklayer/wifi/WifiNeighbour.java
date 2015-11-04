@@ -39,6 +39,11 @@ public class WifiNeighbour implements LinkLayerNeighbour {
         }
     }
 
+    public WifiNeighbour(WifiNeighbour neighbour) {
+        this.remoteIPAddress  = neighbour.remoteIPAddress;
+        this.remoteMacAddress = neighbour.remoteMacAddress;
+    }
+
     @Override
     public boolean isLocal() {
         if(remoteIPAddress.equals("127.0.0.1"))

@@ -24,6 +24,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.disrupted.rumble.database.statistics.StatChannelDatabase;
+import org.disrupted.rumble.database.statistics.StatInterfaceDatabase;
+import org.disrupted.rumble.database.statistics.StatLinkLayerDatabase;
+import org.disrupted.rumble.database.statistics.StatReachabilityDatabase;
+
 /**
  * @author Marlinski
  */
@@ -32,24 +37,35 @@ public class DatabaseFactory {
     private static final String TAG = "DatabaseFactory";
 
     private static final int DATABASE_VERSION  = 1;
-    private static final String DATABASE_NAME  = "rumble.db";
+    private static final String MAIN_DB_NAME   = "rumble.db";
+
+    private static final int STATISTIC_VERSION  = 1;
+    private static final String STAT_DB_NAME   = "statistic.db";
+
     private static final Object lock           = new Object();
 
     private static DatabaseFactory instance;
 
     private DatabaseHelper                       databaseHelper;
+    private StatisticHelper                      statisticHelper;
+
     private final PushStatusDatabase             pushStatusDatabase;
     private final ChatMessageDatabase            chatMessageDatabase;
     private final HashtagDatabase                hashtagDatabase;
     private final StatusTagDatabase              statusTagDatabase;
     private final GroupDatabase                  groupDatabase;
     private final ContactDatabase                contactDatabase;
-    private final ContactGroupDatabase contactGroupDatabase;
+    private final ContactGroupDatabase           contactGroupDatabase;
     private final ContactHashTagInterestDatabase contactHashTagInterestDatabase;
     private final InterfaceDatabase              interfaceDatabase;
     private final ContactInterfaceDatabase       contactInterfaceDatabase;
     private final StatusContactDatabase          statusContactDatabase;
     private DatabaseExecutor                     databaseExecutor;
+
+    private final StatReachabilityDatabase statReachabilityDatabase;
+    private final StatChannelDatabase      statChannelDatabase;
+    private final StatInterfaceDatabase    statInterfaceDatabase;
+    private final StatLinkLayerDatabase    statLinkLayerDatabase;
 
     public static DatabaseFactory getInstance(Context context) {
         synchronized (lock) {
@@ -61,7 +77,7 @@ public class DatabaseFactory {
     }
 
     public static String getDatabaseName() {
-        return DATABASE_NAME;
+        return MAIN_DB_NAME;
     }
 
     public static PushStatusDatabase getPushStatusDatabase(Context context) {
@@ -101,8 +117,24 @@ public class DatabaseFactory {
         return getInstance(context).databaseExecutor;
     }
 
+
+    public static StatReachabilityDatabase getStatReachabilityDatabase(Context context) {
+        return getInstance(context).statReachabilityDatabase;
+    }
+    public static StatChannelDatabase getStatChannelDatabase(Context context) {
+        return getInstance(context).statChannelDatabase;
+    }
+    public static StatInterfaceDatabase getStatInterfaceDatabase(Context context) {
+        return getInstance(context).statInterfaceDatabase;
+    }
+    public static StatLinkLayerDatabase getStatLinkLayerDatabase(Context context) {
+        return getInstance(context).statLinkLayerDatabase;
+    }
+
+
     private DatabaseFactory(Context context) {
-        this.databaseHelper                 = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+        // main tables
+        this.databaseHelper                 = new DatabaseHelper(context, MAIN_DB_NAME, null, DATABASE_VERSION);
         this.interfaceDatabase              = new InterfaceDatabase(context, databaseHelper);
         this.pushStatusDatabase             = new PushStatusDatabase(context, databaseHelper);
         this.chatMessageDatabase            = new ChatMessageDatabase(context, databaseHelper);
@@ -110,16 +142,23 @@ public class DatabaseFactory {
         this.statusTagDatabase              = new StatusTagDatabase(context, databaseHelper);
         this.groupDatabase                  = new GroupDatabase(context, databaseHelper);
         this.contactDatabase                = new ContactDatabase(context, databaseHelper);
-        this.contactGroupDatabase = new ContactGroupDatabase(context, databaseHelper);
+        this.contactGroupDatabase           = new ContactGroupDatabase(context, databaseHelper);
         this.contactHashTagInterestDatabase = new ContactHashTagInterestDatabase(context, databaseHelper);
         this.contactInterfaceDatabase       = new ContactInterfaceDatabase(context, databaseHelper);
         this.statusContactDatabase          = new StatusContactDatabase(context, databaseHelper);
         this.databaseExecutor               = new DatabaseExecutor();
+
+        // statistic tables
+        this.statisticHelper           = new StatisticHelper(context, STAT_DB_NAME, null, STATISTIC_VERSION);
+        this.statReachabilityDatabase  = new StatReachabilityDatabase(context, statisticHelper);
+        this.statChannelDatabase       = new StatChannelDatabase(context, statisticHelper);
+        this.statInterfaceDatabase     = new StatInterfaceDatabase(context, statisticHelper);
+        this.statLinkLayerDatabase     = new StatLinkLayerDatabase(context, statisticHelper);
     }
 
     public void reset(Context context) {
-        DatabaseHelper old = this.databaseHelper;
-        this.databaseHelper = new DatabaseHelper(context, DATABASE_NAME, null, DATABASE_VERSION);
+        DatabaseHelper olddb = this.databaseHelper;
+        this.databaseHelper = new DatabaseHelper(context, MAIN_DB_NAME, null, DATABASE_VERSION);
 
         this.contactDatabase.reset(databaseHelper);
         this.pushStatusDatabase.reset(databaseHelper);
@@ -132,7 +171,15 @@ public class DatabaseFactory {
         this.contactHashTagInterestDatabase.reset(databaseHelper);
         this.contactInterfaceDatabase.reset(databaseHelper);
         this.statusContactDatabase.reset(databaseHelper);
-        old.close();
+        olddb.close();
+
+        StatisticHelper oldstat = this.statisticHelper;
+        this.statisticHelper = new StatisticHelper(context, STAT_DB_NAME, null, STATISTIC_VERSION);
+        this.statChannelDatabase.reset(statisticHelper);
+        this.statChannelDatabase.reset(statisticHelper);
+        this.statInterfaceDatabase.reset(statisticHelper);
+        this.statLinkLayerDatabase.reset(statisticHelper);
+        oldstat.close();
     }
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
@@ -167,6 +214,25 @@ public class DatabaseFactory {
             for (String statement : statements)
                 db.execSQL(statement);
         }
+    }
 
+    private static class StatisticHelper extends SQLiteOpenHelper {
+
+        public StatisticHelper(Context context, String name, CursorFactory factory, int version) {
+            super(context, name, factory, version);
+        }
+
+        @Override
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // nothing for the moment
+        }
+
+        @Override
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(StatInterfaceDatabase.CREATE_TABLE);
+            db.execSQL(StatLinkLayerDatabase.CREATE_TABLE);
+            db.execSQL(StatReachabilityDatabase.CREATE_TABLE);
+            db.execSQL(StatChannelDatabase.CREATE_TABLE);
+        }
     }
 }
