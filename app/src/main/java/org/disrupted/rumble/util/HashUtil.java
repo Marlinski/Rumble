@@ -115,8 +115,8 @@ public class HashUtil {
         }
     }
 
-    public static String generateRandomSuffix(int size) {
-        char[] chars = "ABCDEF012GHIJKL345MNOPQR678STUVWXYZ9".toCharArray();
+    public static String generateRandomString(int size) {
+        char[] chars = "ABCDEF+=012!GHIJKL@345MNOPQR678STUVWXYZ9/".toCharArray();
         StringBuilder sb = new StringBuilder();
         Random random = new Random();
         for (int i = 0; i < size; i++) {

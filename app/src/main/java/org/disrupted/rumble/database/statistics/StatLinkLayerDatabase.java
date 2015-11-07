@@ -26,7 +26,7 @@ import org.disrupted.rumble.database.Database;
 /**
  * @author Marlinski
  */
-public class StatLinkLayerDatabase extends Database {
+public class StatLinkLayerDatabase extends StatisticDatabase {
     private static final String TAG = "StatConnectionDatabase";
 
     public  static final String TABLE_NAME      = "link_layer";
@@ -46,12 +46,21 @@ public class StatLinkLayerDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public long insertLinkLayerStat(String linkLayerID, long started_nano, long stopped_nano) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(LINKLAYER_ID, linkLayerID);
         contentValues.put(TIME_STARTED, started_nano);
         contentValues.put(TIME_STOPPED, stopped_nano);
         return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+    }
+
+    public void clean() {
+        databaseHelper.getWritableDatabase().delete(TABLE_NAME, null, null);
     }
 
 }

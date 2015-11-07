@@ -46,10 +46,9 @@ import de.greenrobot.event.EventBus;
  */
 public class RumbleApplication extends Application{
 
-    private static RumbleApplication instance;
+    public static String BUILD_VERSION = "FOUCAULT";
 
-    // name of the Rumble Image directory as it appears on Photo Album
-    public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
+    private static RumbleApplication instance;
 
     public  static boolean LOG_EVENT = true;
     private static EventLogger logger;

@@ -32,7 +32,6 @@ import android.os.HandlerThread;
 import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.network.events.ConnectedToAP;
 import org.disrupted.rumble.network.linklayer.events.AccessPointDisabled;
 import org.disrupted.rumble.network.linklayer.events.AccessPointEnabled;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
@@ -171,7 +170,6 @@ public class WifiLinkLayerAdapter extends HandlerThread implements LinkLayerAdap
                         if(activated)
                             return;
                         Log.d(TAG, "[+] connected to a wifi access point");
-                        EventBus.getDefault().post(new ConnectedToAP());
                         linkConnected();
                     }
                 }

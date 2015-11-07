@@ -44,6 +44,7 @@ import java.util.Date;
 public class FileUtil {
 
     private static final String TAG = "FileUtil";
+    public static String RUMBLE_IMAGE_ALBUM_NAME = "Rumble";
 
     public static String cleanBase64(String uuid) {
         String ret = uuid.replace('/', '_');
@@ -78,8 +79,9 @@ public class FileUtil {
         if(!isExternalStorageWritable())
             throw  new IOException("Storage is not writable");
 
-        File file = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);
+        File file = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                RUMBLE_IMAGE_ALBUM_NAME);
         file.mkdirs();
 
         if(file.getFreeSpace() < PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE)
@@ -92,8 +94,9 @@ public class FileUtil {
         if(!isExternalStorageReadable())
             throw  new IOException("Storage is not readable");
 
-        File file = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES),  RumbleApplication.RUMBLE_IMAGE_ALBUM_NAME);
+        File file = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                RUMBLE_IMAGE_ALBUM_NAME);
         if (!file.mkdirs()) {
         }
 

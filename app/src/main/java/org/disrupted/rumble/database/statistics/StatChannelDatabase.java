@@ -21,12 +21,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import org.disrupted.rumble.database.Database;
-
 /**
  * @author Marlinski
  */
-public class StatChannelDatabase extends Database {
+public class StatChannelDatabase extends StatisticDatabase {
 
     private static final String TAG = "StatConnectionDatabase";
 
@@ -62,6 +60,11 @@ public class StatChannelDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public long insertChannelStat(long iface_dbid, long connected_nano, long disconnected_nano,
                                    String protocolID, long bytes_rcvd, long in_trans_time,
                                    long bytes_sent, long out_trans_time, int status_received,
@@ -78,6 +81,10 @@ public class StatChannelDatabase extends Database {
         contentValues.put(STATUS_RECEIVED, status_received);
         contentValues.put(STATUS_SENT, status_sent);
         return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+    }
+
+    public void clean() {
+        databaseHelper.getWritableDatabase().delete(TABLE_NAME,null,null);
     }
 
 }

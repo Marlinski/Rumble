@@ -28,45 +28,49 @@ import android.util.Log;
  */
 public class RumblePreferences {
 
-    public  static final String IDENTITY_PREF            = "pref_choose_identity";
-    public  static final String STOP_BLUETOOTH_ON_CLICK  = "stop_bluetooth_on_click";
-    public  static final String STOP_BLUETOOTH_ON_CLICK_REMEMBER = "stop_wifi_on_click";
-    public  static final String STOP_WIFI_ON_CLICK       = "stop_wifi_on_click";
-    public  static final String STOP_WIFI_ON_CLICK_REMEMBER     = "stop_wifi_on_click";
-    public  static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+    public static final String PREF_USER_OK_SYNC   = "ok_sync";
+    public static final String USER_ANONYMOUS_ID = "anonymous_id";
+    public static final String LAST_SYNC = "last_sync";
+    private static final int   SYNC_EVERY_DAY = 3600*24*1000;
 
-    public static String getIdentityContactUri(Context context) {
-        return getStringPreference(context, IDENTITY_PREF, null);
+    public static String getAnonymousID(Context context) {
+        String id = getStringPreference(context, USER_ANONYMOUS_ID,"");
+        if(id.equals("")) {
+            createAnonymousID(context);
+            id = getStringPreference(context, USER_ANONYMOUS_ID,"");
+        }
+        return id;
     }
-
-    public static void setIdentityContactUri(Context context, String identityUri) {
-               setStringPreference(context, IDENTITY_PREF, identityUri);
+    private static void createAnonymousID(Context context) {
+        setStringPreference(context, PREF_USER_LEARNED_DRAWER, HashUtil.generateRandomString(20));
     }
 
     public static boolean hasUserLearnedDrawer(Context context) {
         return getBooleanPreference(context, PREF_USER_LEARNED_DRAWER, false);
     }
-
     public static void setUserLearnedDrawer(Context context, Boolean bool) {
         setBooleanPreference(context, PREF_USER_LEARNED_DRAWER, bool);
     }
 
-    public static void setStopBluetoothOnClick(Context context, Boolean bool) {
-        setBooleanPreference(context, STOP_BLUETOOTH_ON_CLICK, bool);
+    public static boolean UserOkWithSharingAnonymousData(Context context) {
+        return getBooleanPreference(context, PREF_USER_OK_SYNC, true);
+    }
+    public static void setUserPreferenceWithSharingData(Context context, Boolean bool) {
+        setBooleanPreference(context, PREF_USER_OK_SYNC, bool);
     }
 
-    public static boolean stopBluetoothOnClick(Context context) {
-        return getBooleanPreference(context, STOP_BLUETOOTH_ON_CLICK, false);
+    public static boolean isTimeToSync(Context context) {
+        long last = getLongPreference(context, LAST_SYNC, 0);
+        return ((System.currentTimeMillis() - last) > SYNC_EVERY_DAY);
+    }
+    public static void updateLastSync(Context context) {
+        setLongPreference(context, LAST_SYNC, System.currentTimeMillis());
     }
 
-    public static boolean stopWifiOnClick(Context context) {
-        return getBooleanPreference(context, STOP_WIFI_ON_CLICK, false);
-    }
-
-    public static void setStopWifiOnClick(Context context, Boolean bool) {
-        setBooleanPreference(context, STOP_WIFI_ON_CLICK, bool);
-    }
-
+    /**
+     *  Shared Preferences Setter and Getter
+     */
     private static void setBooleanPreference(Context context, String key, boolean value) {
         PreferenceManager.getDefaultSharedPreferences(context).edit().putBoolean(key, value).commit();
     }

@@ -17,34 +17,32 @@
 
 package org.disrupted.rumble.database.statistics;
 
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import android.database.Cursor;
+import android.os.Build;
 import android.util.Log;
 
-import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.network.events.ChannelDisconnected;
-import org.disrupted.rumble.network.events.ConnectedToAP;
 import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
+import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
-import org.disrupted.rumble.util.HashUtil;
+import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.util.NetUtil;
-import org.disrupted.rumble.util.SharedPreferenceUtil;
+import org.disrupted.rumble.util.RumblePreferences;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.Random;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -158,12 +156,20 @@ public class StatisticManager {
                         event.channel.status_sent);
     }
 
-    public void onEventAsync(ConnectedToAP event) {
-        if(SharedPreferenceUtil.UserOkWithSharingAnonymousData() && SharedPreferenceUtil.isTimeToSync()) {
+    public void onEventAsync(LinkLayerStarted event) {
+        if(!event.linkLayerIdentifier.equals(WifiLinkLayerAdapter.LinkLayerIdentifier))
+            return;
+
+        if(RumblePreferences.UserOkWithSharingAnonymousData(RumbleApplication.getContext())
+                && RumblePreferences.isTimeToSync(RumbleApplication.getContext())) {
             if(!NetUtil.isURLReachable("http://disruptedsystems.org/"))
                 return;
 
             try {
+                // generate the JSON file
+                byte[] json = generateStatJSON().toString().getBytes();
+
+                // configure SSL
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
                 InputStream caInput = new BufferedInputStream(RumbleApplication.getContext()
                         .getAssets().open("certs/disruptedsystemsCA.pem"));
@@ -181,19 +187,65 @@ public class StatisticManager {
                 SSLContext sslContext = SSLContext.getInstance("TLS");
                 sslContext.init(null, tmf.getTrustManagers(), null);
 
-                URL url = new URL("https://data.disruptedsystems.org");
+                URL url = new URL("https://data.disruptedsystems.org/post");
                 HttpsURLConnection urlConnection = (HttpsURLConnection)url.openConnection();
                 urlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
 
+                // then configure the header
+                urlConnection.setInstanceFollowRedirects(true);
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setDoOutput(true);
+                urlConnection.setRequestProperty("Content-Type", "application/json");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                urlConnection.setRequestProperty("charset", "utf-8");
+                urlConnection.setRequestProperty("Content-Length", Integer.toString(json.length));
+                urlConnection.setUseCaches(false);
+
+                // connect and send the JSON
                 urlConnection.setConnectTimeout(10 * 1000);
                 urlConnection.connect();
+                urlConnection.getOutputStream().write(json);
                 if (urlConnection.getResponseCode() != 200)
-                    throw new IOException("website down");
+                    throw new IOException("request failed");
+
+                // erase the database
+                RumblePreferences.updateLastSync(RumbleApplication.getContext());
+                cleanDatabase();
             } catch (Exception ex)
             {
-                //Log.e(TAG, "Failed to establish SSL connection to server: " + ex.toString());
+                Log.e(TAG, "Failed to establish SSL connection to server: " + ex.toString());
             }
         }
+    }
+
+    public JSONObject generateStatJSON() throws JSONException{
+        JSONObject json = new JSONObject();
+        json.put("rumble_version", RumbleApplication.BUILD_VERSION);
+        json.put("android_build", Integer.toString(Build.VERSION.SDK_INT));
+        json.put("phone_model",Build.MODEL);
+        json.put("anonymous_id",RumblePreferences.getAnonymousID(RumbleApplication.getContext()));
+
+        JSONArray resultSet;
+        resultSet = DatabaseFactory.getStatChannelDatabase(RumbleApplication.getContext())
+                .getJSON();
+        json.put("channels",resultSet);
+        resultSet = DatabaseFactory.getStatLinkLayerDatabase(RumbleApplication.getContext())
+                .getJSON();
+        json.put("link-layer",resultSet);
+        resultSet = DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
+                .getJSON();
+        json.put("reachability",resultSet);
+
+        return json;
+    }
+
+    public void cleanDatabase() {
+        DatabaseFactory.getStatChannelDatabase(RumbleApplication.getContext())
+                .clean();
+        DatabaseFactory.getStatLinkLayerDatabase(RumbleApplication.getContext())
+                .clean();
+        DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
+                .clean();
     }
 
 }

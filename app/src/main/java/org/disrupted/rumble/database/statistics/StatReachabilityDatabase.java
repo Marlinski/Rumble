@@ -26,7 +26,7 @@ import org.disrupted.rumble.database.Database;
 /**
  * @author Marlinski
  */
-public class StatReachabilityDatabase extends Database {
+public class StatReachabilityDatabase extends StatisticDatabase {
 
     private static final String TAG = "NeighbourReachabilityDatabase";
 
@@ -51,6 +51,11 @@ public class StatReachabilityDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public long insertReachability(long iface_dbid, long timestamp_nano, boolean reachable, long duration) {
         ContentValues contentValues = new ContentValues();
         contentValues.put(IFACED_BID,  iface_dbid);
@@ -59,5 +64,9 @@ public class StatReachabilityDatabase extends Database {
         contentValues.put(UNREACHABLE, !reachable);
         contentValues.put(DURATION,    duration);
         return databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+    }
+
+    public void clean() {
+        databaseHelper.getWritableDatabase().delete(TABLE_NAME, null, null);
     }
 }
