@@ -21,8 +21,11 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.util.RumblePreferences;
 
 /**
  * @author Marlinski
@@ -47,6 +50,14 @@ public class StatisticActivity extends AppCompatActivity {
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
+        CheckBox checkBox = (CheckBox)findViewById(R.id.stat_check_box);
+        checkBox.setChecked(!RumblePreferences.UserOkWithSharingAnonymousData(this));
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                RumblePreferences.setUserPreferenceWithSharingData(StatisticActivity.this, !isChecked);
+            }
+        });
     }
 
     @Override

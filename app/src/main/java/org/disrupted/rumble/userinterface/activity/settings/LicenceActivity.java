@@ -21,6 +21,8 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 import org.disrupted.rumble.R;
 
@@ -39,7 +41,6 @@ public class LicenceActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings_licence);
         setTitle(R.string.settings_freedom);
 
         ActionBar actionBar = getSupportActionBar();
@@ -47,6 +48,10 @@ public class LicenceActivity extends AppCompatActivity {
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
+        WebView webview = new WebView(this);
+        webview.getSettings().setBuiltInZoomControls(true);
+        setContentView(webview);
+        webview.loadUrl("file:///android_asset/GNU_GPL_v3-standalone.html");
     }
 
 

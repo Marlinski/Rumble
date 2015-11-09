@@ -21,8 +21,10 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 
 /**
  * @author Marlinski
@@ -47,6 +49,15 @@ public class AboutActivity extends AppCompatActivity{
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
+        TextView aboutVersion = (TextView)findViewById(R.id.about_version);
+        aboutVersion.setText(RumbleApplication.BUILD_VERSION);
+
+
+        TextView aboutProject = (TextView)findViewById(R.id.about_project);
+        aboutProject.setText("DisruptedSystems (http://disruptedsystems.org/)");
+
+        TextView aboutDeveloper = (TextView)findViewById(R.id.about_developer);
+        aboutDeveloper.setText("Marlinski (http://marlinski.org/)");
     }
 
 

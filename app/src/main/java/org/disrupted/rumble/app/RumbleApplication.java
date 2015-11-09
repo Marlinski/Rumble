@@ -47,6 +47,7 @@ import de.greenrobot.event.EventBus;
 public class RumbleApplication extends Application{
 
     public static String BUILD_VERSION = "FOUCAULT";
+    public static String BUILD_NUMBER = "1.0";
 
     private static RumbleApplication instance;
 

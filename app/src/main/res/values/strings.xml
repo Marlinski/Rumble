@@ -118,6 +118,13 @@
     <string name="settings_about">About</string>
     <string name="settings_freedom">Open Source Licence</string>
 
+    <string name="statistic_disclaimer">DisruptedSystems takes part in some research project and wish to collect some data. Those data are anonymous and cannot be link to any device or any individual. By sharing those data, you will help us design better algorithms and protocols. If you want to know more about our data policy, please visit http://disruptedsystems/rumble/datapolicy. Check the following check box if you do not want to participate.</string>
+    <string name="statistic_usage">I do not want to participate</string>
+
+    <string name="setting_about_rumble">Release Name</string>
+    <string name="setting_about_project">Project Account</string>
+    <string name="setting_about_developer">Developed By</string>
+
     <string name="status_created">created: </string>
     <string name="status_received">received: </string>
     <string name="second_ago">a second ago</string>
@@ -146,5 +153,6 @@
     <string name="chat_message_tuto">Here is the chat window to send and receive real time message with the people around you. Those messages aren\'t forwarded any further. Open the network drawer to see if there is people around you and start chatting with them.</string>
     <string name="login">Log in!</string>
     <string name="login_username">Username</string>
+    <string name="warning_notice">Even though you can create private groups, all the messages are public by default so be careful with what you disclose</string>
 
 </resources>
