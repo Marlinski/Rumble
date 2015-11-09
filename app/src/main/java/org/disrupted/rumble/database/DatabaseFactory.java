@@ -27,6 +27,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import org.disrupted.rumble.database.statistics.StatChannelDatabase;
 import org.disrupted.rumble.database.statistics.StatInterfaceDatabase;
 import org.disrupted.rumble.database.statistics.StatLinkLayerDatabase;
+import org.disrupted.rumble.database.statistics.StatMessageDatabase;
 import org.disrupted.rumble.database.statistics.StatReachabilityDatabase;
 
 /**
@@ -66,6 +67,7 @@ public class DatabaseFactory {
     private final StatChannelDatabase      statChannelDatabase;
     private final StatInterfaceDatabase    statInterfaceDatabase;
     private final StatLinkLayerDatabase    statLinkLayerDatabase;
+    private final StatMessageDatabase      statMessageDatabase;
 
     public static DatabaseFactory getInstance(Context context) {
         synchronized (lock) {
@@ -130,6 +132,9 @@ public class DatabaseFactory {
     public static StatLinkLayerDatabase getStatLinkLayerDatabase(Context context) {
         return getInstance(context).statLinkLayerDatabase;
     }
+    public static StatMessageDatabase getStatMessageDatabase(Context context) {
+        return getInstance(context).statMessageDatabase;
+    }
 
 
     private DatabaseFactory(Context context) {
@@ -154,6 +159,7 @@ public class DatabaseFactory {
         this.statChannelDatabase       = new StatChannelDatabase(context, statisticHelper);
         this.statInterfaceDatabase     = new StatInterfaceDatabase(context, statisticHelper);
         this.statLinkLayerDatabase     = new StatLinkLayerDatabase(context, statisticHelper);
+        this.statMessageDatabase       = new StatMessageDatabase(context, statisticHelper);
     }
 
     public void reset(Context context) {
@@ -179,6 +185,7 @@ public class DatabaseFactory {
         this.statChannelDatabase.reset(statisticHelper);
         this.statInterfaceDatabase.reset(statisticHelper);
         this.statLinkLayerDatabase.reset(statisticHelper);
+        this.statMessageDatabase.reset(statisticHelper);
         oldstat.close();
     }
 
@@ -233,6 +240,7 @@ public class DatabaseFactory {
             db.execSQL(StatLinkLayerDatabase.CREATE_TABLE);
             db.execSQL(StatReachabilityDatabase.CREATE_TABLE);
             db.execSQL(StatChannelDatabase.CREATE_TABLE);
+            db.execSQL(StatMessageDatabase.CREATE_TABLE);
         }
     }
 }

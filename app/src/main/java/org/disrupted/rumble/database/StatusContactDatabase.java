@@ -49,6 +49,11 @@ public class StatusContactDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public void deleteEntriesMatchingStatusDBID(long statusDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, STATUS_DBID + " = ?" , new String[] {statusDBID + ""});

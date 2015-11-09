@@ -70,6 +70,10 @@ public class ChatMessageDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
 
     public static class ChatMessageQueryOption {
         public static final long FILTER_TOA_FROM   = 0x0001;

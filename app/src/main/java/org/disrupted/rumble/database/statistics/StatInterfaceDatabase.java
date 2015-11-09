@@ -55,6 +55,11 @@ public class StatInterfaceDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public long getInterfaceDBIDFromMac(String mac) {
         Cursor cursor = null;
         try {

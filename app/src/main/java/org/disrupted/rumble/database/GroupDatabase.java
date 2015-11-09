@@ -50,6 +50,11 @@ public class GroupDatabase  extends  Database{
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public boolean getGroups(DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {

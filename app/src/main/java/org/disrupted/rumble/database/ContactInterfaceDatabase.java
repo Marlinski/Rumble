@@ -63,6 +63,11 @@ public class ContactInterfaceDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public void deleteEntriesMatchingContactDBID(long contactDBID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, CONTACT_DBID + " = ?" , new String[] {contactDBID + ""});

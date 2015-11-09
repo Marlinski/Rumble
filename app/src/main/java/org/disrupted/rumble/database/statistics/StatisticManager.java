@@ -23,6 +23,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.events.StatusDuplicate;
 import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.events.NeighbourUnreachable;
@@ -30,6 +31,9 @@ import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapte
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStarted;
 import org.disrupted.rumble.network.linklayer.events.LinkLayerStopped;
 import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
+import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
+import org.disrupted.rumble.network.protocols.events.PushStatusSent;
+import org.disrupted.rumble.util.FileUtil;
 import org.disrupted.rumble.util.NetUtil;
 import org.disrupted.rumble.util.RumblePreferences;
 import org.json.JSONArray;
@@ -37,6 +41,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -57,8 +62,11 @@ public class StatisticManager {
 
     private static final String TAG = "StatisticManager";
 
-    private static final int MAX_IMAGE_SIZE_ON_DISK = 500000;
-    private static final int MAX_IMAGE_BORDER_PX = 1000;
+    private static final String KEY_MESSAGE_RECEIVED  = "message_received";
+    private static final String KEY_MESSAGE_DUPLICATE = "message_duplicate";
+    private static final String KEY_MESSAGE_SENT      = "message_sent";
+    private static final String KEY_FREE_SPACE        = "storage_free_space";
+    private static final String KEY_FILE_SIZE         = "storage_file_size";
 
     private static final Object lock = new Object();
     private static StatisticManager instance;
@@ -89,61 +97,6 @@ public class StatisticManager {
             if(EventBus.getDefault().isRegistered(this))
                 EventBus.getDefault().unregister(this);
         }
-    }
-
-    public void onEvent(LinkLayerStopped event) {
-        // then the statistic
-        DatabaseFactory.getStatLinkLayerDatabase(RumbleApplication.getContext())
-                .insertLinkLayerStat(event.linkLayerIdentifier, event.started_time_nano, event.stopped_time_nano);
-    }
-    public void onEvent(NeighbourReachable event) {
-        String mac = event.neighbour.getLinkLayerAddress();
-        // first we add the Interface if needed
-        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                .getInterfaceDBIDFromMac(mac);
-        if(rowId < 0) {
-            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
-        }
-        // then the statistic
-        DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
-                .insertReachability(rowId, event.reachable_time_nano, true, 0);
-    }
-    public void onEvent(NeighbourUnreachable event) {
-        String mac = event.neighbour.getLinkLayerAddress();
-        // first we add the Interface if needed
-        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                .getInterfaceDBIDFromMac(mac);
-        if(rowId < 0) {
-            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
-        }
-        // then the statistic
-        DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
-                .insertReachability(rowId, event.unreachable_time_nano, false, event.unreachable_time_nano - event.reachable_time_nano);
-    }
-    public void onEvent(ChannelDisconnected event) {
-        String mac;
-        try {
-            mac = event.neighbour.getLinkLayerMacAddress();
-        } catch (NetUtil.NoMacAddressException ie) {
-            return;
-        }
-        // first we add the Interface if needed
-        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                .getInterfaceDBIDFromMac(mac);
-        if(rowId < 0) {
-            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
-                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
-        }
-        // then the statistic
-        if(event.channel.connection_end_time - event.channel.connection_start_time == 0)
-            return;
-        DatabaseFactory.getStatChannelDatabase(RumbleApplication.getContext())
-                .insertChannelStat(rowId, event.channel.connection_start_time, event.channel.connection_end_time,
-                        event.channel.getProtocolIdentifier(), event.channel.bytes_received, event.channel.in_transmission_time,
-                        event.channel.bytes_sent, event.channel.out_transmission_time, event.channel.status_received,
-                        event.channel.status_sent);
     }
 
     public void onEventAsync(LinkLayerStarted event) {
@@ -207,6 +160,81 @@ public class StatisticManager {
             }
         }
     }
+    public void onEvent(LinkLayerStopped event) {
+        // then the statistic
+        DatabaseFactory.getStatLinkLayerDatabase(RumbleApplication.getContext())
+                .insertLinkLayerStat(event.linkLayerIdentifier, event.started_time_nano, event.stopped_time_nano);
+    }
+    public void onEvent(NeighbourReachable event) {
+        String mac = event.neighbour.getLinkLayerAddress();
+        // first we add the Interface if needed
+        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                .getInterfaceDBIDFromMac(mac);
+        if(rowId < 0) {
+            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+        }
+        // then the statistic
+        DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
+                .insertReachability(rowId, event.reachable_time_nano, true, 0);
+    }
+    public void onEvent(NeighbourUnreachable event) {
+        String mac = event.neighbour.getLinkLayerAddress();
+        // first we add the Interface if needed
+        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                .getInterfaceDBIDFromMac(mac);
+        if(rowId < 0) {
+            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+        }
+        // then the statistic
+        DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
+                .insertReachability(rowId, event.unreachable_time_nano, false, event.unreachable_time_nano - event.reachable_time_nano);
+    }
+    public void onEvent(ChannelDisconnected event) {
+        String mac;
+        try {
+            mac = event.neighbour.getLinkLayerMacAddress();
+        } catch (NetUtil.NoMacAddressException ie) {
+            return;
+        }
+        // first we add the Interface if needed
+        long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                .getInterfaceDBIDFromMac(mac);
+        if(rowId < 0) {
+            rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
+                    .insertInterface(mac,event.neighbour.getLinkLayerIdentifier().equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier));
+        }
+        // then the statistic
+        if(event.channel.connection_end_time - event.channel.connection_start_time == 0)
+            return;
+        DatabaseFactory.getStatChannelDatabase(RumbleApplication.getContext())
+                .insertChannelStat(rowId, event.channel.getLinkLayerIdentifier(),
+                        event.channel.connection_start_time, event.channel.connection_end_time,
+                        event.channel.getProtocolIdentifier(), event.channel.bytes_received,
+                        event.channel.in_transmission_time, event.channel.bytes_sent,
+                        event.channel.out_transmission_time, event.channel.status_received,
+                        event.channel.status_sent);
+    }
+    public void onEventAsync(PushStatusReceived event) {
+        long nb = DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .getValue(KEY_MESSAGE_RECEIVED, 0);
+        DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .updateValue(KEY_MESSAGE_RECEIVED, nb+1);
+
+    }
+    public void onEventAsync(PushStatusSent event) {
+        long nb = DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .getValue(KEY_MESSAGE_SENT, 0);
+        DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .updateValue(KEY_MESSAGE_SENT, nb+1);
+    }
+    public void onEvent(StatusDuplicate event) {
+        long nb = DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .getValue(KEY_MESSAGE_DUPLICATE, 0);
+        DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .updateValue(KEY_MESSAGE_DUPLICATE, nb+1);
+    }
 
     public JSONObject generateStatJSON() throws JSONException{
         JSONObject json = new JSONObject();
@@ -225,6 +253,44 @@ public class StatisticManager {
         resultSet = DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
                 .getJSON();
         json.put("reachability",resultSet);
+        resultSet = DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
+                .getJSON();
+        json.put("messages",resultSet);
+
+        resultSet = new JSONArray();
+        resultSet.put((new JSONObject()).put(
+                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getTableName(),
+                DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getCount()));
+        resultSet.put((new JSONObject()).put(
+                DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getTableName(),
+                DatabaseFactory.getChatMessageDatabase(RumbleApplication.getContext()).getCount()));
+        resultSet.put((new JSONObject()).put(
+                DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getTableName(),
+                DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getCount()));
+        resultSet.put((new JSONObject()).put(
+                DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getTableName(),
+                DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getCount()));
+        resultSet.put((new JSONObject()).put(
+                DatabaseFactory.getHashtagDatabase(RumbleApplication.getContext()).getTableName(),
+                DatabaseFactory.getHashtagDatabase(RumbleApplication.getContext()).getCount()));
+
+        long fileSize = 0;
+        long freespace = 0;
+        try {
+            File dir = FileUtil.getReadableAlbumStorageDir();
+            File files[] = dir.listFiles();
+            for(File file : files) {
+                fileSize += file.length();
+            }
+            freespace = dir.getFreeSpace();
+        } catch(IOException ie) {}
+        resultSet.put((new JSONObject()).put(
+                KEY_FREE_SPACE,
+                freespace));
+        resultSet.put((new JSONObject()).put(
+                KEY_FILE_SIZE,
+                fileSize));
+        json.put("db",resultSet);
 
         return json;
     }
@@ -235,6 +301,8 @@ public class StatisticManager {
         DatabaseFactory.getStatLinkLayerDatabase(RumbleApplication.getContext())
                 .clean();
         DatabaseFactory.getStatReachabilityDatabase(RumbleApplication.getContext())
+                .clean();
+        DatabaseFactory.getStatMessageDatabase(RumbleApplication.getContext())
                 .clean();
     }
 

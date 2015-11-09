@@ -51,18 +51,23 @@ public class StatMessageDatabase extends StatisticDatabase {
         return TABLE_NAME;
     }
 
-    public long getValue(String key) throws KeyNotFoundException{
+    public long getValue(String key, long default_value) {
         long rowid = -1;
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();
             cursor = database.query(TABLE_NAME, new String[] {KEY}, KEY+ " = ?", new String[] {key}, null, null, null);
             if(cursor == null)
-                throw new KeyNotFoundException();
-            if(cursor.moveToFirst() && !cursor.isAfterLast())
+                return -1;
+            if(cursor.moveToFirst() && !cursor.isAfterLast()) {
                 return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
-            else
-                throw new KeyNotFoundException();
+            } else {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(KEY, key);
+                contentValues.put(VALUE, default_value);
+                databaseHelper.getWritableDatabase().insert(TABLE_NAME, null, contentValues);
+                return default_value;
+            }
         } finally {
             if(cursor != null)
                 cursor.close();

@@ -20,6 +20,8 @@
 package org.disrupted.rumble.database;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 /**
@@ -39,8 +41,21 @@ public abstract class Database {
         this.databaseHelper = databaseHelper;
     }
 
+    abstract public String getTableName();
+
     public void reset(SQLiteOpenHelper databaseHelper) {
         this.databaseHelper = databaseHelper;
     }
 
+    public int getCount() {
+        SQLiteDatabase database = databaseHelper.getReadableDatabase();
+        Cursor cursor = database.query(getTableName(), null, null, null, null, null, null);
+        if(cursor == null)
+            return -1;
+        try {
+            return cursor.getCount();
+        } finally {
+            cursor.close();
+        }
+    }
 }

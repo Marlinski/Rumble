@@ -39,6 +39,7 @@ import org.disrupted.rumble.database.events.ContactInterfaceInserted;
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
 import org.disrupted.rumble.database.events.FileInsertedEvent;
 import org.disrupted.rumble.database.events.StatusDeletedEvent;
+import org.disrupted.rumble.database.events.StatusDuplicate;
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.database.objects.Group;
@@ -183,6 +184,7 @@ public class CacheManager {
                 if (event.status.getLike() > 0)
                     exists.addLike();
                 DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).updateStatus(exists);
+                EventBus.getDefault().post(new StatusDuplicate());
             }
 
             // then the StatusContact database

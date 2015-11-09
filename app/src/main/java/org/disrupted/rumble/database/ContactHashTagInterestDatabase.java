@@ -47,6 +47,11 @@ public class ContactHashTagInterestDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public void deleteEntriesMatchingContactID(long contactID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, CDBID + " = ?" , new String[] {Long.toString(contactID)});

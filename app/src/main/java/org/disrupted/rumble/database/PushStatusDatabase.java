@@ -161,9 +161,14 @@ public class PushStatusDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     /*
-     * General querying with options
-     */
+         * General querying with options
+         */
     public boolean getStatuses(final StatusQueryOption options, DatabaseExecutor.ReadableQueryCallback callback){
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {

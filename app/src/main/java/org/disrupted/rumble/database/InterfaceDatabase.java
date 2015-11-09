@@ -51,6 +51,11 @@ public class InterfaceDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public static Interface cursorToInterface(Cursor cursor) {
         if(cursor == null)
             return null;

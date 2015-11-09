@@ -48,6 +48,11 @@ public class ContactGroupDatabase extends Database {
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public void deleteEntriesMatchingContactID(long contactID){
         SQLiteDatabase db = databaseHelper.getWritableDatabase();
         db.delete(TABLE_NAME, UDBID + " = ?" , new String[] {Long.toString(contactID)});

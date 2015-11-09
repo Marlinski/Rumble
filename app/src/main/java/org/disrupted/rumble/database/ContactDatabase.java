@@ -109,10 +109,14 @@ public class ContactDatabase extends Database  {
     // caching the localContact as it is accessed very often
     private Contact localContact;
 
-
     public ContactDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
         localContact = null;
+    }
+
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
     }
 
     public Contact getLocalContact() {

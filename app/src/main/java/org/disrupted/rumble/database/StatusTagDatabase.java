@@ -48,6 +48,11 @@ public class StatusTagDatabase extends Database {
             "CREATE INDEX IF NOT EXISTS hashtag_status_id_index ON " + TABLE_NAME + " (" + SDBID + ");"
     };
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public StatusTagDatabase(Context context, SQLiteOpenHelper databaseHelper) {
         super(context, databaseHelper);
     }

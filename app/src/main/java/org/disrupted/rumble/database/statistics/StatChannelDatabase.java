@@ -30,7 +30,8 @@ public class StatChannelDatabase extends StatisticDatabase {
 
     public  static final String TABLE_NAME      = "connection";
     public  static final String ID              = "_id";
-    public  static final String IFACED_BID      = "interface_db_id";
+    public  static final String IFACE_DBID      = "interface_db_id";
+    public  static final String IFACE_TYPE      = "interface_type";
     public  static final String CONNECTED       = "connected";
     public  static final String DISCONNECTED    = "disconnected";
     public  static final String PROTOCOL        = "protocol";
@@ -43,7 +44,8 @@ public class StatChannelDatabase extends StatisticDatabase {
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID     + " INTEGER PRIMARY KEY, "
-            + IFACED_BID      + " INTEGER, "
+            + IFACE_DBID + " INTEGER, "
+            + IFACE_TYPE + " TEXT, "
             + CONNECTED       + " INTEGER, "
             + DISCONNECTED    + " INTEGER, "
             + PROTOCOL        + " TEXT, "
@@ -53,7 +55,7 @@ public class StatChannelDatabase extends StatisticDatabase {
             + OUT_TRANS_TIME  + " INTEGER, "
             + STATUS_RECEIVED + " INTEGER, "
             + STATUS_SENT     + " INTEGER, "
-            + " FOREIGN KEY ( "+ IFACED_BID + " ) REFERENCES " + StatInterfaceDatabase.TABLE_NAME  + " ( " + StatInterfaceDatabase.ID  + " ) "
+            + " FOREIGN KEY ( "+ IFACE_DBID + " ) REFERENCES " + StatInterfaceDatabase.TABLE_NAME  + " ( " + StatInterfaceDatabase.ID  + " ) "
             + " );";
 
     public StatChannelDatabase(Context context, SQLiteOpenHelper databaseHelper) {
@@ -65,12 +67,13 @@ public class StatChannelDatabase extends StatisticDatabase {
         return TABLE_NAME;
     }
 
-    public long insertChannelStat(long iface_dbid, long connected_nano, long disconnected_nano,
-                                   String protocolID, long bytes_rcvd, long in_trans_time,
-                                   long bytes_sent, long out_trans_time, int status_received,
-                                   int status_sent) {
+    public long insertChannelStat(long iface_dbid, String iface_type, long connected_nano,
+                                  long disconnected_nano, String protocolID, long bytes_rcvd,
+                                  long in_trans_time, long bytes_sent, long out_trans_time,
+                                  int status_received, int status_sent) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(IFACED_BID,  iface_dbid);
+        contentValues.put(IFACE_DBID,  iface_dbid);
+        contentValues.put(IFACE_TYPE,  iface_type);
         contentValues.put(CONNECTED,   connected_nano);
         contentValues.put(DISCONNECTED, disconnected_nano);
         contentValues.put(PROTOCOL, protocolID);

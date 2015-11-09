@@ -57,6 +57,11 @@ public class HashtagDatabase extends  Database{
         super(context, databaseHelper);
     }
 
+    @Override
+    public String getTableName() {
+        return TABLE_NAME;
+    }
+
     public boolean getHashtags(DatabaseExecutor.ReadableQueryCallback callback) {
         return DatabaseFactory.getDatabaseExecutor(context).addQuery(
                 new DatabaseExecutor.ReadableQuery() {
