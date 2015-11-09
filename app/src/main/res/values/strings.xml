@@ -114,6 +114,9 @@
     <string name="settings_detail_app">Application size</string>
     <string name="settings_detail_db">Database size</string>
     <string name="settings_detail_file">File total size</string>
+    <string name="settings_statistic">Statistic</string>
+    <string name="settings_about">About</string>
+    <string name="settings_freedom">Open Source Licence</string>
 
     <string name="status_created">created: </string>
     <string name="status_received">received: </string>

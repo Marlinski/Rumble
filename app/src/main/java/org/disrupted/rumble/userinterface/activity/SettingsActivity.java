@@ -18,6 +18,7 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -27,10 +28,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.userinterface.activity.settings.AboutActivity;
+import org.disrupted.rumble.userinterface.activity.settings.LicenceActivity;
+import org.disrupted.rumble.userinterface.activity.settings.StatisticActivity;
+import org.disrupted.rumble.userinterface.activity.settings.StorageActivity;
 import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
 import org.disrupted.rumble.userinterface.events.UserWipeData;
 import org.disrupted.rumble.userinterface.events.UserWipeFiles;
@@ -51,16 +57,6 @@ public class SettingsActivity extends AppCompatActivity{
 
     private static final String TAG = "Settings";
 
-    private CombinedHistogram combinedHistogram;
-    private TextView totalData;
-    private SimpleHistogram appSizeHistogram;
-    private SimpleHistogram dbSizeHistogram;
-    private SimpleHistogram fileSizeHistogram;
-    private TextView appDetailText;
-    private TextView dbDetailText;
-    private TextView fileDetailText;
-
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -77,93 +73,29 @@ public class SettingsActivity extends AppCompatActivity{
         actionBar.setDisplayUseLogoEnabled(false);
         actionBar.setDisplayShowHomeEnabled(false);
 
-        totalData = (TextView)findViewById(R.id.storage_total_value);
-        //combinedHistogram = (CombinedHistogram)findViewById(R.id.combined_histogram);
+        LinearLayout storage = (LinearLayout)findViewById(R.id.setting_storage);
+        storage.setOnClickListener(openActivity(StorageActivity.class));
 
-        appDetailText = (TextView)findViewById(R.id.app_detail_text);
-        appSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_app);
+        LinearLayout stat = (LinearLayout)findViewById(R.id.setting_statistic);
+        stat.setOnClickListener(openActivity(StatisticActivity.class));
 
-        dbDetailText = (TextView)findViewById(R.id.db_detail_text);
-        dbSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_db);
+        LinearLayout about = (LinearLayout)findViewById(R.id.setting_about);
+        about.setOnClickListener(openActivity(AboutActivity.class));
 
-        fileDetailText = (TextView)findViewById(R.id.file_detail_text);
-        fileSizeHistogram = (SimpleHistogram)findViewById(R.id.usage_detail_file);
-
-        // memory cleaning buttons
-        Button clearStatus = (Button)findViewById(R.id.clear_statuses);
-        clearStatus.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                            EventBus.getDefault().post(new UserWipeStatuses());
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
-                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });
-
-        Button clearChat   = (Button)findViewById(R.id.clear_chat);
-        clearChat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                            EventBus.getDefault().post(new UserWipeChatMessages());
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
-                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });
-
-        Button clearFiles   = (Button)findViewById(R.id.clear_files);
-        clearFiles.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                            EventBus.getDefault().post(new UserWipeFiles());
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
-                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });
-
-        Button clearData  = (Button)findViewById(R.id.clear_data);
-        clearData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == DialogInterface.BUTTON_POSITIVE) {
-                            EventBus.getDefault().post(new UserWipeData());
-                        }
-                    }
-                };
-                AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
-                builder.setMessage("Are you sure?").setPositiveButton("Yes", dialogClickListener)
-                        .setNegativeButton("No", dialogClickListener).show();
-            }
-        });
-
-        computeDataUsage();
+        LinearLayout licence = (LinearLayout)findViewById(R.id.setting_licence);
+        licence.setOnClickListener(openActivity(LicenceActivity.class));
     }
+
+    public View.OnClickListener openActivity(final Class<?> cls) {
+        return new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent homeActivity = new Intent(SettingsActivity.this, cls);
+                startActivity(homeActivity);
+            }
+        };
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
@@ -179,52 +111,5 @@ public class SettingsActivity extends AppCompatActivity{
     public void onBackPressed() {
         finish();
         overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
-    }
-
-    private void computeDataUsage() {
-        long appSize = 0;
-        try {
-            final PackageManager pm = getPackageManager();
-            ApplicationInfo applicationInfo = pm.getApplicationInfo(getApplicationContext().getPackageName(), 0);
-            File file = new File(applicationInfo.publicSourceDir);
-            appSize = file.length();
-            appDetailText.setText(appDetailText.getText() + " (" + humanReadableByteCount(appSize, false) + ")");
-        } catch(PackageManager.NameNotFoundException e) {}
-
-        File database = getDatabasePath(DatabaseFactory.getDatabaseName());
-        long dbSize = database.length();
-        dbDetailText.setText(dbDetailText.getText()+" ("+humanReadableByteCount(dbSize,false)+")");
-
-        long fileSize = 0;
-        long freespace = 0;
-        try {
-            File dir = FileUtil.getReadableAlbumStorageDir();
-            File files[] = dir.listFiles();
-            for(File file : files) {
-                fileSize += file.length();
-            }
-            freespace = dir.getFreeSpace();
-            fileDetailText.setText(fileDetailText.getText()+" ("+humanReadableByteCount(fileSize,false)+")");
-        } catch(IOException ie) {}
-
-        long total = appSize+dbSize+fileSize;
-        //combinedHistogram.setSize(appSize, dbSize, fileSize);
-        totalData.setText(humanReadableByteCount(total, false) + " / " +
-                          humanReadableByteCount(freespace, false));
-
-        appSizeHistogram.setSize(appSize, total);
-        appSizeHistogram.setColor(R.color.app_size);
-        dbSizeHistogram.setSize(dbSize, total);
-        dbSizeHistogram.setColor(R.color.db_size);
-        fileSizeHistogram.setSize(fileSize, total);
-        fileSizeHistogram.setColor(R.color.file_size);
-    }
-
-    public static String humanReadableByteCount(long bytes, boolean si) {
-        int unit = si ? 1000 : 1024;
-        if (bytes < unit) return bytes + " B";
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 }

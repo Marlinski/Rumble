@@ -104,10 +104,6 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
-            android:name=".userinterface.activity.SettingsActivity">
-        </activity>
-
-        <activity
             android:name=".userinterface.activity.GroupListActivity"
             android:uiOptions="splitActionBarWhenNarrow"
             android:theme="@style/Theme.AppCompat.NoActionBar">
@@ -169,6 +165,22 @@
                 <action android:name="org.disrupted.rumble.userinterface.activity.DisplayImage">
                 </action>
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".userinterface.activity.SettingsActivity">
+        </activity>
+        <activity
+            android:name=".userinterface.activity.settings.LicenceActivity">
+        </activity>
+        <activity
+            android:name=".userinterface.activity.settings.StatisticActivity">
+        </activity>
+        <activity
+            android:name=".userinterface.activity.settings.AboutActivity">
+        </activity>
+        <activity
+            android:name=".userinterface.activity.settings.StorageActivity">
         </activity>
 
         <service android:name=".network.NetworkCoordinator">
