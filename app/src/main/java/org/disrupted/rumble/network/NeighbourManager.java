@@ -110,8 +110,13 @@ public class NeighbourManager {
             while (it.hasNext()) {
                 Map.Entry<LinkLayerNeighbour, NeighbourDetail> mapEntry = it.next();
                 LinkLayerNeighbour neighbour = mapEntry.getKey();
-                if (neighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier))
+                if (neighbour.getLinkLayerIdentifier().equals(event.linkLayerIdentifier)) {
+                    NeighbourDetail detail = mapEntry.getValue();
+                    EventBus.getDefault().post(new NeighbourUnreachable(neighbour,
+                            detail.reachable_time_nano,
+                            System.nanoTime()));
                     it.remove();
+                }
             }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
@@ -160,6 +165,8 @@ public class NeighbourManager {
             NeighbourDetail detail = neighborhood.get(event.neighbour);
             if(detail == null) {
                 // it is possible that a peer connect to us before we even detect it
+                // but then the server should normally call ScannerNeighbourSensed before
+                // accepting the connection
                 detail = new NeighbourDetail();
                 neighborhood.put(event.neighbour, detail);
             }
@@ -189,11 +196,16 @@ public class NeighbourManager {
             }
 
             /*
-             * should we trigger a force scan ?
+             * It is conceptually wrong to remove a neighbour from the neighborhood once the
+             * connection has disconnected. But this is only to force a NeighbourReachable
+             * Next time it is discover because we don't have yet a ConnectionManager
              */
-            if (detail.channels.isEmpty())
+            if (detail.channels.isEmpty()) {
                 neighborhood.remove(event.neighbour);
-
+                EventBus.getDefault().post(new NeighbourUnreachable(event.neighbour,
+                        detail.reachable_time_nano,
+                        System.nanoTime()));
+            }
         }
         EventBus.getDefault().post(new NeighborhoodChanged());
     }

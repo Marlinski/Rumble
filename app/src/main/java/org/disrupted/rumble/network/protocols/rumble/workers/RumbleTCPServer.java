@@ -21,6 +21,7 @@ import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.Worker;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServer;
 import org.disrupted.rumble.network.linklayer.wifi.TCP.TCPServerConnection;
 import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
@@ -31,6 +32,8 @@ import org.disrupted.rumble.util.NetUtil;
 
 import java.io.IOException;
 import java.net.Socket;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -64,6 +67,7 @@ public class RumbleTCPServer extends TCPServer {
     protected void onClientConnected(Socket mmConnectedSocket) {
         WifiNeighbour neighbour = new WifiNeighbour(mmConnectedSocket.getInetAddress().getHostAddress());
         RumbleStateMachine connectionState = protocol.getState(neighbour.getLinkLayerAddress());
+        Worker worker = null;
         try {
             connectionState.lock.lock();
             switch (connectionState.getState()) {
@@ -89,9 +93,8 @@ public class RumbleTCPServer extends TCPServer {
                     break;
             }
 
-            Worker worker = new RumbleUnicastChannel(protocol, new TCPServerConnection(mmConnectedSocket));
+            worker = new RumbleUnicastChannel(protocol, new TCPServerConnection(mmConnectedSocket));
             connectionState.connectionAccepted(worker.getWorkerIdentifier());
-            networkCoordinator.addWorker(worker);
         } catch(IOException ignore) {
             Log.e(TAG, "[!] Client CON: " + ignore.getMessage());
         } catch (RumbleStateMachine.StateException e) {
@@ -99,5 +102,8 @@ public class RumbleTCPServer extends TCPServer {
         } finally {
             connectionState.lock.unlock();
         }
+        EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
+        if(worker != null)
+            networkCoordinator.addWorker(worker);
     }
 }

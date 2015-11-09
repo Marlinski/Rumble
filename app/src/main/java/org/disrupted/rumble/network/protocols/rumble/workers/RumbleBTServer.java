@@ -23,6 +23,7 @@ import android.bluetooth.BluetoothSocket;
 import android.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
+import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothNeighbour;
@@ -34,6 +35,8 @@ import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 
 import java.io.IOException;
 import java.util.UUID;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -71,6 +74,7 @@ public class RumbleBTServer extends BluetoothServer {
     protected void onClientConnected(BluetoothSocket mmConnectedSocket) {
         LinkLayerNeighbour neighbour = new BluetoothNeighbour(mmConnectedSocket.getRemoteDevice().getAddress());
         RumbleStateMachine connectionState = protocol.getState(neighbour.getLinkLayerAddress());
+        Worker worker = null;
         try {
             connectionState.lock.lock();
             switch (connectionState.getState()) {
@@ -95,10 +99,8 @@ public class RumbleBTServer extends BluetoothServer {
                 default:
                     break;
             }
-
-            Worker worker = new RumbleUnicastChannel(protocol, new BluetoothServerConnection(mmConnectedSocket));
+            worker = new RumbleUnicastChannel(protocol, new BluetoothServerConnection(mmConnectedSocket));
             connectionState.connectionAccepted(worker.getWorkerIdentifier());
-            networkCoordinator.addWorker(worker);
         } catch(IOException ignore) {
             Log.e(TAG,"[!] Client CON: "+ignore.getMessage());
         } catch (RumbleStateMachine.StateException e) {
@@ -106,6 +108,9 @@ public class RumbleBTServer extends BluetoothServer {
         } finally {
             connectionState.lock.unlock();
         }
+        EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
+        if(worker != null)
+            networkCoordinator.addWorker(worker);
     }
 
 }

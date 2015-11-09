@@ -44,6 +44,7 @@ public class StatReachabilityDatabase extends StatisticDatabase {
             + TIMESTAMP   + " INTEGER, "
             + REACHABLE   + " INTEGER, "
             + UNREACHABLE + " INTEGER, "
+            + DURATION    + " INTEGER, "
             + " FOREIGN KEY ( "+ IFACED_BID + " ) REFERENCES " + StatInterfaceDatabase.TABLE_NAME  + " ( " + StatInterfaceDatabase.ID  + " ) "
             + " );";
 

@@ -97,12 +97,7 @@ public class StatisticManager {
                 .insertLinkLayerStat(event.linkLayerIdentifier, event.started_time_nano, event.stopped_time_nano);
     }
     public void onEvent(NeighbourReachable event) {
-        String mac;
-        try {
-            mac = event.neighbour.getLinkLayerMacAddress();
-        } catch (NetUtil.NoMacAddressException ie) {
-            mac = "00:00:00:00:00:00";
-        }
+        String mac = event.neighbour.getLinkLayerAddress();
         // first we add the Interface if needed
         long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
                 .getInterfaceDBIDFromMac(mac);
@@ -115,12 +110,7 @@ public class StatisticManager {
                 .insertReachability(rowId, event.reachable_time_nano, true, 0);
     }
     public void onEvent(NeighbourUnreachable event) {
-        String mac;
-        try {
-            mac = event.neighbour.getLinkLayerMacAddress();
-        } catch (NetUtil.NoMacAddressException ie) {
-            mac = "00:00:00:00:00:00";
-        }
+        String mac = event.neighbour.getLinkLayerAddress();
         // first we add the Interface if needed
         long rowId = DatabaseFactory.getStatInterfaceDatabase(RumbleApplication.getContext())
                 .getInterfaceDBIDFromMac(mac);
