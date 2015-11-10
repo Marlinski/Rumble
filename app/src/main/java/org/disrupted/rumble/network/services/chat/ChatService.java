@@ -130,7 +130,7 @@ public class ChatService implements ServiceLayer {
         public void onEvent(ChatMessageInsertedEvent event) {
             if((event.channel != null) && event.channel.equals(this.channel))
                 return;
-            channel.execute(new CommandSendChatMessage(event.chatMessage));
+            channel.executeNonBlocking(new CommandSendChatMessage(event.chatMessage));
         }
 
     }

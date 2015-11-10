@@ -106,7 +106,7 @@ public class PushService implements ServiceLayer {
 
         Contact local = Contact.getLocalContact();
         CommandSendLocalInformation command = new CommandSendLocalInformation(local,Contact.FLAG_TAG_INTEREST | Contact.FLAG_GROUP_LIST);
-        event.channel.execute(command);
+        event.channel.executeNonBlocking(command);
     }
 
     /*
@@ -189,10 +189,6 @@ public class PushService implements ServiceLayer {
         private final ReentrantLock putLock = new ReentrantLock(true);
         private final ReentrantLock takeLock = new ReentrantLock(true);
         private final Condition notEmpty = takeLock.newCondition();
-
-        // flow control
-        CountDownLatch latch;
-        Command lastPush;
         private boolean running;
 
         private PushStatus max;
@@ -277,29 +273,28 @@ public class PushService implements ServiceLayer {
             try {
                 Log.d(TAG, "[+] MessageDispatcher initiated");
                 do {
+                        // pick a message randomly
                         PushStatus message = pickMessage();
-                        latch = new CountDownLatch(1);
+
+                        // prepare the command
+                        Command cmd = new CommandSendPushStatus(message);
 
                         // choose a channel to execute the command
                         ProtocolChannel channel = PushService.networkCoordinator.neighbourManager.chooseBestChannel(contact);
                         this.tmpchannel = channel;
                         if(this.tmpchannel == null) {
-                            // the contact must have disconnected
+                            // the contact must have disconnected completely
                             stopDispatcher();
                             break;
                         }
 
-                        // estimate the number of contact that will receive this status
-                        Set<Contact> recipientList = this.tmpchannel.getRecipientList();
-                        lastPush = new CommandSendPushStatus(message, recipientList);
+                        // send the message (blocking operation)
+                        if(channel.execute(cmd)) {
+                            if(max.equals(message))
+                                max = null;
+                            statuses.remove(Integer.valueOf((int) message.getdbId()));
+                        }
 
-                        // send the message
-                        channel.execute(lastPush);
-
-                        // wait for the command to be executed
-                        if(latch.getCount() > 0)
-                            latch.await();
-                        lastPush = null;
                         message.discard();
                 } while (running);
 
@@ -325,8 +320,8 @@ public class PushService implements ServiceLayer {
             if(this.contact == null)
                 return false;
             final ReentrantLock putlock = this.putLock;
+            putlock.lock();
             try {
-                putlock.lock();
 
                 float score = computeScore(message, contact);
 
@@ -402,7 +397,7 @@ public class PushService implements ServiceLayer {
                 }
             }
             for(Integer i : toDelete) {
-                statuses.remove(new Integer(i));
+                statuses.remove(Integer.valueOf(i));
             }
         }
 
@@ -432,19 +427,16 @@ public class PushService implements ServiceLayer {
                         long id = statuses.get(index);
                         pickedUpMessage = DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatus(id);
                         if(pickedUpMessage == null) {
-                            //Log.d(TAG, "cannot retrieve statusId: "+id);
-                            statuses.remove(new Integer((int)id));
+                            statuses.remove(Integer.valueOf((int)id));
                             continue;
                         }
 
-                        // get max probability Pmax
+                        // get max probability Pmax and element probability Pu
                         float maxScore = computeScore(max, contact);
-
-                        // get element probability Pu
                         float score = computeScore(pickedUpMessage, contact);
 
                         if (score <= threshold) {
-                            statuses.remove(new Integer((int)id));
+                            statuses.remove(Integer.valueOf((int)id));
                             pickedUpMessage.discard();
                             pickedUpMessage = null;
                             continue;
@@ -452,7 +444,6 @@ public class PushService implements ServiceLayer {
 
                         int shallwepick = random.nextInt((int) (maxScore * 1000));
                         if (shallwepick <= (score * 1000)) {
-                            statuses.remove(new Integer((int)pickedUpMessage.getdbId()));
                             pickup = true;
                         } else {
                             pickedUpMessage.discard();
@@ -478,7 +469,7 @@ public class PushService implements ServiceLayer {
                 stopDispatcher();
                 return;
             }
-            channel.execute(command);
+            channel.executeNonBlocking(command);
         }
 
 
@@ -530,14 +521,6 @@ public class PushService implements ServiceLayer {
             if(event.contact.isLocal()) {
                 sendLocalPreferences(Contact.FLAG_TAG_INTEREST);
             }
-        }
-
-        /*
-         * signalling that status has been pushed
-         */
-        public void onEvent(CommandExecuted event) {
-            if(event.worker.equals(this.tmpchannel) && event.command.equals(this.lastPush))
-                this.latch.countDown();
         }
 
     }

@@ -265,14 +265,14 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
             // schedule a keep alive to send
             keepAlive.postDelayed(keepAliveFires, KEEP_ALIVE_TIME);
+
+            //EventBus.getDefault().post(new CommandExecuted(this, command, false));
             return true;
         } catch(InputOutputStreamException ignore) {
             Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
         } catch(IOException ignore){
             Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
         }
-
-        EventBus.getDefault().post(new CommandExecuted(this, command, false));
         stopWorker();
         return false;
     }
@@ -314,7 +314,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         @Override
         public void run() {
             CommandSendKeepAlive sendKeepAlive = new CommandSendKeepAlive();
-            execute(sendKeepAlive);
+            executeNonBlocking(sendKeepAlive);
         }
     };
     private Runnable socketTimeoutFires = new Runnable() {

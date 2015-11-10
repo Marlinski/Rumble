@@ -30,19 +30,13 @@ import java.util.Set;
 public class CommandSendPushStatus extends Command {
 
     private PushStatus   status;
-    private Set<Contact> recipientList;
 
-    public CommandSendPushStatus(PushStatus status, Set<Contact> recipientList){
+    public CommandSendPushStatus(PushStatus status){
         this.status = status;
-        this.recipientList = recipientList;
     }
 
     public PushStatus getStatus() {
         return status;
-    }
-
-    public Set<Contact> getRecipientList() {
-        return recipientList;
     }
 
     @Override

@@ -120,14 +120,12 @@ public class BlockPushStatus extends Block{
             PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE;
 
     private PushStatus   status;
-    private Set<Contact> recipientList;
 
     public BlockPushStatus(CommandSendPushStatus command) {
         super(new BlockHeader());
         this.header.setBlockType(BlockHeader.BLOCKTYPE_PUSH_STATUS);
         this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.status = command.getStatus();
-        this.recipientList = command.getRecipientList();
     }
 
     public BlockPushStatus(BlockHeader header) {
@@ -346,7 +344,7 @@ public class BlockPushStatus extends Block{
 
         EventBus.getDefault().post(new PushStatusSent(
                         status,
-                        recipientList,
+                        channel.getRecipientList(),
                         RumbleProtocol.protocolID,
                         BluetoothLinkLayerAdapter.LinkLayerIdentifier,
                         header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,

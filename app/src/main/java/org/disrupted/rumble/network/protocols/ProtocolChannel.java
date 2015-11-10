@@ -30,6 +30,7 @@ import org.disrupted.rumble.network.protocols.command.Command;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
 
@@ -45,6 +46,7 @@ public abstract class ProtocolChannel implements Worker {
     private static final String TAG = "ProtocolWorker";
 
     private BlockingQueue<Command> commandQueue;
+    private final ReentrantLock lock = new ReentrantLock();
 
     protected Protocol protocol;
     protected LinkLayerConnection con;
@@ -84,7 +86,12 @@ public abstract class ProtocolChannel implements Worker {
                 try {
                     while (true) {
                         Command command = commandQueue.take();
-                        onCommandReceived(command);
+                        try {
+                            lock.lock();
+                            onCommandReceived(command);
+                        } finally {
+                            lock.unlock();
+                        }
                     }
                 }
                 catch(InterruptedException e) {
@@ -127,7 +134,7 @@ public abstract class ProtocolChannel implements Worker {
     /*
      * class API
      * - onChannelConnected must be called by implementing class to start the receiving thread
-     * - execute is public method to be called by upper layer
+     * - execute and executeNonBlocking is public method to be called by upper layer
      */
     protected final void onChannelConnected() {
         connection_start_time = System.nanoTime();
@@ -141,6 +148,15 @@ public abstract class ProtocolChannel implements Worker {
     }
 
     public final boolean execute(Command command){
+        lock.lock();
+        try {
+            return onCommandReceived(command);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public final boolean executeNonBlocking(Command command){
         try {
             commandQueue.put(command);
             return true;
