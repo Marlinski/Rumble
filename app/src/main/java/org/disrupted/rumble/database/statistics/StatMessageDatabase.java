@@ -60,7 +60,7 @@ public class StatMessageDatabase extends StatisticDatabase {
             if(cursor == null)
                 return -1;
             if(cursor.moveToFirst() && !cursor.isAfterLast()) {
-                return cursor.getLong(cursor.getColumnIndexOrThrow(ID));
+                return cursor.getLong(cursor.getColumnIndexOrThrow(KEY));
             } else {
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(KEY, key);
