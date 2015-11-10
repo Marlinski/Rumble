@@ -43,7 +43,7 @@ public class RumblePreferences {
         return id;
     }
     private static void createAnonymousID(Context context) {
-        setStringPreference(context, PREF_USER_LEARNED_DRAWER, HashUtil.generateRandomString(20));
+        setStringPreference(context, USER_ANONYMOUS_ID, HashUtil.generateRandomString(20));
     }
 
     public static boolean hasUserLearnedDrawer(Context context) {
