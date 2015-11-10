@@ -30,7 +30,7 @@ public class StatMessageDatabase extends StatisticDatabase {
 
     private static final String TAG = "StatMessageDatabase";
 
-    public  static final String TABLE_NAME      = "link_layer";
+    public  static final String TABLE_NAME      = "messages";
     public  static final String ID              = "_id";
     public  static final String KEY             = "key";
     public  static final String VALUE           = "value";
