@@ -261,7 +261,6 @@ public class BlockFile extends Block {
             throw new IOException(filename+" is not a file or does not exists");
 
         long timeToTransfer = System.nanoTime();
-        long bytesSent = 0;
 
         /* prepare the iv */
         byte[] iv;
@@ -269,7 +268,7 @@ public class BlockFile extends Block {
         if(this.key != null) {
             try {
                 iv = AESUtil.generateRandomIV();
-                payloadSize = AESUtil.expectedEncryptedSize(attachedFile.length());
+                payloadSize = attachedFile.length();
             } catch(Exception e) {
                 return 0;
             }
@@ -292,7 +291,6 @@ public class BlockFile extends Block {
         header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
         header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(pseudoHeaderBuffer.array());
-        bytesSent += FIELD_STATUS_ID_SIZE+FIELD_AES_IV_SIZE+1;
 
         /* sent the attached file, encrypted if key is not null */
         BufferedInputStream fis = null;
@@ -310,7 +308,6 @@ public class BlockFile extends Block {
                     out.write(fileBuffer, 0, bytesread);
                 else
                     cos.write(fileBuffer, 0, bytesread);
-                bytesSent += bytesread;
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } catch(Exception e) {
