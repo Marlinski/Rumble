@@ -274,7 +274,7 @@ public class BlockPushStatus extends Block{
             status.addReplication((int) replication);
             status.setLike((int) like);
 
-            status.toString();
+            Log.d(TAG, status.toString());
 
             String tempfile = "";
             if(status.hasAttachedFile()) {
@@ -391,7 +391,7 @@ public class BlockPushStatus extends Block{
             }
         }
 
-        status.toString();
+        Log.d(TAG, status.toString());
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;

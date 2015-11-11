@@ -93,6 +93,7 @@ public class BlockFile extends Block {
 
     public BlockFile(BlockHeader header) {
         super(header);
+        filename = "";
     }
 
     public BlockFile(String filename, String statud_id_base64) {
@@ -146,7 +147,9 @@ public class BlockFile extends Block {
         readleft -= FIELD_MIME_TYPE_SIZE;
 
         Log.d(TAG, "uid: " + status_id_base64
-                + " iv: " + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP));
+                + " iv: " + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP)
+                + " sum: "+sum
+                + " mime: "+mime);
 
         CONSUME_FILE:
         {
@@ -163,6 +166,7 @@ public class BlockFile extends Block {
                             directory       /* directory */
                     );
 
+                    Log.d(TAG,"creating temp file: "+attachedFile.getName());
                     FileOutputStream fos = null;
                     try {
                         fos = new FileOutputStream(attachedFile);
@@ -179,7 +183,8 @@ public class BlockFile extends Block {
                                 // the IV is null so the file is not encrypted
                                 fos.write(buffer, 0, bytesread);
                             } else {
-                                if ((this.key == null) && (sum != 0)) {
+                                if (this.key == null) {
+                                    Log.d(TAG,"the key wasn't set, we look for it");
                                     // if the key wasn't set, we get the key from the status group
                                     PushStatus status = DatabaseFactory
                                             .getPushStatusDatabase(RumbleApplication.getContext())
@@ -190,12 +195,14 @@ public class BlockFile extends Block {
                                     if(this.key == null)
                                         break CONSUME_FILE;
                                 }
+                                Log.d(TAG,"the key is found");
 
                                 try {
                                     byte[] decrypted = AESUtil.decryptBlock(buffer, key, iv);
                                     fos.write(decrypted, 0, decrypted.length);
                                 } catch (Exception e) {
                                     // error while decrypting the file ?!
+                                    Log.d(TAG,"encryption failed");
                                     if (fos != null)
                                         fos.close();
                                     attachedFile.delete();
@@ -207,7 +214,7 @@ public class BlockFile extends Block {
                         if (fos != null)
                             fos.close();
                     }
-
+                    Log.d(TAG,"filename downloaded");
                     filename = attachedFile.getName();
 
                 /*
