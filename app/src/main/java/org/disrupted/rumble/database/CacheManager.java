@@ -199,7 +199,7 @@ public class CacheManager {
         } catch (Exception ignore ) {
             //ignore.printStackTrace();
         } finally {
-            if (event.tempfile.equals("")) {
+            if (!event.tempfile.equals("")) {
                 try {
                     File toDelete = new File(FileUtil.getWritableAlbumStorageDir(), event.tempfile);
                     toDelete.delete();

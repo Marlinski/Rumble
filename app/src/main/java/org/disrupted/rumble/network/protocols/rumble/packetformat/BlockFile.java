@@ -136,7 +136,7 @@ public class BlockFile extends Block {
         status_id_base64 = Base64.encodeToString(uid, 0, FIELD_STATUS_ID_SIZE, Base64.NO_WRAP);
 
         byte[] iv = new byte[FIELD_AES_IV_SIZE];
-        byteBuffer.get(uid, 0, FIELD_AES_IV_SIZE);
+        byteBuffer.get(iv, 0, FIELD_AES_IV_SIZE);
         readleft -= FIELD_AES_IV_SIZE;
         int sum = 0;
         for (byte b : iv) {sum |= b;}
@@ -144,6 +144,9 @@ public class BlockFile extends Block {
         // for now we only authorize image
         int mime = byteBuffer.get();
         readleft -= FIELD_MIME_TYPE_SIZE;
+
+        Log.d(TAG, "uid: " + status_id_base64
+                + " iv: " + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP));
 
         CONSUME_FILE:
         {
@@ -228,6 +231,7 @@ public class BlockFile extends Block {
         }
 
         // consume what's left
+        Log.d(TAG,"consumming what's left: "+readleft);
         int BUFFER_SIZE = 2048;
         byte[] buffer = new byte[BUFFER_SIZE];
         while (readleft > 0) {
@@ -276,6 +280,9 @@ public class BlockFile extends Block {
         pseudoHeaderBuffer.put(status_id, 0, FIELD_STATUS_ID_SIZE);
         pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
         pseudoHeaderBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
+
+        Log.d(TAG, "uid: " + status_id_base64 + " iv: "
+                + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP));
 
         /* send the header, the pseudo-header and the attached file */
         header.writeBlockHeader(con.getOutputStream());

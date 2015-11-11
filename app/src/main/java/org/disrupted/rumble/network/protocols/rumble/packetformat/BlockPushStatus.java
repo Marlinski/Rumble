@@ -274,8 +274,11 @@ public class BlockPushStatus extends Block{
             status.addReplication((int) replication);
             status.setLike((int) like);
 
+            status.toString();
+
             String tempfile = "";
             if(status.hasAttachedFile()) {
+                Log.d(TAG,"sending file: "+status.getFileName());
                 try {
                     BlockHeader header = BlockHeader.readBlockHeader(in);
                     if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
@@ -374,22 +377,21 @@ public class BlockPushStatus extends Block{
         blockBuffer.put(encryptedBuffer, 0, encryptedBuffer.length);
 
         /* send the header, the status and the attached file */
-        BlockFile blockFile = null;
-        if(status.hasAttachedFile()) {
-            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
-            if(attachedFile.exists() && attachedFile.isFile()) {
-                header.setLastBlock(false);
-                blockFile = new BlockFile(status.getFileName(), status.getUuid());
-                blockFile.setEncryptionKey(status.getGroup().getGroupKey());
-            }
-        }
-
+        if(status.hasAttachedFile())
+            header.setLastBlock(false);
         header.setPayloadLength(length);
         header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(),0,length);
-        if(blockFile != null) {
-            blockFile.writeBlock(channel);
+        if(status.hasAttachedFile()) {
+            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+            if(attachedFile.exists() && attachedFile.isFile()) {
+                BlockFile blockFile = new BlockFile(status.getFileName(), status.getUuid());
+                blockFile.setEncryptionKey(status.getGroup().getGroupKey());
+                blockFile.writeBlock(channel);
+            }
         }
+
+        status.toString();
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;
