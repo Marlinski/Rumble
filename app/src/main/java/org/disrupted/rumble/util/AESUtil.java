@@ -85,13 +85,6 @@ public class AESUtil {
         return cipher.doFinal(encryptedData);
     }
 
-    public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        InputStreamNonClosed isnc = new InputStreamNonClosed(in);
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return new CipherInputStream(isnc, cipher);
-    }
-
     public static CipherOutputStream getCipherOutputStream(OutputStream out, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
         OutputStreamNonClosed isnc = new OutputStreamNonClosed(out);
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -99,6 +92,12 @@ public class AESUtil {
         return new CipherOutputStream(isnc, cipher);
     }
 
+    public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+        InputStreamNonClosed isnc = new InputStreamNonClosed(in);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
+        return new CipherInputStream(isnc, cipher);
+    }
 
     /*
      * CipherInputStream and CipherOutputStream closes the underlying Stream when closed
