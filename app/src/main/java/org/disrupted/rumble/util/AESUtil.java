@@ -22,6 +22,11 @@ package org.disrupted.rumble.util;
  */
 import android.util.Base64;
 
+import java.io.FilterInputStream;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -30,6 +35,8 @@ import java.security.SecureRandom;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
@@ -66,12 +73,6 @@ public class AESUtil {
         return iv;
     }
 
-    public static Cipher getCipher(SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return cipher;
-    }
-
     public static byte[] encryptBlock(byte[] plainData, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
@@ -84,4 +85,42 @@ public class AESUtil {
         return cipher.doFinal(encryptedData);
     }
 
+    public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+        InputStreamNonClosed isnc = new InputStreamNonClosed(in);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
+        return new CipherInputStream(isnc, cipher);
+    }
+
+    public static CipherOutputStream getCipherOutputStream(OutputStream out, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+        OutputStreamNonClosed isnc = new OutputStreamNonClosed(out);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
+        return new CipherOutputStream(isnc, cipher);
+    }
+
+
+    /*
+     * CipherInputStream and CipherOutputStream closes the underlying Stream when closed
+     * this behaviour It is not convenient when used over a socket, so we create new FilterStream
+     * that do nothing when closed.
+     */
+    public static class OutputStreamNonClosed extends FilterOutputStream {
+        public OutputStreamNonClosed(OutputStream out) {
+            super(out);
+        }
+        @Override
+        public void close() throws IOException {
+            // do nothing
+        }
+    }
+    public static class InputStreamNonClosed extends FilterInputStream {
+        public InputStreamNonClosed(InputStream in) {
+            super(in);
+        }
+        @Override
+        public void close() throws IOException {
+            // do nothing
+        }
+    }
 }

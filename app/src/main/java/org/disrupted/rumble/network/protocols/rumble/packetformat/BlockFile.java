@@ -42,6 +42,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
+import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
@@ -180,7 +181,7 @@ public class BlockFile extends Block {
                     try {
                         fos = new FileOutputStream(attachedFile);
                         if(this.key != null)
-                            cis = new CipherInputStream(in, AESUtil.getCipher(this.key, iv));
+                            cis = AESUtil.getCipherInputStream(in, this.key, iv);
 
                         final int BUFFER_SIZE = 2048;
                         byte[] buffer = new byte[BUFFER_SIZE];
@@ -199,8 +200,8 @@ public class BlockFile extends Block {
                         attachedFile.delete();
                         break CONSUME_FILE;
                     } finally {
-                        // we do not close the CipherInputStream because we don't want to close
-                        // the socket.
+                        if(cis != null)
+                            cis.close();
                         if (fos != null)
                             fos.close();
                     }
@@ -276,17 +277,19 @@ public class BlockFile extends Block {
         pseudoHeaderBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
         pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
 
-        /* send the header, the pseudo-header and the attached file */
+        /* send the header and the pseudo-header */
         header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
         header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(pseudoHeaderBuffer.array());
 
+        /* sent the attached file, encrypted if key is not null */
         BufferedInputStream fis = null;
         CipherOutputStream cos = null;
         try {
             OutputStream out = con.getOutputStream();
             if(this.key != null)
-                cos = new CipherOutputStream(out, AESUtil.getCipher(this.key, iv));
+                cos = AESUtil.getCipherOutputStream(out,this.key, iv);
+
             final int BUFFER_SIZE = 2048;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));

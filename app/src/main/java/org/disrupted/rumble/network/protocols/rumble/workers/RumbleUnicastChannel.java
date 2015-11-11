@@ -269,11 +269,12 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             //EventBus.getDefault().post(new CommandExecuted(this, command, false));
             return true;
         } catch(InputOutputStreamException ignore) {
-            Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
+            ignore.printStackTrace();
+            Log.d(TAG, "[!] "+command.getCommandID()+" "+ignore.getMessage());
         } catch(IOException ignore){
-            Log.d(TAG, "[!] "+command.getCommandID()+ignore.getMessage());
+            ignore.printStackTrace();
+            Log.d(TAG, "[!] "+command.getCommandID()+" "+ignore.getMessage());
         }
-        stopWorker();
         return false;
     }
 
