@@ -44,6 +44,6 @@ public class FileSent extends NetworkEvent {
 
     @Override
     public String shortDescription() {
-        return filepath;
+        return filepath+": size="+size+" bytes sent in "+duration+" nanoseconds";
     }
 }

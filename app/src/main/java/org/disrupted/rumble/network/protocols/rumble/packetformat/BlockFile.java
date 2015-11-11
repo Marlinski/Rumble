@@ -17,6 +17,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
+import android.os.Debug;
 import android.util.Base64;
 import android.util.Log;
 
@@ -26,6 +27,8 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.events.FileSent;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.AESUtil;
 import org.disrupted.rumble.util.FileUtil;
@@ -39,13 +42,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * A BlockFile is just a binary stream of size header.length
@@ -72,6 +79,7 @@ import javax.crypto.SecretKey;
 public class BlockFile extends Block {
 
     public static final String TAG = "BlockFile";
+    private static final int BUFFER_SIZE = 128*1024;
 
     /*
      * Byte size
@@ -183,7 +191,6 @@ public class BlockFile extends Block {
                         if(this.key != null)
                             cis = AESUtil.getCipherInputStream(in, this.key, iv);
 
-                        final int BUFFER_SIZE = 2048;
                         byte[] buffer = new byte[BUFFER_SIZE];
                         while (readleft > 0) {
                             long max_read = Math.min((long) BUFFER_SIZE, readleft);
@@ -229,7 +236,6 @@ public class BlockFile extends Block {
         }
 
         // consume what's left
-        int BUFFER_SIZE = 2048;
         byte[] buffer = new byte[BUFFER_SIZE];
         while (readleft > 0) {
             long max_read = Math.min((long)BUFFER_SIZE,readleft);
@@ -253,6 +259,7 @@ public class BlockFile extends Block {
             throw new IOException(filename+" is not a file or does not exists");
 
         long timeToTransfer = System.nanoTime();
+        long bytesSent = 0;
 
         /* prepare the iv */
         byte[] iv;
@@ -283,6 +290,7 @@ public class BlockFile extends Block {
         header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
         header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(pseudoHeaderBuffer.array());
+        bytesSent += FIELD_STATUS_ID_SIZE+FIELD_AES_IV_SIZE+1;
 
         /* sent the attached file, encrypted if key is not null */
         BufferedInputStream fis = null;
@@ -292,7 +300,6 @@ public class BlockFile extends Block {
             if(this.key != null)
                 cos = AESUtil.getCipherOutputStream(out,this.key, iv);
 
-            final int BUFFER_SIZE = 2048;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
@@ -301,6 +308,7 @@ public class BlockFile extends Block {
                     out.write(fileBuffer, 0, bytesread);
                 else
                     cos.write(fileBuffer, 0, bytesread);
+                bytesSent += bytesread;
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } catch(Exception e) {
@@ -314,7 +322,7 @@ public class BlockFile extends Block {
         }
 
         Log.d(TAG,"SENT: "+(System.nanoTime() - timeToTransfer));
-        /*
+
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
         recipients.add(con.getRemoteLinkLayerAddress());
@@ -322,11 +330,10 @@ public class BlockFile extends Block {
                         filename,
                         recipients,
                         RumbleProtocol.protocolID,
-                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        header.getBlockLength() + header.BLOCK_HEADER_LENGTH,
+                        channel.getLinkLayerIdentifier(),
+                        bytesSent,
                         timeToTransfer)
         );
-        */
 
         return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
     }

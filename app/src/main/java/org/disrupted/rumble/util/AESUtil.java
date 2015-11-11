@@ -21,6 +21,7 @@ package org.disrupted.rumble.util;
  * @author Marlinski
  */
 import android.util.Base64;
+import android.util.Log;
 
 import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
@@ -46,6 +47,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AESUtil {
 
+    public static final String TAG = "AESUtil";
     public static final int KEYSIZE = 128;
     public static final int IVSIZE = 16;
 
@@ -105,21 +107,64 @@ public class AESUtil {
      * that do nothing when closed.
      */
     public static class OutputStreamNonClosed extends FilterOutputStream {
+        private long sent;
         public OutputStreamNonClosed(OutputStream out) {
             super(out);
+            sent=0;
+        }
+        @Override
+        public void write(byte[] buffer) throws IOException {
+            super.write(buffer);
+            sent+=buffer.length;
+        }
+
+        @Override
+        public void write(byte[] buffer, int offset, int length) throws IOException {
+            super.write(buffer, offset, length);
+            sent+=length;
+        }
+
+        @Override
+        public void write(int oneByte) throws IOException {
+            super.write(oneByte);
+            sent+=1;
         }
         @Override
         public void close() throws IOException {
             // do nothing
+            Log.d(TAG, "READ: " + sent);
         }
     }
     public static class InputStreamNonClosed extends FilterInputStream {
+        private long read;
         public InputStreamNonClosed(InputStream in) {
             super(in);
+            read = 0;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int r = super.read();
+            read+=1;
+            return r;
+        }
+        @Override
+        public int read(byte[] buffer) throws IOException {
+            int r = super.read(buffer);
+            read += r;
+            return r;
+        }
+
+        @Override
+        public int read(byte[] buffer, int byteOffset, int byteCount) throws IOException {
+            int r = super.read(buffer, byteOffset, byteCount);
+            read += r;
+            return r;
         }
         @Override
         public void close() throws IOException {
             // do nothing
+            Log.d(TAG, "READ: " + read);
         }
     }
 }
