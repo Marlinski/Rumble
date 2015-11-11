@@ -41,7 +41,7 @@ public class UserComposeStatus extends UserInteractionEvent  {
     @Override
     public String shortDescription() {
         if(status != null)
-            return status.getPost()+" ("+status.getAuthor()+")";
+            return status.getPost()+" ("+status.getAuthor().getName()+")";
         else
             return "";
     }

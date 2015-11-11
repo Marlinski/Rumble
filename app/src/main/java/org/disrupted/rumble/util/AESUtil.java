@@ -47,7 +47,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class AESUtil {
 
     public static final int KEYSIZE = 128;
-    public static final int IVSIZE = 8;
+    public static final int IVSIZE = 16;
 
     public static SecretKey generateRandomAESKey() throws NoSuchAlgorithmException{
         KeyGenerator kgen = KeyGenerator.getInstance("AES");

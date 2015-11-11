@@ -35,7 +35,7 @@ public class StatusUpdatedEvent extends StatusDatabaseEvent {
     @Override
     public String shortDescription() {
         if(status != null)
-            return status.getPost()+" ("+status.getAuthor()+")";
+            return status.getPost()+" ("+status.getAuthor().getName()+")";
         else
             return "";
     }

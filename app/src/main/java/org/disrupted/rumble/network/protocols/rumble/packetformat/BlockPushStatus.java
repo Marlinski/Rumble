@@ -180,7 +180,6 @@ public class BlockPushStatus extends Block{
             byte[] iv = new byte[FIELD_AES_IV_SIZE];
             byteBuffer.get(iv, 0, FIELD_AES_IV_SIZE);
             readleft -= FIELD_AES_IV_SIZE;
-
             int sum = 0;
             for (byte b : iv) {sum |= b;}
 
@@ -199,6 +198,7 @@ public class BlockPushStatus extends Block{
                     byteBuffer = ByteBuffer.wrap(blockBuffer);
                     readleft = blockBuffer.length;
                 } catch(Exception e){
+                    e.printStackTrace();
                     throw new MalformedBlockPayload("Unable to decrypt the message", 0);
                 }
             } else {
@@ -359,7 +359,7 @@ public class BlockPushStatus extends Block{
                 iv = AESUtil.generateRandomIV();
                 encryptedBuffer = AESUtil.encryptBlock(toEncryptBuffer.array(), status.getGroup().getGroupKey(), iv);
             } catch(Exception e) {
-                // somehow encryption didn't work.
+                e.printStackTrace();
                 return 0;
             }
         } else {
