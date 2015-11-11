@@ -54,7 +54,7 @@ import javax.crypto.SecretKey;
  * |            Attached Status                |  16 bytes
  * |                 UID                       |
  * +-------------------------------------------+
- * |           Initialisation                  |  16 bytes Initialisation Vector
+ * |           Initialisation                  |  AESUtil.IVSIZE bytes Initialisation Vector
  * |                Vector                     |  (is 0 if file is not encrypted)
  * +-----------+-------------------------------+
  * | Mime Type |                                  1 byte
@@ -270,6 +270,8 @@ public class BlockFile extends Block {
             payloadSize = attachedFile.length();
         }
 
+        Log.d(TAG,"IV STEP: "+(System.nanoTime() - timeToTransfer));
+
         /* prepare the pseudo header */
         ByteBuffer pseudoHeaderBuffer = ByteBuffer.allocate(PSEUDO_HEADER_SIZE);
         byte[] status_id    = Base64.decode(status_id_base64, Base64.NO_WRAP);
@@ -311,6 +313,7 @@ public class BlockFile extends Block {
                 fis.close();
         }
 
+        Log.d(TAG,"SENT: "+(System.nanoTime() - timeToTransfer));
         /*
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();

@@ -109,7 +109,7 @@ public class GroupListActivity extends AppCompatActivity {
      * +--------+----------------------------------+
      * | Length |         Author (String)          |  1 byte + group ID
      * +-------------------------------------------+
-     * |               Group Key                   |  256 bits group key
+     * |               Group Key                   |  group key
      * +--------+---------+------------------------+
      */
     @Override
@@ -137,7 +137,7 @@ public class GroupListActivity extends AppCompatActivity {
 
                 // extract group Key
                 int keysize = (resultbytes.length - 2 - namesize - gidsize);
-                if((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_AES_SIZE/8)))
+                if((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_AES_SIZE)))
                     throw new Exception();
                 byte[] key = new byte[keysize];
                 byteBuffer.get(key, 0, keysize);

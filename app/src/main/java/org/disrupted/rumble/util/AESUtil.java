@@ -46,8 +46,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AESUtil {
 
-    public static final int KEYSIZE = 256;
-    public static final int IVSIZE = 16;
+    public static final int KEYSIZE = 128;
+    public static final int IVSIZE = 8;
 
     public static SecretKey generateRandomAESKey() throws NoSuchAlgorithmException{
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
@@ -56,7 +56,7 @@ public class AESUtil {
     }
 
     public static long expectedEncryptedSize(long size) {
-        return size + (16 - (size % 16));
+        return size + (IVSIZE - (size % IVSIZE));
     }
 
     public static SecretKey getSecretKeyFromByteArray(byte[] keyBlob) {
@@ -67,9 +67,9 @@ public class AESUtil {
     }
 
     public static byte[] generateRandomIV() throws NoSuchAlgorithmException{
-        SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
         byte[] iv = new byte[IVSIZE];
-        randomSecureRandom.nextBytes(iv);
+        secureRandom.nextBytes(iv);
         return iv;
     }
 
