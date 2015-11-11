@@ -285,8 +285,8 @@ public class BlockFile extends Block {
         ByteBuffer pseudoHeaderBuffer = ByteBuffer.allocate(PSEUDO_HEADER_SIZE);
         byte[] status_id    = Base64.decode(status_id_base64, Base64.NO_WRAP);
         pseudoHeaderBuffer.put(status_id, 0, FIELD_STATUS_ID_SIZE);
-        pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
         pseudoHeaderBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
+        pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
 
         Log.d(TAG, "uid: " + status_id_base64 + " iv: "
                 + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP));

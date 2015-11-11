@@ -278,7 +278,7 @@ public class BlockPushStatus extends Block{
 
             String tempfile = "";
             if(status.hasAttachedFile()) {
-                Log.d(TAG,"sending file: "+status.getFileName());
+                Log.d(TAG,"receiving file: "+status.getFileName());
                 try {
                     BlockHeader header = BlockHeader.readBlockHeader(in);
                     if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
