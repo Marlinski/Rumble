@@ -44,6 +44,6 @@ public class FileReceived extends NetworkEvent {
 
     @Override
     public String shortDescription() {
-        return filename;
+        return filename+": size="+size+" bytes sent in "+duration+" nanoseconds";
     }
 }

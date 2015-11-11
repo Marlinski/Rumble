@@ -27,6 +27,7 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
+import org.disrupted.rumble.network.protocols.events.FileReceived;
 import org.disrupted.rumble.network.protocols.events.FileSent;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
@@ -215,7 +216,7 @@ public class BlockFile extends Block {
 
                     filename = attachedFile.getName();
 
-                    /*
+
                     timeToTransfer  = (System.nanoTime() - timeToTransfer);
                     EventBus.getDefault().post(new FileReceived(
                                     attachedFile.getName(),
@@ -226,7 +227,7 @@ public class BlockFile extends Block {
                                     header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                                     timeToTransfer)
                     );
-                    */
+
 
                     return header.getBlockLength();
                 } catch (IOException e) {
@@ -236,6 +237,7 @@ public class BlockFile extends Block {
         }
 
         // consume what's left
+        Log.e(TAG, "Consumming what's left: " + readleft);
         byte[] buffer = new byte[BUFFER_SIZE];
         while (readleft > 0) {
             long max_read = Math.min((long)BUFFER_SIZE,readleft);
@@ -331,7 +333,7 @@ public class BlockFile extends Block {
                         recipients,
                         RumbleProtocol.protocolID,
                         channel.getLinkLayerIdentifier(),
-                        bytesSent,
+                        header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
                         timeToTransfer)
         );
 
