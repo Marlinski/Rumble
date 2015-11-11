@@ -161,20 +161,20 @@ public class Contact {
 
     @Override
     public String toString() {
-        String string =  uid+" - "+name+" ("+(local ? "local" : "alien")+")  ";
-        string += "Groups=(";
+        String string =  "uid="+uid+" name="+name+" ("+(local ? "local" : "alien")+")  \n";
+        string += "Groups=[";
         if(joinedGroupIDs != null) {
             for (String group : joinedGroupIDs) {
                 string += group+", ";
             }
         }
-        string += ") Tag=(";
+        string += "] \nTag=[";
         if(hashtagInterests != null) {
             for (Map.Entry<String, Integer> entry : hashtagInterests.entrySet()) {
                 string += entry.getKey() + ":" + entry.getValue() + " ";
             }
         }
-        string += ")";
+        string += "]";
         return string;
     }
 

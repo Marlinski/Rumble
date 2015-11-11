@@ -241,7 +241,7 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                         if (wifiNeighborhood.add(neighbour)) {
                             EventBus.getDefault().post(new ScannerNeighbourSensed(neighbour));
                         } else {
-                            Log.d(TAG, "beacon from " + neighbour.getLinkLayerAddress());
+                            //Log.d(TAG, "beacon from " + neighbour.getLinkLayerAddress());
                             Runnable callback = timeouts.get(neighbour);
                             if (callback != null)
                                 handler.removeCallbacks(callback);

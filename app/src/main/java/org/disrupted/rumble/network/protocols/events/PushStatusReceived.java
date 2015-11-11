@@ -47,7 +47,7 @@ public class PushStatusReceived extends NetworkEvent{
     @Override
     public String shortDescription() {
         if(status != null)
-            return status.getPost()+" ("+status.getAuthor()+")";
+            return status.getPost()+" ("+status.getAuthor().getName()+") in "+duration+" ns";
         else
             return "";
     }
