@@ -274,11 +274,8 @@ public class BlockPushStatus extends Block{
             status.addReplication((int) replication);
             status.setLike((int) like);
 
-            Log.d(TAG, status.toString());
-
             String tempfile = "";
             if(status.hasAttachedFile()) {
-                Log.d(TAG,"receiving file: "+status.getFileName());
                 try {
                     BlockHeader header = BlockHeader.readBlockHeader(in);
                     if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
@@ -286,8 +283,8 @@ public class BlockPushStatus extends Block{
                     BlockFile block = new BlockFile(header);
                     block.setEncryptionKey(group.getGroupKey());
                     block.readBlock(channel);
-                    tempfile = block.filename;
                     channel.bytes_received += header.getBlockLength();
+                    tempfile = block.filename;
                 } catch (MalformedBlockHeader e) {
                     throw new MalformedBlockPayload("FileBlock Header expected", readleft);
                 }
@@ -298,17 +295,22 @@ public class BlockPushStatus extends Block{
             channel.bytes_received += header.getBlockLength();
             channel.in_transmission_time += timeToTransfer;
 
-            EventBus.getDefault().post(new PushStatusReceived(
-                            status,
-                            sender_id_base64,
-                            tempfile,
-                            RumbleProtocol.protocolID,
-                            con.getLinkLayerIdentifier(),
-                            header.getBlockLength(),
-                            timeToTransfer)
-            );
-
-            return header.getBlockLength();
+            if(status.hasAttachedFile() && tempfile.equals("")) {
+                // there was a problem with the attached file
+                status.discard();
+                return header.getBlockLength();
+            } else {
+                EventBus.getDefault().post(new PushStatusReceived(
+                                status,
+                                sender_id_base64,
+                                tempfile,
+                                RumbleProtocol.protocolID,
+                                con.getLinkLayerIdentifier(),
+                                header.getBlockLength(),
+                                timeToTransfer)
+                );
+                return header.getBlockLength();
+            }
         } catch (BufferUnderflowException exception) {
             throw new MalformedBlockPayload("buffer too small", header.getBlockLength() - readleft);
         }
@@ -390,8 +392,6 @@ public class BlockPushStatus extends Block{
                 blockFile.writeBlock(channel);
             }
         }
-
-        Log.d(TAG, status.toString());
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;

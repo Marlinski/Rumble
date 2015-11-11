@@ -42,6 +42,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.SecretKey;
 
 /**
@@ -142,17 +144,24 @@ public class BlockFile extends Block {
         int sum = 0;
         for (byte b : iv) {sum |= b;}
 
-        // for now we only authorize image
         int mime = byteBuffer.get();
         readleft -= FIELD_MIME_TYPE_SIZE;
 
-        Log.d(TAG, "uid: " + status_id_base64
-                + " iv: " + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP)
-                + " sum: "+sum
-                + " mime: "+mime);
-
         CONSUME_FILE:
         {
+            if ((sum != 0) && (this.key == null)) {
+                // if the key wasn't set, we get the key from the status group
+                PushStatus status = DatabaseFactory
+                        .getPushStatusDatabase(RumbleApplication.getContext())
+                        .getStatus(status_id_base64);
+                if (status == null) // this status does not exists
+                    break CONSUME_FILE;
+                this.key = status.getGroup().getGroupKey();
+                if (this.key == null) // the group is public so encryption is not needed
+                    break CONSUME_FILE;
+            }
+
+            // for now we only authorize image
             if ((mime == MIME_TYPE_IMAGE)) {
                 File directory;
                 try {
@@ -166,69 +175,50 @@ public class BlockFile extends Block {
                             directory       /* directory */
                     );
 
-                    Log.d(TAG,"creating temp file: "+attachedFile.getName());
                     FileOutputStream fos = null;
+                    CipherInputStream cis = null;
                     try {
                         fos = new FileOutputStream(attachedFile);
+                        if(this.key != null)
+                            cis = new CipherInputStream(in, AESUtil.getCipher(this.key, iv));
+
                         final int BUFFER_SIZE = 2048;
                         byte[] buffer = new byte[BUFFER_SIZE];
                         while (readleft > 0) {
                             long max_read = Math.min((long) BUFFER_SIZE, readleft);
-                            int bytesread = in.read(buffer, 0, (int) max_read);
+                            int bytesread = (this.key == null) ?
+                                    in.read(buffer, 0, (int) max_read) :
+                                    cis.read(buffer, 0, (int) max_read);
                             if (bytesread < 0)
                                 throw new IOException("End of stream reached before downloading was complete");
                             readleft -= bytesread;
-
-                            if (sum == 0) {
-                                // the IV is null so the file is not encrypted
-                                fos.write(buffer, 0, bytesread);
-                            } else {
-                                if (this.key == null) {
-                                    Log.d(TAG,"the key wasn't set, we look for it");
-                                    // if the key wasn't set, we get the key from the status group
-                                    PushStatus status = DatabaseFactory
-                                            .getPushStatusDatabase(RumbleApplication.getContext())
-                                            .getStatus(status_id_base64);
-                                    if(status == null)
-                                        break CONSUME_FILE;
-                                    this.key = status.getGroup().getGroupKey();
-                                    if(this.key == null)
-                                        break CONSUME_FILE;
-                                }
-                                Log.d(TAG,"the key is found");
-
-                                try {
-                                    byte[] decrypted = AESUtil.decryptBlock(buffer, key, iv);
-                                    fos.write(decrypted, 0, decrypted.length);
-                                } catch (Exception e) {
-                                    // error while decrypting the file ?!
-                                    Log.d(TAG,"encryption failed");
-                                    if (fos != null)
-                                        fos.close();
-                                    attachedFile.delete();
-                                    break CONSUME_FILE;
-                                }
-                            }
+                            fos.write(buffer, 0, bytesread);
                         }
+                    } catch(Exception e){
+                        e.printStackTrace();
+                        attachedFile.delete();
+                        break CONSUME_FILE;
                     } finally {
+                        // we do not close the CipherInputStream because we don't want to close
+                        // the socket.
                         if (fos != null)
                             fos.close();
                     }
-                    Log.d(TAG,"filename downloaded");
+
                     filename = attachedFile.getName();
 
-                /*
-                timeToTransfer  = (System.nanoTime() - timeToTransfer);
-                EventBus.getDefault().post(new FileReceived(
-                                attachedFile.getName(),
-                                status_id_base64,
-                                con.getRemoteLinkLayerAddress(),
-                                RumbleProtocol.protocolID,
-                                con.getLinkLayerIdentifier(),
-                                header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
-                                timeToTransfer)
-                );
-                */
+                    /*
+                    timeToTransfer  = (System.nanoTime() - timeToTransfer);
+                    EventBus.getDefault().post(new FileReceived(
+                                    attachedFile.getName(),
+                                    status_id_base64,
+                                    con.getRemoteLinkLayerAddress(),
+                                    RumbleProtocol.protocolID,
+                                    con.getLinkLayerIdentifier(),
+                                    header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
+                                    timeToTransfer)
+                    );
+                    */
 
                     return header.getBlockLength();
                 } catch (IOException e) {
@@ -238,7 +228,6 @@ public class BlockFile extends Block {
         }
 
         // consume what's left
-        Log.d(TAG,"consumming what's left: "+readleft);
         int BUFFER_SIZE = 2048;
         byte[] buffer = new byte[BUFFER_SIZE];
         while (readleft > 0) {
@@ -248,6 +237,7 @@ public class BlockFile extends Block {
                 throw new IOException("End of stream reached before downloading was complete");
             readleft -= bytesread;
         }
+        filename = "";
         return header.getBlockLength();
     }
 
@@ -271,7 +261,6 @@ public class BlockFile extends Block {
                 iv = AESUtil.generateRandomIV();
                 payloadSize = AESUtil.expectedEncryptedSize(attachedFile.length());
             } catch(Exception e) {
-                // somehow encryption didn't work.
                 return 0;
             }
         } else {
@@ -279,7 +268,6 @@ public class BlockFile extends Block {
             Arrays.fill(iv, (byte) 0);
             payloadSize = attachedFile.length();
         }
-        header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
 
         /* prepare the pseudo header */
         ByteBuffer pseudoHeaderBuffer = ByteBuffer.allocate(PSEUDO_HEADER_SIZE);
@@ -288,35 +276,34 @@ public class BlockFile extends Block {
         pseudoHeaderBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
         pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
 
-        Log.d(TAG, "uid: " + status_id_base64 + " iv: "
-                + Base64.encodeToString(iv, 0, FIELD_AES_IV_SIZE, Base64.NO_WRAP));
-
         /* send the header, the pseudo-header and the attached file */
+        header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
         header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(pseudoHeaderBuffer.array());
+
         BufferedInputStream fis = null;
+        CipherOutputStream cos = null;
         try {
             OutputStream out = con.getOutputStream();
+            if(this.key != null)
+                cos = new CipherOutputStream(out, AESUtil.getCipher(this.key, iv));
             final int BUFFER_SIZE = 2048;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             while (bytesread > 0) {
-                if(this.key == null) {
+                if (this.key == null)
                     out.write(fileBuffer, 0, bytesread);
-                } else {
-                    try {
-                        byte[] encryptedBuffer = AESUtil.encryptBlock(fileBuffer, this.key, iv);
-                        out.write(encryptedBuffer, 0, encryptedBuffer.length);
-                    } catch (Exception e) {
-                        // somehow encryption didn't work
-                        this.key = null;
-                        return 0;
-                    }
-                }
+                else
+                    cos.write(fileBuffer, 0, bytesread);
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
+        } catch(Exception e) {
+            e.printStackTrace();
+            return 0;
         } finally {
+            if(cos != null)
+                cos.close();
             if (fis != null)
                 fis.close();
         }

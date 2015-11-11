@@ -66,19 +66,10 @@ public class AESUtil {
         return iv;
     }
 
-    public static String encryptText(String plainText, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        byte[] encryptedTextBytes = cipher.doFinal(plainText.getBytes("UTF-8"));
-        return Base64.encodeToString(encryptedTextBytes, Base64.NO_WRAP);
-    }
-
-    public static String decryptText(String encryptedText, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
+    public static Cipher getCipher(SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        byte[] base64decoded = Base64.decode(encryptedText, Base64.NO_WRAP);
-        byte[] decryptedTextBytes = cipher.doFinal(base64decoded);
-        return new String(decryptedTextBytes);
+        return cipher;
     }
 
     public static byte[] encryptBlock(byte[] plainData, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
