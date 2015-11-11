@@ -20,11 +20,14 @@ package org.disrupted.rumble.network.protocols.rumble.packetformat;
 import android.util.Base64;
 import android.util.Log;
 
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.AESUtil;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.BufferedInputStream;
@@ -36,24 +39,30 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+
+import javax.crypto.SecretKey;
 
 /**
  * A BlockFile is just a binary stream of size header.length
  *
  * +-------------------------------------------+
- * |                                           |
- * |            Attached Status  UID           |  16 bytes
- * |                                           |
- * |                                           |
- * +-----------+-------------------------------+
- * |   MIME    |                               |  1 byte
- * +-----------+                               |
- * |                                           |
- * |       Binary .....                        |
- * |                                           |
- * |                                           |
+ * |            Attached Status                |  16 bytes
+ * |                 UID                       |
  * +-------------------------------------------+
+ * |           Initialisation                  |  16 bytes Initialisation Vector
+ * |                Vector                     |  (is 0 if file is not encrypted)
+ * +-----------+-------------------------------+
+ * | Mime Type |                                  1 byte
+ * +-----------+-------------------------------+  +++++++++++++++++++ BEGIN ENCRYPTED BLOCK
+ * |                                           |
+ * |                                           |
+ * |                                           |  VARIABLE
+ * |       Binary File .....                   |
+ * |                                           |
+ * |                                           |
+ * +-------------------------------------------+  +++++++++++++++++++ END ENCRYPTED BLOCK
  *
  * @author Marlinski
  */
@@ -64,16 +73,23 @@ public class BlockFile extends Block {
     /*
      * Byte size
      */
-    private static final int STATUS_ID_SIZE   = PushStatus.STATUS_ID_RAW_SIZE;
-    private static final int MIME_TYPE_SIZE   = 1;
+    private static final int FIELD_STATUS_ID_SIZE = PushStatus.STATUS_ID_RAW_SIZE;
+    private static final int FIELD_AES_IV_SIZE    = AESUtil.IVSIZE;
+    private static final int FIELD_MIME_TYPE_SIZE = 1;
 
-    private  static final int MIN_PAYLOAD_SIZE = ( STATUS_ID_SIZE + MIME_TYPE_SIZE);
-    private  static final int MAX_PAYLOAD_SIZE = ( MIN_PAYLOAD_SIZE + PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE);
+    private  static final int PSEUDO_HEADER_SIZE = (
+            FIELD_STATUS_ID_SIZE +
+            FIELD_AES_IV_SIZE +
+            FIELD_MIME_TYPE_SIZE);
+
+    private  static final int MAX_PAYLOAD_SIZE = ( PSEUDO_HEADER_SIZE + PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE);
 
     public final static int MIME_TYPE_IMAGE = 0x01;
 
-    public String filename;
-    public String statud_id_base64;
+    public  String filename;
+    public  String status_id_base64;
+    private SecretKey key;
+
 
     public BlockFile(BlockHeader header) {
         super(header);
@@ -83,7 +99,12 @@ public class BlockFile extends Block {
         super(new BlockHeader());
         header.setBlockType(BlockHeader.BLOCKTYPE_FILE);
         this.filename = filename;
-        this.statud_id_base64 = statud_id_base64;
+        this.status_id_base64 = statud_id_base64;
+        this.key = null;
+    }
+
+    public void setEncryptionKey(SecretKey key){
+        this.key = key;
     }
 
     @Override
@@ -93,62 +114,98 @@ public class BlockFile extends Block {
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
 
         long readleft = header.getBlockLength();
-        if((readleft < 0) || (readleft > MAX_PAYLOAD_SIZE))
+        if((readleft < PSEUDO_HEADER_SIZE) || (readleft > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong payload size", readleft);
 
         long timeToTransfer = System.nanoTime();
 
         /* read the block pseudo header */
         InputStream in = con.getInputStream();
-        byte[] pseudoHeaderBuffer = new byte[MIN_PAYLOAD_SIZE];
-        int count = in.read(pseudoHeaderBuffer, 0, MIN_PAYLOAD_SIZE);
+        byte[] pseudoHeaderBuffer = new byte[PSEUDO_HEADER_SIZE];
+        int count = in.read(pseudoHeaderBuffer, 0, PSEUDO_HEADER_SIZE);
         if (count < 0)
             throw new IOException("end of stream reached");
-        if (count < MIN_PAYLOAD_SIZE)
+        if (count < PSEUDO_HEADER_SIZE)
             throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
 
+        /* process the block pseudo header */
         ByteBuffer byteBuffer = ByteBuffer.wrap(pseudoHeaderBuffer);
-        byte[] uid = new byte[STATUS_ID_SIZE];
-        byteBuffer.get(uid, 0, STATUS_ID_SIZE);
-        readleft -= STATUS_ID_SIZE;
+        byte[] uid = new byte[FIELD_STATUS_ID_SIZE];
+        byteBuffer.get(uid, 0, FIELD_STATUS_ID_SIZE);
+        readleft -= FIELD_STATUS_ID_SIZE;
+        status_id_base64 = Base64.encodeToString(uid, 0, FIELD_STATUS_ID_SIZE, Base64.NO_WRAP);
 
+        byte[] iv = new byte[FIELD_AES_IV_SIZE];
+        byteBuffer.get(uid, 0, FIELD_AES_IV_SIZE);
+        readleft -= FIELD_AES_IV_SIZE;
+        int sum = 0;
+        for (byte b : iv) {sum |= b;}
+
+        // for now we only authorize image
         int mime = byteBuffer.get();
-        readleft -= MIME_TYPE_SIZE;
+        readleft -= FIELD_MIME_TYPE_SIZE;
 
-        if((mime == MIME_TYPE_IMAGE)) {
-            File directory;
-            try {
-                directory = FileUtil.getWritableAlbumStorageDir();
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-                String imageFileName = "JPEG_" + timeStamp + "_";
-                String suffix = ".jpg";
-                File attachedFile = File.createTempFile(
-                        imageFileName,  /* prefix */
-                        suffix,         /* suffix */
-                        directory       /* directory */
-                );
-
-                FileOutputStream fos = null;
+        CONSUME_FILE:
+        {
+            if ((mime == MIME_TYPE_IMAGE)) {
+                File directory;
                 try {
-                    fos = new FileOutputStream(attachedFile);
-                    final int BUFFER_SIZE = 1024;
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    while (readleft > 0) {
-                        long max_read = Math.min((long)BUFFER_SIZE,readleft);
-                        int bytesread = in.read(buffer, 0, (int)max_read);
-                        if (bytesread < 0)
-                            throw new IOException("End of stream reached before downloading was complete");
-                        readleft -= bytesread;
-                        fos.write(buffer, 0, bytesread);
-                    }
-                } finally {
-                    if (fos != null)
-                        fos.close();
-                }
+                    directory = FileUtil.getWritableAlbumStorageDir();
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    String imageFileName = "JPEG_" + timeStamp + "_";
+                    String suffix = ".jpg";
+                    File attachedFile = File.createTempFile(
+                            imageFileName,  /* prefix */
+                            suffix,         /* suffix */
+                            directory       /* directory */
+                    );
 
-                String status_id_base64 = Base64.encodeToString(uid,0,STATUS_ID_SIZE,Base64.NO_WRAP);
-                filename = attachedFile.getName();
-                statud_id_base64 = status_id_base64;
+                    FileOutputStream fos = null;
+                    try {
+                        fos = new FileOutputStream(attachedFile);
+                        final int BUFFER_SIZE = 2048;
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        while (readleft > 0) {
+                            long max_read = Math.min((long) BUFFER_SIZE, readleft);
+                            int bytesread = in.read(buffer, 0, (int) max_read);
+                            if (bytesread < 0)
+                                throw new IOException("End of stream reached before downloading was complete");
+                            readleft -= bytesread;
+
+                            if (sum == 0) {
+                                // the IV is null so the file is not encrypted
+                                fos.write(buffer, 0, bytesread);
+                            } else {
+                                if ((this.key == null) && (sum != 0)) {
+                                    // if the key wasn't set, we get the key from the status group
+                                    PushStatus status = DatabaseFactory
+                                            .getPushStatusDatabase(RumbleApplication.getContext())
+                                            .getStatus(status_id_base64);
+                                    if(status == null)
+                                        break CONSUME_FILE;
+                                    this.key = status.getGroup().getGroupKey();
+                                    if(this.key == null)
+                                        break CONSUME_FILE;
+                                }
+
+                                try {
+                                    byte[] decrypted = AESUtil.decryptBlock(buffer, key, iv);
+                                    fos.write(decrypted, 0, decrypted.length);
+                                } catch (Exception e) {
+                                    // error while decrypting the file ?!
+                                    if (fos != null)
+                                        fos.close();
+                                    attachedFile.delete();
+                                    break CONSUME_FILE;
+                                }
+                            }
+                        }
+                    } finally {
+                        if (fos != null)
+                            fos.close();
+                    }
+
+                    filename = attachedFile.getName();
 
                 /*
                 timeToTransfer  = (System.nanoTime() - timeToTransfer);
@@ -163,22 +220,24 @@ public class BlockFile extends Block {
                 );
                 */
 
-                return header.getBlockLength();
-            } catch (IOException e) {
-                Log.e(TAG, "[-] file has not been downloaded "+e.getMessage());
-            }
-        } else {
-            int BUFFER_SIZE = 1024;
-            byte[] buffer = new byte[BUFFER_SIZE];
-            while (readleft > 0) {
-                long max_read = Math.min((long)BUFFER_SIZE,readleft);
-                int bytesread = in.read(buffer, 0, (int)max_read);
-                if (bytesread < 0)
-                    throw new IOException("End of stream reached before downloading was complete");
-                readleft -= bytesread;
+                    return header.getBlockLength();
+                } catch (IOException e) {
+                    Log.e(TAG, "[-] file has not been downloaded " + e.getMessage());
+                }
             }
         }
-        return 0;
+
+        // consume what's left
+        int BUFFER_SIZE = 2048;
+        byte[] buffer = new byte[BUFFER_SIZE];
+        while (readleft > 0) {
+            long max_read = Math.min((long)BUFFER_SIZE,readleft);
+            int bytesread = in.read(buffer, 0, (int)max_read);
+            if (bytesread < 0)
+                throw new IOException("End of stream reached before downloading was complete");
+            readleft -= bytesread;
+        }
+        return header.getBlockLength();
     }
 
     @Override
@@ -187,35 +246,60 @@ public class BlockFile extends Block {
         if(filename == null)
             throw new IOException("filename is null");
 
-        byte[] status_id    = Base64.decode(statud_id_base64, Base64.NO_WRAP);
-
         File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), filename);
         if(!attachedFile.exists() || !attachedFile.isFile())
             throw new IOException(filename+" is not a file or does not exists");
 
         long timeToTransfer = System.nanoTime();
 
-        /* calculate the total block size */
-        long size = attachedFile.length();
-        this.header.setPayloadLength(size + MIN_PAYLOAD_SIZE);
+        /* prepare the iv */
+        byte[] iv;
+        long payloadSize;
+        if(this.key != null) {
+            try {
+                iv = AESUtil.generateRandomIV();
+                payloadSize = AESUtil.expectedEncryptedSize(attachedFile.length());
+            } catch(Exception e) {
+                // somehow encryption didn't work.
+                return 0;
+            }
+        } else {
+            iv = new byte[FIELD_AES_IV_SIZE];
+            Arrays.fill(iv, (byte) 0);
+            payloadSize = attachedFile.length();
+        }
+        header.setPayloadLength(PSEUDO_HEADER_SIZE+payloadSize);
 
-        ByteBuffer bufferBlockFilePseudoHeader = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
-        bufferBlockFilePseudoHeader.put(status_id, 0, STATUS_ID_SIZE);
-        bufferBlockFilePseudoHeader.put((byte) MIME_TYPE_IMAGE);
+        /* prepare the pseudo header */
+        ByteBuffer pseudoHeaderBuffer = ByteBuffer.allocate(PSEUDO_HEADER_SIZE);
+        byte[] status_id    = Base64.decode(status_id_base64, Base64.NO_WRAP);
+        pseudoHeaderBuffer.put(status_id, 0, FIELD_STATUS_ID_SIZE);
+        pseudoHeaderBuffer.put((byte) MIME_TYPE_IMAGE);
+        pseudoHeaderBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
 
         /* send the header, the pseudo-header and the attached file */
         header.writeBlockHeader(con.getOutputStream());
-        con.getOutputStream().write(bufferBlockFilePseudoHeader.array());
-
+        con.getOutputStream().write(pseudoHeaderBuffer.array());
         BufferedInputStream fis = null;
         try {
             OutputStream out = con.getOutputStream();
-            final int BUFFER_SIZE = 1024;
+            final int BUFFER_SIZE = 2048;
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             while (bytesread > 0) {
-                out.write(fileBuffer, 0, bytesread);
+                if(this.key == null) {
+                    out.write(fileBuffer, 0, bytesread);
+                } else {
+                    try {
+                        byte[] encryptedBuffer = AESUtil.encryptBlock(fileBuffer, this.key, iv);
+                        out.write(encryptedBuffer, 0, encryptedBuffer.length);
+                    } catch (Exception e) {
+                        // somehow encryption didn't work
+                        this.key = null;
+                        return 0;
+                    }
+                }
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } finally {
@@ -237,11 +321,10 @@ public class BlockFile extends Block {
         );
         */
 
-        return 0;
+        return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
     }
 
     @Override
     public void dismiss() {
-
     }
 }

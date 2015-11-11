@@ -20,6 +20,7 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
+import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -75,7 +76,7 @@ import de.greenrobot.event.EventBus;
  * |   Hop Count       |      Hop Limit        |  2 bytes + 2 bytes
  * +-------------------+-----------------------+
  * |    Replication    |    like   |              2 byte + 1 byte
- * +-------------------+-----------+             +++++++++++++++++++ END ENCRYPTED BLOCK
+ * +-------------------------------------------+ +++++++++++++++++++ END ENCRYPTED BLOCK
  *
  * @author Marlinski
  */
@@ -280,6 +281,7 @@ public class BlockPushStatus extends Block{
                     if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
                         throw new MalformedBlockPayload("FileBlock Header expected", readleft);
                     BlockFile block = new BlockFile(header);
+                    block.setEncryptionKey(group.getGroupKey());
                     block.readBlock(channel);
                     tempfile = block.filename;
                     channel.bytes_received += header.getBlockLength();
@@ -378,6 +380,7 @@ public class BlockPushStatus extends Block{
             if(attachedFile.exists() && attachedFile.isFile()) {
                 header.setLastBlock(false);
                 blockFile = new BlockFile(status.getFileName(), status.getUuid());
+                blockFile.setEncryptionKey(status.getGroup().getGroupKey());
             }
         }
 

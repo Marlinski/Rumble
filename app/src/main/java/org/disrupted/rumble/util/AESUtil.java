@@ -27,8 +27,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidParameterSpecException;
-import java.util.Random;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -48,6 +46,10 @@ public class AESUtil {
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
         kgen.init(KEYSIZE);
         return kgen.generateKey();
+    }
+
+    public static long expectedEncryptedSize(long size) {
+        return size + (16 - (size % 16));
     }
 
     public static SecretKey getSecretKeyFromByteArray(byte[] keyBlob) {
