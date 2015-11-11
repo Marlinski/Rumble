@@ -174,7 +174,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     protected void processingPacketFromNetwork(){
         try {
             while (true) {
-                BlockHeader header = BlockHeader.readBlock(((UnicastConnection) con).getInputStream());
+                BlockHeader header = BlockHeader.readBlockHeader(((UnicastConnection) con).getInputStream());
 
                 // channel is alive
                 socketTimeout.removeCallbacks(socketTimeoutFires);

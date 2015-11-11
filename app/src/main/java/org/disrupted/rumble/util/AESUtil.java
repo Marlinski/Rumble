@@ -26,6 +26,10 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.InvalidParameterSpecException;
+import java.util.Random;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
@@ -38,6 +42,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class AESUtil {
 
     public static final int KEYSIZE = 256;
+    public static final int IVSIZE = 16;
 
     public static SecretKey generateRandomAESKey() throws NoSuchAlgorithmException{
         KeyGenerator kgen = KeyGenerator.getInstance("AES");
@@ -50,6 +55,13 @@ public class AESUtil {
             return null;
         else
             return new SecretKeySpec(keyBlob, "AES");
+    }
+
+    public static byte[] generateRandomIV() throws NoSuchAlgorithmException{
+        SecureRandom randomSecureRandom = SecureRandom.getInstance("SHA1PRNG");
+        byte[] iv = new byte[IVSIZE];
+        randomSecureRandom.nextBytes(iv);
+        return iv;
     }
 
     public static String encryptText(String plainText, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {

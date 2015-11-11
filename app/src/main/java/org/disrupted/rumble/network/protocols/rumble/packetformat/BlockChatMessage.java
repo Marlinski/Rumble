@@ -21,7 +21,6 @@ import android.util.Base64;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -31,7 +30,6 @@ import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
-import org.disrupted.rumble.util.HashUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -203,7 +201,7 @@ public class BlockChatMessage extends Block {
         blockBuffer.putLong(chatMessage.getAuthorTimestamp());
 
         /* send the header, the status and the attached file */
-        header.writeBlock(con.getOutputStream());
+        header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(),0,length);
         if(blockFile != null)
             blockFile.writeBlock(channel);

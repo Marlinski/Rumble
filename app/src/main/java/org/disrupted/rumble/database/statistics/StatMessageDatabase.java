@@ -52,7 +52,6 @@ public class StatMessageDatabase extends StatisticDatabase {
     }
 
     public long getValue(String key, long default_value) {
-        long rowid = -1;
         Cursor cursor = null;
         try {
             SQLiteDatabase database = databaseHelper.getReadableDatabase();

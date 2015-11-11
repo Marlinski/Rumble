@@ -129,22 +129,6 @@ public class CacheManager {
             if ((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
                 return;
 
-            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.status.getGroup().getGid());
-            if (group == null) {
-                // we do not accept message for group we do not belong to
-                // because a group can only be added manually by the user
-                // todo make it a setting to accept open group ?
-                Log.d(TAG, "[!] unknown group: refusing the message");
-                return;
-            } else {
-                if (!group.getName().equals(event.status.getGroup().getName())) {
-                    // if we manually added the group, then we refuse the message if the name conflicts
-                    // A group cannot change its name
-                    Log.d(TAG, "[!] GroupID: " + group.getGid() + " CONFLICT: db=" + group.getName() + " status=" + event.status.getGroup().getName());
-                    return;
-                }
-            }
-
             Contact sender = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.receivedBy());
             if (sender == null) {
                 // we do not accept message from unknown sender, that should never happen as the protocol starts by exchange

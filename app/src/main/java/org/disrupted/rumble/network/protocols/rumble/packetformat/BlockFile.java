@@ -17,24 +17,15 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.events.FileReceived;
-import org.disrupted.rumble.network.protocols.events.FileSent;
-import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
-import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
-import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.FileUtil;
-import org.disrupted.rumble.util.HashUtil;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -45,11 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * A BlockFile is just a binary stream of size header.length
@@ -217,7 +204,7 @@ public class BlockFile extends Block {
         bufferBlockFilePseudoHeader.put((byte) MIME_TYPE_IMAGE);
 
         /* send the header, the pseudo-header and the attached file */
-        header.writeBlock(con.getOutputStream());
+        header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(bufferBlockFilePseudoHeader.array());
 
         BufferedInputStream fis = null;

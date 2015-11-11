@@ -109,7 +109,7 @@ public class BlockHeader {
         payload_length = 0;
     }
 
-    public static BlockHeader readBlock(InputStream in) throws MalformedBlockHeader, IOException {
+    public static BlockHeader readBlockHeader(InputStream in) throws MalformedBlockHeader, IOException {
         BlockHeader ret = new BlockHeader();
         byte[] headerBuffer = new byte[BLOCK_HEADER_LENGTH];
 
@@ -141,7 +141,7 @@ public class BlockHeader {
         return ret;
     }
 
-    public long writeBlock(OutputStream out) throws IOException {
+    public long writeBlockHeader(OutputStream out) throws IOException {
         ByteBuffer bufferBlockHeader = ByteBuffer.allocate(BLOCK_HEADER_LENGTH);
         try {
             bufferBlockHeader.put((byte)(version & 0xff));

@@ -17,8 +17,6 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.util.Log;
-
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
@@ -53,7 +51,7 @@ public class BlockKeepAlive extends Block {
     @Override
     public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
         UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        header.writeBlock(con.getOutputStream());
+        header.writeBlockHeader(con.getOutputStream());
         return BlockHeader.BLOCK_HEADER_LENGTH;
     }
 

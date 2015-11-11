@@ -29,9 +29,7 @@ import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
 import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
-import org.disrupted.rumble.util.HashUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -264,7 +262,7 @@ public class BlockContact extends Block {
         long timeToTransfer = System.currentTimeMillis();
 
         /* send the BlockHeader and the BlockPayload */
-        header.writeBlock(con.getOutputStream());
+        header.writeBlockHeader(con.getOutputStream());
         con.getOutputStream().write(blockBuffer.array(), 0, buffersize);
 
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
