@@ -351,6 +351,7 @@ public class BlockPushStatus extends Block{
             blockFile.writeBlock(channel, finalOut);
         if(encrypted)
             finalOut.close();
+        out.write(new byte[]{20,21,22,23,24,25});
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;

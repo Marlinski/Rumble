@@ -130,7 +130,7 @@ public class BlockFile extends Block {
         if (count < MIN_PAYLOAD_SIZE)
             throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
 
-        Log.d(TAG,"BlockFileHeader received ("+count+" bytes): "+new String(pseudoHeaderBuffer));
+        Log.d(TAG,"BlockFileHeader received ("+count+" bytes): "+Arrays.toString(pseudoHeaderBuffer));
 
         /* process the block pseudo header */
         ByteBuffer byteBuffer = ByteBuffer.wrap(pseudoHeaderBuffer);
@@ -232,7 +232,7 @@ public class BlockFile extends Block {
         out.write(pseudoHeaderBuffer.array());
 
         Log.d(TAG, "BlockFileHeader sent (" + pseudoHeaderBuffer.array().length + " bytes): "
-                + new String(pseudoHeaderBuffer.array()));
+                + Arrays.toString(pseudoHeaderBuffer.array()));
 
         /* sent the attached file */
         BufferedInputStream fis = null;

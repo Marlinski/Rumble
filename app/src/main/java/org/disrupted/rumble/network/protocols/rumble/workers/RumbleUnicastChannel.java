@@ -54,6 +54,7 @@ import org.disrupted.rumble.util.AESUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -222,8 +223,13 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 }
 
                 if((secretKey != null) && header.isLastBlock()) {
+                    byte[] bibi = new byte[3];
+                    in.read(bibi);
+                    Log.d(TAG, Arrays.toString(bibi));
                     in.close();
                     in = temp;
+                    in.read(bibi);
+                    Log.d(TAG, Arrays.toString(bibi));
                     temp = null;
                     secretKey = null;
                     ivBytes = null;
