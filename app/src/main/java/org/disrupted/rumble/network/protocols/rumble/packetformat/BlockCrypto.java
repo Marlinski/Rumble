@@ -105,14 +105,9 @@ public class BlockCrypto extends Block {
 
     public BlockCrypto(String gid, byte[] iv) {
         super(new BlockHeader());
+        header.setBlockType(BlockHeader.BLOCKTYPE_CRYPTO);
         this.gid = gid;
         this.ivBytes = iv;
-    }
-
-    public BlockCrypto(CommandSendKeepAlive command) {
-        super(new BlockHeader());
-        header.setBlockType(BlockHeader.BLOCKTYPE_CRYPTO);
-        header.setPayloadLength(0);
     }
 
     public void sanityCheck() throws MalformedBlockPayload {
