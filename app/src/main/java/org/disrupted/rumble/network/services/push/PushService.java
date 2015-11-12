@@ -238,9 +238,10 @@ public class PushService implements ServiceLayer {
             if(contact == null)
                 return;
             PushStatusDatabase.StatusQueryOption options = new PushStatusDatabase.StatusQueryOption();
+            options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NOT_EXPIRED;
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_GROUP;
-            options.groupIDFilters = contact.getJoinedGroupIDs();
             options.filterFlags |= PushStatusDatabase.StatusQueryOption.FILTER_NEVER_SEND_TO_USER;
+            options.groupIDFilters = contact.getJoinedGroupIDs();
             options.uid = contact.getUid();
             options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_DBIDS;
             DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).getStatuses(options, onStatusLoaded);

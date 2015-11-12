@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class Contact {
 
-    public static final int CONTACT_NAME_MAX_SIZE = 20;
+    public static final int CONTACT_NAME_MAX_SIZE = 50;
     public static final int CONTACT_UID_RAW_SIZE  = 8;
 
     /* core attributes */

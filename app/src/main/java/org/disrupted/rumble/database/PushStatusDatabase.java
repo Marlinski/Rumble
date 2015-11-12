@@ -24,7 +24,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 import android.util.Log;
 
 import org.disrupted.rumble.database.events.StatusInsertedEvent;
@@ -52,25 +51,25 @@ public class PushStatusDatabase extends Database {
 
     private static final String TAG = "PushStatusDatabase";
 
-    public static final String TABLE_NAME       = "push_status";
-    public static final String ID               = "_id";
-    public static final String UUID             = "uuid";         // unique ID 128 bits
-    public static final String AUTHOR_DBID      = "author_db_id"; // unique ID 64  bits stored in Base64
-    public static final String GROUP_DBID       = "group_db_id";  // the name of the group it belongs to
-    public static final String POST             = "post";         // the post itself
-    public static final String FILE_NAME        = "filename";     // the name of the attached file
-    public static final String TIME_OF_CREATION = "toc";          // time of creation of the post
-    public static final String TIME_OF_ARRIVAL  = "toa";          // time of arrival at current node
-    public static final String SENDER_DBID      = "sender_db_id"; // unique ID 64  bits stored in Base64
-    public static final String TTL              = "ttl";          // time to live (in second since toc)
-    public static final String HOP_COUNT        = "hopcount";     // number of device it has traversed
-    public static final String HOP_LIMIT        = "hoplimit";     // number of device it has traversed
-    public static final String LIKE             = "like";         // number of like (in the path)
-    public static final String REPLICATION      = "replication";  // number of replications
-    public static final String DUPLICATE        = "duplicate";    // number of copies received
-    public static final String USERREAD         = "read";         // has the user read it already ?
-    public static final String USERLIKED         = "liked";       // has the user liked it ?
-    public static final String USERSAVED         = "saved";       // has the user liked it ?
+    public static final String TABLE_NAME         = "push_status";
+    public static final String ID                 = "_id";
+    public static final String UUID               = "uuid";         // unique ID 128 bits
+    public static final String AUTHOR_DBID        = "author_db_id"; // unique ID 64  bits stored in Base64
+    public static final String GROUP_DBID         = "group_db_id";  // the name of the group it belongs to
+    public static final String POST               = "post";         // the post itself
+    public static final String FILE_NAME          = "filename";     // the name of the attached file
+    public static final String TIME_OF_CREATION   = "toc";          // time of creation of the post
+    public static final String TIME_OF_ARRIVAL    = "toa";          // time of arrival at current node
+    public static final String TIME_TO_LIVE       = "ttl";          // time to live (in second since toc)
+    public static final String SENDER_DBID        = "sender_db_id"; // unique ID 64  bits stored in Base64
+    public static final String HOP_COUNT          = "hopcount";     // number of device it has traversed
+    public static final String HOP_LIMIT          = "hoplimit";     // number of device it has traversed
+    public static final String LIKE               = "like";         // number of like (in the path)
+    public static final String REPLICATION        = "replication";  // number of replications
+    public static final String DUPLICATE          = "duplicate";    // number of copies received
+    public static final String USERREAD           = "read";         // has the user read it already ?
+    public static final String USERLIKED          = "liked";       // has the user liked it ?
+    public static final String USERSAVED          = "saved";       // has the user liked it ?
 
     public static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME +
             " (" + ID          + " INTEGER PRIMARY KEY, "
@@ -79,10 +78,10 @@ public class PushStatusDatabase extends Database {
                  + GROUP_DBID  + " INTEGER, "
                  + POST        + " TEXT, "
                  + FILE_NAME   + " TEXT, "
-                 + TIME_OF_CREATION  + " INTEGER, "
-                 + TIME_OF_ARRIVAL   + " INTEGER, "
+                 + TIME_OF_CREATION   + " INTEGER, "
+                 + TIME_OF_ARRIVAL    + " INTEGER, "
                  + SENDER_DBID + " INTEGER, "
-                 + TTL         + " INTEGER, "
+                 + TIME_TO_LIVE + " INTEGER, "
                  + HOP_LIMIT   + " INTEGER, "
                  + LIKE        + " INTEGER, "
                  + HOP_COUNT   + " INTEGER, "
@@ -110,6 +109,7 @@ public class PushStatusDatabase extends Database {
         public static final long FILTER_BEFORE_TOC         = 0x0100;
         public static final long FILTER_BEFORE_TOA         = 0x0200;
         public static final long FILTER_NEVER_SEND_TO_USER = 0x0400;
+        public static final long FILTER_NOT_EXPIRED        = 0x0800;
 
         public enum QUERY_RESULT {
             COUNT,
@@ -278,12 +278,12 @@ public class PushStatusDatabase extends Database {
                 query.append(" AND ");
             firstwhere = false;
             query.append(
-                    " ps."+ PushStatusDatabase.ID + "  NOT IN ( "
-                    + " SELECT sc."+ StatusContactDatabase.STATUS_DBID
-                    + " FROM " + StatusContactDatabase.TABLE_NAME + " sc "
-                    + " JOIN " + ContactDatabase.TABLE_NAME + " c "
-                    + " ON sc." + StatusContactDatabase.CONTACT_DBID + " = c."+ContactDatabase.ID
-                    + " WHERE c."+ ContactDatabase.UID + " = ? )");
+                    " ps." + PushStatusDatabase.ID + "  NOT IN ( "
+                            + " SELECT sc." + StatusContactDatabase.STATUS_DBID
+                            + " FROM " + StatusContactDatabase.TABLE_NAME + " sc "
+                            + " JOIN " + ContactDatabase.TABLE_NAME + " c "
+                            + " ON sc." + StatusContactDatabase.CONTACT_DBID + " = c." + ContactDatabase.ID
+                            + " WHERE c." + ContactDatabase.UID + " = ? )");
             argumentList.add(options.uid);
             groupby = true;
         }
@@ -338,6 +338,15 @@ public class PushStatusDatabase extends Database {
                 query.append(" ps." + PushStatusDatabase.USERLIKED + " = 1 ");
             else
                 query.append(" ps." + PushStatusDatabase.USERLIKED + " = 0 ");
+        }
+        if ((options.filterFlags & StatusQueryOption.FILTER_NOT_EXPIRED) == StatusQueryOption.FILTER_NOT_EXPIRED) {
+            if(!firstwhere)
+                query.append(" AND ");
+            query.append(" ps." + PushStatusDatabase.TIME_TO_LIVE + " >= 0 ");
+            long now = System.currentTimeMillis();
+            query.append(" AND ? - ps." + PushStatusDatabase.TIME_OF_CREATION +
+                    " < ps." + PushStatusDatabase.TIME_TO_LIVE);
+            argumentList.add(Long.toString(now));
         }
         if (options.filterFlags > 0)
             query.append(" ) ");
@@ -524,10 +533,10 @@ public class PushStatusDatabase extends Database {
         contentValues.put(FILE_NAME, status.getFileName());
         contentValues.put(TIME_OF_CREATION, status.getTimeOfCreation());
         contentValues.put(TIME_OF_ARRIVAL, status.getTimeOfArrival());
+        contentValues.put(TIME_TO_LIVE, status.getTTL());
         contentValues.put(SENDER_DBID, sender_DBID);
         contentValues.put(HOP_COUNT, status.getHopCount());
         contentValues.put(LIKE, status.getLike());
-        contentValues.put(TTL, status.getTTL());
         contentValues.put(REPLICATION, status.getReplication());
         contentValues.put(DUPLICATE, status.getDuplicate());
         contentValues.put(USERREAD, status.hasUserReadAlready() ? 1 : 0);
@@ -589,9 +598,9 @@ public class PushStatusDatabase extends Database {
         PushStatus message = new PushStatus(contact, group, post, toc, sender_dbid);
         message.setdbId(statusDBID);
         message.setTimeOfArrival(cursor.getLong(cursor.getColumnIndexOrThrow(TIME_OF_ARRIVAL)));
+        message.setTTL(cursor.getLong(cursor.getColumnIndexOrThrow(TIME_TO_LIVE)));
         message.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(FILE_NAME)));
         message.setHopCount(cursor.getInt(cursor.getColumnIndexOrThrow(HOP_COUNT)));
-        message.setTTL(cursor.getLong(cursor.getColumnIndexOrThrow(TTL)));
         message.setLike(cursor.getInt(cursor.getColumnIndexOrThrow(LIKE)));
         message.addReplication(cursor.getInt(cursor.getColumnIndexOrThrow(REPLICATION)));
         message.addDuplicate(cursor.getInt(cursor.getColumnIndexOrThrow(DUPLICATE)));

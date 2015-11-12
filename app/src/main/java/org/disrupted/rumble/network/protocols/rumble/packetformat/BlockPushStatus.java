@@ -217,7 +217,7 @@ public class BlockPushStatus extends Block{
                 throw new MalformedBlockPayload("wrong header.length parameter, no more data to read: " + (header.getBlockLength()-readleft), header.getBlockLength()-readleft);
 
             /* assemble the status */
-            String group_id_base64 = Base64.encodeToString(group_id,  0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
+            String group_id_base64  = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
             String sender_id_base64 = Base64.encodeToString(sender_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
             String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
 

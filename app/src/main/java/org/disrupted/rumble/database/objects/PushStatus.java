@@ -77,20 +77,20 @@ public class PushStatus {
         if(message.getHashtagSet() != null)
             this.hashtagSet  = new HashSet<String>(message.hashtagSet);
         else
-            this.hashtagSet  = new HashSet<String>();
-        this.attachedFile    = message.attachedFile;
-        this.fileSize        = message.fileSize;
-        this.timeOfArrival   = message.timeOfArrival;
-        this.ttl             = message.ttl;
-        this.hopCount        = message.hopCount;
-        this.hopLimit        = message.hopLimit;
-        this.like            = message.like;
-        this.replication     = message.replication;
-        this.duplicate       = message.duplicate;
-        this.hasUserRead     = message.hasUserRead;
-        this.hasUserLiked    = message.hasUserLiked;
-        this.hasUserSaved    = message.hasUserSaved;
-        this.received_by     = message.received_by;
+            this.hashtagSet   = new HashSet<String>();
+        this.attachedFile     = message.attachedFile;
+        this.fileSize         = message.fileSize;
+        this.timeOfArrival    = message.timeOfArrival;
+        this.ttl              = message.ttl;
+        this.hopCount         = message.hopCount;
+        this.hopLimit         = message.hopLimit;
+        this.like             = message.like;
+        this.replication      = message.replication;
+        this.duplicate        = message.duplicate;
+        this.hasUserRead      = message.hasUserRead;
+        this.hasUserLiked     = message.hasUserLiked;
+        this.hasUserSaved     = message.hasUserSaved;
+        this.received_by      = message.received_by;
     }
 
     public PushStatus(Contact author, Group group, String post, long timeOfCreation, String received_by) {
@@ -109,16 +109,15 @@ public class PushStatus {
         }
 
         attachedFile   = "";
-        fileSize = 0;
+        fileSize       = 0;
         this.timeOfCreation = timeOfCreation;
-        timeOfArrival  = System.currentTimeMillis();
+        timeOfArrival       = System.currentTimeMillis();
+        ttl            = -1;
         hopCount       = 0;
         hopLimit       = Integer.MAX_VALUE;
-        ttl            = 0;
         like           = 0;
         replication    = 0;
         duplicate      = 0;
-
         hasUserRead  = false;
         hasUserLiked = false;
         hasUserSaved = false;
@@ -132,9 +131,9 @@ public class PushStatus {
     public Set<String> getHashtagSet(){     return this.hashtagSet;            }
     public long    getTimeOfCreation(){     return this.timeOfCreation;        }
     public long    getTimeOfArrival(){      return this.timeOfArrival;         }
+    public long    getTTL(){                return this.ttl;                   }
     public int     getHopCount(){           return this.hopCount;              }
     public int     getHopLimit(){           return this.hopLimit;              }
-    public long    getTTL(){                return this.ttl;                   }
     public String  getFileName(){           return this.attachedFile;          }
     public long    getFileSize() {          return this.fileSize;              }
     public int     getLike(){               return like;                       }
@@ -145,18 +144,21 @@ public class PushStatus {
     public boolean hasUserReadAlready() {   return hasUserRead;                }
     public boolean hasUserSaved() {         return hasUserSaved;               }
     public String  receivedBy() {           return received_by;                }
-
-
-    public void setdbId(long dbid) {              this.dbid           = dbid;     }
-    public void setFileName(String name){         this.attachedFile   = name;      }
-    public void setFileSize(long fileSize) {      this.fileSize = fileSize;       }
-    public void setTimeOfCreation(long toc){      this.timeOfCreation = toc;      }
-    public void setTimeOfArrival(long toa){       this.timeOfArrival  = toa;      }
-    public void setHopCount(int hopcount){        this.hopCount       = hopcount; }
-    public void setHopLimit(int hopLimit){        this.hopLimit       = hopLimit; }
-    public void setLike(int like){                this.like           = like;     }
-    public void addLike(){                        this.like++;                    }
-    public void setTTL(long ttl){                 this.ttl            = ttl;      }
+    public boolean isExpired() {
+        return (System.currentTimeMillis() - timeOfCreation) < ttl;
+    }
+    
+    public void setdbId(long dbid) {              this.dbid             = dbid;     }
+    public void setFileName(String name){         this.attachedFile     = name;     }
+    public void setFileSize(long fileSize) {      this.fileSize = fileSize;         }
+    public void setTimeOfCreation(long toc){      this.timeOfCreation   = toc;      }
+    public void setTimeOfArrival(long toa){       this.timeOfArrival    = toa;      }
+    public void setTimeOfExpiration(long ttl){    this.ttl              = ttl;      }
+    public void setHopCount(int hopcount){        this.hopCount         = hopcount; }
+    public void setHopLimit(int hopLimit){        this.hopLimit         = hopLimit; }
+    public void setLike(int like){                this.like             = like;     }
+    public void addLike(){                        this.like++;                      }
+    public void setTTL(long ttl){                 this.ttl              = ttl;      }
     public void setHashtagSet(Set<String> hashtagSet) {
         if(this.hashtagSet.size() > 0)
             this.hashtagSet.clear();
