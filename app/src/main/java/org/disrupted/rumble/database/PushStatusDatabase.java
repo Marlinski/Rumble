@@ -342,10 +342,12 @@ public class PushStatusDatabase extends Database {
         if ((options.filterFlags & StatusQueryOption.FILTER_NOT_EXPIRED) == StatusQueryOption.FILTER_NOT_EXPIRED) {
             if(!firstwhere)
                 query.append(" AND ");
-            query.append(" ps." + PushStatusDatabase.TIME_TO_LIVE + " >= 0 ");
             long now = System.currentTimeMillis();
-            query.append(" AND ? - ps." + PushStatusDatabase.TIME_OF_CREATION +
-                    " < ps." + PushStatusDatabase.TIME_TO_LIVE);
+            query.append("( " +
+                    " ps." + PushStatusDatabase.TIME_TO_LIVE + " < 0 " +
+                    " OR  ? - ps." + PushStatusDatabase.TIME_OF_CREATION +
+                    " < ps." + PushStatusDatabase.TIME_TO_LIVE +
+                         " ) ");
             argumentList.add(Long.toString(now));
         }
         if (options.filterFlags > 0)
@@ -373,12 +375,12 @@ public class PushStatusDatabase extends Database {
             argumentList.add(Integer.toString(options.answerLimit));
         }
 
-        /* perform the query
-            Log.d(TAG, "[Q] query: "+query.toString());
-            for(String argument : argumentList) {
-                Log.d(TAG, argument+" ");
-            }
-            */
+        /* perform the query */
+        Log.d(TAG, "[Q] query: "+query.toString());
+        for(String argument : argumentList) {
+            Log.d(TAG, argument+" ");
+        }
+
 
         SQLiteDatabase database = databaseHelper.getReadableDatabase();
         Cursor cursor = database.rawQuery(query.toString(),argumentList.toArray(new String[argumentList.size()]));
