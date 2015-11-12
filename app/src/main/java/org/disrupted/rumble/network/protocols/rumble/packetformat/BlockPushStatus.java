@@ -47,6 +47,8 @@ import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.crypto.CipherOutputStream;
 
@@ -155,7 +157,7 @@ public class BlockPushStatus extends Block{
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG,"BlockStatus received ("+count+" bytes): "+new String(blockBuffer));
+        Log.d(TAG,"BlockStatus received ("+count+" bytes): "+Arrays.toString(blockBuffer));
 
         /* process the block buffer */
         try {
@@ -322,7 +324,7 @@ public class BlockPushStatus extends Block{
                 encrypted = true;
                 BlockCrypto blockCrypto = new BlockCrypto(status.getGroup().getGid(), iv);
                 blockCrypto.writeBlock(channel, out);
-            } catch(Exception e) {
+            } catch(AESUtil.CryptographicException e) {
                 e.printStackTrace();
                 Log.e(TAG, "cannot send PushStatus, failed to setup encrypted stream");
                 return 0;
@@ -344,11 +346,9 @@ public class BlockPushStatus extends Block{
         header.setPayloadLength(length);
         header.writeBlockHeader(finalOut);
         finalOut.write(blockBuffer.array(), 0, length);
-        Log.d(TAG, "BlockStatus sent (" + length + " bytes): " + new String(blockBuffer.array()));
-        if(blockFile != null) {
+        Log.d(TAG, "BlockStatus sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
+        if(blockFile != null)
             blockFile.writeBlock(channel, finalOut);
-        }
-
         if(encrypted)
             finalOut.close();
 

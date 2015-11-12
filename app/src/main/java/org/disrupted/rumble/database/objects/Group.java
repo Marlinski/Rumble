@@ -50,12 +50,12 @@ public class Group {
             Group defaultGroup =  createNewGroup(DEFAULT_PUBLIC_GROUP, false);
             defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
             return defaultGroup;
-        } catch ( NoSuchAlgorithmException impossible ) {
+        } catch ( AESUtil.CryptographicException impossible ) {
             return null;
         }
     }
 
-    public static Group createNewGroup(String name, boolean isPrivate) throws NoSuchAlgorithmException{
+    public static Group createNewGroup(String name, boolean isPrivate) throws AESUtil.CryptographicException{
         SecretKey key = null;
         if(isPrivate)
             key = AESUtil.generateRandomAESKey();

@@ -18,6 +18,7 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
+import android.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;
@@ -38,6 +39,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import de.greenrobot.event.EventBus;
@@ -114,6 +116,8 @@ public class BlockChatMessage extends Block {
             throw new IOException("end of stream reached");
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
+
+        Log.d(TAG, "BlockChatMessage received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
 
         /* process the read buffer */
         try {
@@ -202,6 +206,7 @@ public class BlockChatMessage extends Block {
         /* send the header, the status and the attached file */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
+        Log.d(TAG, "BlockChatMessage sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
         if(blockFile != null)
             blockFile.writeBlock(channel, out);
 

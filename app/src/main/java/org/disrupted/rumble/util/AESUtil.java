@@ -51,14 +51,14 @@ public class AESUtil {
     public static final int KEYSIZE = 128;
     public static final int IVSIZE = 16;
 
-    public static SecretKey generateRandomAESKey() throws NoSuchAlgorithmException{
-        KeyGenerator kgen = KeyGenerator.getInstance("AES");
-        kgen.init(KEYSIZE);
-        return kgen.generateKey();
-    }
-
-    public static long expectedEncryptedSize(long size) {
-        return size + (IVSIZE - (size % IVSIZE));
+    public static SecretKey generateRandomAESKey() throws CryptographicException{
+        try {
+            KeyGenerator kgen = KeyGenerator.getInstance("AES");
+            kgen.init(KEYSIZE);
+            return kgen.generateKey();
+        } catch(NoSuchAlgorithmException e) {
+            throw new CryptographicException();
+        }
     }
 
     public static SecretKey getSecretKeyFromByteArray(byte[] keyBlob) {
@@ -68,37 +68,49 @@ public class AESUtil {
             return new SecretKeySpec(keyBlob, "AES");
     }
 
-    public static byte[] generateRandomIV() throws NoSuchAlgorithmException{
-        SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-        byte[] iv = new byte[IVSIZE];
-        secureRandom.nextBytes(iv);
-        return iv;
+    public static byte[] generateRandomIV() throws CryptographicException {
+        try {
+            SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
+            byte[] iv = new byte[IVSIZE];
+            secureRandom.nextBytes(iv);
+            return iv;
+        } catch(NoSuchAlgorithmException e){
+            throw new CryptographicException();
+        }
     }
 
-    public static byte[] encryptBlock(byte[] plainData, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return cipher.doFinal(plainData);
+    public static CipherOutputStream getCipherOutputStream(OutputStream out, SecretKey key, byte[] ivBytes)  throws CryptographicException {
+        try {
+            OutputStreamNonClosed osnc = new OutputStreamNonClosed(out);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
+            return new CipherOutputStream(osnc, cipher);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new CryptographicException();
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException();
+        } catch (NoSuchPaddingException e) {
+            throw new CryptographicException();
+        } catch (InvalidKeyException e) {
+            throw new CryptographicException();
+        }
     }
 
-    public static byte[] decryptBlock(byte[] encryptedData, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return cipher.doFinal(encryptedData);
-    }
-
-    public static CipherOutputStream getCipherOutputStream(OutputStream out, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        OutputStreamNonClosed osnc = new OutputStreamNonClosed(out);
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return new CipherOutputStream(osnc, cipher);
-    }
-
-    public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        InputStreamNonClosed isnc = new InputStreamNonClosed(in);
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return new CipherInputStream(isnc, cipher);
+    public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws CryptographicException{
+        try {
+            InputStreamNonClosed isnc = new InputStreamNonClosed(in);
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
+            return new CipherInputStream(isnc, cipher);
+        } catch (InvalidAlgorithmParameterException e) {
+            throw new CryptographicException();
+        } catch (NoSuchAlgorithmException e) {
+            throw new CryptographicException();
+        } catch (NoSuchPaddingException e) {
+            throw new CryptographicException();
+        } catch (InvalidKeyException e) {
+            throw new CryptographicException();
+        }
     }
 
     /*
@@ -121,5 +133,8 @@ public class AESUtil {
         @Override
         public void close() throws IOException {
         }
+    }
+
+    public static class CryptographicException extends  Exception {
     }
 }

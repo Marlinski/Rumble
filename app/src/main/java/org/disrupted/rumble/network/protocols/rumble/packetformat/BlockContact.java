@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 import de.greenrobot.event.EventBus;
@@ -141,7 +142,7 @@ public class BlockContact extends Block {
         if (count <  (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG, "BlockContact received ("+header.getBlockLength()+" bytes): \n"+new String(blockBuffer));
+        Log.d(TAG, "BlockContact received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
 
         /* process the read buffer */
         try {
@@ -267,7 +268,7 @@ public class BlockContact extends Block {
         /* send the BlockHeader and the BlockPayload */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, buffersize);
-        Log.d(TAG, "BlockContact sent ("+buffersize+" bytes): \n"+new String(blockBuffer.array()));
+        Log.d(TAG, "BlockContact sent (" + buffersize + " bytes): " + Arrays.toString(blockBuffer.array()));
 
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
         EventBus.getDefault().post(new ContactInformationSent(

@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * The BlockHeader is simply constituted of a BlockType and its subsequent Length
@@ -119,7 +120,7 @@ public class BlockHeader {
             throw new IOException("end of stream reached");
         if (count < BLOCK_HEADER_LENGTH)
             throw new MalformedBlockHeader("read less bytes than expected", count);
-        Log.d(TAG, "BlockHeader received (" + count + " bytes): " + new String(headerBuffer));
+        Log.d(TAG, "BlockHeader received (" + count + " bytes): " + Arrays.toString(headerBuffer));
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(headerBuffer);
 
@@ -162,7 +163,7 @@ public class BlockHeader {
 
             out.write(bufferBlockHeader.array());
             bufferBlockHeader.clear();
-            Log.d(TAG, "BlockHeader sent (" + bufferBlockHeader.array().length + " bytes): " + new String(bufferBlockHeader.array()));
+            Log.d(TAG, "BlockHeader sent (" + bufferBlockHeader.array().length + " bytes): " +Arrays.toString(bufferBlockHeader.array()));
             return BLOCK_HEADER_LENGTH;
         }
         catch(BufferOverflowException e) {

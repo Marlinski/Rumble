@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 import javax.crypto.SecretKey;
 
@@ -131,7 +132,7 @@ public class BlockCrypto extends Block {
         if (count < (int) header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+new String(blockBuffer));
+        Log.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+Arrays.toString(blockBuffer));
         /* process the block buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
@@ -192,7 +193,7 @@ public class BlockCrypto extends Block {
         /* send the block */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
-        Log.d(TAG, "BlockCrypto sent (" + length + " bytes): " + new String(blockBuffer.array()));
+        Log.d(TAG, "BlockCrypto sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
 
         return length;
     }
