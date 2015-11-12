@@ -198,8 +198,6 @@ public class BlockCipher extends Block {
 
     @Override
     public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
-        byte[] group_id = Base64.decode(gid, Base64.NO_WRAP);
-
         /* prepare the buffer */
         int length;
         ByteBuffer blockBuffer;
@@ -211,6 +209,7 @@ public class BlockCipher extends Block {
             blockBuffer.put((byte) CIPHER_SUITE_NO_CIPHER);
             header.setLastBlock(true);
         } else {
+            byte[] group_id = Base64.decode(gid, Base64.NO_WRAP);
             length = MAX_CRYPTO_BLOCK_SIZE;
             blockBuffer = ByteBuffer.allocate(length);
             blockBuffer.put((byte) CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER);
