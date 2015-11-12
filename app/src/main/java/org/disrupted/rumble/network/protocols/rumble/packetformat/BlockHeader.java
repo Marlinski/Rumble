@@ -128,13 +128,13 @@ public class BlockHeader {
         ret.transaction_type = ((int) byteBuffer.get() & 0xff);
 
         int flags      = ((int) byteBuffer.get() & 0xff);
-        ret.reserved0 = ((flags & 0x80) == 0x80);
-        ret.reserved1 = ((flags & 0x40) == 0x40);
-        ret.reserved2 = ((flags & 0x20) == 0x20);
-        ret.reserved3 = ((flags & 0x10) == 0x10);
-        ret.reserved4 = ((flags & 0x08) == 0x08);
-        ret.reserved5 = ((flags & 0x04) == 0x04);
-        ret.reserved6 = ((flags & 0x02) == 0x02);
+        ret.reserved0  = ((flags & 0x80) == 0x80);
+        ret.reserved1  = ((flags & 0x40) == 0x40);
+        ret.reserved2  = ((flags & 0x20) == 0x20);
+        ret.reserved3  = ((flags & 0x10) == 0x10);
+        ret.reserved4  = ((flags & 0x08) == 0x08);
+        ret.reserved5  = ((flags & 0x04) == 0x04);
+        ret.reserved6  = ((flags & 0x02) == 0x02);
         ret.last_block = ((flags & 0x01) == 0x01);
 
         ret.block_type     = ((int) byteBuffer.get() & 0xff);
@@ -196,7 +196,7 @@ public class BlockHeader {
     public void setReserved4(boolean reserved4) {  this.reserved4 = reserved4; }
     public void setReserved5(boolean reserved5) {  this.reserved5 = reserved5; }
     public void setReserved6(boolean reserved6) {  this.reserved6 = reserved6; }
-    public void setLastBlock(boolean last_block) {  this.last_block = last_block; }
+    public void setLastBlock(boolean last_block) { this.last_block = last_block; }
     public void setPayloadLength(long length) { this.payload_length = length; }
 
     @Override

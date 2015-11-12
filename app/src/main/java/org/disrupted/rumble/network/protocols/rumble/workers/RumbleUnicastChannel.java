@@ -216,6 +216,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 block.readBlock(this, in);
 
                 if(header.getBlockType() == BlockHeader.BLOCKTYPE_CRYPTO) {
+                    Log.d(TAG, "START CRYPTO");
                     secretKey = ((BlockCrypto) block).secretKey;
                     ivBytes   = ((BlockCrypto) block).ivBytes;
                     temp = in;
@@ -223,6 +224,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 }
 
                 if((secretKey != null) && header.isLastBlock()) {
+                    Log.d(TAG, "END CRYPTO");
                     byte[] bibi = new byte[3];
                     in.read(bibi);
                     Log.d(TAG, Arrays.toString(bibi));
