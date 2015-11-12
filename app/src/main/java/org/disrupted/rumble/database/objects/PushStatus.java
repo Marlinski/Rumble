@@ -127,7 +127,7 @@ public class PushStatus {
     public long    getdbId() {              return this.dbid;                  }
     public String  getUuid() {              return this.uuid;                  }
     public Contact getAuthor() {            return this.author;                }
-    public Group getGroup()  {              return this.group;                 }
+    public Group   getGroup()  {            return this.group;                 }
     public String  getPost(){               return this.status;                }
     public Set<String> getHashtagSet(){     return this.hashtagSet;            }
     public long    getTimeOfCreation(){     return this.timeOfCreation;        }

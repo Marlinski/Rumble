@@ -219,11 +219,12 @@ public class BlockPushStatus extends Block{
                 throw new MalformedBlockPayload("wrong header.length parameter, no more data to read: " + (header.getBlockLength()-readleft), header.getBlockLength()-readleft);
 
             /* assemble the status */
+            String group_id_base64 = Base64.encodeToString(group_id,  0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
             String sender_id_base64 = Base64.encodeToString(sender_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
             String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
-            status = new PushStatus(contact_tmp, null, new String(post), toc, sender_id_base64);
+            status = new PushStatus(contact_tmp, Group.NOGROUP, new String(post), toc, sender_id_base64);
 
             status.setFileName(new String(filename));
             status.setTimeOfArrival(System.currentTimeMillis());
@@ -261,6 +262,7 @@ public class BlockPushStatus extends Block{
                 UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
                 EventBus.getDefault().post(new PushStatusReceived(
                                 status,
+                                group_id_base64,
                                 sender_id_base64,
                                 tempfile,
                                 RumbleProtocol.protocolID,

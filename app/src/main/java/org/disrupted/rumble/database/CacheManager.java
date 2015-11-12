@@ -129,6 +129,14 @@ public class CacheManager {
             if ((event.status.getAuthor() == null) || (event.status.getGroup() == null) || (event.status.receivedBy() == null))
                 return;
 
+            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).getGroup(event.gid);
+            if(group == null) {
+                // we do not belong to the group
+                Log.d(TAG, "[!] unknow group: refusing the message");
+                return;
+            }
+            event.status.setGroup(group);
+
             Contact sender = DatabaseFactory.getContactDatabase(RumbleApplication.getContext()).getContact(event.status.receivedBy());
             if (sender == null) {
                 // we do not accept message from unknown sender, that should never happen as the protocol starts by exchange

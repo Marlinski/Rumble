@@ -27,6 +27,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 public class PushStatusReceived extends NetworkEvent{
 
     public PushStatus status;
+    public String gid;
     public String senderID;
     public String tempfile;
     public String protocolID;
@@ -34,8 +35,10 @@ public class PushStatusReceived extends NetworkEvent{
     public long size;
     public long duration;
 
-    public PushStatusReceived(PushStatus status, String sender, String tempfile, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusReceived(PushStatus status, String gid, String sender, String tempfile,
+                              String protocolID, String linkLayerIdentifier, long size, long duration) {
         this.status = status;
+        this.gid = gid;
         this.senderID = sender;
         this.tempfile = tempfile;
         this.protocolID = protocolID;

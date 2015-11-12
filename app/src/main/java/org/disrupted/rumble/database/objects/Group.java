@@ -37,6 +37,8 @@ public class Group {
     public static final int GROUP_GID_RAW_SIZE  = 8;
     public static final int GROUP_KEY_AES_SIZE  = AESUtil.KEYSIZE/8;
 
+    public static final Group NOGROUP = new Group("nogroup","nogroup",null);
+
     private String    name;
     private String    gid;
     private SecretKey key;
