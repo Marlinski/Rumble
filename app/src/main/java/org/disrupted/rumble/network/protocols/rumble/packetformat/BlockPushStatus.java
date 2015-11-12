@@ -47,10 +47,7 @@ import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-
-import javax.crypto.CipherOutputStream;
 
 import de.greenrobot.event.EventBus;
 
@@ -314,24 +311,7 @@ public class BlockPushStatus extends Block{
         blockBuffer.putShort((short) status.getReplication());
         blockBuffer.put((byte) status.getLike());
 
-        /* if the group is private, send a BlockCrypto first */
-        OutputStream finalOut = out;
-        boolean encrypted = false;
-        if(status.getGroup().isPrivate()) {
-            try {
-                byte[] iv = AESUtil.generateRandomIV();
-                finalOut = AESUtil.getCipherOutputStream(out, status.getGroup().getGroupKey(), iv);
-                encrypted = true;
-                BlockCrypto blockCrypto = new BlockCrypto(status.getGroup().getGid(), iv);
-                blockCrypto.writeBlock(channel, out);
-            } catch(AESUtil.CryptographicException e) {
-                e.printStackTrace();
-                Log.e(TAG, "cannot send PushStatus, failed to setup encrypted stream");
-                return 0;
-            }
-        }
-
-        /* send the header and the push status and attached file if any */
+        /* prepare the blockfile if any */
         BlockFile blockFile = null;
         if(status.hasAttachedFile()) {
             File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
@@ -343,15 +323,37 @@ public class BlockPushStatus extends Block{
             header.setLastBlock(false);
         }
 
+        /* if the group is private, send a BlockCipher AES128/CBC/PKCS5 first */
+        OutputStream finalOut = out;
+        boolean encrypted = false;
+        if(status.getGroup().isPrivate()) {
+            try {
+                byte[] iv = AESUtil.generateRandomIV();
+                finalOut = AESUtil.getCipherOutputStream(out, status.getGroup().getGroupKey(), iv);
+                encrypted = true;
+                BlockCipher blockCipher = new BlockCipher(status.getGroup().getGid(), iv);
+                blockCipher.writeBlock(channel, out);
+            } catch(AESUtil.CryptographicException e) {
+                e.printStackTrace();
+                Log.e(TAG, "cannot send PushStatus, failed to setup encrypted stream");
+                return 0;
+            }
+        }
+
+        /* send the status and the block file */
         header.setPayloadLength(length);
         header.writeBlockHeader(finalOut);
         finalOut.write(blockBuffer.array(), 0, length);
         Log.d(TAG, "BlockStatus sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
         if(blockFile != null)
             blockFile.writeBlock(channel, finalOut);
-        if(encrypted)
+
+        /* send a CLEARTEXT BlockCipher */
+        if(encrypted) {
+            BlockCipher cleartext = new BlockCipher();
+            cleartext.writeBlock(channel, finalOut);
             finalOut.close();
-        out.write(new byte[]{20,21,22,23,24,25});
+        }
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;

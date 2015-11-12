@@ -42,19 +42,17 @@ import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockCrypto;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockCipher;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockKeepAlive;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.AESUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -182,7 +180,6 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             SecretKey secretKey = null;
             byte[] ivBytes = null;
             InputStream in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
-            InputStream temp = null;
             while (true) {
                 BlockHeader header = BlockHeader.readBlockHeader(in);
 
@@ -206,35 +203,26 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     case BlockHeader.BLOCKTYPE_KEEPALIVE:
                         block = new BlockKeepAlive(header);
                         break;
-                    case BlockHeader.BLOCKTYPE_CRYPTO:
-                        block = new BlockCrypto(header);
+                    case BlockHeader.BLOCK_CIPHER:
+                        block = new BlockCipher(header);
                         break;
                     default:
                         throw new MalformedBlockHeader("Unknown header type: "+header.getBlockType(), 0);
                 }
 
                 block.readBlock(this, in);
-
-                if(header.getBlockType() == BlockHeader.BLOCKTYPE_CRYPTO) {
-                    Log.d(TAG, "START CRYPTO");
-                    secretKey = ((BlockCrypto) block).secretKey;
-                    ivBytes   = ((BlockCrypto) block).ivBytes;
-                    temp = in;
-                    in = AESUtil.getCipherInputStream(temp,secretKey,ivBytes);
-                }
-
-                if((secretKey != null) && header.isLastBlock()) {
-                    Log.d(TAG, "END CRYPTO");
-                    byte[] bibi = new byte[3];
-                    in.read(bibi);
-                    Log.d(TAG, Arrays.toString(bibi));
-                    in.close();
-                    in = temp;
-                    in.read(bibi);
-                    Log.d(TAG, Arrays.toString(bibi));
-                    temp = null;
-                    secretKey = null;
-                    ivBytes = null;
+                
+                if(header.getBlockType() == BlockHeader.BLOCK_CIPHER) {
+                    secretKey = ((BlockCipher) block).secretKey;
+                    ivBytes   = ((BlockCipher) block).ivBytes;
+                    if(secretKey != null) {
+                        in = AESUtil.getCipherInputStream(
+                                ((UnicastConnection)this.getLinkLayerConnection()).getInputStream(),
+                                secretKey,
+                                ivBytes);
+                    } else {
+                        in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
+                    }
                 }
 
                 block.dismiss();

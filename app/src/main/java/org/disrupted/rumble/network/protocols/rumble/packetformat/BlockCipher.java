@@ -23,10 +23,8 @@ import android.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.command.CommandSendKeepAlive;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.AESUtil;
 
@@ -50,16 +48,21 @@ import javax.crypto.SecretKey;
  * CryptoType defines what it is for
  * =================================
  *
- *  BLOCK_ENCRYPTION_GROUP_PARAMETER: the following shall gives all the information to configure a
+ *  1: BLOCK_ENCRYPTION_CLEARTEXT : no encryption
+ *  2: BLOCK_ENCRYPTION_GROUP_PARAMETER: the following shall gives all the information to configure a
  *                                    decryption key for a Group
  *
  * CipherSuite defines the type of key
  * ===================================
  *
- * 1: AES 128 / CBC / PKCS5
- * 2: AES 256 / CBC / PKCS5
+ * 1: NO CIPHER
+ * 2: AES 128 / CBC / PKCS5
+ * 3: AES 256 / CBC / PKCS5
  *
- * CryptoType.BLOCK_ENCRYPTION_GROUP_PARAMETER
+ * //////////////////////////////////////////////////////////
+ *
+ * CryptoType.BLOCK_ENCRYPTION_GROUP_PARAMETER with Cipher AES
+ *
  * +-----------------------------------------------+
  * |                     GID                       | 8 bytes Group GID
  * +-----------------------------------------------+
@@ -69,7 +72,7 @@ import javax.crypto.SecretKey;
  *
  * @author Marlinski
  */
-public class BlockCrypto extends Block {
+public class BlockCipher extends Block {
 
     public static final String TAG = "BlockCrypto";
 
@@ -77,9 +80,14 @@ public class BlockCrypto extends Block {
     private static final int FIELD_CRYPTO_TYPE          = 0x01;
     private static final int FIELD_CIPHER_SUITE         = 0x01;
 
-    /* header value */
-    public static final int  CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER = 0x01;
-    public static final int  CIPHER_SUITE_AES128_CBC_PKCS5 = 0x01;
+    /* header values */
+    public static final int  CRYPTO_TYPE_CLEARTEXT                        = 0x01;
+    public static final int  CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER = 0x02;
+
+    public static final int  CIPHER_SUITE_NO_CIPHER        = 0x01;
+    public static final int  CIPHER_SUITE_AES128_CBC_PKCS5 = 0x02;
+    public static final int  CIPHER_SUITE_AES256_CBC_PKCS5 = 0x03;
+
 
     /* key parameter for CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER ------------- */
     private static final int FIELD_GROUP_GID_SIZE       = Group.GROUP_GID_RAW_SIZE;
@@ -100,21 +108,30 @@ public class BlockCrypto extends Block {
     public SecretKey secretKey;
     public byte[] ivBytes;
 
-    public BlockCrypto(BlockHeader header) {
+    public BlockCipher(BlockHeader header) {
         super(header);
     }
 
-    public BlockCrypto(String gid, byte[] iv) {
+    public BlockCipher() {
         super(new BlockHeader());
-        header.setBlockType(BlockHeader.BLOCKTYPE_CRYPTO);
+        header.setBlockType(BlockHeader.BLOCK_CIPHER);
+        this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
+        this.gid = null;
+        this.secretKey = null;
+        this.ivBytes = null;
+    }
+
+    public BlockCipher(String gid, byte[] iv) {
+        super(new BlockHeader());
+        header.setBlockType(BlockHeader.BLOCK_CIPHER);
         this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.gid = gid;
         this.ivBytes = iv;
     }
 
     public void sanityCheck() throws MalformedBlockPayload {
-        if (header.getBlockType() != BlockHeader.BLOCKTYPE_CRYPTO)
-            throw new MalformedBlockPayload("Block type BLOCKTYPE_CRYPTO expected", 0);
+        if (header.getBlockType() != BlockHeader.BLOCK_CIPHER)
+            throw new MalformedBlockPayload("Block type BLOCK_CIPHER expected", 0);
         if ((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_CRYPTO_BLOCK_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: " + header.getBlockLength(), 0);
     }
@@ -142,31 +159,36 @@ public class BlockCrypto extends Block {
             short cipherSuite = byteBuffer.get();
             readleft -= FIELD_CIPHER_SUITE;
 
-            // for now we only do one crypto
-            if(cryptoType != CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER)
-                throw new IOException("Crypto unknown");
-            if(cipherSuite != CIPHER_SUITE_AES128_CBC_PKCS5)
-                throw new IOException("Cipher unknown");
+            switch (cryptoType) {
+                case CRYPTO_TYPE_CLEARTEXT:
+                    secretKey = null;
+                    ivBytes = null;
+                    break;
+                case CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER:
+                    if (cipherSuite != CIPHER_SUITE_AES128_CBC_PKCS5)
+                        throw new IOException("Cipher unknown");
 
-            byte[] group_id = new byte[FIELD_GROUP_GID_SIZE];
-            byteBuffer.get(group_id, 0, FIELD_GROUP_GID_SIZE);
-            readleft -= FIELD_GROUP_GID_SIZE;
+                    byte[] group_id = new byte[FIELD_GROUP_GID_SIZE];
+                    byteBuffer.get(group_id, 0, FIELD_GROUP_GID_SIZE);
+                    readleft -= FIELD_GROUP_GID_SIZE;
 
-            String group_id_base64  = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
-            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext())
-                    .getGroup(group_id_base64);
-            if(group == null) // we do not belong to the group
-                throw new IOException("encryption key is unknown");
+                    String group_id_base64 = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
+                    Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext())
+                            .getGroup(group_id_base64);
+                    if (group == null) // we do not belong to the group
+                        throw new IOException("Encryption key is unknown");
 
-            byte[] iv = new byte[FIELD_AES_IV_SIZE];
-            byteBuffer.get(iv, 0, FIELD_AES_IV_SIZE);
-            readleft -= FIELD_AES_IV_SIZE;
+                    byte[] iv = new byte[FIELD_AES_IV_SIZE];
+                    byteBuffer.get(iv, 0, FIELD_AES_IV_SIZE);
+                    readleft -= FIELD_AES_IV_SIZE;
 
-            /* configure the keys */
-            secretKey = group.getGroupKey();
-            ivBytes   = iv;
-
-            Log.d(TAG, "Read crypto key for group: "+group_id_base64);
+                    /* configure the keys */
+                    secretKey = group.getGroupKey();
+                    ivBytes = iv;
+                    break;
+                default:
+                    throw new IOException("Crypto unknown");
+            }
 
             return header.getBlockLength();
         } catch (BufferUnderflowException exception) {
@@ -179,18 +201,27 @@ public class BlockCrypto extends Block {
         byte[] group_id = Base64.decode(gid, Base64.NO_WRAP);
 
         /* prepare the buffer */
-        int length = MAX_CRYPTO_BLOCK_SIZE;
-        ByteBuffer blockBuffer = ByteBuffer.allocate(length);
-        blockBuffer.put((byte)CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER);
-        blockBuffer.put((byte)CIPHER_SUITE_AES128_CBC_PKCS5);
-        blockBuffer.put(group_id, 0, FIELD_GROUP_GID_SIZE);
-        blockBuffer.put(ivBytes, 0, FIELD_AES_IV_SIZE);
+        int length;
+        ByteBuffer blockBuffer;
+        if(gid == null) {
+            // clear text
+            length = MIN_PAYLOAD_SIZE;
+            blockBuffer= ByteBuffer.allocate(length);
+            blockBuffer.put((byte) CRYPTO_TYPE_CLEARTEXT);
+            blockBuffer.put((byte) CIPHER_SUITE_NO_CIPHER);
+            header.setLastBlock(true);
+        } else {
+            length = MAX_CRYPTO_BLOCK_SIZE;
+            blockBuffer = ByteBuffer.allocate(length);
+            blockBuffer.put((byte) CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER);
+            blockBuffer.put((byte) CIPHER_SUITE_AES128_CBC_PKCS5);
+            blockBuffer.put(group_id, 0, FIELD_GROUP_GID_SIZE);
+            blockBuffer.put(ivBytes, 0, FIELD_AES_IV_SIZE);
+            header.setLastBlock(false);
+        }
 
-        /* prepare the header */
+        /* send the header and the payload */
         header.setPayloadLength(length);
-        header.setLastBlock(false);
-
-        /* send the block */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
         Log.d(TAG, "BlockCrypto sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
