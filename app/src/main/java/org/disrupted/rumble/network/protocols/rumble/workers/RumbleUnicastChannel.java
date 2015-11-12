@@ -179,6 +179,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         try {
             SecretKey secretKey = null;
             byte[] ivBytes = null;
+            boolean encrypted = false;
             InputStream in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
             while (true) {
                 BlockHeader header = BlockHeader.readBlockHeader(in);
@@ -211,7 +212,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                 }
 
                 block.readBlock(this, in);
-                
+
                 if(header.getBlockType() == BlockHeader.BLOCK_CIPHER) {
                     secretKey = ((BlockCipher) block).secretKey;
                     ivBytes   = ((BlockCipher) block).ivBytes;
@@ -220,8 +221,12 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                                 ((UnicastConnection)this.getLinkLayerConnection()).getInputStream(),
                                 secretKey,
                                 ivBytes);
+                        encrypted = true;
                     } else {
+                        if(encrypted)
+                            in.close();
                         in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
+                        encrypted = false;
                     }
                 }
 
