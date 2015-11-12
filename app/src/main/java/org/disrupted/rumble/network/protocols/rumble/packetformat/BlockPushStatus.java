@@ -137,6 +137,7 @@ public class BlockPushStatus extends Block{
             throw new MalformedBlockPayload("Block type BLOCKTYPE_PUSH_STATUS expected", 0);
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: "+header.getBlockLength(), 0);
+        Log.d(TAG,"Reading BlockPushStatus");
     }
 
     @Override
@@ -284,7 +285,6 @@ public class BlockPushStatus extends Block{
         byte[] author_name = status.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
         byte[] filename = status.getFileName().getBytes(Charset.forName("UTF-8"));
-
         int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 post.length +
@@ -316,6 +316,7 @@ public class BlockPushStatus extends Block{
                 byte[] iv = AESUtil.generateRandomIV();
                 finalOut = AESUtil.getCipherOutputStream(out, status.getGroup().getGroupKey(), iv);
                 encrypted = true;
+                Log.d(TAG,"sending crypto block");
                 BlockCrypto blockCrypto = new BlockCrypto(status.getGroup().getGid(), iv);
                 blockCrypto.writeBlock(channel, out);
             } catch(Exception e) {
@@ -337,11 +338,14 @@ public class BlockPushStatus extends Block{
             header.setLastBlock(false);
         }
 
+        Log.d(TAG, "sending status");
         header.setPayloadLength(length);
         header.writeBlockHeader(finalOut);
         finalOut.write(blockBuffer.array(),0,length);
-        if(blockFile != null)
+        if(blockFile != null) {
+            Log.d(TAG, "sending file");
             blockFile.writeBlock(channel, finalOut);
+        }
 
         if(encrypted)
             finalOut.close();

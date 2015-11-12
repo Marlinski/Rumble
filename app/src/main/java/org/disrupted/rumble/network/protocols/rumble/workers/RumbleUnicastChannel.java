@@ -209,7 +209,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                         block = new BlockCrypto(header);
                         break;
                     default:
-                        throw new MalformedBlockHeader("Unknown header type", 0);
+                        throw new MalformedBlockHeader("Unknown header type: "+header.getBlockType(), 0);
                 }
 
                 block.readBlock(this, in);
@@ -243,7 +243,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             error = true;
             Log.d(TAG, "[!] malformed block: " + e.reason + "("+e.bytesRead+")");
         } catch(Exception e) {
-
+            e.printStackTrace();
         }
     }
 

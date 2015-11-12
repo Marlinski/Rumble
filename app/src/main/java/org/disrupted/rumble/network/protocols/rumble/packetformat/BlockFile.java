@@ -113,6 +113,7 @@ public class BlockFile extends Block {
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong payload size: "+header.getBlockLength(), 0);
+        Log.d(TAG,"Reading BlockFile");
     }
 
     @Override

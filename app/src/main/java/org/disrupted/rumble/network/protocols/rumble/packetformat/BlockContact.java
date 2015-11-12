@@ -120,18 +120,20 @@ public class BlockContact extends Block {
         this.flags   = command.getFlags();
     }
 
+    public void sanityCheck() throws MalformedBlockPayload {
+        if(header.getBlockType() != BlockHeader.BLOCKTYPE_CONTACT)
+            throw new MalformedBlockPayload("Block type BLOCKTYPE_CONTACT expected",0);
+        if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_CONTACT_SIZE))
+            throw new MalformedBlockPayload("header.length is too short: "+header.getBlockLength(), 0);
+    }
+
     @Override
     public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        if(header.getBlockType() != BlockHeader.BLOCKTYPE_CONTACT)
-            throw new MalformedBlockPayload("Block type BLOCK_FILE expected",0);
 
-        long readleft = header.getBlockLength();
-        if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_CONTACT_SIZE))
-            throw new MalformedBlockPayload("header.length is too short: "+readleft, 0);
-
-        /* read the block */
         long timeToTransfer = System.nanoTime();
 
+        /* read the block */
+        long readleft = header.getBlockLength();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
         int count = in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
