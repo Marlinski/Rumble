@@ -42,6 +42,7 @@ import org.disrupted.rumble.network.protocols.rumble.RumbleStateMachine;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockCrypto;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockKeepAlive;
@@ -49,11 +50,15 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatu
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.AESUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
+
+import javax.crypto.SecretKey;
 
 import de.greenrobot.event.EventBus;
 
@@ -173,6 +178,10 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     @Override
     protected void processingPacketFromNetwork(){
         try {
+            SecretKey secretKey = null;
+            byte[] ivBytes = null;
+            InputStream in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
+            InputStream temp = null;
             while (true) {
                 BlockHeader header = BlockHeader.readBlockHeader(((UnicastConnection) con).getInputStream());
 
@@ -196,28 +205,30 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     case BlockHeader.BLOCKTYPE_KEEPALIVE:
                         block = new BlockKeepAlive(header);
                         break;
+                    case BlockHeader.BLOCKTYPE_CRYPTO:
+                        block = new BlockCrypto(header);
+                        break;
                     default:
                         throw new MalformedBlockHeader("Unknown header type", 0);
                 }
 
-                long bytesread = 0;
-                try {
-                    bytesread = block.readBlock(this);
-                } catch (MalformedBlockPayload e) {
-                    bytesread = e.bytesRead;
+                block.readBlock(this, in);
+
+                if(header.getBlockType() == BlockHeader.BLOCKTYPE_CRYPTO) {
+                    secretKey = ((BlockCrypto) block).secretKey;
+                    ivBytes   = ((BlockCrypto) block).ivBytes;
+                    temp = in;
+                    in = AESUtil.getCipherInputStream(temp,secretKey,ivBytes);
                 }
 
-                if (bytesread < header.getBlockLength()) {
-                    byte[] buffer = new byte[1024];
-                    long readleft = header.getBlockLength();
-                    while (readleft > 0) {
-                        long max_read = Math.min((long) 1024, readleft);
-                        int read = ((UnicastConnection) con).getInputStream().read(buffer, 0, (int) max_read);
-                        if (read < 0)
-                            throw new IOException();
-                        readleft -= read;
-                    }
+                if((secretKey != null) && header.isLastBlock()) {
+                    in.close();
+                    in = temp;
+                    temp = null;
+                    secretKey = null;
+                    ivBytes = null;
                 }
+
                 block.dismiss();
                 if(con instanceof BluetoothConnection)
                     socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT_BLUETOOTH);
@@ -225,12 +236,14 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT_UDP);
             }
         } catch (IOException silentlyCloseConnection) {
-            Log.d(TAG, ""+silentlyCloseConnection.getMessage());
+            Log.d(TAG, " "+silentlyCloseConnection.getMessage());
         } catch (InputOutputStreamException silentlyCloseConnection) {
-            Log.d(TAG, ""+silentlyCloseConnection.getMessage());
+            Log.d(TAG, " "+silentlyCloseConnection.getMessage());
         } catch (MalformedBlock e) {
             error = true;
             Log.d(TAG, "[!] malformed block: " + e.reason + "("+e.bytesRead+")");
+        } catch(Exception e) {
+
         }
     }
 
@@ -258,7 +271,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     return false;
             }
 
-            block.writeBlock(this);
+            block.writeBlock(this, ((UnicastConnection)this.getLinkLayerConnection()).getOutputStream());
             block.dismiss();
             if(!command.getCommandID().equals(Command.CommandID.SEND_KEEP_ALIVE))
                 EventBus.getDefault().post(new CommandExecuted(this, command, true));

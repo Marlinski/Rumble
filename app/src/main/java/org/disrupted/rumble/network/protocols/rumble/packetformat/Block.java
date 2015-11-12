@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.crypto.CipherInputStream;
+import javax.crypto.SecretKey;
+
 /**
  * @author Marlinski
  */
@@ -41,9 +44,10 @@ public abstract class Block {
         this.header = header;
     }
 
-    public abstract long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException;
+    public abstract long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException;
 
-    public abstract long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException;
+    public abstract long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException;
 
     public abstract void dismiss();
+
 }

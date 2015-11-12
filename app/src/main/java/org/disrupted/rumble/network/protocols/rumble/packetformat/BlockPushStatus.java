@@ -43,10 +43,12 @@ import org.disrupted.rumble.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.util.Arrays;
+
+import javax.crypto.CipherOutputStream;
 
 import de.greenrobot.event.EventBus;
 
@@ -56,9 +58,6 @@ import de.greenrobot.event.EventBus;
  * +-------------------------------------------+
  * |               Group ID                    |  8 byte  Group UID
  * +-------------------------------------------+
- * |            Initialization                 |  256 bits IV for AES
- * |                 Vector                    |  (0 if unencrypted)
- * +-------------------------------------------+ +++++++++++++++++++ BEGIN ENCRYPTED BLOCK
  * |            Sender User ID                 |  8 byte Sender UID
  * +-------------------------------------------+
  * |            Author User ID                 |  8 byte Author UID
@@ -74,9 +73,9 @@ import de.greenrobot.event.EventBus;
  * |              Time to Live                 |  8 bytes
  * +-------------------+-----------------------+
  * |   Hop Count       |      Hop Limit        |  2 bytes + 2 bytes
- * +-------------------+-----------------------+
+ * +-------------------+-----------+-----------+
  * |    Replication    |    like   |              2 byte + 1 byte
- * +-------------------------------------------+ +++++++++++++++++++ END ENCRYPTED BLOCK
+ * +-------------------------------+
  *
  * @author Marlinski
  */
@@ -88,7 +87,6 @@ public class BlockPushStatus extends Block{
      * Byte size
      */
     private static final int FIELD_GROUP_GID_SIZE       = Group.GROUP_GID_RAW_SIZE;
-    private static final int FIELD_AES_IV_SIZE          = AESUtil.IVSIZE;
     private static final int FIELD_SENDER_UID_SIZE      = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_UID_SIZE      = Contact.CONTACT_UID_RAW_SIZE;
     private static final int FIELD_AUTHOR_LENGTH_SIZE   = 1;
@@ -101,12 +99,8 @@ public class BlockPushStatus extends Block{
     private static final int FIELD_REPLICATION_SIZE     = 2;
     private static final int FIELD_LIKE_SIZE            = 1;
 
-
-    private  static final int ENCRYPTED_BLOCK_HEADER = (
+    private  static final int MIN_PAYLOAD_SIZE = (
             FIELD_GROUP_GID_SIZE +
-            FIELD_AES_IV_SIZE);
-
-    private  static final int MIN_ENCRYPTED_BLOCK_SIZE = (
             FIELD_SENDER_UID_SIZE +
             FIELD_AUTHOR_UID_SIZE +
             FIELD_AUTHOR_LENGTH_SIZE +
@@ -118,10 +112,6 @@ public class BlockPushStatus extends Block{
             FIELD_HOPLIMIT_SIZE +
             FIELD_REPLICATION_SIZE +
             FIELD_LIKE_SIZE);
-
-    private  static final int MIN_PAYLOAD_SIZE = (
-            ENCRYPTED_BLOCK_HEADER +
-            MIN_ENCRYPTED_BLOCK_SIZE);
 
     private static final int MAX_BLOCK_STATUS_SIZE = MIN_PAYLOAD_SIZE +
             Contact.CONTACT_NAME_MAX_SIZE +
@@ -142,20 +132,21 @@ public class BlockPushStatus extends Block{
         this.status = null;
     }
 
-    @Override
-    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        if(header.getBlockType() != BlockHeader.BLOCKTYPE_PUSH_STATUS)
-            throw new MalformedBlockPayload("Block type BLOCK_STATUS expected", 0);
-
-        long readleft = header.getBlockLength();
+    public void sanityCheck() throws MalformedBlockPayload {
+        if (header.getBlockType() != BlockHeader.BLOCKTYPE_PUSH_STATUS)
+            throw new MalformedBlockPayload("Block type BLOCKTYPE_PUSH_STATUS expected", 0);
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
-            throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
+            throw new MalformedBlockPayload("wrong header length parameter: "+header.getBlockLength(), 0);
+    }
+
+    @Override
+    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        sanityCheck();
 
         long timeToTransfer = System.nanoTime();
 
         /* read the entire block into a block buffer */
-        InputStream in = con.getInputStream();
+        long readleft = header.getBlockLength();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
         int count=in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
@@ -170,40 +161,6 @@ public class BlockPushStatus extends Block{
             byte[] group_id = new byte[FIELD_GROUP_GID_SIZE];
             byteBuffer.get(group_id, 0, FIELD_GROUP_GID_SIZE);
             readleft -= FIELD_GROUP_GID_SIZE;
-
-            String group_id_base64  = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
-            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext())
-                    .getGroup(group_id_base64);
-            if(group == null)
-                return header.getBlockLength(); // we do not belong to the group
-
-            byte[] iv = new byte[FIELD_AES_IV_SIZE];
-            byteBuffer.get(iv, 0, FIELD_AES_IV_SIZE);
-            readleft -= FIELD_AES_IV_SIZE;
-            int sum = 0;
-            for (byte b : iv) {sum |= b;}
-
-            if(sum != 0) {
-                // we have an encrypted block, let's decrypt it and process the decrypted block.
-                byte[] encryptedBlockBuffer = new byte[(int)readleft];
-                byteBuffer.get(encryptedBlockBuffer,0,(int)readleft);
-
-                // if the group is public, it shouldn't be encrypted.
-                // we trash this status and pretend like nothing happened
-                if(group.getGroupKey() == null)
-                    return header.getBlockLength();
-
-                try {
-                    blockBuffer = AESUtil.decryptBlock(encryptedBlockBuffer, group.getGroupKey(), iv);
-                    byteBuffer = ByteBuffer.wrap(blockBuffer);
-                    readleft = blockBuffer.length;
-                } catch(Exception e){
-                    e.printStackTrace();
-                    throw new MalformedBlockPayload("Unable to decrypt the message", 0);
-                }
-            } else {
-                // block is not encrypted, we do nothing
-            }
 
             byte[] sender_id = new byte[FIELD_SENDER_UID_SIZE];
             byteBuffer.get(sender_id, 0, FIELD_SENDER_UID_SIZE);
@@ -263,7 +220,7 @@ public class BlockPushStatus extends Block{
             String author_id_base64 = Base64.encodeToString(author_id,0, FIELD_AUTHOR_UID_SIZE,Base64.NO_WRAP);
 
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
-            status = new PushStatus(contact_tmp, group, new String(post), toc, sender_id_base64);
+            status = new PushStatus(contact_tmp, null, new String(post), toc, sender_id_base64);
 
             status.setFileName(new String(filename));
             status.setTimeOfArrival(System.currentTimeMillis());
@@ -281,9 +238,7 @@ public class BlockPushStatus extends Block{
                     if(header.getBlockType() != BlockHeader.BLOCKTYPE_FILE)
                         throw new MalformedBlockPayload("FileBlock Header expected", readleft);
                     BlockFile block = new BlockFile(header);
-                    block.setEncryptionKey(group.getGroupKey());
-                    block.readBlock(channel);
-                    channel.bytes_received += header.getBlockLength();
+                    block.readBlock(channel, in);
                     tempfile = block.filename;
                 } catch (MalformedBlockHeader e) {
                     throw new MalformedBlockPayload("FileBlock Header expected", readleft);
@@ -291,7 +246,6 @@ public class BlockPushStatus extends Block{
             }
 
             timeToTransfer = (System.nanoTime() - timeToTransfer);
-            channel.status_received++;
             channel.bytes_received += header.getBlockLength();
             channel.in_transmission_time += timeToTransfer;
 
@@ -300,6 +254,8 @@ public class BlockPushStatus extends Block{
                 status.discard();
                 return header.getBlockLength();
             } else {
+                channel.status_received++;
+                UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
                 EventBus.getDefault().post(new PushStatusReceived(
                                 status,
                                 sender_id_base64,
@@ -317,11 +273,11 @@ public class BlockPushStatus extends Block{
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel) throws IOException,InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException,InputOutputStreamException {
         long timeToTransfer = System.nanoTime();
 
-        /* calculate the encrypted block size */
+        /* preparing some buffer and calculate the block size */
+        byte[] group_id = Base64.decode(status.getGroup().getGid(), Base64.NO_WRAP);
         byte[] sender_id   = Base64.decode(DatabaseFactory.getContactDatabase(RumbleApplication.getContext())
                 .getLocalContact().getUid(), Base64.NO_WRAP);
         byte[] author_id   = Base64.decode(status.getAuthor().getUid(), Base64.NO_WRAP);
@@ -329,69 +285,66 @@ public class BlockPushStatus extends Block{
         byte[] post     = status.getPost().getBytes(Charset.forName("UTF-8"));
         byte[] filename = status.getFileName().getBytes(Charset.forName("UTF-8"));
 
-        int encrypted_block_size = MIN_ENCRYPTED_BLOCK_SIZE +
+        int length = MIN_PAYLOAD_SIZE +
                 author_name.length +
                 post.length +
                 filename.length;
 
-        /* prepare the encrypted buffer */
-        ByteBuffer toEncryptBuffer = ByteBuffer.allocate(encrypted_block_size);
-        toEncryptBuffer.put(sender_id, 0, FIELD_SENDER_UID_SIZE);
-        toEncryptBuffer.put(author_id, 0, FIELD_AUTHOR_UID_SIZE);
-        toEncryptBuffer.put((byte)author_name.length);
-        toEncryptBuffer.put(author_name, 0, author_name.length);
-        toEncryptBuffer.putShort((short) post.length);
-        toEncryptBuffer.put(post, 0, post.length);
-        toEncryptBuffer.put((byte) filename.length);
-        toEncryptBuffer.put(filename, 0, filename.length);
-        toEncryptBuffer.putLong(status.getTimeOfCreation());
-        toEncryptBuffer.putLong(status.getTTL());
-        toEncryptBuffer.putShort((short) status.getHopCount());
-        toEncryptBuffer.putShort((short) status.getHopLimit());
-        toEncryptBuffer.putShort((short) status.getReplication());
-        toEncryptBuffer.put((byte) status.getLike());
-
-        /* encrypt the buffer (if necessary) */
-        byte[] iv;
-        byte[] encryptedBuffer;
-        if(status.getGroup().isIsprivate()) {
-            try {
-                iv = AESUtil.generateRandomIV();
-                encryptedBuffer = AESUtil.encryptBlock(toEncryptBuffer.array(), status.getGroup().getGroupKey(), iv);
-            } catch(Exception e) {
-                e.printStackTrace();
-                return 0;
-            }
-        } else {
-            iv = new byte[FIELD_AES_IV_SIZE];
-            Arrays.fill(iv, (byte) 0);
-            encryptedBuffer = toEncryptBuffer.array();
-        }
-
-        /* compute final block size */
-        byte[] group_id = Base64.decode(status.getGroup().getGid(), Base64.NO_WRAP);
-        int length = ENCRYPTED_BLOCK_HEADER + encryptedBuffer.length;
-
-        /* fill the buffer */
+        /* prepare the block buffer */
         ByteBuffer blockBuffer = ByteBuffer.allocate(length);
         blockBuffer.put(group_id, 0, FIELD_GROUP_GID_SIZE);
-        blockBuffer.put(iv, 0, FIELD_AES_IV_SIZE);
-        blockBuffer.put(encryptedBuffer, 0, encryptedBuffer.length);
+        blockBuffer.put(sender_id, 0, FIELD_SENDER_UID_SIZE);
+        blockBuffer.put(author_id, 0, FIELD_AUTHOR_UID_SIZE);
+        blockBuffer.put((byte)author_name.length);
+        blockBuffer.put(author_name, 0, author_name.length);
+        blockBuffer.putShort((short) post.length);
+        blockBuffer.put(post, 0, post.length);
+        blockBuffer.put((byte) filename.length);
+        blockBuffer.put(filename, 0, filename.length);
+        blockBuffer.putLong(status.getTimeOfCreation());
+        blockBuffer.putLong(status.getTTL());
+        blockBuffer.putShort((short) status.getHopCount());
+        blockBuffer.putShort((short) status.getHopLimit());
+        blockBuffer.putShort((short) status.getReplication());
+        blockBuffer.put((byte) status.getLike());
 
-        /* send the header, the status and the attached file */
-        if(status.hasAttachedFile())
-            header.setLastBlock(false);
-        header.setPayloadLength(length);
-        header.writeBlockHeader(con.getOutputStream());
-        con.getOutputStream().write(blockBuffer.array(),0,length);
-        if(status.hasAttachedFile()) {
-            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
-            if(attachedFile.exists() && attachedFile.isFile()) {
-                BlockFile blockFile = new BlockFile(status.getFileName(), status.getUuid());
-                blockFile.setEncryptionKey(status.getGroup().getGroupKey());
-                blockFile.writeBlock(channel);
+        /* if the group is private, send a BlockCrypto first */
+        OutputStream finalOut = out;
+        boolean encrypted = false;
+        if(status.getGroup().isPrivate()) {
+            try {
+                byte[] iv = AESUtil.generateRandomIV();
+                finalOut = AESUtil.getCipherOutputStream(out, status.getGroup().getGroupKey(), iv);
+                encrypted = true;
+                BlockCrypto blockCrypto = new BlockCrypto(status.getGroup().getGid(), iv);
+                blockCrypto.writeBlock(channel, out);
+            } catch(Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "cannot send PushStatus, failed to setup encrypted stream");
+                return 0;
             }
         }
+
+        /* send the header and the push status and attached file if any */
+        BlockFile blockFile = null;
+        if(status.hasAttachedFile()) {
+            File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+            if(!(attachedFile.exists() && attachedFile.isFile())) {
+                Log.e(TAG, "attached file doesn't exist, abort sending push status");
+                return 0;
+            }
+            blockFile = new BlockFile(status.getFileName(), status.getUuid());
+            header.setLastBlock(false);
+        }
+
+        header.setPayloadLength(length);
+        header.writeBlockHeader(finalOut);
+        finalOut.write(blockBuffer.array(),0,length);
+        if(blockFile != null)
+            blockFile.writeBlock(channel, finalOut);
+
+        if(encrypted)
+            finalOut.close();
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         channel.status_sent++;

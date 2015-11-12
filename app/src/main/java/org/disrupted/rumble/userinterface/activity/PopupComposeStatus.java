@@ -20,7 +20,6 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -332,7 +331,7 @@ public class PopupComposeStatus extends Activity {
         @Override
         public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
             Group clicked = groupList.get(i);
-            if(!clicked.isIsprivate())
+            if(!clicked.isPrivate())
                 groupLock.setBackgroundResource(R.drawable.ic_lock_open_white_24dp);
             else
                 groupLock.setBackgroundResource(R.drawable.ic_lock_white_24dp);

@@ -43,8 +43,6 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.adapter.GroupDetailPagerAdapter;
-import org.disrupted.rumble.userinterface.fragments.FragmentContactList;
-import org.disrupted.rumble.userinterface.fragments.FragmentStatusList;
 
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
@@ -122,7 +120,7 @@ public class GroupDetailActivity extends AppCompatActivity {
         Group group = DatabaseFactory.getGroupDatabase(this).getGroup(groupID);
         ByteBuffer byteBuffer;
         byte[] keybytes;
-        if(group.isIsprivate())
+        if(group.isPrivate())
             keybytes = group.getGroupKey().getEncoded();
         else
             keybytes = new byte[0];

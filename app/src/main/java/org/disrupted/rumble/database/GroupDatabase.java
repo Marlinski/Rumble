@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Base64;
-import android.util.Log;
 
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
@@ -134,14 +133,14 @@ public class GroupDatabase  extends  Database{
             return false;
 
         String base64EncodedKey = null;
-        if(group.isIsprivate())
+        if(group.isPrivate())
             base64EncodedKey = Base64.encodeToString(group.getGroupKey().getEncoded(), Base64.NO_WRAP);
 
         ContentValues contentValues = new ContentValues();
         contentValues.put(NAME, group.getName());
         contentValues.put(GID, group.getGid());
         contentValues.put(KEY, base64EncodedKey);
-        contentValues.put(PRIVATE, group.isIsprivate() ? 1 : 0);
+        contentValues.put(PRIVATE, group.isPrivate() ? 1 : 0);
         contentValues.put(DESC, group.getDesc());
 
         long count = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues,SQLiteDatabase.CONFLICT_IGNORE);

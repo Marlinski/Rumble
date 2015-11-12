@@ -33,6 +33,7 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -120,8 +121,7 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_CONTACT)
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected",0);
 
@@ -132,7 +132,6 @@ public class BlockContact extends Block {
         /* read the block */
         long timeToTransfer = System.nanoTime();
 
-        InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
         int count = in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
@@ -195,6 +194,7 @@ public class BlockContact extends Block {
 
             tempcontact.lastMet(System.currentTimeMillis());
             timeToTransfer  = (System.nanoTime() - timeToTransfer);
+            UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
             EventBus.getDefault().post(new ContactInformationReceived(
                             tempcontact,
                             flags,
@@ -213,8 +213,7 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
         /* prepare the entries */
@@ -262,8 +261,8 @@ public class BlockContact extends Block {
         long timeToTransfer = System.currentTimeMillis();
 
         /* send the BlockHeader and the BlockPayload */
-        header.writeBlockHeader(con.getOutputStream());
-        con.getOutputStream().write(blockBuffer.array(), 0, buffersize);
+        header.writeBlockHeader(out);
+        out.write(blockBuffer.array(), 0, buffersize);
 
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
         EventBus.getDefault().post(new ContactInformationSent(

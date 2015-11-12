@@ -33,6 +33,7 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.Mal
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -96,8 +97,7 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_CHAT_MESSAGE)
             throw new MalformedBlockPayload("Block type BLOCK_CHAT expected", 0);
 
@@ -108,7 +108,6 @@ public class BlockChatMessage extends Block {
         long timeToTransfer = System.nanoTime();
 
         /* read the block */
-        InputStream in = con.getInputStream();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
         int count = in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
@@ -154,6 +153,7 @@ public class BlockChatMessage extends Block {
             chatMessage = new ChatMessage(contact_tmp, new String(message), toc, receivedAt, RumbleProtocol.protocolID);
 
             timeToTransfer = (System.nanoTime() - timeToTransfer);
+            UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
             EventBus.getDefault().post(new ChatMessageReceived(
                             chatMessage,
                             con.getRemoteLinkLayerAddress(),
@@ -169,8 +169,7 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
+    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
         long timeToTransfer = System.nanoTime();
 
         /* calculate the total block size */
@@ -201,10 +200,10 @@ public class BlockChatMessage extends Block {
         blockBuffer.putLong(chatMessage.getAuthorTimestamp());
 
         /* send the header, the status and the attached file */
-        header.writeBlockHeader(con.getOutputStream());
-        con.getOutputStream().write(blockBuffer.array(),0,length);
+        header.writeBlockHeader(out);
+        out.write(blockBuffer.array(), 0, length);
         if(blockFile != null)
-            blockFile.writeBlock(channel);
+            blockFile.writeBlock(channel, out);
 
         /*
          * It is very important to post an event as it will be catch by the
@@ -212,6 +211,7 @@ public class BlockChatMessage extends Block {
          */
         timeToTransfer  = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();
+        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
         recipients.add(con.getRemoteLinkLayerAddress());
         EventBus.getDefault().post(new ChatMessageSent(
                         chatMessage,

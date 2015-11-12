@@ -93,6 +93,7 @@ public class BlockHeader {
     public static final int BLOCKTYPE_FILE          = 0x02;
     public static final int BLOCKTYPE_CONTACT       = 0x03;
     public static final int BLOCKTYPE_CHAT_MESSAGE  = 0x04;
+    public static final int BLOCKTYPE_CRYPTO        = 0x05;
 
     public BlockHeader() {
         version = VERSION_ID;

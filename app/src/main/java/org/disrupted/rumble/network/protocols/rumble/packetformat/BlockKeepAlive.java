@@ -24,6 +24,8 @@ import org.disrupted.rumble.network.protocols.command.CommandSendKeepAlive;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * @author Marlinski
@@ -44,14 +46,13 @@ public class BlockKeepAlive extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         return 0;
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel) throws IOException, InputOutputStreamException {
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        header.writeBlockHeader(con.getOutputStream());
+    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
+        header.writeBlockHeader(out);
         return BlockHeader.BLOCK_HEADER_LENGTH;
     }
 

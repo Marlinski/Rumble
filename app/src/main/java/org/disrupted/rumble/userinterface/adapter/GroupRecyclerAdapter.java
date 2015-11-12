@@ -19,7 +19,6 @@ package org.disrupted.rumble.userinterface.adapter;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -29,7 +28,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -44,10 +42,6 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.squareup.picasso.Picasso;
 
 import org.disrupted.rumble.R;
-import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseExecutor;
-import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.PushStatusDatabase;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.activity.DisplayQRCode;
 import org.disrupted.rumble.userinterface.activity.GroupDetailActivity;
@@ -55,7 +49,6 @@ import org.disrupted.rumble.userinterface.activity.GroupDetailActivity;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
 
 import javax.crypto.SecretKey;
 
@@ -89,7 +82,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
         public void bindGroup(Group group, int unread) {
 
             //group_name.setTextColor(ColorGenerator.DEFAULT.getColor(groupList.get(i).getName()));
-            if(group.isIsprivate())
+            if(group.isPrivate())
                 Picasso.with(activity)
                         .load(R.drawable.ic_lock_grey600_24dp)
                         .into(group_lock);
@@ -116,7 +109,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
              * Manage click events
              */
             final String    gid          = group.getGid();
-            final boolean   privateGroup = group.isIsprivate();
+            final boolean   privateGroup = group.isPrivate();
             final SecretKey key          = group.getGroupKey();
             final String    name         = group.getName();
 

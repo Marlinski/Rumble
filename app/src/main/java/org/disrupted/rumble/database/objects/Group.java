@@ -72,7 +72,7 @@ public class Group {
     public final String getName() {        return name;      }
     public final String getGid() {         return gid;       }
     public final SecretKey getGroupKey() { return key;       }
-    public boolean isIsprivate() {         return isPrivate; }
+    public boolean isPrivate() {         return isPrivate; }
     public final String getDesc() {        return desc;      }
 
     public void setDesc(String desc) {     this.desc = desc; }
