@@ -18,7 +18,6 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
-import android.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -74,11 +73,11 @@ import javax.crypto.SecretKey;
  */
 public class BlockCipher extends Block {
 
-    public static final String TAG = "BlockCrypto";
+    public static final String TAG = "BlockCipher";
 
-    /* crypto header */
-    private static final int FIELD_CRYPTO_TYPE          = 0x01;
-    private static final int FIELD_CIPHER_SUITE         = 0x01;
+    /* crypto header field size */
+    private static final int FIELD_CRYPTO_TYPE_SIZE  = 0x01;
+    private static final int FIELD_CIPHER_SUITE_SIZE = 0x01;
 
     /* header values */
     public static final int  CRYPTO_TYPE_CLEARTEXT                        = 0x01;
@@ -96,8 +95,8 @@ public class BlockCipher extends Block {
 
     /* block boundaries */
     private static final int MIN_PAYLOAD_SIZE = (
-            FIELD_CRYPTO_TYPE +
-            FIELD_CIPHER_SUITE);
+            FIELD_CRYPTO_TYPE_SIZE +
+            FIELD_CIPHER_SUITE_SIZE);
 
     private static final int MAX_CRYPTO_BLOCK_SIZE = (
             MIN_PAYLOAD_SIZE +
@@ -147,7 +146,7 @@ public class BlockCipher extends Block {
         if (count < 0)
             throw new IOException("end of stream reached");
         if (count < (int) header.getBlockLength())
-            throw new MalformedBlockPayload("read less bytes than expected", count);
+            throw new MalformedBlockPayload("read less bytes than expected: "+count+"/"+readleft,count);
 
         BlockDebug.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+Arrays.toString(blockBuffer));
         /* process the block buffer */
@@ -155,14 +154,14 @@ public class BlockCipher extends Block {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
 
             short cryptoType = byteBuffer.get();
-            readleft -= FIELD_CRYPTO_TYPE;
+            readleft -= FIELD_CRYPTO_TYPE_SIZE;
             short cipherSuite = byteBuffer.get();
-            readleft -= FIELD_CIPHER_SUITE;
+            readleft -= FIELD_CIPHER_SUITE_SIZE;
 
             switch (cryptoType) {
                 case CRYPTO_TYPE_CLEARTEXT:
-                    secretKey = null;
-                    ivBytes = null;
+                    this.secretKey = null;
+                    this.ivBytes = null;
                     break;
                 case CRYPTO_TYPE_BLOCK_ENCRYPTION_GROUP_PARAMETER:
                     if (cipherSuite != CIPHER_SUITE_AES128_CBC_PKCS5)
@@ -183,8 +182,8 @@ public class BlockCipher extends Block {
                     readleft -= FIELD_AES_IV_SIZE;
 
                     /* configure the keys */
-                    secretKey = group.getGroupKey();
-                    ivBytes = iv;
+                    this.secretKey = group.getGroupKey();
+                    this.ivBytes = iv;
                     break;
                 default:
                     throw new IOException("Crypto unknown");

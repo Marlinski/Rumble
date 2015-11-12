@@ -23,8 +23,8 @@ import android.util.Log;
  * @author Marlinski
  */
 public class BlockDebug {
-    public static final boolean DEBUG = false;
-    public static final boolean ERROR = false;
+    public static final boolean DEBUG = true;
+    public static final boolean ERROR = true;
 
 
     public static void d(String TAG, String debugMessage) {

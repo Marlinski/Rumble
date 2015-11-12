@@ -43,6 +43,7 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockCipher;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockDebug;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockKeepAlive;
@@ -217,14 +218,18 @@ public class RumbleUnicastChannel extends ProtocolChannel {
                     secretKey = ((BlockCipher) block).secretKey;
                     ivBytes   = ((BlockCipher) block).ivBytes;
                     if(secretKey != null) {
+                        BlockDebug.d(TAG, "Entering Cipher Mode AES");
                         in = AESUtil.getCipherInputStream(
                                 ((UnicastConnection)this.getLinkLayerConnection()).getInputStream(),
                                 secretKey,
                                 ivBytes);
                         encrypted = true;
                     } else {
-                        if(encrypted)
-                            in.close();
+                        try {
+                            if (encrypted)
+                                in.close();
+                        } catch(IOException ignore){}
+                        BlockDebug.d(TAG, "Entering Cipher Mode CLEARTEXT");
                         in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
                         encrypted = false;
                     }
