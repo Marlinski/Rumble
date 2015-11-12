@@ -113,7 +113,6 @@ public class BlockFile extends Block {
             throw new MalformedBlockPayload("Block type BLOCK_FILE expected", 0);
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_PAYLOAD_SIZE))
             throw new MalformedBlockPayload("wrong payload size: "+header.getBlockLength(), 0);
-        Log.d(TAG,"Reading BlockFile");
     }
 
     @Override
@@ -130,6 +129,8 @@ public class BlockFile extends Block {
             throw new IOException("end of stream reached");
         if (count < MIN_PAYLOAD_SIZE)
             throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
+
+        Log.d(TAG,"BlockFileHeader received ("+count+" bytes): "+new String(pseudoHeaderBuffer));
 
         /* process the block pseudo header */
         ByteBuffer byteBuffer = ByteBuffer.wrap(pseudoHeaderBuffer);
@@ -173,6 +174,7 @@ public class BlockFile extends Block {
                 }
 
                 filename = attachedFile.getName();
+                Log.d(TAG,"FILE received ("+attachedFile.length()+" bytes): "+filename);
 
                 timeToTransfer  = (System.nanoTime() - timeToTransfer);
                 UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
@@ -229,20 +231,27 @@ public class BlockFile extends Block {
         header.writeBlockHeader(out);
         out.write(pseudoHeaderBuffer.array());
 
+        Log.d(TAG, "BlockFileHeader sent (" + pseudoHeaderBuffer.array().length + " bytes): "
+                + new String(pseudoHeaderBuffer.array()));
+
         /* sent the attached file */
         BufferedInputStream fis = null;
+        long bytesSent = 0;
         try {
             byte[] fileBuffer = new byte[BUFFER_SIZE];
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             while (bytesread > 0) {
                 out.write(fileBuffer, 0, bytesread);
+                bytesSent+=bytesread;
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } finally {
             if (fis != null)
                 fis.close();
         }
+
+        Log.d(TAG,"FILE sent ("+bytesSent+" bytes): "+attachedFile.getName());
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();

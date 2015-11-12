@@ -155,6 +155,8 @@ public class BlockPushStatus extends Block{
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
+        Log.d(TAG,"BlockStatus received ("+count+" bytes): "+new String(blockBuffer));
+
         /* process the block buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
@@ -316,7 +318,6 @@ public class BlockPushStatus extends Block{
                 byte[] iv = AESUtil.generateRandomIV();
                 finalOut = AESUtil.getCipherOutputStream(out, status.getGroup().getGroupKey(), iv);
                 encrypted = true;
-                Log.d(TAG,"sending crypto block");
                 BlockCrypto blockCrypto = new BlockCrypto(status.getGroup().getGid(), iv);
                 blockCrypto.writeBlock(channel, out);
             } catch(Exception e) {
@@ -338,12 +339,11 @@ public class BlockPushStatus extends Block{
             header.setLastBlock(false);
         }
 
-        Log.d(TAG, "sending status");
         header.setPayloadLength(length);
         header.writeBlockHeader(finalOut);
-        finalOut.write(blockBuffer.array(),0,length);
+        finalOut.write(blockBuffer.array(), 0, length);
+        Log.d(TAG, "BlockStatus sent (" + length + " bytes): " + new String(blockBuffer.array()));
         if(blockFile != null) {
-            Log.d(TAG, "sending file");
             blockFile.writeBlock(channel, finalOut);
         }
 
@@ -354,7 +354,6 @@ public class BlockPushStatus extends Block{
         channel.status_sent++;
         channel.bytes_sent+=header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
         channel.out_transmission_time += timeToTransfer;
-
         EventBus.getDefault().post(new PushStatusSent(
                         status,
                         channel.getRecipientList(),

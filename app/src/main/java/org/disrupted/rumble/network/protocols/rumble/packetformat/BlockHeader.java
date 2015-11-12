@@ -31,7 +31,7 @@ import java.nio.ByteBuffer;
  * The BlockHeader is simply constituted of a BlockType and its subsequent Length
  *
  *
- *  *   1 byte        2 bytes      1 byte                8 bytes (long)
+ *   1 byte        2 bytes      1 byte                8 bytes (long)
  * +---------+-------------------+----------+---------------------------------+
  * | Version |   Block control   |   Type   |          Block Length           |
  * +---------+-------------------+----------+---------------------------------+
@@ -119,6 +119,7 @@ public class BlockHeader {
             throw new IOException("end of stream reached");
         if (count < BLOCK_HEADER_LENGTH)
             throw new MalformedBlockHeader("read less bytes than expected", count);
+        Log.d(TAG, "BlockHeader received (" + count + " bytes): " + new String(headerBuffer));
 
         ByteBuffer byteBuffer = ByteBuffer.wrap(headerBuffer);
 
@@ -161,6 +162,7 @@ public class BlockHeader {
 
             out.write(bufferBlockHeader.array());
             bufferBlockHeader.clear();
+            Log.d(TAG, "BlockHeader sent (" + bufferBlockHeader.array().length + " bytes): " + new String(bufferBlockHeader.array()));
             return BLOCK_HEADER_LENGTH;
         }
         catch(BufferOverflowException e) {

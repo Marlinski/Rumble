@@ -106,6 +106,7 @@ public class BlockCrypto extends Block {
     public BlockCrypto(String gid, byte[] iv) {
         super(new BlockHeader());
         header.setBlockType(BlockHeader.BLOCKTYPE_CRYPTO);
+        this.header.setTransaction(BlockHeader.TRANSACTION_TYPE_PUSH);
         this.gid = gid;
         this.ivBytes = iv;
     }
@@ -115,7 +116,6 @@ public class BlockCrypto extends Block {
             throw new MalformedBlockPayload("Block type BLOCKTYPE_CRYPTO expected", 0);
         if ((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_CRYPTO_BLOCK_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: " + header.getBlockLength(), 0);
-        Log.d(TAG,"Reading BlockCrypto");
     }
 
     @Override
@@ -131,6 +131,7 @@ public class BlockCrypto extends Block {
         if (count < (int) header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
+        Log.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+new String(blockBuffer));
         /* process the block buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
@@ -190,7 +191,8 @@ public class BlockCrypto extends Block {
 
         /* send the block */
         header.writeBlockHeader(out);
-        out.write(blockBuffer.array(),0,length);
+        out.write(blockBuffer.array(), 0, length);
+        Log.d(TAG, "BlockCrypto sent (" + length + " bytes): " + new String(blockBuffer.array()));
 
         return length;
     }
