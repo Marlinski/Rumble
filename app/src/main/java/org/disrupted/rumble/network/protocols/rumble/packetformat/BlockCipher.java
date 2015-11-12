@@ -149,7 +149,7 @@ public class BlockCipher extends Block {
         if (count < (int) header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+Arrays.toString(blockBuffer));
+        BlockDebug.d(TAG,"BlockCrypto received ("+readleft+" bytes): "+Arrays.toString(blockBuffer));
         /* process the block buffer */
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(blockBuffer);
@@ -223,7 +223,7 @@ public class BlockCipher extends Block {
         header.setPayloadLength(length);
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
-        Log.d(TAG, "BlockCrypto sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
+        BlockDebug.d(TAG, "BlockCrypto sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
 
         return length;
     }

@@ -136,7 +136,6 @@ public class BlockPushStatus extends Block{
             throw new MalformedBlockPayload("Block type BLOCKTYPE_PUSH_STATUS expected", 0);
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_BLOCK_STATUS_SIZE))
             throw new MalformedBlockPayload("wrong header length parameter: "+header.getBlockLength(), 0);
-        Log.d(TAG,"Reading BlockPushStatus");
     }
 
     @Override
@@ -154,7 +153,7 @@ public class BlockPushStatus extends Block{
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG,"BlockStatus received ("+count+" bytes): "+Arrays.toString(blockBuffer));
+        BlockDebug.d(TAG,"BlockStatus received ("+count+" bytes): "+Arrays.toString(blockBuffer));
 
         /* process the block buffer */
         try {
@@ -316,7 +315,7 @@ public class BlockPushStatus extends Block{
         if(status.hasAttachedFile()) {
             File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
             if(!(attachedFile.exists() && attachedFile.isFile())) {
-                Log.e(TAG, "attached file doesn't exist, abort sending push status");
+                BlockDebug.e(TAG, "attached file doesn't exist, abort sending push status");
                 return 0;
             }
             blockFile = new BlockFile(status.getFileName(), status.getUuid());
@@ -334,8 +333,7 @@ public class BlockPushStatus extends Block{
                 BlockCipher blockCipher = new BlockCipher(status.getGroup().getGid(), iv);
                 blockCipher.writeBlock(channel, out);
             } catch(AESUtil.CryptographicException e) {
-                e.printStackTrace();
-                Log.e(TAG, "cannot send PushStatus, failed to setup encrypted stream");
+                BlockDebug.e(TAG, "cannot send PushStatus, failed to setup encrypted stream", e);
                 return 0;
             }
         }
@@ -344,7 +342,7 @@ public class BlockPushStatus extends Block{
         header.setPayloadLength(length);
         header.writeBlockHeader(finalOut);
         finalOut.write(blockBuffer.array(), 0, length);
-        Log.d(TAG, "BlockStatus sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
+        BlockDebug.d(TAG, "BlockStatus sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
         if(blockFile != null)
             blockFile.writeBlock(channel, finalOut);
 

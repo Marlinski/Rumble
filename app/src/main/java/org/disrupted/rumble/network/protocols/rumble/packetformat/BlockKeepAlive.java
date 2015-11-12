@@ -47,12 +47,14 @@ public class BlockKeepAlive extends Block {
 
     @Override
     public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        BlockDebug.d(TAG,"BlockKeepAlive received");
         return 0;
     }
 
     @Override
     public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
         header.writeBlockHeader(out);
+        BlockDebug.d(TAG, "BlockKeepAlive sent");
         return BlockHeader.BLOCK_HEADER_LENGTH;
     }
 

@@ -98,18 +98,21 @@ public class BlockChatMessage extends Block {
         this.chatMessage = null;
     }
 
-    @Override
-    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    private void sanityCheck() throws MalformedBlockPayload{
         if(header.getBlockType() != BlockHeader.BLOCKTYPE_CHAT_MESSAGE)
             throw new MalformedBlockPayload("Block type BLOCK_CHAT expected", 0);
-
-        long readleft = header.getBlockLength();
         if((header.getBlockLength() < MIN_PAYLOAD_SIZE) || (header.getBlockLength() > MAX_PAYLOAD_SIZE))
-            throw new MalformedBlockPayload("wrong header length parameter: "+readleft, 0);
+            throw new MalformedBlockPayload("wrong header length parameter: "+header.getBlockType(), 0);
+    }
+
+    @Override
+    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+        sanityCheck();
 
         long timeToTransfer = System.nanoTime();
 
         /* read the block */
+        long readleft = header.getBlockLength();
         byte[] blockBuffer = new byte[(int)header.getBlockLength()];
         int count = in.read(blockBuffer, 0, (int)header.getBlockLength());
         if (count < 0)
@@ -117,7 +120,7 @@ public class BlockChatMessage extends Block {
         if (count < (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG, "BlockChatMessage received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
+        BlockDebug.d(TAG, "BlockChatMessage received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
 
         /* process the read buffer */
         try {
@@ -206,7 +209,7 @@ public class BlockChatMessage extends Block {
         /* send the header, the status and the attached file */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
-        Log.d(TAG, "BlockChatMessage sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
+        BlockDebug.d(TAG, "BlockChatMessage sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
         if(blockFile != null)
             blockFile.writeBlock(channel, out);
 

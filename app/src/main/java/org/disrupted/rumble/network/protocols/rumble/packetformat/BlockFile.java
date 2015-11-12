@@ -130,7 +130,7 @@ public class BlockFile extends Block {
         if (count < MIN_PAYLOAD_SIZE)
             throw new MalformedBlockPayload("read less bytes than expected: "+count, count);
 
-        Log.d(TAG,"BlockFileHeader received ("+count+" bytes): "+Arrays.toString(pseudoHeaderBuffer));
+        BlockDebug.d(TAG,"BlockFileHeader received ("+count+" bytes): "+Arrays.toString(pseudoHeaderBuffer));
 
         /* process the block pseudo header */
         ByteBuffer byteBuffer = ByteBuffer.wrap(pseudoHeaderBuffer);
@@ -174,7 +174,7 @@ public class BlockFile extends Block {
                 }
 
                 filename = attachedFile.getName();
-                Log.d(TAG,"FILE received ("+attachedFile.length()+" bytes): "+filename);
+                BlockDebug.d(TAG,"FILE received ("+attachedFile.length()+" bytes): "+filename);
 
                 timeToTransfer  = (System.nanoTime() - timeToTransfer);
                 UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
@@ -189,12 +189,12 @@ public class BlockFile extends Block {
                 );
                 return header.getBlockLength();
             } catch (IOException e) {
-                Log.e(TAG, "[-] file has not been downloaded " + e.getMessage());
+                BlockDebug.e(TAG, "[-] file has not been downloaded",e);
                 filename = "";
                 return header.getBlockLength() - readleft;
             }
         } else {
-            Log.d(TAG, "file type unknown; " + mime);
+            BlockDebug.d(TAG, "file type unknown; " + mime);
             byte[] buffer = new byte[BUFFER_SIZE];
             while (readleft > 0) {
                 long max_read = Math.min((long) BUFFER_SIZE, readleft);
@@ -231,7 +231,7 @@ public class BlockFile extends Block {
         header.writeBlockHeader(out);
         out.write(pseudoHeaderBuffer.array());
 
-        Log.d(TAG, "BlockFileHeader sent (" + pseudoHeaderBuffer.array().length + " bytes): "
+        BlockDebug.d(TAG, "BlockFileHeader sent (" + pseudoHeaderBuffer.array().length + " bytes): "
                 + Arrays.toString(pseudoHeaderBuffer.array()));
 
         /* sent the attached file */
@@ -251,7 +251,7 @@ public class BlockFile extends Block {
                 fis.close();
         }
 
-        Log.d(TAG,"FILE sent ("+bytesSent+" bytes): "+attachedFile.getName());
+        BlockDebug.d(TAG,"FILE sent ("+bytesSent+" bytes): "+attachedFile.getName());
 
         timeToTransfer = (System.nanoTime() - timeToTransfer);
         List<String> recipients = new ArrayList<String>();

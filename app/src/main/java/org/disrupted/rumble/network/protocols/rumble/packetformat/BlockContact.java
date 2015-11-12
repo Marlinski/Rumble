@@ -142,7 +142,7 @@ public class BlockContact extends Block {
         if (count <  (int)header.getBlockLength())
             throw new MalformedBlockPayload("read less bytes than expected", count);
 
-        Log.d(TAG, "BlockContact received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
+        BlockDebug.d(TAG, "BlockContact received ("+count+" bytes): "+ Arrays.toString(blockBuffer));
 
         /* process the read buffer */
         try {
@@ -257,9 +257,9 @@ public class BlockContact extends Block {
             try {
                 entry.write(blockBuffer);
             } catch (BufferOverflowException e) {
-                Log.d(TAG, "BufferOverFlow");
+                BlockDebug.e(TAG, "BufferOverFlow",e);
             } catch (ReadOnlyBufferException e) {
-                Log.d(TAG, "ReadOnlyBufferException");
+                BlockDebug.e(TAG, "ReadOnlyBufferException",e);
             }
         }
 
@@ -268,7 +268,7 @@ public class BlockContact extends Block {
         /* send the BlockHeader and the BlockPayload */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, buffersize);
-        Log.d(TAG, "BlockContact sent (" + buffersize + " bytes): " + Arrays.toString(blockBuffer.array()));
+        BlockDebug.d(TAG, "BlockContact sent (" + buffersize + " bytes): " + Arrays.toString(blockBuffer.array()));
 
         timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
         EventBus.getDefault().post(new ContactInformationSent(
