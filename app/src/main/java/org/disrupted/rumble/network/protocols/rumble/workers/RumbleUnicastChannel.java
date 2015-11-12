@@ -183,7 +183,7 @@ public class RumbleUnicastChannel extends ProtocolChannel {
             InputStream in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
             InputStream temp = null;
             while (true) {
-                BlockHeader header = BlockHeader.readBlockHeader(((UnicastConnection) con).getInputStream());
+                BlockHeader header = BlockHeader.readBlockHeader(in);
 
                 // channel is alive
                 socketTimeout.removeCallbacks(socketTimeoutFires);

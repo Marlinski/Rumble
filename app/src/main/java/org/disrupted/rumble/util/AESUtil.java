@@ -88,10 +88,10 @@ public class AESUtil {
     }
 
     public static CipherOutputStream getCipherOutputStream(OutputStream out, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
-        OutputStreamNonClosed isnc = new OutputStreamNonClosed(out);
+        OutputStreamNonClosed osnc = new OutputStreamNonClosed(out);
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
-        return new CipherOutputStream(isnc, cipher);
+        return new CipherOutputStream(osnc, cipher);
     }
 
     public static CipherInputStream getCipherInputStream(InputStream in, SecretKey key, byte[] ivBytes) throws BadPaddingException, IllegalBlockSizeException, UnsupportedEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException {
