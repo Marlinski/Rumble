@@ -43,22 +43,21 @@ import org.disrupted.rumble.network.protocols.rumble.packetformat.Block;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockChatMessage;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockContact;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockCipher;
-import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockDebug;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockFile;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockHeader;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockKeepAlive;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockProcessor;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockPushStatus;
+import org.disrupted.rumble.network.protocols.rumble.packetformat.CommandProcessor;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockHeader;
-import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.CryptoUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
-
-import javax.crypto.SecretKey;
 
 import de.greenrobot.event.EventBus;
 
@@ -76,6 +75,8 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     private boolean working;
     private Contact remoteContact;
 
+    private BlockProcessor   blockProcessor;
+    private CommandProcessor commandProcessor;
     private Handler keepAlive;
     private Handler socketTimeout;
 
@@ -178,64 +179,19 @@ public class RumbleUnicastChannel extends ProtocolChannel {
     @Override
     protected void processingPacketFromNetwork(){
         try {
-            SecretKey secretKey = null;
-            byte[] ivBytes = null;
-            boolean encrypted = false;
             InputStream in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
+            blockProcessor = new BlockProcessor(in, this);
             while (true) {
+                // read next block header (blocking)
                 BlockHeader header = BlockHeader.readBlockHeader(in);
 
-                // channel is alive
+                // channel is alive, cancel timeout during block processing
                 socketTimeout.removeCallbacks(socketTimeoutFires);
 
-                Block block;
-                switch (header.getBlockType()) {
-                    case BlockHeader.BLOCKTYPE_PUSH_STATUS:
-                        block = new BlockPushStatus(header);
-                        break;
-                    case BlockHeader.BLOCKTYPE_FILE:
-                        block = new BlockFile(header);
-                        break;
-                    case BlockHeader.BLOCKTYPE_CONTACT:
-                        block = new BlockContact(header);
-                        break;
-                    case BlockHeader.BLOCKTYPE_CHAT_MESSAGE:
-                        block = new BlockChatMessage(header);
-                        break;
-                    case BlockHeader.BLOCKTYPE_KEEPALIVE:
-                        block = new BlockKeepAlive(header);
-                        break;
-                    case BlockHeader.BLOCK_CIPHER:
-                        block = new BlockCipher(header);
-                        break;
-                    default:
-                        throw new MalformedBlockHeader("Unknown header type: "+header.getBlockType(), 0);
-                }
+                // process block
+                blockProcessor.processBlock(header);
 
-                block.readBlock(this, in);
-
-                if(header.getBlockType() == BlockHeader.BLOCK_CIPHER) {
-                    secretKey = ((BlockCipher) block).secretKey;
-                    ivBytes   = ((BlockCipher) block).ivBytes;
-                    if(secretKey != null) {
-                        BlockDebug.d(TAG, "Entering Cipher Mode AES");
-                        in = AESUtil.getCipherInputStream(
-                                ((UnicastConnection)this.getLinkLayerConnection()).getInputStream(),
-                                secretKey,
-                                ivBytes);
-                        encrypted = true;
-                    } else {
-                        try {
-                            if (encrypted)
-                                in.close();
-                        } catch(IOException ignore){}
-                        BlockDebug.d(TAG, "Entering Cipher Mode CLEARTEXT");
-                        in = ((UnicastConnection)this.getLinkLayerConnection()).getInputStream();
-                        encrypted = false;
-                    }
-                }
-
-                block.dismiss();
+                // set timeout
                 if(con instanceof BluetoothConnection)
                     socketTimeout.postDelayed(socketTimeoutFires, SOCKET_TIMEOUT_BLUETOOTH);
                 else
@@ -255,30 +211,15 @@ public class RumbleUnicastChannel extends ProtocolChannel {
 
     @Override
     protected boolean onCommandReceived(Command command) {
-        Block block;
         try {
+            if(commandProcessor == null)
+                commandProcessor = new CommandProcessor(((UnicastConnection)this.getLinkLayerConnection()).getOutputStream(), this);
+
             // remove keep alive if any
             keepAlive.removeCallbacks(keepAliveFires);
 
-            switch (command.getCommandID()) {
-                case SEND_LOCAL_INFORMATION:
-                    block = new BlockContact((CommandSendLocalInformation) command);
-                    break;
-                case SEND_PUSH_STATUS:
-                    block = new BlockPushStatus((CommandSendPushStatus) command);
-                    break;
-                case SEND_CHAT_MESSAGE:
-                    block = new BlockChatMessage((CommandSendChatMessage) command);
-                    break;
-                case SEND_KEEP_ALIVE:
-                    block = new BlockKeepAlive((CommandSendKeepAlive) command);
-                    break;
-                default:
-                    return false;
-            }
+            commandProcessor.processCommand(command);
 
-            block.writeBlock(this, ((UnicastConnection)this.getLinkLayerConnection()).getOutputStream());
-            block.dismiss();
             if(!command.getCommandID().equals(Command.CommandID.SEND_KEEP_ALIVE))
                 EventBus.getDefault().post(new CommandExecuted(this, command, true));
 

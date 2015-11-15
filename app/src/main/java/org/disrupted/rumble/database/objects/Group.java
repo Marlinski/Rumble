@@ -17,10 +17,8 @@
 
 package org.disrupted.rumble.database.objects;
 
-import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.CryptoUtil;
 import org.disrupted.rumble.util.HashUtil;
-
-import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.SecretKey;
 
@@ -35,7 +33,7 @@ public class Group {
     public static final int GROUP_NAME_MAX_SIZE = 50;
     public static final int GROUP_DESC_MAX_SIZE = 140;
     public static final int GROUP_GID_RAW_SIZE  = 8;
-    public static final int GROUP_KEY_AES_SIZE  = AESUtil.KEYSIZE/8;
+    public static final int GROUP_KEY_AES_SIZE  = CryptoUtil.KEYSIZE/8;
 
     public static final Group NOGROUP = new Group("nogroup","nogroup",null);
 
@@ -50,15 +48,15 @@ public class Group {
             Group defaultGroup =  createNewGroup(DEFAULT_PUBLIC_GROUP, false);
             defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
             return defaultGroup;
-        } catch ( AESUtil.CryptographicException impossible ) {
+        } catch ( CryptoUtil.CryptographicException impossible ) {
             return null;
         }
     }
 
-    public static Group createNewGroup(String name, boolean isPrivate) throws AESUtil.CryptographicException{
+    public static Group createNewGroup(String name, boolean isPrivate) throws CryptoUtil.CryptographicException{
         SecretKey key = null;
         if(isPrivate)
-            key = AESUtil.generateRandomAESKey();
+            key = CryptoUtil.generateRandomAESKey();
         String gid = HashUtil.computeGroupUid(name, isPrivate);
         return new Group(name, gid, key);
     }

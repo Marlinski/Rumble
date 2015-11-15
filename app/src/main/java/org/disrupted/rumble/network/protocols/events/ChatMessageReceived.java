@@ -27,17 +27,11 @@ import org.disrupted.rumble.network.protocols.ProtocolChannel;
 public class ChatMessageReceived extends NetworkEvent {
 
     public ChatMessage chatMessage;
-    public String sender;
     public ProtocolChannel channel;
-    public long size;
-    public long duration;
 
-    public ChatMessageReceived(ChatMessage chatMessage, String sender, ProtocolChannel channel, long size, long duration) {
+    public ChatMessageReceived(ChatMessage chatMessage, ProtocolChannel channel) {
         this.chatMessage = chatMessage;
-        this.sender = sender;
         this.channel = channel;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override

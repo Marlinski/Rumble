@@ -34,17 +34,13 @@ public class ContactInformationReceived extends NetworkEvent{
     public ProtocolChannel channel;
     public LinkLayerNeighbour neighbour;
     public boolean authenticated;
-    public long    size;
-    public long    duration;
 
-    public ContactInformationReceived(Contact contact, int flags, ProtocolChannel channel, LinkLayerNeighbour neighbour, long size, long duration) {
+    public ContactInformationReceived(Contact contact, int flags, ProtocolChannel channel, LinkLayerNeighbour neighbour) {
         this.contact = contact;
         this.flags = flags;
         this.channel = channel;
         this.neighbour = neighbour;
         this.authenticated = false;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override

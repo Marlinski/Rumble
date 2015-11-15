@@ -53,9 +53,9 @@ import java.util.Arrays;
 public class BlockHeader {
 
     private static final String TAG = "BlockHeader";
-
     private static final int VERSION_ID = 1;
 
+    /* header field size */
     private static final int VERSION_BITSIZE     = 8;        // sizeof byte
     private static final int TRANSACTION_TYPE_BITSIZE = 8;   // sizeof byte
     private static final int FLAG_BITSIZE        = 8;        // sizeof byte
@@ -93,6 +93,7 @@ public class BlockHeader {
     public static final int BLOCKTYPE_CONTACT       = 0x03;
     public static final int BLOCKTYPE_CHAT_MESSAGE  = 0x04;
     public static final int BLOCK_CIPHER            = 0x05;
+    public static final int BLOCK_NULL              = 0xff;
 
     public BlockHeader() {
         version = VERSION_ID;
@@ -105,8 +106,8 @@ public class BlockHeader {
         reserved5 = false;
         reserved6 = false;
         last_block = true;
-        block_type = BLOCKTYPE_KEEPALIVE;
-        payload_length = 0;
+        this.block_type = BLOCK_NULL;
+        this.payload_length = 0;
     }
 
     public static BlockHeader readBlockHeader(InputStream in) throws MalformedBlockHeader, IOException {
@@ -134,9 +135,7 @@ public class BlockHeader {
         ret.reserved5  = ((flags & 0x04) == 0x04);
         ret.reserved6  = ((flags & 0x02) == 0x02);
         ret.last_block = ((flags & 0x01) == 0x01);
-
         ret.block_type     = ((int) byteBuffer.get() & 0xff);
-
         ret.payload_length = byteBuffer.getLong();
 
         return ret;
@@ -181,7 +180,7 @@ public class BlockHeader {
     public boolean isReserved3() {   return reserved3; }
     public boolean isReserved4() {   return reserved4; }
     public boolean isReserved5() {   return reserved5; }
-    public boolean isReserved6() {   return reserved6; }
+    public boolean isEncrypted() {   return reserved6; }
     public boolean isLastBlock() {   return last_block; }
 
     public void setVersion(int version)         {  this.version = version;  }
@@ -193,7 +192,7 @@ public class BlockHeader {
     public void setReserved3(boolean reserved3) {  this.reserved3 = reserved3; }
     public void setReserved4(boolean reserved4) {  this.reserved4 = reserved4; }
     public void setReserved5(boolean reserved5) {  this.reserved5 = reserved5; }
-    public void setReserved6(boolean reserved6) {  this.reserved6 = reserved6; }
+    public void setEncrypted(boolean reserved6) {  this.reserved6 = reserved6; }
     public void setLastBlock(boolean last_block) { this.last_block = last_block; }
     public void setPayloadLength(long length) { this.payload_length = length; }
 

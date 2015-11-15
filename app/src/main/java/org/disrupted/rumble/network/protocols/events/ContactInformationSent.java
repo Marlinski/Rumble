@@ -30,14 +30,10 @@ public class ContactInformationSent extends NetworkEvent {
 
     public Contact contact;
     ProtocolChannel channel;
-    public long size;
-    public long duration;
 
-    public ContactInformationSent(Contact contact, ProtocolChannel channel, long size, long duration) {
+    public ContactInformationSent(Contact contact, ProtocolChannel channel) {
         this.contact = contact;
         this.channel = channel;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override

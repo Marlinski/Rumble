@@ -32,25 +32,21 @@ public class PushStatusReceived extends NetworkEvent{
     public String tempfile;
     public String protocolID;
     public String linkLayerIdentifier;
-    public long size;
-    public long duration;
 
     public PushStatusReceived(PushStatus status, String gid, String sender, String tempfile,
-                              String protocolID, String linkLayerIdentifier, long size, long duration) {
+                              String protocolID, String linkLayerIdentifier) {
         this.status = status;
         this.gid = gid;
         this.senderID = sender;
         this.tempfile = tempfile;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override
     public String shortDescription() {
         if(status != null)
-            return status.getPost()+" ("+status.getAuthor().getName()+") in "+duration+" ns";
+            return status.getPost()+" ("+status.getAuthor().getName()+")";
         else
             return "";
     }

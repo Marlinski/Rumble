@@ -10,7 +10,7 @@ import android.util.Base64;
 import org.disrupted.rumble.database.events.GroupDeletedEvent;
 import org.disrupted.rumble.database.events.GroupInsertedEvent;
 import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.CryptoUtil;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -196,7 +196,7 @@ public class GroupDatabase  extends  Database{
         if(isPrivate) {
             String keyEncodedBase64 = cursor.getString(cursor.getColumnIndexOrThrow(KEY));
             byte[] decodedKey = Base64.decode(keyEncodedBase64, Base64.NO_WRAP);
-            key = AESUtil.getSecretKeyFromByteArray(decodedKey);
+            key = CryptoUtil.getSecretKeyFromByteArray(decodedKey);
         }
         Group ret = new Group(name, gid, key);
         ret.setDesc(desc);

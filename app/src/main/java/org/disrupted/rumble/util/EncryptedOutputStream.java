@@ -15,29 +15,30 @@
  * with Rumble.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.disrupted.rumble.network.protocols.events;
+package org.disrupted.rumble.util;
 
-import org.disrupted.rumble.network.events.NetworkEvent;
+import java.io.BufferedOutputStream;
+import java.io.FilterOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+
+import javax.crypto.Cipher;
+import javax.crypto.CipherOutputStream;
 
 /**
  * @author Marlinski
  */
-public class FileReceived extends NetworkEvent {
-
-    public String filename;
-    public String uuid;
-    public String protocolID;
-    public String linkLayerIdentifier;
-
-    public FileReceived(String filename, String uuid, String protocolID, String linkLayerIdentifier) {
-        this.filename = filename;
-        this.uuid = uuid;
-        this.protocolID = protocolID;
-        this.linkLayerIdentifier = linkLayerIdentifier;
+public class EncryptedOutputStream extends CipherOutputStream {
+    public EncryptedOutputStream(OutputStream out, Cipher cipher) {
+        super(new OutputStreamNonClosed(new BufferedOutputStream(out)), cipher);
     }
-
-    @Override
-    public String shortDescription() {
-        return "filename:"+filename;
+    public static class OutputStreamNonClosed extends FilterOutputStream {
+        public OutputStreamNonClosed(OutputStream out) {
+            super(out);
+        }
+        @Override
+        public void close() throws IOException {
+            super.flush();
+        }
     }
 }

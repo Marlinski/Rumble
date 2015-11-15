@@ -30,6 +30,7 @@ import org.disrupted.rumble.network.protocols.events.ContactInformationSent;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.command.CommandSendLocalInformation;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.EncryptedOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,7 +73,7 @@ import de.greenrobot.event.EventBus;
  *
  *        ========================
  *
- * Data structures according to the TYPE value:
+ * DATA structures according to the TYPE value:
  *
  * ENTRY TYPE GROUP:
  * +-------------------------------------------+
@@ -107,8 +108,8 @@ public class BlockContact extends Block {
     );
     private static final int MAX_BLOCK_CONTACT_SIZE =  2048;
 
-    private Contact contact;
-    private int     flags;
+    public Contact contact;
+    public int     flags;
 
     public BlockContact(BlockHeader header) {
         super(header);
@@ -129,7 +130,7 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
 
         long timeToTransfer = System.nanoTime();
 
@@ -167,7 +168,7 @@ public class BlockContact extends Block {
             byteBuffer.get(author_name,0,author_name_length);
             readleft -= author_name_length;
 
-            Contact tempcontact = new Contact(new String(author_name),user_id_base64,false);
+            contact = new Contact(new String(author_name),user_id_base64,false);
 
             // read the optional fields
             while(readleft > 2) {
@@ -180,13 +181,13 @@ public class BlockContact extends Block {
                     case Entry.ENTRY_TYPE_GROUP:
                         entry = new GroupEntry(entrySize);
                         entry.read(byteBuffer);
-                        tempcontact.addGroup(((GroupEntry)entry).group_id_base64);
+                        contact.addGroup(((GroupEntry)entry).group_id_base64);
                         this.flags |= Contact.FLAG_GROUP_LIST;
                         break;
                     case Entry.ENTRY_TYPE_TAG:
                         entry = new TagInterestEntry(entrySize);
                         entry.read(byteBuffer);
-                        tempcontact.addTagInterest(((TagInterestEntry)entry).hashtag, ((TagInterestEntry)entry).levelOfInterest);
+                        contact.addTagInterest(((TagInterestEntry)entry).hashtag, ((TagInterestEntry)entry).levelOfInterest);
                         this.flags |= Contact.FLAG_TAG_INTEREST;
                         break;
                     default:
@@ -197,18 +198,6 @@ public class BlockContact extends Block {
                 readleft -= (entry.getEntrySize());
             }
 
-            tempcontact.lastMet(System.currentTimeMillis());
-            timeToTransfer  = (System.nanoTime() - timeToTransfer);
-            UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-            EventBus.getDefault().post(new ContactInformationReceived(
-                            tempcontact,
-                            flags,
-                            channel,
-                            con.getLinkLayerNeighbour(),
-                            BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength(),
-                            timeToTransfer)
-            );
-
             return header.getBlockLength();
 
         } catch (BufferUnderflowException exception) {
@@ -218,7 +207,7 @@ public class BlockContact extends Block {
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
+    public long writeBlock(OutputStream out, EncryptedOutputStream eos) throws IOException, InputOutputStreamException {
         ArrayList<Entry> entries = new ArrayList<Entry>();
 
         /* prepare the entries */
@@ -263,20 +252,10 @@ public class BlockContact extends Block {
             }
         }
 
-        long timeToTransfer = System.currentTimeMillis();
-
         /* send the BlockHeader and the BlockPayload */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, buffersize);
         BlockDebug.d(TAG, "BlockContact sent (" + buffersize + " bytes): " + Arrays.toString(blockBuffer.array()));
-
-        timeToTransfer  = (System.currentTimeMillis() - timeToTransfer);
-        EventBus.getDefault().post(new ContactInformationSent(
-                        contact,
-                        channel,
-                        BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength(),
-                        timeToTransfer)
-        );
 
         return BlockHeader.BLOCK_HEADER_LENGTH + header.getBlockLength();
     }

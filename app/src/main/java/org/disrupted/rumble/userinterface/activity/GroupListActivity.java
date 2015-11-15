@@ -36,7 +36,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.fragments.FragmentGroupList;
-import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.CryptoUtil;
 import org.disrupted.rumble.util.HashUtil;
 
 import java.nio.ByteBuffer;
@@ -141,7 +141,7 @@ public class GroupListActivity extends AppCompatActivity {
                     throw new Exception();
                 byte[] key = new byte[keysize];
                 byteBuffer.get(key, 0, keysize);
-                Group group = new Group(new String(name), new String(gid), AESUtil.getSecretKeyFromByteArray(key));
+                Group group = new Group(new String(name), new String(gid), CryptoUtil.getSecretKeyFromByteArray(key));
 
                 // add Group to database
                 EventBus.getDefault().post(new UserJoinGroup(group));

@@ -17,10 +17,9 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
-import org.disrupted.rumble.network.protocols.command.CommandSendKeepAlive;
+import org.disrupted.rumble.network.protocols.command.CommandSendPushStatus;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
 import org.disrupted.rumble.util.EncryptedOutputStream;
 
@@ -31,32 +30,29 @@ import java.io.OutputStream;
 /**
  * @author Marlinski
  */
-public class BlockKeepAlive extends Block {
+public class BlockNull extends Block {
 
-    public static final String TAG = "BlockKeepAlive";
-    public static final int BUFFER_SIZE = 1024;
-
-    public BlockKeepAlive(BlockHeader header) {
+    public BlockNull(BlockHeader header) {
         super(header);
-    }
-
-    public BlockKeepAlive(CommandSendKeepAlive command) {
-        super(new BlockHeader());
-        header.setBlockType(BlockHeader.BLOCKTYPE_KEEPALIVE);
-        header.setPayloadLength(0);
     }
 
     @Override
     public long readBlock(InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
-        BlockDebug.d(TAG,"BlockKeepAlive received");
-        return 0;
+        long readleft = header.getBlockLength();
+        byte[] buffer = new byte[1024];
+        while (readleft > 0) {
+            long max_read = Math.min(1024, readleft);
+            int bytesread = in.read(buffer, 0, (int) max_read);
+            if (bytesread < 0)
+                throw new IOException("End of stream reached before downloading was complete");
+            readleft -= bytesread;
+        }
+        return header.getBlockLength();
     }
 
     @Override
     public long writeBlock(OutputStream out, EncryptedOutputStream eos) throws IOException, InputOutputStreamException {
-        header.writeBlockHeader(out);
-        BlockDebug.d(TAG, "BlockKeepAlive sent");
-        return BlockHeader.BLOCK_HEADER_LENGTH;
+        return 0;
     }
 
     @Override

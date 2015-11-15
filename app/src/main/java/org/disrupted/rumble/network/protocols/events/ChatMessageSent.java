@@ -28,19 +28,13 @@ import java.util.List;
 public class ChatMessageSent extends NetworkEvent {
 
     public ChatMessage chatMessage;
-    public List<String> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
-    public long size;
-    public long duration;
 
-    public ChatMessageSent(ChatMessage chatMessage, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public ChatMessageSent(ChatMessage chatMessage, String protocolID, String linkLayerIdentifier) {
         this.chatMessage = chatMessage;
-        this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override

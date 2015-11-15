@@ -31,6 +31,7 @@ import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.network.protocols.events.ChatMessageSent;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.EncryptedOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,7 +85,7 @@ public class BlockChatMessage extends Block {
             Contact.CONTACT_NAME_MAX_SIZE +
             ChatMessage.MSG_MAX_SIZE);
 
-    private ChatMessage chatMessage;
+    public ChatMessage chatMessage;
 
     public BlockChatMessage(CommandSendChatMessage command) {
         super(new BlockHeader());
@@ -106,7 +107,7 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         sanityCheck();
 
         long timeToTransfer = System.nanoTime();
@@ -156,18 +157,7 @@ public class BlockChatMessage extends Block {
             String author_id_base64 = Base64.encodeToString(author_id, 0, FIELD_UID_SIZE, Base64.NO_WRAP);
             Contact contact_tmp  = new Contact(new String(author_name),author_id_base64,false);
             long receivedAt = (System.currentTimeMillis());
-
             chatMessage = new ChatMessage(contact_tmp, new String(message), toc, receivedAt, RumbleProtocol.protocolID);
-
-            timeToTransfer = (System.nanoTime() - timeToTransfer);
-            UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-            EventBus.getDefault().post(new ChatMessageReceived(
-                            chatMessage,
-                            con.getRemoteLinkLayerAddress(),
-                            channel,
-                            header.getBlockLength(),
-                            timeToTransfer)
-            );
 
             return header.getBlockLength();
         } catch (BufferUnderflowException exception) {
@@ -176,9 +166,7 @@ public class BlockChatMessage extends Block {
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
-        long timeToTransfer = System.nanoTime();
-
+    public long writeBlock(OutputStream out, EncryptedOutputStream eos) throws IOException, InputOutputStreamException {
         /* calculate the total block size */
         byte[] post     = chatMessage.getMessage().getBytes(Charset.forName("UTF-8"));
         byte[] author_name = chatMessage.getAuthor().getName().getBytes(Charset.forName("UTF-8"));
@@ -189,18 +177,10 @@ public class BlockChatMessage extends Block {
                 post.length;
         header.setPayloadLength(length);
 
-        BlockFile blockFile = null;
-        /*
-        if(chatMessage.hasAttachedFile()) {
-            header.setLastBlock(false);
-            blockFile = new BlockFile(status.getFileName(), status.getUuid());
-        }
-        */
-
         /* prepare the buffer */
         ByteBuffer blockBuffer = ByteBuffer.allocate(length);
         blockBuffer.put(author_id, 0, FIELD_UID_SIZE);
-        blockBuffer.put((byte)author_name.length);
+        blockBuffer.put((byte) author_name.length);
         blockBuffer.put(author_name, 0, author_name.length);
         blockBuffer.putShort((short) post.length);
         blockBuffer.put(post, 0, post.length);
@@ -209,26 +189,6 @@ public class BlockChatMessage extends Block {
         /* send the header, the status and the attached file */
         header.writeBlockHeader(out);
         out.write(blockBuffer.array(), 0, length);
-        BlockDebug.d(TAG, "BlockChatMessage sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
-        if(blockFile != null)
-            blockFile.writeBlock(channel, out);
-
-        /*
-         * It is very important to post an event as it will be catch by the
-         * CacheManager and will update the database accordingly
-         */
-        timeToTransfer  = (System.nanoTime() - timeToTransfer);
-        List<String> recipients = new ArrayList<String>();
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        recipients.add(con.getRemoteLinkLayerAddress());
-        EventBus.getDefault().post(new ChatMessageSent(
-                        chatMessage,
-                        recipients,
-                        RumbleProtocol.protocolID,
-                        BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                        header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
-                        timeToTransfer)
-        );
 
         return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
     }

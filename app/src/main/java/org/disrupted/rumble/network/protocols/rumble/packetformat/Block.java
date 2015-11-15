@@ -25,6 +25,8 @@ import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamExcepti
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlock;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
+import org.disrupted.rumble.util.EncryptedInputStream;
+import org.disrupted.rumble.util.EncryptedOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,15 +40,15 @@ import javax.crypto.SecretKey;
  */
 public abstract class Block {
 
-    protected BlockHeader  header;
+    public BlockHeader  header;
 
     public Block(BlockHeader header) {
         this.header = header;
     }
 
-    public abstract long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException;
+    public abstract long readBlock(InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException;
 
-    public abstract long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException;
+    public abstract long writeBlock(OutputStream out, EncryptedOutputStream eos) throws IOException, InputOutputStreamException;
 
     public abstract void dismiss();
 

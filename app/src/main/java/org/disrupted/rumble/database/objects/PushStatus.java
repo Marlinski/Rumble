@@ -19,12 +19,8 @@
 
 package org.disrupted.rumble.database.objects;
 
-
-import android.net.Uri;
-
 import org.disrupted.rumble.util.HashUtil;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;

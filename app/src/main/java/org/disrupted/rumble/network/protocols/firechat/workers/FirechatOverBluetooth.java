@@ -220,10 +220,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
                          */
                         EventBus.getDefault().post(new ChatMessageReceived(
                                         status,
-                                        ((BluetoothConnection)con).getRemoteLinkLayerAddress(),
-                                        this,
-                                        status.getFileSize()+jsonString.length(),
-                                        -1)
+                                        this)
                         );
                     } catch (JSONException ignore) {
                         Log.d(TAG, "malformed JSON");
@@ -323,11 +320,8 @@ public class FirechatOverBluetooth extends ProtocolChannel {
                 recipients.add(((BluetoothConnection)con).getRemoteLinkLayerAddress());
                 EventBus.getDefault().post(new ChatMessageSent(
                                 chatMessage,
-                                recipients,
                                 FirechatProtocol.protocolID,
-                                BluetoothLinkLayerAdapter.LinkLayerIdentifier,
-                                bytesTransfered,
-                                timeToTransfer)
+                                BluetoothLinkLayerAdapter.LinkLayerIdentifier)
                 );
             } catch(IOException ignore){
                 Log.e(TAG, "[!] error while sending: "+ignore.getMessage());

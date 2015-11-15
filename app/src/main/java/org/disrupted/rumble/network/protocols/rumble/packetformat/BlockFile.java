@@ -17,21 +17,12 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.os.Debug;
 import android.util.Base64;
-import android.util.Log;
 
-import org.disrupted.rumble.app.RumbleApplication;
-import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.PushStatus;
-import org.disrupted.rumble.network.linklayer.UnicastConnection;
-import org.disrupted.rumble.network.protocols.ProtocolChannel;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
-import org.disrupted.rumble.network.protocols.events.FileReceived;
-import org.disrupted.rumble.network.protocols.events.FileSent;
-import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.network.protocols.rumble.packetformat.exceptions.MalformedBlockPayload;
-import org.disrupted.rumble.util.AESUtil;
+import org.disrupted.rumble.util.EncryptedOutputStream;
 import org.disrupted.rumble.util.FileUtil;
 
 import java.io.BufferedInputStream;
@@ -43,17 +34,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 
-import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.SecretKey;
-
-import de.greenrobot.event.EventBus;
 
 /**
  * A BlockFile is just a binary stream of size header.length
@@ -77,22 +60,23 @@ import de.greenrobot.event.EventBus;
 public class BlockFile extends Block {
 
     public static final String TAG = "BlockFile";
-    private static final int BUFFER_SIZE = 128*1024;
+    private static final int BUFFER_SIZE = 1024;
 
-    /*
-     * Byte size
-     */
+
+    /* Field Byte size */
     private static final int FIELD_STATUS_ID_SIZE = PushStatus.STATUS_ID_RAW_SIZE;
     private static final int FIELD_MIME_TYPE_SIZE = 1;
 
+    /* Block Size Boundaries */
     private  static final int MIN_PAYLOAD_SIZE = (
             FIELD_STATUS_ID_SIZE +
             FIELD_MIME_TYPE_SIZE);
-
     private  static final int MAX_PAYLOAD_SIZE = ( MIN_PAYLOAD_SIZE + PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE);
 
+    /* Mime Types (so far we only authorize images) */
     public final static int MIME_TYPE_IMAGE = 0x01;
 
+    /* Block Attributes */
     public  String filename;
     public  String status_id_base64;
 
@@ -116,10 +100,8 @@ public class BlockFile extends Block {
     }
 
     @Override
-    public long readBlock(ProtocolChannel channel, InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
+    public long readBlock(InputStream in) throws MalformedBlockPayload, IOException, InputOutputStreamException {
         sanityCheck();
-
-        long timeToTransfer = System.nanoTime();
 
         /* read the block pseudo header */
         long readleft = header.getBlockLength();
@@ -176,17 +158,6 @@ public class BlockFile extends Block {
                 filename = attachedFile.getName();
                 BlockDebug.d(TAG,"FILE received ("+attachedFile.length()+" bytes): "+filename);
 
-                timeToTransfer  = (System.nanoTime() - timeToTransfer);
-                UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-                EventBus.getDefault().post(new FileReceived(
-                                attachedFile.getName(),
-                                status_id_base64,
-                                con.getRemoteLinkLayerAddress(),
-                                RumbleProtocol.protocolID,
-                                con.getLinkLayerIdentifier(),
-                                header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
-                                timeToTransfer)
-                );
                 return header.getBlockLength();
             } catch (IOException e) {
                 BlockDebug.e(TAG, "[-] file has not been downloaded",e);
@@ -209,15 +180,13 @@ public class BlockFile extends Block {
     }
 
     @Override
-    public long writeBlock(ProtocolChannel channel, OutputStream out) throws IOException, InputOutputStreamException {
+    public long writeBlock(OutputStream out, EncryptedOutputStream eos) throws IOException, InputOutputStreamException {
         if(filename == null)
             throw new IOException("filename is null");
 
         File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), filename);
         if(!attachedFile.exists() || !attachedFile.isFile())
             throw new IOException(filename+" is not a file or does not exists");
-
-        long timeToTransfer = System.nanoTime();
 
         /* prepare the pseudo header */
         ByteBuffer pseudoHeaderBuffer = ByteBuffer.allocate(MIN_PAYLOAD_SIZE);
@@ -229,7 +198,10 @@ public class BlockFile extends Block {
         long payloadSize = attachedFile.length();
         header.setPayloadLength(MIN_PAYLOAD_SIZE + payloadSize);
         header.writeBlockHeader(out);
-        out.write(pseudoHeaderBuffer.array());
+        if(header.isEncrypted() && (eos != null))
+            eos.write(pseudoHeaderBuffer.array());
+        else
+            out.write(pseudoHeaderBuffer.array());
 
         BlockDebug.d(TAG, "BlockFileHeader sent (" + pseudoHeaderBuffer.array().length + " bytes): "
                 + Arrays.toString(pseudoHeaderBuffer.array()));
@@ -242,7 +214,10 @@ public class BlockFile extends Block {
             fis = new BufferedInputStream(new FileInputStream(attachedFile));
             int bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             while (bytesread > 0) {
-                out.write(fileBuffer, 0, bytesread);
+                if(header.isEncrypted() && (eos != null))
+                    eos.write(fileBuffer, 0, bytesread);
+                else
+                    out.write(fileBuffer, 0, bytesread);
                 bytesSent+=bytesread;
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
@@ -252,20 +227,6 @@ public class BlockFile extends Block {
         }
 
         BlockDebug.d(TAG,"FILE sent ("+bytesSent+" bytes): "+attachedFile.getName());
-
-        timeToTransfer = (System.nanoTime() - timeToTransfer);
-        List<String> recipients = new ArrayList<String>();
-        UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
-        recipients.add(con.getRemoteLinkLayerAddress());
-        EventBus.getDefault().post(new FileSent(
-                        filename,
-                        recipients,
-                        RumbleProtocol.protocolID,
-                        channel.getLinkLayerIdentifier(),
-                        header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH,
-                        timeToTransfer)
-        );
-
         return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
     }
 

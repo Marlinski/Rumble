@@ -49,16 +49,12 @@ public class PushStatusSent extends NetworkEvent {
     public Set<Contact> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
-    public long size;
-    public long duration;
 
-    public PushStatusSent(PushStatus status, Set<Contact> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public PushStatusSent(PushStatus status, Set<Contact> recipients, String protocolID, String linkLayerIdentifier) {
         this.status = status;
         this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override

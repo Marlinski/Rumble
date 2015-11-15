@@ -30,20 +30,16 @@ public class FileSent extends NetworkEvent {
     public List<String> recipients;
     public String protocolID;
     public String linkLayerIdentifier;
-    public long size;
-    public long duration;
 
-    public FileSent(String filepath, List<String> recipients, String protocolID, String linkLayerIdentifier, long size, long duration) {
+    public FileSent(String filepath, List<String> recipients, String protocolID, String linkLayerIdentifier) {
         this.filepath = filepath;
         this.recipients = recipients;
         this.protocolID = protocolID;
         this.linkLayerIdentifier = linkLayerIdentifier;
-        this.size = size;
-        this.duration = duration;
     }
 
     @Override
     public String shortDescription() {
-        return filepath+": size="+size+" bytes sent in "+duration+" nanoseconds";
+        return "filepath: "+filepath;
     }
 }
