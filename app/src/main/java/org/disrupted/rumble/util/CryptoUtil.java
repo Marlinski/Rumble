@@ -176,10 +176,10 @@ public class CryptoUtil {
             return new SecretKeySpec(keyBlob, "AES");
     }
 
-    public static byte[] generateRandomIV() throws CryptographicException {
+    public static byte[] generateRandomIV(int size) throws CryptographicException {
         try {
             SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            byte[] iv = new byte[IVSIZE];
+            byte[] iv = new byte[size];
             secureRandom.nextBytes(iv);
             return iv;
         } catch(NoSuchAlgorithmException e){
@@ -194,7 +194,7 @@ public class CryptoUtil {
                                                            SecretKey key,
                                                            byte[] ivBytes)  throws CryptographicException {
         try {
-            Log.d(TAG, "setting up EncryptedOutputStream: " + algo + "/" + block + "/" + pad);
+            //Log.d(TAG, "setting up EncryptedOutputStream: " + algo + "/" + block + "/" + pad);
             Cipher cipher = Cipher.getInstance(algo+"/"+block+"/"+pad);
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
             return new EncryptedOutputStream(out, cipher);
@@ -216,7 +216,7 @@ public class CryptoUtil {
                                                          SecretKey key,
                                                          byte[] ivBytes) throws CryptographicException{
         try {
-            Log.d(TAG, "setting up EncryptedInputStream: " + algo + "/" + block + "/" + pad);
+            //Log.d(TAG, "setting up EncryptedInputStream: " + algo + "/" + block + "/" + pad);
             Cipher cipher = Cipher.getInstance(algo+"/"+block+"/"+pad);
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
             return new EncryptedInputStream(in, cipher);
