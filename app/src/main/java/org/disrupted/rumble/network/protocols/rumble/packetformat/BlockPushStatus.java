@@ -266,7 +266,6 @@ public class BlockPushStatus extends Block{
         header.writeBlockHeader(out);
         if(header.isEncrypted() && (eos != null)) {
             eos.write(blockBuffer.array(), 0, length);
-            eos.flush();
         } else {
             out.write(blockBuffer.array(), 0, length);
         }

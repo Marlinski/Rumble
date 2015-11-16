@@ -222,8 +222,6 @@ public class BlockFile extends Block {
                 bytesread = fis.read(fileBuffer, 0, BUFFER_SIZE);
             }
         } finally {
-            if(header.isEncrypted() && (eos != null))
-                eos.flush();
             if (fis != null)
                 fis.close();
         }

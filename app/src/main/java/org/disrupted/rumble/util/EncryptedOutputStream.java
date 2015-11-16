@@ -76,21 +76,7 @@ public class EncryptedOutputStream extends FilterOutputStream {
 
     @Override
     public void close() throws IOException {
-        byte[] result;
-        try {
-            if (cipher != null) {
-                result = cipher.doFinal();
-                if (result != null) {
-                    out.write(result);
-                }
-            }
-            if (out != null) {
-                out.flush();
-            }
-        } catch (BadPaddingException e) {
-            throw new IOException(e.getMessage());
-        } catch (IllegalBlockSizeException e) {
-            throw new IOException(e.getMessage());
-        }
+        if (out != null)
+            out.flush();
     }
 }

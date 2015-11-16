@@ -129,6 +129,8 @@ public class CommandProcessor {
                 blockPushStatus.header.setLastBlock(!status.hasAttachedFile() && (eos == null));
                 blockPushStatus.header.setEncrypted(eos != null);
                 bytes_transmitted+=blockPushStatus.writeBlock(out, eos);
+                if(eos != null)
+                    eos.flush();
                 blockPushStatus.dismiss();
 
                 /* send block file if any */
@@ -136,6 +138,8 @@ public class CommandProcessor {
                     blockFile.header.setLastBlock(eos == null);
                     blockFile.header.setEncrypted(eos != null);
                     bytes_transmitted += blockFile.writeBlock(out, eos);
+                    if(eos != null)
+                        eos.flush();
                     blockFile.dismiss();
                 }
 
