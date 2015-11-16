@@ -205,7 +205,7 @@ public class CacheManager {
                 EventBus.getDefault().post(new FileInsertedEvent(attached.getName(), exists.getUuid()));
 
         } catch (Exception ignore ) {
-            //ignore.printStackTrace();
+            ignore.getMessage();
         } finally {
             if (!event.tempfile.equals("")) {
                 try {

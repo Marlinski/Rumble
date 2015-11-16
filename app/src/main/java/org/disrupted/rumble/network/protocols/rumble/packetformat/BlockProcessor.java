@@ -114,7 +114,7 @@ public class BlockProcessor {
                                         blockPushStatus.status,
                                         blockPushStatus.group_id_base64,
                                         blockPushStatus.sender_id_base64,
-                                        "",
+                                        blockFile.filename,
                                         RumbleProtocol.protocolID,
                                         channel.getLinkLayerIdentifier())
                         );
