@@ -17,6 +17,9 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
+import org.disrupted.rumble.app.RumbleApplication;
+import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.network.linklayer.UnicastConnection;
 import org.disrupted.rumble.network.linklayer.exception.InputOutputStreamException;
@@ -72,10 +75,15 @@ public class BlockProcessor {
             channel.bytes_received += nullBlock.readBlock(in);
             channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
         } else {
+            InputStream is = in;
+            if(header.isEncrypted()) {
+                eis.setLimit((int)header.getBlockLength());
+                is = eis;
+            }
             switch (header.getBlockType()) {
                 case BlockHeader.BLOCKTYPE_PUSH_STATUS:
                     BlockPushStatus blockStatus = new BlockPushStatus(header);
-                    channel.bytes_received += blockStatus.readBlock(in);
+                    channel.bytes_received += blockStatus.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
                     if(!blockStatus.status.hasAttachedFile()) {
                         channel.status_received++;
@@ -94,9 +102,10 @@ public class BlockProcessor {
                     break;
                 case BlockHeader.BLOCKTYPE_FILE:
                     BlockFile blockFile = new BlockFile(header);
-                    channel.bytes_received += blockFile.readBlock(in);
+                    channel.bytes_received += blockFile.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
                     if(blockPushStatus != null) {
+                        channel.status_received++;
                         EventBus.getDefault().post(new PushStatusReceived(
                                         blockPushStatus.status,
                                         blockPushStatus.group_id_base64,
@@ -116,7 +125,7 @@ public class BlockProcessor {
                     break;
                 case BlockHeader.BLOCKTYPE_CONTACT:
                     BlockContact blockContact = new BlockContact(header);
-                    channel.bytes_received += blockContact.readBlock(in);
+                    channel.bytes_received += blockContact.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
                     blockContact.contact.lastMet(System.currentTimeMillis());
                     UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
@@ -129,7 +138,7 @@ public class BlockProcessor {
                     break;
                 case BlockHeader.BLOCKTYPE_CHAT_MESSAGE:
                     BlockChatMessage blockChatMessage = new BlockChatMessage(header);
-                    channel.bytes_received += blockChatMessage.readBlock(in);
+                    channel.bytes_received += blockChatMessage.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
                     EventBus.getDefault().post(new ChatMessageReceived(
                                     blockChatMessage.chatMessage,
@@ -138,21 +147,27 @@ public class BlockProcessor {
                     break;
                 case BlockHeader.BLOCKTYPE_KEEPALIVE:
                     BlockKeepAlive blockKA = new BlockKeepAlive(header);
-                    channel.bytes_received += blockKA.readBlock(in);
+                    channel.bytes_received += blockKA.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
                     break;
                 case BlockHeader.BLOCK_CIPHER:
                     BlockCipher blockCipher = new BlockCipher(header);
-                    channel.bytes_received += blockCipher.readBlock(in);
+                    channel.bytes_received += blockCipher.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
-                    if (blockCipher.type.equals(BlockCipher.CipherType.TYPE_CIPHER_GROUP)) {
+                    if (blockCipher.type.equals(BlockCipher.CipherType.TYPE_CIPHER_GROUP)
+                            && (blockCipher.group_id_base64 != null)
+                            && (blockCipher.ivBytes != null)){
                         try {
+                            Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext())
+                                    .getGroup(blockCipher.group_id_base64);
+                            if (group == null)
+                                throw new CryptoUtil.CryptographicException();
                             eis = CryptoUtil.getCipherInputStream(
                                     in,
                                     blockCipher.algo,
                                     blockCipher.block,
                                     blockCipher.padding,
-                                    blockCipher.secretKey,
+                                    group.getGroupKey(),
                                     blockCipher.ivBytes);
                         } catch (CryptoUtil.CryptographicException e) {
                             eis = null;
@@ -160,6 +175,7 @@ public class BlockProcessor {
                     } else {
                         eis = null;
                     }
+                    blockCipher.dismiss();
                     break;
                 default:
                     throw new MalformedBlock("Unknown header type: " + header.getBlockType(), 0);

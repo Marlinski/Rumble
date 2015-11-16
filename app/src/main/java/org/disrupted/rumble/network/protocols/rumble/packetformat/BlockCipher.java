@@ -117,7 +117,7 @@ public class BlockCipher extends Block {
     public CryptoUtil.CipherPadding padding;
 
     private String gid;
-    public SecretKey secretKey;
+    public String group_id_base64;
     public byte[] ivBytes;
 
     public BlockCipher(BlockHeader header) {
@@ -136,7 +136,6 @@ public class BlockCipher extends Block {
         this.padding = CryptoUtil.CipherPadding.NO_PADDING;
 
         this.gid = null;
-        this.secretKey = null;
         this.ivBytes = null;
 
     }
@@ -192,19 +191,13 @@ public class BlockCipher extends Block {
 
             switch (type) {
                 case TYPE_CIPHER_CLEAR:
-                    this.secretKey = null;
+                    this.group_id_base64 = null;
                     this.ivBytes = null;
                     break;
                 case TYPE_CIPHER_GROUP:
                     byte[] group_id = new byte[FIELD_GROUP_GID_SIZE];
                     byteBuffer.get(group_id, 0, FIELD_GROUP_GID_SIZE);
                     readleft -= FIELD_GROUP_GID_SIZE;
-
-                    String group_id_base64 = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
-                    Group group = DatabaseFactory.getGroupDatabase(RumbleApplication.getContext())
-                            .getGroup(group_id_base64);
-                    if (group == null) // we do not belong to the group
-                        throw new IOException("Encryption key is unknown");
 
                     byte[] iv = null;
                     if(block.equals(CryptoUtil.CipherBlock.BLOCK_CBC)) {
@@ -215,11 +208,19 @@ public class BlockCipher extends Block {
                     }
 
                     /* configure the keys */
-                    this.secretKey = group.getGroupKey();
+                    group_id_base64 = Base64.encodeToString(group_id, 0, FIELD_GROUP_GID_SIZE, Base64.NO_WRAP);
                     this.ivBytes = iv;
                     break;
                 default:
-                    throw new IOException("Crypto unknown");
+                    // read the rest of the block, if any;
+                    byte[] buffer = new byte[100];
+                    while (readleft > 0) {
+                        long max_read = Math.min((long) 100, readleft);
+                        int bytesread = in.read(buffer, 0, (int) max_read);
+                        if (bytesread < 0)
+                            throw new IOException("End of stream reached");
+                        readleft -= bytesread;
+                    }
             }
 
             return header.getBlockLength();
@@ -262,7 +263,7 @@ public class BlockCipher extends Block {
 
     @Override
     public void dismiss() {
-        secretKey = null;
+        group_id_base64 = null;
         ivBytes = null;
     }
 }

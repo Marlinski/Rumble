@@ -105,7 +105,6 @@ public class BlockPushStatus extends Block{
             PushStatus.STATUS_POST_MAX_SIZE +
             PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE;
 
-
     public PushStatus status;
     public String group_id_base64;
     public String sender_id_base64;
