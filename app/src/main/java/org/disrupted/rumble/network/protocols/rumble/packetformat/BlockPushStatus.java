@@ -264,10 +264,12 @@ public class BlockPushStatus extends Block{
         /* send the status and the block file */
         header.setPayloadLength(length);
         header.writeBlockHeader(out);
-        if(header.isEncrypted() && (eos != null))
+        if(header.isEncrypted() && (eos != null)) {
             eos.write(blockBuffer.array(), 0, length);
-        else
+            eos.flush();
+        } else {
             out.write(blockBuffer.array(), 0, length);
+        }
         BlockDebug.d(TAG, "BlockStatus sent (" + length + " bytes): " + Arrays.toString(blockBuffer.array()));
 
         return header.getBlockLength()+BlockHeader.BLOCK_HEADER_LENGTH;
