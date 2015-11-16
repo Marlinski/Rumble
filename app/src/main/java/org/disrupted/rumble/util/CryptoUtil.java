@@ -21,6 +21,10 @@ package org.disrupted.rumble.util;
  * @author Marlinski
  */
 
+import android.util.Log;
+
+import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockDebug;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
@@ -64,6 +68,7 @@ public class CryptoUtil {
                     return ALGO_UNKNOW;
             }
         }
+        @Override
         public String toString() {
             switch(value) {
                 case 0x00:
@@ -99,6 +104,7 @@ public class CryptoUtil {
                     return BLOCK_UNKNOW;
             }
         }
+        @Override
         public String toString() {
             switch(value) {
                 case 0x00:
@@ -135,6 +141,8 @@ public class CryptoUtil {
                     return PADDING_UNKNOWN;
             }
         }
+
+        @Override
         public String toString() {
             switch(value) {
                 case 0x00:
@@ -186,7 +194,8 @@ public class CryptoUtil {
                                                            SecretKey key,
                                                            byte[] ivBytes)  throws CryptographicException {
         try {
-            Cipher cipher = Cipher.getInstance(algo.toString()+"/"+block+"/"+pad.toString());
+            Log.d(TAG, "setting up EncryptedOutputStream: " + algo + "/" + block + "/" + pad);
+            Cipher cipher = Cipher.getInstance(algo+"/"+block+"/"+pad);
             cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(ivBytes));
             return new EncryptedOutputStream(out, cipher);
         } catch (InvalidAlgorithmParameterException e) {
@@ -207,7 +216,8 @@ public class CryptoUtil {
                                                          SecretKey key,
                                                          byte[] ivBytes) throws CryptographicException{
         try {
-            Cipher cipher = Cipher.getInstance(algo.toString()+"/"+block+"/"+pad.toString());
+            Log.d(TAG, "setting up EncryptedInputStream: " + algo + "/" + block + "/" + pad);
+            Cipher cipher = Cipher.getInstance(algo+"/"+block+"/"+pad);
             cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(ivBytes));
             return new EncryptedInputStream(in, cipher);
         } catch (InvalidAlgorithmParameterException e) {
