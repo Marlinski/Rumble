@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.userinterface.fragments;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -99,14 +100,17 @@ public class FragmentGroupList extends Fragment {
         public void onReadableQueryFinished(final Object result) {
             if(getActivity() == null)
                 return;
-            getActivity().runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                ArrayList<Group> answer = (ArrayList<Group>) (result);
-                                                groupRecyclerAdapter.swap(answer);
-                                            }
-                                        }
-            );
+            Activity activity = FragmentGroupList.this.getActivity();
+            if(activity != null) {
+                activity.runOnUiThread(new Runnable() {
+                                           @Override
+                                           public void run() {
+                                               ArrayList<Group> answer = (ArrayList<Group>) (result);
+                                               groupRecyclerAdapter.swap(answer);
+                                           }
+                                       }
+                );
+            }
 
             // update the number of unread message for every group
             for(Group group : (ArrayList<Group>)(result)) {
@@ -134,12 +138,15 @@ public class FragmentGroupList extends Fragment {
         @Override
         public void onReadableQueryFinished(Object object) {
             final Integer count = (Integer)object;
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    groupRecyclerAdapter.updateUnread(gid, count);
-                }
-            });
+            Activity activity = FragmentGroupList.this.getActivity();
+            if(activity != null) {
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        groupRecyclerAdapter.updateUnread(gid, count);
+                    }
+                });
+            }
         }
     }
 
