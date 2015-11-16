@@ -108,7 +108,7 @@ public class CommandProcessor {
                 EncryptedOutputStream eos = null;
                 if(status.getGroup().isPrivate()) {
                     try {
-                        byte[] iv = CryptoUtil.generateRandomIV();
+                        byte[] iv = CryptoUtil.generateRandomIV(16);
                         eos = CryptoUtil.getCipherOutputStream(out,
                                 CryptoUtil.CipherAlgo.ALGO_AES,
                                 CryptoUtil.CipherBlock.BLOCK_CBC,

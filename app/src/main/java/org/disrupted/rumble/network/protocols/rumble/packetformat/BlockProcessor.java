@@ -17,6 +17,8 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
+import android.util.Log;
+
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.database.objects.Group;
@@ -42,6 +44,8 @@ import de.greenrobot.event.EventBus;
  * @author Marlinski
  */
 public class BlockProcessor {
+
+    public static final String TAG = "BlockProcessor";
 
     /* necessary attributes */
     private InputStream in;

@@ -275,14 +275,14 @@ public class RumbleUnicastChannel extends ProtocolChannel {
         @Override
         public void run() {
             CommandSendKeepAlive sendKeepAlive = new CommandSendKeepAlive();
-            executeNonBlocking(sendKeepAlive);
+            //executeNonBlocking(sendKeepAlive);
         }
     };
     private Runnable socketTimeoutFires = new Runnable() {
         @Override
         public void run() {
             Log.d(TAG, "channel seems dead");
-            stopWorker();
+            //stopWorker();
         }
     };
 }
