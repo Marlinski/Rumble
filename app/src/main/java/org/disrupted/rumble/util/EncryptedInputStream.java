@@ -44,6 +44,9 @@ public class EncryptedInputStream extends FilterInputStream {
     private boolean propagateClose = false;
 
     public void setLimit(int clearsize) {
+        done = false;
+        ostart = 0;
+        ofinish = 0;
         int blocksize = cipher.getBlockSize();
         if(blocksize > 0) {
             String[] pieces = cipher.getAlgorithm().split("/");
