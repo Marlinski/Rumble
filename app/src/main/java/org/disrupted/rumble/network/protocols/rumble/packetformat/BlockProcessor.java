@@ -131,7 +131,6 @@ public class BlockProcessor {
                     BlockContact blockContact = new BlockContact(header);
                     channel.bytes_received += blockContact.readBlock(is);
                     channel.in_transmission_time += (System.nanoTime() - timeToTransfer);
-                    blockContact.contact.lastMet(System.currentTimeMillis());
                     UnicastConnection con = (UnicastConnection)channel.getLinkLayerConnection();
                     EventBus.getDefault().post(new ContactInformationReceived(
                                     blockContact.contact,

@@ -197,9 +197,9 @@ public class BlockContact extends Block {
                 }
                 readleft -= (entry.getEntrySize());
             }
+            contact.lastMet(System.currentTimeMillis());
 
             return header.getBlockLength();
-
         } catch (BufferUnderflowException exception) {
             throw new MalformedBlockPayload("buffer too small", count);
         }

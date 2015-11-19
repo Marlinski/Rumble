@@ -342,7 +342,7 @@ public class ContactDatabase extends Database  {
         String author      = cursor.getString(cursor.getColumnIndexOrThrow(NAME));
         String uid         = cursor.getString(cursor.getColumnIndexOrThrow(UID));
         boolean local      = (cursor.getInt(cursor.getColumnIndexOrThrow(LOCALUSER)) == 1);
-        long date          = cursor.getInt(cursor.getColumnIndexOrThrow(LAST_MET));
+        long date          = cursor.getLong(cursor.getColumnIndexOrThrow(LAST_MET));
         int nb_status_sent = cursor.getInt(cursor.getColumnIndexOrThrow(NB_STATUS_SENT));
         int nb_status_rcvd = cursor.getInt(cursor.getColumnIndexOrThrow(NB_STATUS_RCVD));
 
