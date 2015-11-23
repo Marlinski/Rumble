@@ -23,15 +23,23 @@
     android:paddingTop="5dp"
     android:paddingBottom="5dp">
 
+    <ImageView
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:layout_gravity="left|center_vertical"
+        android:src="@drawable/ic_bookmark"/>
+
     <TextView
         android:id="@+id/hashtag"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
         android:layout_marginLeft="10dp"
+        android:layout_gravity="left"
         android:textColor="@color/black"
         android:textAppearance="@android:style/TextAppearance.Medium"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"/>
 
     <TextView
         android:id="@+id/subscription_button"

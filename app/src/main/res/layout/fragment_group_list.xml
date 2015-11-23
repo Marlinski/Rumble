@@ -26,17 +26,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!--
-    <ListView
-        android:id="@+id/group_list"
-        android:focusable="false"
-        android:focusableInTouchMode="false"
-        android:clickable="false"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </ListView>
-    -->
-
     <android.support.v7.widget.RecyclerView
         android:id="@+id/group_list"
         android:focusable="false"
