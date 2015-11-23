@@ -44,6 +44,7 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.userinterface.activity.ContactDetailActivity;
 import org.disrupted.rumble.userinterface.activity.DisplayImage;
+import org.disrupted.rumble.userinterface.activity.DisplayStatusActivity;
 import org.disrupted.rumble.userinterface.events.UserDeleteStatus;
 import org.disrupted.rumble.userinterface.events.UserLikedStatus;
 import org.disrupted.rumble.userinterface.events.UserReadStatus;
@@ -92,7 +93,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
             box           = (LinearLayout)itemView.findViewById(R.id.status_item_box);
         }
 
-        public void bindStatus(PushStatus status) {
+        public void bindStatus(final PushStatus status) {
             final String uid = status.getAuthor().getUid();
             final String name= status.getAuthor().getName();
 
@@ -125,6 +126,17 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
             if (status.getPost().length() == 0) {
                 itemView.setVisibility(View.GONE);
             } else {
+                // open the status in a viewer activity if clicked
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(activity, DisplayStatusActivity.class);
+                        intent.putExtra("StatusID", status.getUuid());
+                        activity.startActivity(intent);
+                        activity.overridePendingTransition(R.anim.activity_open_enter, R.anim.activity_open_exit);
+                    }
+                });
+
                 SpannableString ss = new SpannableString(status.getPost());
                 int beginCharPosition = -1;
                 int j;
@@ -202,9 +214,9 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                 moreView.setOnClickListener(new PopupMenuListener());
                 if (!status.hasUserReadAlready() || ((System.currentTimeMillis() - status.getTimeOfArrival()) < 60000)) {
                     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                        box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+                        box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_selector_unread));
                     } else {
-                        box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_unread));
+                        box.setBackground(activity.getResources().getDrawable(R.drawable.status_selector_unread));
                     }
                     if (!status.hasUserReadAlready()) {
                         status.setUserRead(true);
@@ -212,9 +224,9 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                     }
                 } else {
                     if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {
-                        box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_shape_read));
+                        box.setBackgroundDrawable(activity.getResources().getDrawable(R.drawable.status_selector_read));
                     } else {
-                        box.setBackground(activity.getResources().getDrawable(R.drawable.status_shape_read));
+                        box.setBackground(activity.getResources().getDrawable(R.drawable.status_selector_read));
                     }
                 }
             }

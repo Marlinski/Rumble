@@ -168,8 +168,14 @@ public class PushStatus {
     public void setUserLike(boolean hasUserLiked){   this.hasUserLiked = hasUserLiked; }
     public void setUserRead(boolean userHasRead){    this.hasUserRead = userHasRead;   }
     public void setUserSaved(boolean hasUserSaved){  this.hasUserSaved = hasUserSaved; }
-    public void setAuthor(Contact author) {       this.author         = author;        }
-    public void setGroup(Group group) {           this.group          = group;         }
+    public void setAuthor(Contact author) {
+        this.author         = author;
+        this.uuid  = HashUtil.computeStatusUUID(author.getUid(), group.getGid(), getPost(), timeOfCreation);
+    }
+    public void setGroup(Group group) {
+        this.group = group;
+        this.uuid  = HashUtil.computeStatusUUID(author.getUid(), group.getGid(), getPost(), timeOfCreation);
+    }
 
     public void discard() {
         hashtagSet.clear();
