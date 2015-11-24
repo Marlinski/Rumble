@@ -18,7 +18,7 @@
 package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.bluetooth.BluetoothSocket;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothServer;

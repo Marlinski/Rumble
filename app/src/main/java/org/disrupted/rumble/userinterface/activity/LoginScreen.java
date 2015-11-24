@@ -20,17 +20,22 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.app.RumbleApplication;
@@ -45,7 +50,7 @@ import org.disrupted.rumble.util.HashUtil;
 /**
  * @author Marlinski
  */
-public class LoginScreen extends Activity implements View.OnClickListener{
+public class LoginScreen extends Activity{
 
     private static final String TAG = "LoginScreen";
     private static String RUMBLE_AUTHOR_NAME = "Marlinski (http://disruptedsystems.org)";
@@ -63,8 +68,25 @@ public class LoginScreen extends Activity implements View.OnClickListener{
 
         loginScreen  = (LinearLayout)this.findViewById(R.id.login_screen);
         username = (EditText) this.findViewById(R.id.login_username);
+        username.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if(actionId == EditorInfo.IME_ACTION_GO)
+                {
+                    login();
+                    return true;
+                }
+                return false;
+            }
+        });
+
         loginButton  = (Button) this.findViewById(R.id.login_button);
-        loginButton.setOnClickListener(this);
+        loginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                login();
+            }
+        });
     }
 
     @Override
@@ -72,10 +94,9 @@ public class LoginScreen extends Activity implements View.OnClickListener{
         super.onDestroy();
     }
 
-    @Override
-    public void onClick(View view) {
+    private void login() {
         String username = this.username.getText().toString();
-        if(!username.equals("")) {
+        if(Contact.checkUsername(username)) {
             // create default public group
             Group defaultPublicGroup = Group.getDefaultGroup();
             DatabaseFactory.getGroupDatabase(this).insertGroup(defaultPublicGroup);
@@ -125,6 +146,16 @@ public class LoginScreen extends Activity implements View.OnClickListener{
             Intent routingActivity = new Intent(LoginScreen.this, RoutingActivity.class );
             startActivity(routingActivity);
             finish();
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.login_bad_username)
+                    .setCancelable(false)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                        }
+                    });
+            AlertDialog alert = builder.create();
+            alert.show();
         }
     }
 }

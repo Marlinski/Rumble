@@ -92,6 +92,15 @@ public class Contact {
         this.nb_status_sent     = 0;
     }
 
+    public static boolean checkUsername(String username) {
+        if(username.length() > CONTACT_NAME_MAX_SIZE)
+            return false;
+        if(username.contains("\n"))
+            return false;
+        return true;
+    }
+
+
     public String getUid()    { return uid;}
     public String getName()   { return name;}
     public String getAvatar() { return avatar;}
@@ -141,7 +150,6 @@ public class Contact {
         else
             this.interfaces = new HashSet<Interface>();
     }
-
 
     @Override
     public boolean equals(Object o) {

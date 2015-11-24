@@ -21,7 +21,7 @@ import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 

@@ -1,6 +1,6 @@
 package org.disrupted.rumble.network.services.push;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseExecutor;

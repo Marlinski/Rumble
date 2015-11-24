@@ -23,7 +23,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.text.format.Formatter;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.events.AccessPointDisabled;
@@ -174,7 +174,7 @@ public class WifiUtil {
             sb.append(wlan0.getName() + " ");
             if (wlan0.getName().equals("wlan0")) {
                 //there is probably a better way to find ethernet interface
-                Log.i(TAG, "wlan0 found");
+                Log.d(TAG, "wlan0 found");
                 return wlan0;
             }
         }

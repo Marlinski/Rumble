@@ -26,7 +26,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.*;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.network.services.ServiceLayer;

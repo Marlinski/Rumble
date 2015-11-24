@@ -32,7 +32,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.*;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.events.ScannerNeighbourSensed;

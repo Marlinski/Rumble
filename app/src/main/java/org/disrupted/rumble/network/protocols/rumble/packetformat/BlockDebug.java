@@ -17,7 +17,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 /**
  * @author Marlinski

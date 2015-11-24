@@ -1,6 +1,6 @@
 package org.disrupted.rumble.network.protocols.firechat;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 /**
  * @author Marlinski

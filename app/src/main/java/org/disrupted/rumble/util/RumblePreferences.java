@@ -21,7 +21,9 @@ package org.disrupted.rumble.util;
 
 import android.content.Context;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
+
+import org.disrupted.rumble.app.RumbleApplication;
 
 /**
  * @author Marlinski
@@ -30,9 +32,10 @@ public class RumblePreferences {
 
     public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
     public static final String PREF_USER_OK_SYNC   = "ok_sync";
+    public static final String PREF_LOGCAT_DEBUG   = "logcat_debug";
     public static final String USER_ANONYMOUS_ID = "anonymous_id";
     public static final String LAST_SYNC = "last_sync";
-    private static final int   SYNC_EVERY_DAY = 3600*24*1000;
+    private static final int   SYNC_EVERY = 3600*24*1000;
 
     public static String getAnonymousID(Context context) {
         String id = getStringPreference(context, USER_ANONYMOUS_ID,"");
@@ -60,9 +63,16 @@ public class RumblePreferences {
         setBooleanPreference(context, PREF_USER_OK_SYNC, bool);
     }
 
+    public static boolean isLogcatDebugEnabled(Context context) {
+        return getBooleanPreference(context, PREF_LOGCAT_DEBUG, false);
+    }
+    public static void setLogcatDebugging(Context context, Boolean bool) {
+        setBooleanPreference(context, PREF_LOGCAT_DEBUG, bool);
+    }
+
     public static boolean isTimeToSync(Context context) {
         long last = getLongPreference(context, LAST_SYNC, 0);
-        return ((System.currentTimeMillis() - last) > SYNC_EVERY_DAY);
+        return ((System.currentTimeMillis() - last) > SYNC_EVERY);
     }
     public static void updateLastSync(Context context) {
         setLongPreference(context, LAST_SYNC, System.currentTimeMillis());

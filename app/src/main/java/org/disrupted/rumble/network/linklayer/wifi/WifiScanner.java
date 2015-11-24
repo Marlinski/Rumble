@@ -25,7 +25,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import com.google.zxing.client.android.Intents;
 

@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.firechat.workers;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;

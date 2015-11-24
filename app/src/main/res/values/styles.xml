@@ -31,6 +31,7 @@
     <color name="bluetooth_color_toggled">#0099CC</color>
     <color name="white">#ffeeeeee</color>
     <color name="pure_white">#ffffffff</color>
+    <color name="pure_white_selected">#b6b6b6</color>
     <color name="blue">#ff0d84ee</color>
     <color name="green">#ff3ac356</color>
     <color name="black">#c8000000</color>
@@ -39,6 +40,7 @@
     <color name="status_background">#efefef</color>
     <color name="status_background_liked">#efefef</color>
     <color name="status_unread">#ffd2efdc</color>
+    <color name="status_unread_selected">#86998d</color>
     <color name="tab_notification">#ff0000</color>
 
     <color name="app_size">#3522ff</color>

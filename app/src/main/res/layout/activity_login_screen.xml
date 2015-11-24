@@ -46,7 +46,8 @@
             android:layout_marginTop="30dp"
             android:minWidth="200dp"
             android:textAppearance="@android:style/TextAppearance.Medium"
-            android:hint="username" />
+            android:hint="username"
+            android:imeOptions="actionGo"/>
 
 
         <Button

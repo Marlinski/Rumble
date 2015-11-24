@@ -19,8 +19,6 @@ package org.disrupted.rumble.app;
 
 import android.util.Log;
 
-import org.disrupted.rumble.database.events.DatabaseEvent;
-
 import de.greenrobot.event.EventBus;
 
 /**
@@ -31,7 +29,16 @@ public class EventLogger {
     public static final String TAG = "EventLogger";
 
     public EventLogger() {
-        EventBus.getDefault().register(this,10);
+    }
+
+    public void start() {
+        if(!EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().register(this,10);
+    }
+
+    public void stop() {
+        if(EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
     }
 
     public void onEvent(RumbleEvent event) {

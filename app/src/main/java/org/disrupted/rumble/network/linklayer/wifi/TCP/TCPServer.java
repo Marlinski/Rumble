@@ -17,7 +17,7 @@
 
 package org.disrupted.rumble.network.linklayer.wifi.TCP;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.Worker;
 import org.disrupted.rumble.network.events.ScannerNeighbourSensed;

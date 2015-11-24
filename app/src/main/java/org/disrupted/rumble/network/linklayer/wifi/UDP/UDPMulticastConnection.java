@@ -20,7 +20,7 @@
 package org.disrupted.rumble.network.linklayer.wifi.UDP;
 
 import android.net.wifi.WifiManager;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.MulticastConnection;

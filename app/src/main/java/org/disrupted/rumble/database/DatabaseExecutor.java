@@ -19,8 +19,7 @@
 
 package org.disrupted.rumble.database;
 
-import android.database.Cursor;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;

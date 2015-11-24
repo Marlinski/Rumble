@@ -22,22 +22,13 @@ package org.disrupted.rumble.app;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
-import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.database.GroupDatabase;
 import org.disrupted.rumble.database.events.ContactInsertedEvent;
-import org.disrupted.rumble.database.events.DatabaseEvent;
-import org.disrupted.rumble.database.objects.Contact;
-import org.disrupted.rumble.database.objects.Group;
-import org.disrupted.rumble.database.objects.PushStatus;
 import org.disrupted.rumble.database.statistics.StatisticManager;
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.database.CacheManager;
-import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
-import org.disrupted.rumble.util.HashUtil;
+import org.disrupted.rumble.util.RumblePreferences;
 
 import de.greenrobot.event.EventBus;
 
@@ -50,20 +41,27 @@ public class RumbleApplication extends Application{
     public static String BUILD_NUMBER = "1.0";
 
     private static RumbleApplication instance;
-
-    public  static boolean LOG_EVENT = true;
     private static EventLogger logger;
 
     public RumbleApplication() {
         instance = this;
     }
 
+    public void debugging() {
+        if(logger == null)
+            logger = new EventLogger();
+
+        if(RumblePreferences.isLogcatDebugEnabled(this))
+            logger.start();
+        else
+            logger.stop();
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
 
-        if(LOG_EVENT)
-            logger = new EventLogger();
+        debugging();
 
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
@@ -90,6 +88,10 @@ public class RumbleApplication extends Application{
     }
 
     public static Context getContext() {
+        return instance;
+    }
+
+    public static RumbleApplication getApplication() {
         return instance;
     }
 }

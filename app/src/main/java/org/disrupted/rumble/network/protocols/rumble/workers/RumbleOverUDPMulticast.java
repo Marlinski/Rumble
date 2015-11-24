@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.database.objects.Contact;
 import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionException;

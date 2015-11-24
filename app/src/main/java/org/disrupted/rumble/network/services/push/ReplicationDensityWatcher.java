@@ -5,7 +5,7 @@ import org.disrupted.rumble.network.protocols.events.PushStatusReceived;
 import java.util.HashMap;
 import java.util.Map;
 import android.os.Handler;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import de.greenrobot.event.EventBus;
 

@@ -18,7 +18,7 @@
 package org.disrupted.rumble.network.protocols.rumble.packetformat;
 
 import android.util.Base64;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.database.objects.ChatMessage;
 import org.disrupted.rumble.database.objects.Contact;

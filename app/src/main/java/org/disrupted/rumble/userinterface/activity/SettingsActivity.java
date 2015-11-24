@@ -34,6 +34,7 @@ import android.widget.TextView;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.activity.settings.AboutActivity;
+import org.disrupted.rumble.userinterface.activity.settings.DebugActivity;
 import org.disrupted.rumble.userinterface.activity.settings.LicenceActivity;
 import org.disrupted.rumble.userinterface.activity.settings.StatisticActivity;
 import org.disrupted.rumble.userinterface.activity.settings.StorageActivity;
@@ -81,6 +82,9 @@ public class SettingsActivity extends AppCompatActivity{
 
         LinearLayout about = (LinearLayout)findViewById(R.id.setting_about);
         about.setOnClickListener(openActivity(AboutActivity.class));
+
+        LinearLayout debug = (LinearLayout)findViewById(R.id.setting_debug);
+        debug.setOnClickListener(openActivity(DebugActivity.class));
 
         LinearLayout licence = (LinearLayout)findViewById(R.id.setting_licence);
         licence.setOnClickListener(openActivity(LicenceActivity.class));

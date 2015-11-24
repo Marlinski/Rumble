@@ -19,7 +19,7 @@ package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.events.ScannerNeighbourSensed;
 import org.disrupted.rumble.network.events.ScannerNeighbourTimeout;

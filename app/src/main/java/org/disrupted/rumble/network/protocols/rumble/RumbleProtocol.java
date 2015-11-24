@@ -19,7 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
 import org.disrupted.rumble.network.events.ChannelDisconnected;

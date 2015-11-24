@@ -21,7 +21,7 @@ package org.disrupted.rumble.util;
  * @author Marlinski
  */
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.protocols.rumble.packetformat.BlockDebug;
 

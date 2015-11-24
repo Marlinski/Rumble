@@ -148,5 +148,9 @@
     <string name="setting_about_developer">Application développé par</string>
     <string name="setting_about_project">Compte du projet</string>
     <string name="setting_about_rumble">Nom de la release</string>
+    <string name="status_viewer">Status</string>
+    <string name="settings_debug">Debug</string>
+    <string name="debug_text">logcat debugging</string>
+    <string name="login_bad_username">Le pseudo doit tenir sur une ligne et faire moins de 20 caractères !</string>
 
 </resources>

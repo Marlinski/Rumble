@@ -21,7 +21,7 @@ package org.disrupted.rumble.network.protocols.firechat.workers;
 
 import android.content.Intent;
 import android.net.Uri;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.objects.ChatMessage;

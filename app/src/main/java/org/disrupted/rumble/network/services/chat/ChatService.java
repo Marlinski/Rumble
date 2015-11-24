@@ -17,7 +17,7 @@
 
 package org.disrupted.rumble.network.services.chat;
 
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.network.NetworkCoordinator;

@@ -19,7 +19,7 @@ package org.disrupted.rumble.database.statistics;
 
 import android.database.Cursor;
 import android.os.Build;
-import android.util.Log;
+import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -242,6 +242,7 @@ public class StatisticManager {
         json.put("android_build", Integer.toString(Build.VERSION.SDK_INT));
         json.put("phone_model",Build.MODEL);
         json.put("anonymous_id",RumblePreferences.getAnonymousID(RumbleApplication.getContext()));
+        json.put("timestamp",System.currentTimeMillis());
 
         JSONArray resultSet;
         resultSet = DatabaseFactory.getStatChannelDatabase(RumbleApplication.getContext())
