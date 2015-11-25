@@ -18,15 +18,20 @@
 package org.disrupted.rumble.userinterface.activity;
 
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Base64;
+
+import org.disrupted.rumble.userinterface.events.UserDeleteGroup;
+import org.disrupted.rumble.userinterface.events.UserLeaveGroup;
 import org.disrupted.rumble.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,6 +51,8 @@ import org.disrupted.rumble.userinterface.adapter.GroupDetailPagerAdapter;
 
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
+
+import de.greenrobot.event.EventBus;
 
 /**
  * @author Marlinski
@@ -102,6 +109,34 @@ public class GroupDetailActivity extends AppCompatActivity {
             invite();
         }
         if (id==R.id.group_action_delete) {
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        EventBus.getDefault().post(new UserDeleteGroup(groupID));
+                        finish();
+                        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
+                    }
+                }
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(GroupDetailActivity.this);
+            builder.setMessage(R.string.group_confirm_delete).setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener).show();
+        }
+        if (id==R.id.group_action_leave) {
+            DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        EventBus.getDefault().post(new UserLeaveGroup(groupID));
+                        finish();
+                        overridePendingTransition(R.anim.activity_close_enter, R.anim.activity_close_exit);
+                    }
+                }
+            };
+            AlertDialog.Builder builder = new AlertDialog.Builder(GroupDetailActivity.this);
+            builder.setMessage(R.string.group_confirm_leave).setPositiveButton("Yes", dialogClickListener)
+                    .setNegativeButton("No", dialogClickListener).show();
         }
         if (id==android.R.id.home) {
             finish();

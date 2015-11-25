@@ -149,7 +149,7 @@ public class GroupDatabase  extends  Database{
         return (count > 0);
     }
 
-    public void deleteGroup(String gid) {
+    public void deleteGroupStatus(String gid) {
         if(gid == null)
             return;
 
@@ -158,16 +158,9 @@ public class GroupDatabase  extends  Database{
         options.groupIDFilters = new HashSet<String>();
         options.groupIDFilters.add(gid);
         options.query_result = PushStatusDatabase.StatusQueryOption.QUERY_RESULT.LIST_OF_UUIDS;
-        DatabaseFactory.getPushStatusDatabase(context).getStatuses(options, new deleteGroupStatusCallback(gid));
+        DatabaseFactory.getPushStatusDatabase(context).getStatuses(options, deleteGroupStatusCallback);
     }
-    private class deleteGroupStatusCallback implements DatabaseExecutor.ReadableQueryCallback {
-
-        private String gid;
-
-        public deleteGroupStatusCallback(String gid) {
-            this.gid = gid;
-        }
-
+    DatabaseExecutor.ReadableQueryCallback deleteGroupStatusCallback = new DatabaseExecutor.ReadableQueryCallback() {
         @Override
         public void onReadableQueryFinished(Object object) {
             if(object != null) {
@@ -176,11 +169,17 @@ public class GroupDatabase  extends  Database{
                     DatabaseFactory.getPushStatusDatabase(context).deleteStatus(uuid);
                 }
             }
-            long groupDBID = getGroupDBID(gid);
-            DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingGroupID(groupDBID);
-            if(databaseHelper.getWritableDatabase().delete(TABLE_NAME, ID+" = ?",new String[] {Long.toString(groupDBID)}) > 0)
-                EventBus.getDefault().post(new GroupDeletedEvent(gid));
         }
+    };
+
+    public void leaveGroup(String gid) {
+        if(gid == null)
+            return;
+        deleteGroupStatus(gid);
+        long groupDBID = getGroupDBID(gid);
+        DatabaseFactory.getContactJoinGroupDatabase(context).deleteEntriesMatchingGroupID(groupDBID);
+        if(databaseHelper.getWritableDatabase().delete(TABLE_NAME, ID+" = ?",new String[] {Long.toString(groupDBID)}) > 0)
+            EventBus.getDefault().post(new GroupDeletedEvent(gid));
     }
 
     private Group cursorToGroup(Cursor cursor) {

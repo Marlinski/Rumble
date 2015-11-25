@@ -485,7 +485,6 @@ public class PushStatusDatabase extends Database {
             } else {
                 return false;
             }
-
         } finally {
             cursor.close();
         }
@@ -542,7 +541,7 @@ public class PushStatusDatabase extends Database {
         contentValues.put(DUPLICATE, status.getDuplicate());
         contentValues.put(USERREAD, status.hasUserReadAlready() ? 1 : 0);
         contentValues.put(USERLIKED, status.hasUserLiked() ? 1 : 0);
-        contentValues.put(USERSAVED, status.hasUserLiked() ? 1 : 0);
+        contentValues.put(USERSAVED, status.hasUserSaved() ? 1 : 0);
 
         long statusID = databaseHelper.getWritableDatabase().insertWithOnConflict(TABLE_NAME, null, contentValues, SQLiteDatabase.CONFLICT_IGNORE);
 
@@ -570,7 +569,7 @@ public class PushStatusDatabase extends Database {
             if(object != null) {
                 ArrayList<String> statuses = (ArrayList<String>) object;
                 for(String uuid : statuses) {
-                    DatabaseFactory.getPushStatusDatabase(context).deleteStatus(uuid);
+                    deleteStatus(uuid);
                 }
             }
             EventBus.getDefault().post(new StatusWipedEvent());

@@ -33,6 +33,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 
 import org.disrupted.rumble.database.events.ContactTagInterestUpdatedEvent;
+import org.disrupted.rumble.database.events.StatusInsertedEvent;
 import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.PushStatusDatabase;
@@ -325,16 +326,18 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
     public void onEvent(StatusWipedEvent event) {
         refreshStatuses();
     }
-    public void onEvent(UserComposeStatus event) {
+    public void onEvent(StatusInsertedEvent event) {
         final PushStatus message = event.status;
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                statusRecyclerAdapter.addStatusOnTop(message);
-                statusRecyclerAdapter.notifyItemInserted(0);
-                mRecyclerView.smoothScrollToPosition(0);
-            }
-        });
+        if(message.getAuthor().isLocal()) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    statusRecyclerAdapter.addStatusOnTop(message);
+                    statusRecyclerAdapter.notifyItemInserted(0);
+                    mRecyclerView.smoothScrollToPosition(0);
+                }
+            });
+        }
     }
     public void onEvent(StatusDeletedEvent event) {
         final String uuid = event.uuid;
@@ -342,7 +345,7 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
             @Override
             public void run() {
             int pos = statusRecyclerAdapter.deleteStatus(uuid);
-            if(pos > 0)
+            if(pos >= 0)
                 statusRecyclerAdapter.notifyItemRemoved(pos);
             }
         });

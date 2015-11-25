@@ -23,6 +23,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+
+import org.disrupted.rumble.userinterface.events.UserLeaveGroup;
 import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -460,7 +462,12 @@ public class CacheManager {
     public void onEventAsync(UserDeleteGroup event) {
         if(event.gid == null)
             return;
-        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).deleteGroup(event.gid);
+        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).deleteGroupStatus(event.gid);
+    }
+    public void onEventAsync(UserLeaveGroup event) {
+        if(event.gid == null)
+            return;
+        DatabaseFactory.getGroupDatabase(RumbleApplication.getContext()).leaveGroup(event.gid);
     }
     public void onEventAsync(UserWipeStatuses event) {
         DatabaseFactory.getPushStatusDatabase(RumbleApplication.getContext()).wipe();

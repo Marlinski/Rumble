@@ -153,5 +153,8 @@
     <string name="debug_text">logcat debugging</string>
     <string name="login_bad_username">Le pseudo doit tenir sur une ligne et faire moins de 20 caractères !</string>
     <string name="group_action_leave">Quitter le groupe</string>
+    <string name="group_confirm_delete">Êtes vous sur de vouloir supprimer tout les status de ce groupe ? cette action est irréversible.</string>
+    <string name="group_confirm_leave">Êtes vous sur de vouloir quitter ce groupe ? Tout les status de ce groupe seront supprimés.</string>
+    <string name="group_private_confirm_leave">Êtes vous sur de vouloir quitter ce groupe ? Tout les status de ce groupe seront supprimés. Ce groupe étant privée, vous devrez vous faire inviter par un membre si vous souhaitez le rejoindre plus tard.</string>
 
 </resources>
