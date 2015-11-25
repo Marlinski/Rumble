@@ -61,6 +61,7 @@ public class GroupDetailActivity extends AppCompatActivity {
 
     private static final String TAG = "GroupStatusActivity";
 
+    private Group group;
     private String groupName;
     private String groupID;
 
@@ -76,6 +77,8 @@ public class GroupDetailActivity extends AppCompatActivity {
         Bundle args = getIntent().getExtras();
         groupName = args.getString("GroupName");
         groupID = args.getString("GroupID");
+
+        group = DatabaseFactory.getGroupDatabase(this).getGroup(groupID);
 
         setContentView(R.layout.activity_group_detail);
         setTitle(groupName);
@@ -135,8 +138,12 @@ public class GroupDetailActivity extends AppCompatActivity {
                 }
             };
             AlertDialog.Builder builder = new AlertDialog.Builder(GroupDetailActivity.this);
-            builder.setMessage(R.string.group_confirm_leave).setPositiveButton("Yes", dialogClickListener)
-                    .setNegativeButton("No", dialogClickListener).show();
+            if((group != null) && group.isPrivate())
+                builder.setMessage(R.string.group_private_confirm_leave).setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
+            else
+                builder.setMessage(R.string.group_confirm_leave).setPositiveButton("Yes", dialogClickListener)
+                        .setNegativeButton("No", dialogClickListener).show();
         }
         if (id==android.R.id.home) {
             finish();
@@ -152,7 +159,6 @@ public class GroupDetailActivity extends AppCompatActivity {
     }
 
     public void invite() {
-        Group group = DatabaseFactory.getGroupDatabase(this).getGroup(groupID);
         ByteBuffer byteBuffer;
         byte[] keybytes;
         if(group.isPrivate())
