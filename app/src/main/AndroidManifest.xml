@@ -20,7 +20,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.disrupted.rumble" >
+    package="org.disrupted.rumble">
 
     <!--
       ~ Permission for networking related operation
