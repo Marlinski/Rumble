@@ -33,4 +33,11 @@
         android:orderInCategory="100"
         app:showAsAction="always" />
 
+    <item android:id="@+id/group_action_leave"
+        android:title="@string/group_action_leave"
+        android:icon="@drawable/ic_exit_24px"
+        android:orderInCategory="100"
+        app:showAsAction="always" />
+
+
 </menu>

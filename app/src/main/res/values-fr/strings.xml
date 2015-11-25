@@ -152,5 +152,6 @@
     <string name="settings_debug">Debug</string>
     <string name="debug_text">logcat debugging</string>
     <string name="login_bad_username">Le pseudo doit tenir sur une ligne et faire moins de 20 caractères !</string>
+    <string name="group_action_leave">Quitter le groupe</string>
 
 </resources>

@@ -65,6 +65,9 @@
 
     <string name="group_action_invite_user">invite a user</string>
     <string name="group_action_delete">delete group</string>
+    <string name="group_confirm_delete">Are your sure you want to delete every status from this group ?</string>
+    <string name="group_action_leave">leave group</string>
+    <string name="group_confirm_leave">Are you sure you want to leave this group ? Every status will be destroyed.</string>
 
     <string name="contact_is_local">local contact</string>
     <string name="contact_has_never_been_met">contact never met</string>
