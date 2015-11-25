@@ -184,24 +184,31 @@ public class StorageActivity extends AppCompatActivity {
             final PackageManager pm = getPackageManager();
             ApplicationInfo applicationInfo = pm.getApplicationInfo(getApplicationContext().getPackageName(), 0);
             File file = new File(applicationInfo.publicSourceDir);
-            appSize = file.length();
-            appDetailText.setText(appDetailText.getText() + " (" + humanReadableByteCount(appSize, false) + ")");
+            if(file != null)
+                appSize = file.length();
         } catch(PackageManager.NameNotFoundException e) {}
+        appDetailText.setText(appDetailText.getText() + " (" + humanReadableByteCount(appSize, false) + ")");
 
+        long dbSize = 0;
         File database = getDatabasePath(DatabaseFactory.getDatabaseName());
-        long dbSize = database.length();
+        if(database != null)
+            dbSize = database.length();
         dbDetailText.setText(dbDetailText.getText()+" ("+humanReadableByteCount(dbSize,false)+")");
 
         long fileSize = 0;
         long freespace = 0;
         try {
             File dir = FileUtil.getReadableAlbumStorageDir();
-            File files[] = dir.listFiles();
-            for(File file : files) {
-                fileSize += file.length();
+            if(dir != null) {
+                File files[] = dir.listFiles();
+                if(files != null) {
+                    for (File file : files) {
+                        fileSize += file.length();
+                    }
+                }
+                freespace = dir.getFreeSpace();
             }
-            freespace = dir.getFreeSpace();
-            fileDetailText.setText(fileDetailText.getText()+" ("+humanReadableByteCount(fileSize,false)+")");
+            fileDetailText.setText(fileDetailText.getText() + " (" + humanReadableByteCount(fileSize, false) + ")");
         } catch(IOException ie) {}
 
         long total = appSize+dbSize+fileSize;

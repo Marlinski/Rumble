@@ -129,6 +129,9 @@ public class BlockFile extends Block {
             File directory;
             try {
                 directory = FileUtil.getWritableAlbumStorageDir();
+                if(directory == null)
+                    throw new IOException();
+
                 String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
                 String imageFileName = "JPEG_" + timeStamp + "_";
                 String suffix = ".jpg";

@@ -279,11 +279,15 @@ public class StatisticManager {
         long freespace = 0;
         try {
             File dir = FileUtil.getReadableAlbumStorageDir();
-            File files[] = dir.listFiles();
-            for(File file : files) {
-                fileSize += file.length();
+            if(dir != null) {
+                File files[] = dir.listFiles();
+                if(files != null) {
+                    for (File file : files) {
+                        fileSize += file.length();
+                    }
+                }
+                freespace = dir.getFreeSpace();
             }
-            freespace = dir.getFreeSpace();
         } catch(IOException ie) {}
         resultSet.put((new JSONObject()).put(
                 KEY_FREE_SPACE,

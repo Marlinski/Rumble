@@ -492,9 +492,13 @@ public class CacheManager {
     public void onEventAsync(UserWipeFiles event) {
         try {
             File dir = FileUtil.getReadableAlbumStorageDir();
-            File[] files = dir.listFiles();
-            for(int i = 0; i < files.length; i++) {
-                files[i].delete();
+            if(dir != null) {
+                File[] files = dir.listFiles();
+                if(files != null) {
+                    for (int i = 0; i < files.length; i++) {
+                        files[i].delete();
+                    }
+                }
             }
         }catch(IOException ie){}
     }
