@@ -214,6 +214,13 @@ public class RumbleUDPMulticastScanner extends HandlerThread implements Scanner 
                     DatagramPacket packet = new DatagramPacket(buffer, 17);
                     con.receive(packet);
 
+                    // on AP mode, WifiUtil.getIPAddress() returns null, fortunately the DHCP
+                    // settings are hardcoded in Android and Cyanogenmod
+                    // see https://github.com/CyanogenMod/android_frameworks_base/blob/cm-10.1/wifi/java/android/net/wifi/WifiStateMachine.java?source=c#L1299
+                    // this should be replace by a method that grab the IP address instead of using hardcoded IP
+                    if(WifiUtil.isWiFiApEnabled() && packet.getAddress().getHostAddress().equals("192.168.43.1"))
+                        continue;
+
                     if(packet.getAddress().getHostAddress().equals(WifiUtil.getIPAddress()))
                         continue;
 
