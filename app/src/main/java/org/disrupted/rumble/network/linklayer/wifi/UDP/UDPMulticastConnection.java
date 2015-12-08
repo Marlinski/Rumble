@@ -34,6 +34,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
+import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
@@ -52,6 +53,7 @@ public class UDPMulticastConnection implements MulticastConnection {
     private String            address;
     private InetAddress       multicastAddr;
     private SocketAddress     socketAddress;
+    private NetworkInterface  wlan0;
     WifiManager.MulticastLock multicastLock;
     MulticastSocket           socket;
 
@@ -109,19 +111,22 @@ public class UDPMulticastConnection implements MulticastConnection {
          */
         socket = tmp;
         int nbretries;
+        boolean success = false;
         for(nbretries = 0; nbretries < 10; nbretries++) {
             try {
+                wlan0 = WifiUtil.getWlanEth();
                 socket.setReuseAddress(true);
-                socket.setNetworkInterface(WifiUtil.getWlanEth());
-                socket.joinGroup(multicastAddr);
+                socket.setNetworkInterface(wlan0);
+                socket.joinGroup(socketAddress, wlan0);
+                success = true;
                 break;
             } catch (IOException io) {
-                if(nbretries == 4)
-                    throw new UDPMulticastSocketException();
-                Log.d(TAG, "fail, try again");
+                Log.d(TAG, "fail, try again", io);
                 try { Thread.sleep(500); } catch (InterruptedException ie) {}
             }
         }
+        if(!success)
+            throw new UDPMulticastSocketException();
     }
 
     public DatagramPacket receive(DatagramPacket packet) throws IOException, UDPMulticastSocketException {
@@ -145,7 +150,7 @@ public class UDPMulticastConnection implements MulticastConnection {
     public void disconnect() throws LinkLayerConnectionException {
         try {
             if(socket != null) {
-                socket.leaveGroup(multicastAddr);
+                socket.leaveGroup(socketAddress, wlan0);
                 socket.close();
             }
         } catch(IOException io) {
