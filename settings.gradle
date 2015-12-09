@@ -1,4 +1,2 @@
 include ':app', ':SlidingMenu'
-//project(':pulltorefresh').projectDir = new File('libs/PullToRefresh-ListView/libraryproject')
-//project(':PullToUpdateLibrary').projectDir = new File('libs/PullToUpdate-ListView/PullToUpdateLibrary')
 project(':SlidingMenu').projectDir = new File('libs/SlidingMenu/library')
