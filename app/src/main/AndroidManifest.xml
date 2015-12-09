@@ -65,9 +65,16 @@
     <!--
       ~ Permission to take picture
       -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature
         android:required="true"
         android:name="android.hardware.camera" />
+    <uses-feature
+        android:required="true"
+        android:name="android.hardware.camera.autofocus" />
+    <uses-feature
+        android:required="true"
+        android:name="android.hardware.camera.flash" />
     <!--
       ~ Permission related to the bluetooth scanning strategy
       ~ The accelerometer is used to detect wether the phone is moving or not
@@ -189,7 +196,10 @@
         <activity
             android:name=".userinterface.activity.settings.StorageActivity">
         </activity>
-
+        <activity android:name="info.vividcode.android.zxing.CaptureActivity"
+            android:theme="@style/Theme.ZXingCaptureActivity"
+            android:screenOrientation="landscape">
+        </activity>
 
         <service android:name=".network.NetworkCoordinator">
         </service>

@@ -29,9 +29,6 @@ import org.disrupted.rumble.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
-
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
@@ -42,6 +39,9 @@ import org.disrupted.rumble.util.HashUtil;
 import java.nio.ByteBuffer;
 
 import de.greenrobot.event.EventBus;
+import info.vividcode.android.zxing.CaptureActivity;
+import info.vividcode.android.zxing.CaptureActivityIntents;
+import info.vividcode.android.zxing.CaptureResult;
 
 /**
  * @author Marlinski
@@ -87,7 +87,9 @@ public class GroupListActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_scan_qrcode:
-                IntentIntegrator.initiateScan(this);
+                Intent captureIntent = new Intent(this, CaptureActivity.class);
+                CaptureActivityIntents.setPromptMessage(captureIntent, "Barcode scanning...");
+                startActivityForResult(captureIntent, 1);
                 return true;
             case R.id.action_create_group:
                 Intent create_group = new Intent(this, PopupCreateGroup.class );
@@ -114,7 +116,7 @@ public class GroupListActivity extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        CaptureResult result = CaptureResult.parseResultIntent(data);
         if ((result != null) && (result.getContents() != null)) {
             try {
                 Log.d(TAG, result.getContents());

@@ -36,7 +36,6 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
-import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.squareup.picasso.Picasso;
@@ -148,33 +147,34 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
                     byteBuffer.put(keybytes);
                     String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
 
+                    //try {
+                    //    IntentIntegrator intentIntegrator = new IntentIntegrator(activity);
+                    //    intentIntegrator.shareText(buffer);
+                    //} catch(ActivityNotFoundException notexists) {
+                    Log.d(TAG, "Barcode scanner is not installed on this device");
+                    int size = 200;
+                    Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
+                    hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
+                    QRCodeWriter qrCodeWriter = new QRCodeWriter();
                     try {
-                        IntentIntegrator.shareText(activity, buffer);
-                    } catch(ActivityNotFoundException notexists) {
-                        Log.d(TAG, "Barcode scanner is not installed on this device");
-                        int size = 200;
-                        Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
-                        hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
-                        QRCodeWriter qrCodeWriter = new QRCodeWriter();
-                        try {
-                            BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
-                            Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+                        BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
+                        Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
 
-                            if(image != null) {
-                                for (int i = 0; i < size; i++) {
-                                    for (int j = 0; j < size; j++) {
-                                        image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
-                                    }
+                        if(image != null) {
+                            for (int i = 0; i < size; i++) {
+                                for (int j = 0; j < size; j++) {
+                                    image.setPixel(i, j, bitMatrix.get(i, j) ? Color.BLACK : Color.WHITE);
                                 }
-                                Intent intent = new Intent(activity, DisplayQRCode.class);
-                                intent.putExtra("EXTRA_GROUP_NAME", name);
-                                intent.putExtra("EXTRA_BUFFER", buffer);
-                                intent.putExtra("EXTRA_QRCODE", image);
-                                activity.startActivity(intent);
                             }
-                        }catch(WriterException ignore) {
+                            Intent intent = new Intent(activity, DisplayQRCode.class);
+                            intent.putExtra("EXTRA_GROUP_NAME", name);
+                            intent.putExtra("EXTRA_BUFFER", buffer);
+                            intent.putExtra("EXTRA_QRCODE", image);
+                            activity.startActivity(intent);
                         }
+                    }catch(WriterException ignore) {
                     }
+                    //}
 
                 }
             });

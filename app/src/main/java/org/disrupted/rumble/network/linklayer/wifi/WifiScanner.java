@@ -27,8 +27,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import org.disrupted.rumble.util.Log;
 
-import com.google.zxing.client.android.Intents;
-
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
@@ -38,10 +36,8 @@ import org.disrupted.rumble.network.linklayer.events.WifiScanEnded;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import de.greenrobot.event.EventBus;
