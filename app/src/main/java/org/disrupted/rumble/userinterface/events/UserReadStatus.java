@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -25,7 +25,7 @@ import org.disrupted.rumble.database.objects.PushStatus;
 import java.util.UUID;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class UserReadStatus extends UserInteractionEvent {
 

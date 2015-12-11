@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -42,7 +42,7 @@ import java.net.UnknownHostException;
  * An UDP Multicast Connection is not a one-to-one connection but a one-to-many connection
  * This class is responsible for managing its own neighborhood constituted of the other devices who
  * also send and receive on this multicast IP Address.
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class UDPMulticastConnection implements MulticastConnection {
 

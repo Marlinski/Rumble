@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.protocols.ProtocolChannel;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  *
  * This event is sent by a ProtocolChannel whenever a LinkLayerConnection has successfully
  * opened and that thus, a channel is open to reach a certain neighbour

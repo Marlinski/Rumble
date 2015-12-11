@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -30,7 +30,7 @@ import org.disrupted.rumble.util.Log;
 import org.disrupted.rumble.app.RumbleApplication;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class BluetoothUtil {
 

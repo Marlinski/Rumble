@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -23,7 +23,7 @@ package org.disrupted.rumble.network.linklayer;
 import org.disrupted.rumble.util.NetUtil;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface LinkLayerNeighbour {
 

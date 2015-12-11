@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -36,7 +36,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.SecretKey;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public abstract class Block {
 

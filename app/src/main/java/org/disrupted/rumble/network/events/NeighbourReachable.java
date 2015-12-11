@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  *
  * This event is sent by NeighbourManager whenever a neighbour is within reach. It is not sent
  * if the neighbour was already discover or if a connection already exists to this neighbour.

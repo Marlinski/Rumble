@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -40,7 +40,7 @@ import java.util.Set;
  * In order to avoid storing all the interface mac address in plain text, we store a hash of the
  * mac address.
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class ContactInterfaceDatabase extends Database {
 

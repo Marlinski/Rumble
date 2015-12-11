@@ -22,7 +22,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
  *  - The LinkLayerAdapter to update its internal metric that is used by getBestInterface
  *  - The FragmentStatusList to provide a visual feedback to the user
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class PushStatusReceived extends NetworkEvent{
 

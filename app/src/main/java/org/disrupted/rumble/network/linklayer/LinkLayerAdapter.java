@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -24,7 +24,7 @@ package org.disrupted.rumble.network.linklayer;
  * as Bluetooth or Wifi. It is directly under the responsibility of NetworkCoordinator and
  * all the LinkLayerAdapter methods are called from it.
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface LinkLayerAdapter {
 

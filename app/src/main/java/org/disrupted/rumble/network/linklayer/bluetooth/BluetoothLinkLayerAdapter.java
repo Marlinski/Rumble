@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -39,7 +39,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import de.greenrobot.event.EventBus;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLayerAdapter {
 

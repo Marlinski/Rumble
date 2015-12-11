@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -42,7 +42,7 @@ import de.greenrobot.event.EventBus;
 /**
  * BluetoothClient tries to establish a connection with a remote Bluetooth Device
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class BluetoothClientConnection extends BluetoothConnection {
 

@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import de.greenrobot.event.EventBus;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class PushService implements ServiceLayer {
 

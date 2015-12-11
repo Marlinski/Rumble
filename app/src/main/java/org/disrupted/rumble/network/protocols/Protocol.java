@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -27,7 +27,7 @@ import org.disrupted.rumble.network.events.NeighbourReachable;
 import org.disrupted.rumble.network.events.NeighbourUnreachable;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface Protocol {
 

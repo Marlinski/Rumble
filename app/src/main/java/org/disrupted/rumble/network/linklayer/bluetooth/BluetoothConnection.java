@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -43,7 +43,7 @@ import java.io.OutputStream;
  * a client or to connect to a server. It is abstract as the connection part is specific and should
  * implements connect()  as requested per LinkLayerConnection interface.
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public abstract class BluetoothConnection implements UnicastConnection {
 

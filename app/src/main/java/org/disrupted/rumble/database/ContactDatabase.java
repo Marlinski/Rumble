@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -41,7 +41,7 @@ import java.util.Set;
 import de.greenrobot.event.EventBus;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class ContactDatabase extends Database  {
 

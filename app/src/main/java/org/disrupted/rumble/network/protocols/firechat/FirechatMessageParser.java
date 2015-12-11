@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -36,7 +36,7 @@ import java.text.NumberFormat;
 import java.util.Random;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class FirechatMessageParser {
 

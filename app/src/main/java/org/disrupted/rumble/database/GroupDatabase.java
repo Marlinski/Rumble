@@ -21,7 +21,7 @@ import de.greenrobot.event.EventBus;
 
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class GroupDatabase  extends  Database{
 

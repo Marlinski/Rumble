@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -56,7 +56,7 @@ import de.greenrobot.event.NoSubscriberEvent;
  *  - it starts/stops the protocol stack (Rumble, Firechat, etc.)
  *  - it starts/stops the services (PushService, ChatService)
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class NetworkCoordinator extends Service {
 

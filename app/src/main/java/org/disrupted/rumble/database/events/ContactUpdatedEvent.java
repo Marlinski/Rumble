@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  * This file is part of Rumble.
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ package org.disrupted.rumble.database.events;
 import org.disrupted.rumble.database.objects.Contact;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class ContactUpdatedEvent extends StatusDatabaseEvent {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -23,7 +23,7 @@ import org.disrupted.rumble.network.events.NetworkEvent;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  *
  * This event is sent by NeighbourManager whenever a neighbour has timeout. It is not sent
  * if a channel is still open to this neighbour,

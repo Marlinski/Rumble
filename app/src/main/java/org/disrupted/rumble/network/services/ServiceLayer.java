@@ -1,7 +1,7 @@
 package org.disrupted.rumble.network.services;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface ServiceLayer {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -30,7 +30,7 @@ import org.disrupted.rumble.network.linklayer.LinkLayerConnection;
  * he is the glue between one (or multiple) link-layer neighbour (Bluetooth, IPv4, IPv6) and
  * a protocol (like firechat or rumble).
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface Worker {
 

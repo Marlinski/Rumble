@@ -3,7 +3,7 @@ package org.disrupted.rumble.network.protocols.firechat;
 import org.disrupted.rumble.util.Log;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class FirechatBTState {
 

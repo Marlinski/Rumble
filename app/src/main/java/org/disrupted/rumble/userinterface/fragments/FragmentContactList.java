@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  * This file is part of Rumble.
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import de.greenrobot.event.EventBus;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class FragmentContactList  extends Fragment {
 

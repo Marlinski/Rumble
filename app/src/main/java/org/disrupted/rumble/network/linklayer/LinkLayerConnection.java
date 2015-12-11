@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -26,7 +26,7 @@ import org.disrupted.rumble.network.linklayer.exception.LinkLayerConnectionExcep
  * LinkLayerConnection is an interface for a class to implement connect() and disconnect()
  * method that are link-layer specifics.
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public interface LinkLayerConnection {
 

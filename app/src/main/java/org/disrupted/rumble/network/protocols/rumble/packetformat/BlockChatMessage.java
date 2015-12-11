@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  * This file is part of Rumble.
  * Rumble is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ import de.greenrobot.event.EventBus;
  * |             Time of Creation              |  8 bytes
  * +-------------------------------------------+
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class BlockChatMessage extends Block {
 

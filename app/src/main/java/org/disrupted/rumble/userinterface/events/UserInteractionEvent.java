@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -22,7 +22,7 @@ package org.disrupted.rumble.userinterface.events;
 import org.disrupted.rumble.app.RumbleEvent;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public abstract class UserInteractionEvent implements RumbleEvent {
 }

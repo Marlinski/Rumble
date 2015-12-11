@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -39,7 +39,7 @@ import de.greenrobot.event.EventBus;
  * The GenericProtocol implements a generic protocol where one thread takes care
  * of receiving and processing packet from the network while another one takes
  * care of receiving and processing command from the upper layer.
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public abstract class ProtocolChannel implements Worker {
 

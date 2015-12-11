@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -75,7 +75,7 @@ import de.greenrobot.event.EventBus;
 /**
  * The CacheManager takes care ongf updati the database accordingly to the catched event
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class CacheManager {
 

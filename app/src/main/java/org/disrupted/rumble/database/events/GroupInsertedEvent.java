@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -22,7 +22,7 @@ package org.disrupted.rumble.database.events;
 import org.disrupted.rumble.database.objects.Group;
 
 /**
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class GroupInsertedEvent extends DatabaseEvent {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -64,7 +64,7 @@ import java.util.Arrays;
  * |    Replication    |    like   |              2 byte + 1 byte
  * +-------------------------------+
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class BlockPushStatus extends Block{
 

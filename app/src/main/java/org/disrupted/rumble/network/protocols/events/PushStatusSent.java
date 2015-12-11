@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Disrupted Systems
+ * Copyright (C) 2014 Lucien Loiseau
  *
  * This file is part of Rumble.
  *
@@ -41,7 +41,7 @@ import java.util.Set;
  *  - The LinkLayerAdapte to update its internal metric that is used by getBestInterface
  *  - The FragmentStatusList to provide a visual feedback to the user
  *
- * @author Marlinski
+ * @author Lucien Loiseau
  */
 public class PushStatusSent extends NetworkEvent {
 
