@@ -126,7 +126,7 @@
 
     <string name="debug_text">logcat debugging</string>
 
-    <string name="statistic_disclaimer">DisruptedSystems takes part in some research project and wish to collect some data. Those data are anonymous and cannot be link to any device or any individual. By sharing those data, you will help us design better algorithms and protocols. If you want to know more about our data policy, please visit http://disruptedsystems/rumble/datapolicy. Check the following check box if you do not want to participate.</string>
+    <string name="statistic_disclaimer">DisruptedSystems takes part in some research project and wish to collect some data. Those data are anonymous and cannot be link to any device or any individual. By sharing those data, you will help us design better algorithms and protocols. If you want to know more about our data policy, please visit http://disruptedsystems.org/documentation/#statistics. Check the following check box if you do not want to participate.</string>
     <string name="statistic_usage">I do not want to participate</string>
 
     <string name="setting_about_rumble">Release Name</string>

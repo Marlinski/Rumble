@@ -144,7 +144,7 @@
     <string name="swipe_down">Lorsque vous recevez un nouveau message, vous pouvez rafraîchir la liste en la faisant glisser vers le bas</string>
     <string name="swipe_left">&lt;&lt;&lt;--- La fenêtre de navigation est accessible à gauche, faites glisser la fenêtre pour la découvrir</string>
     <string name="swipe_right">La fenêtre de réseau est accessible à droite, faites glisser la fenêtre pour la découvrir ---&gt;&gt;&gt;</string>
-    <string name="statistic_disclaimer">DisruptedSystems prend par à des projets de recherche et souhaiterait collecter certaines données. Ces données sont complètement anonyme et ne permettent pas de faire le lien avec un appareil en particulier ou avec un individu. En partageant ces données, vous nous aidez à améliorer nos algorithmes et nos protocoles. Si vous voulez en savoir plus sur notre utilisation des données, visitez  http://disruptedsystems/rumble/datapolicy. Cliquez sur la checkbox si vous ne souhaitez pas participer.</string>
+    <string name="statistic_disclaimer">DisruptedSystems prend par à des projets de recherche et souhaiterait collecter certaines données. Ces données sont complètement anonyme et ne permettent pas de faire le lien avec un appareil en particulier ou avec un individu. En partageant ces données, vous nous aidez à améliorer nos algorithmes et nos protocoles. Si vous voulez en savoir plus sur notre utilisation des données, visitez  http://disruptedsystems.org/documentation/#statistics. Cliquez sur la checkbox si vous ne souhaitez pas participer.</string>
     <string name="setting_about_developer">Application développé par</string>
     <string name="setting_about_project">Compte du projet</string>
     <string name="setting_about_rumble">Nom de la release</string>
