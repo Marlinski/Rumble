@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+~ Copyright (C) 2014 Lucien Loiseau
+~
+~ This file is part of Rumble.
+~
+~ Rumble is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU General Public License as published by
+~ the Free Software Foundation, either version 3 of the License, or
+~ (at your option) any later version.
+~
+~ Rumble is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+~ GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License
+~ along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<resources>
+
+    <string name="app_name">Rumble</string>
+    <string name="bluetooth_state_on_openning">bluetooth_state_on_openning</string>
+    <string name="wifi_state_on_openning">wifi_state_on_openning</string>
+    <string name="drawer_open">öffnen</string>
+    <string name="drawer_close">schließen</string>
+
+    <string name="tab_public">Öffentlich</string>
+    <string name="tab_group">Gruppe</string>
+    <string name="tab_chat">Chat</string>
+
+    <string name="navigation_drawer_open">Navigationsleiste öffnen</string>
+    <string name="navigation_drawer_close">Navigationsleiste schließen</string>
+    <string name="navigation_drawer_title">Navigation</string>
+    <string name="navigation_drawer_group">Gruppen</string>
+    <string name="navigation_drawer_contacts">Kontakte</string>
+    <string name="navigation_drawer_hashtag">Hashtags</string>
+    <string name="navigation_drawer_status_favorites">Favoriten</string>
+    <string name="navigation_drawer_settings">Einstellungen</string>
+    <string name="navigation_drawer_exit">Beenden</string>
+
+    <string name="status_viewer">Status</string>
+    <string name="status_more_option_like">Gefällt mir</string>
+    <string name="status_more_option_save">Speichern</string>
+    <string name="status_more_option_delete">Löschen</string>
+
+    <string name="group_detail_tab_message">Nachrichten</string>
+    <string name="group_detail_tab_members">Mitglieder</string>
+    <string name="contact_detail_tab_message">Nachrichten</string>
+    <string name="contact_detail_tab_info">Info</string>
+    <string name="contact_detail_name">Name</string>
+    <string name="contact_detail_uid">Benutzer-ID</string>
+    <string name="contact_detail_last_met">Zuletzt getroffen</string>
+    <string name="contact_detail_group_membership">Bekannte Gruppenzugehörigkeit</string>
+    <string name="contact_detail_nb_status_sent">Anzahl gesendeter Nachrichten</string>
+    <string name="contact_detail_nb_status_rcvd">Anzahl empfangener Nachrichten</string>
+    <string name="contact_detail_message_sent">Gesendete Nachrichten</string>
+    <string name="contact_detail_message_received">Empfangene Nachrichten</string>
+    <string name="contact_detail_interface">Verbindung</string>
+    <string name="contact_detail_message_bluetooth_mac">Bluetooth MAC-Adresse</string>
+    <string name="contact_detail_message_bluetooth_name">Bluetooth Gerätename</string>
+    <string name="contact_detail_message_wifi_mac">WLAN Mac-Adresse</string>
+
+    <string name="group_action_invite_user">lad einen Benutzer ein</string>
+    <string name="group_action_delete">lösche eine Gruppe</string>
+    <string name="group_confirm_delete">Bist du sicher, dass du alle Stati dieser Gruppe löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.</string>
+    <string name="group_action_leave">Gruppe verlassen</string>
+    <string name="group_confirm_leave">Bist du sicher, dass du diese Gruppe verlassen möchtest? Alle Stati dieser Gruppe werden gelöscht.</string>
+    <string name="group_private_confirm_leave">Bist du sicher, dass du diese Gruppe verlassen möchtest? Alle Stati dieser Gruppe werden gelöscht. Diese Gruppe ist privat, du musst also von einem Mitglied eingeladen werden, um sie wieder zu betreten.</string>
+
+    <string name="contact_is_local">lokaler Kontakt</string>
+    <string name="contact_has_never_been_met">Kontakt nie getroffen</string>
+    <string name="contact_last_met">zuletzt getroffen:</string>
+
+    <string name="action_settings">Einstellungen</string>
+    <string name="action_search">Filter</string>
+    <string name="action_compose">Verfassen</string>
+    <string name="action_network">Netzwerke</string>
+    <string name="action_create_group">Neue Gruppe</string>
+    <string name="action_scan_qrcode">Scanne Gruppe</string>
+    <string name="action_new_discussion">Neue Diskussion</string>
+
+    <string name="popup_compose_title">Verfassen</string>
+    <string name="popup_compose_chat_title">Chat!</string>
+    <string name="chat_input_hint">Tippe eine Nachricht ein</string>
+    <string name="popup_compose_group">Gruppe: </string>
+    <string name="popup_create_group">Erstelle eine neue Gruppe</string>
+    <string name="popup_create_group_checkbox_private">Private Gruppe</string>
+    <string name="popup_create_group_checkbox_public">Öffentliche Gruppe</string>
+
+    <string name="popup_question_yes">Ja</string>
+    <string name="popup_question_no">Nein</string>
+    <string name="popup_question_remember">Auswahl merken</string>
+
+    <string name="menu_interfaces_title">Verbindungen</string>
+    <string name="menu_neighbors_title">Nachbarschaft</string>
+    <string name="interface_bluetooth">Bluetooth</string>
+    <string name="bluetooth_disabled">deaktivieren</string>
+    <string name="bluetooth_enabled">aktivieren</string>
+    <string name="bluetooth_discoverable">sichtbar</string>
+    <string name="interface_wifi">WLAN</string>
+    <string name="wifi_disabled">deaktiviert</string>
+    <string name="wifi_normal">normal</string>
+    <string name="wifi_AP">Hotspot</string>
+    <string name="drawer_force_scan">Scannen erzwingen</string>
+
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_action_wipe_status">Stati aus Datenbank löschen</string>
+    <string name="settings_action_wipe_chat">Chatnachrichten aus Datenbank löschen</string>
+    <string name="settings_storage">Speicher</string>
+    <string name="settings_usage">Datennutzung</string>
+    <string name="settings_storage_total">GESAMT</string>
+    <string name="settings_clear_data">DATEN LÖSCHEN</string>
+    <string name="settings_clear_push">Stati löschen</string>
+    <string name="settings_clear_chat">Chat löschen</string>
+    <string name="settings_clear_files">Dateien löschen</string>
+    <string name="settings_detail_app">Anwendungsgröße</string>
+    <string name="settings_detail_db">Datenbankgröße</string>
+    <string name="settings_detail_file">Dateigesamtgröße</string>
+    <string name="settings_statistic">Statistik</string>
+    <string name="settings_debug">Debug</string>
+    <string name="settings_about">Über</string>
+    <string name="settings_freedom">Freie-Software-Lizenz</string>
+
+    <string name="debug_text">Logcat-Debugging</string>
+
+    <string name="statistic_disclaimer">DisruptedSystems nimmt an einem Forschungsprojekt teil und möchte einige Daten sammeln. Diese Daten sind anonym und können keinem Gerät oder Individuum zugeordnet werden. Durch das Teilen dieser Daten hilfst du uns, bessere Algorithmen und Protokolle zu entwickeln. Wenn du mehr über unsere Privatsphäreregelungen wissen möchtest, besuche bitte http://disruptedsystems.org/documentation/#statistics (Englisch). Bitte wähle die folgende Auswahlbox, wenn du mit deinen Daten nicht teilnehmen möchtest.</string>
+    <string name="statistic_usage">Ich möchte nicht teilnehmen</string>
+
+    <string name="setting_about_rumble">Versionsname</string>
+    <string name="setting_about_project">Projektaccount</string>
+    <string name="setting_about_developer">Entwickelt von</string>
+
+    <string name="status_created">erstellt: </string>
+    <string name="status_received">empfangen: </string>
+    <string name="second_ago">vor einer Sekunde</string>
+    <string name="seconds_ago">Sekunden zuvor</string>
+    <string name="minute_ago">vor einer Minute</string>
+    <string name="minutes_ago">Minuten zuvor</string>
+    <string name="day_ago">vor einem Tag</string>
+    <string name="days_ago">Tage zuvor</string>
+    <string name="hour_ago">vor einer Stunde</string>
+    <string name="hours_ago">Stunden zuvor</string>
+    <string name="month_ago">vor einem Monat</string>
+    <string name="months_ago">Monate zuvor</string>
+    <string name="year_ago">vor einem Jahr</string>
+    <string name="years_ago">Jahre zuvor</string>
+    <string name="too_old">vor einer langen Zeit</string>
+
+    <string name="filter_not_subscribed">nicht abonniert</string>
+    <string name="filter_subscribed">abonniert</string>
+    <string name="toast_subscribed_to">Abonniert:</string>
+
+    <string name="welcome_notice">Hallo du, wilkommen im Rumble-Netzwerk, wo die Infrastruktur in der Hand des Nutzers liegt! Jede Nachricht hier wird zu Geräten anderer Rumble-Nutzer in deiner Nähe weitergeleitet.</string>
+    <string name="swipe_left">&lt;&lt;&lt;--- Navigationsleiste ist erreichbar auf der linken Seite, wischen zum Öffnen</string>
+    <string name="swipe_right">Netzwerkeinstellungen sind auf der rechten Seite erreichbar, wischen zum Öffnen ---&gt;&gt;&gt;</string>
+    <string name="swipe_down">Immer, wenn du eine neue Nachricht empfängst, kannst du die Liste durch Wischen nach unten aktualisieren.</string>
+    <string name="chat_message_tuto">Hier ist das Chatfenster, in dem du in Echtzeit Nachrichten mit den Nutzern in deiner Umgebung austauschen kannst. Diese Nachrichten werden nicht weitergeleitet. Öffne die Netzwerkeinstellungen, um zu sehen, ob jemand in deiner Nähe ist und fange an, zu chatten.</string>
+    <string name="login">Einloggen!</string>
+    <string name="login_username">Benutzername</string>
+    <string name="login_bad_username">Unmöglicher Benutzername, wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
+    <string name="warning_notice">Selbst wenn du eine private Gruppe erstellst, sind alle Nachrichten standardgemäß öffentlich, also sei vorsichtig mit dem, was du veröffentlichst</string>
+
+</resources>
