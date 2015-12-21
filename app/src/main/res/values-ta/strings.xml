@@ -110,7 +110,7 @@
     <string name="settings_action_wipe_status">செய்திகளை தரவுத்தளத்திலிருந்து நீக்கு</string>
     <string name="settings_action_wipe_chat">அரட்டைகளை தரவுத்தளத்திலிருந்து நீக்கு</string>
     <string name="settings_storage">சேமிப்பகம்</string>
-    <string name="settings_usage">தரவுப் பயன்பாடு/string>
+    <string name="settings_usage">தரவுப் பயன்பாடு</string>
     <string name="settings_storage_total">மொத்தம்</string>
     <string name="settings_clear_data">தரவுகளை அழி</string>
     <string name="settings_clear_push">செய்திகளை அழி</string>
