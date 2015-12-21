@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+~ Copyright (C) 2014 Lucien Loiseau
+~
+~ This file is part of Rumble.
+~
+~ Rumble is free software: you can redistribute it and/or modify
+~ it under the terms of the GNU General Public License as published by
+~ the Free Software Foundation, either version 3 of the License, or
+~ (at your option) any later version.
+~
+~ Rumble is distributed in the hope that it will be useful,
+~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+~ GNU General Public License for more details.
+~
+~ You should have received a copy of the GNU General Public License
+~ along with Rumble.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<resources>
+
+    <string name="app_name">Rumble</string>
+    <string name="bluetooth_state_on_openning">bluetooth_state_on_openning</string>
+    <string name="wifi_state_on_openning">wifi_state_on_openning</string>
+    <string name="drawer_open">திற</string>
+    <string name="drawer_close">மூடு</string>
+
+    <string name="tab_public">பொது</string>
+    <string name="tab_group">குழு</string>
+    <string name="tab_chat">அரட்டை</string>
+
+    <string name="navigation_drawer_open">வழிசெலுத்தல் இழுப்பறையை திற</string>
+    <string name="navigation_drawer_close">வழிசெலுத்தல் இழுப்பறையை மூடு</string>
+    <string name="navigation_drawer_title">வழிசெலுத்தல்</string>
+    <string name="navigation_drawer_group">குழுக்கள்</string>
+    <string name="navigation_drawer_contacts">தொடர்புகள்</string>
+    <string name="navigation_drawer_hashtag">Hash குறிசொற்கள்</string>
+    <string name="navigation_drawer_status_favorites">பிடித்தவை</string>
+    <string name="navigation_drawer_settings">அமைப்புகள்</string>
+    <string name="navigation_drawer_exit">பணிநிறுத்தக</string>
+
+    <string name="status_viewer">நிலை</string>
+    <string name="status_more_option_like">விருப்பம்</string>
+    <string name="status_more_option_save">சேமி</string>
+    <string name="status_more_option_delete">அழி</string>
+
+    <string name="group_detail_tab_message">செய்திகள்</string>
+    <string name="group_detail_tab_members">உறுப்பினர்கள்</string>
+    <string name="contact_detail_tab_message">செய்திகள்</string>
+    <string name="contact_detail_tab_info">தகவல்</string>
+    <string name="contact_detail_name">பெயர்</string>
+    <string name="contact_detail_uid">பயனர் அடையாளம்</string>
+    <string name="contact_detail_last_met">கடைசி சந்திப்பு</string>
+    <string name="contact_detail_group_membership">பங்கேற்கும் குழுக்கள் (தெரிந்தவரை)</string>
+    <string name="contact_detail_nb_status_sent">அனுப்பியுள்ள செய்தியின் எண்ணிக்கை</string>
+    <string name="contact_detail_nb_status_rcvd">பெறப்பட்ட செய்தியின் எண்ணிக்கை</string>
+    <string name="contact_detail_message_sent">அனுப்பியுள்ள செய்திகள்</string>
+    <string name="contact_detail_message_received">பெறப்பட்ட செய்திகள்</string>
+    <string name="contact_detail_interface">இடைமுகம்</string>
+    <string name="contact_detail_message_bluetooth_mac">Bluetooth MAC முகவரி</string>
+    <string name="contact_detail_message_bluetooth_name">Bluetooth சாதனப் பெயர்</string>
+    <string name="contact_detail_message_wifi_mac">Wifi MAC முகவரி</string>
+
+    <string name="group_action_invite_user">பயனரை இணையுமாறு அழைக்க</string>
+    <string name="group_action_delete">குழுவை அழி</string>
+    <string name="group_confirm_delete">இந்த குழுவிலிருக்கும் செய்திகள் அனைத்தையும் நீங்கள் அழித்தால் அதனை மீட்டெடுக்க முடியாது. இதனை நிச்சயம் செயல்படுத்த விரும்புகிறீர்களா?</string>
+    <string name="group_action_leave">குழுவைவிட்டு வெளியேறு</string>
+    <string name="group_confirm_leave">இக்குழுவைவிட்டு நீங்கள் வெளியேறினால், இங்கே இருக்கும் அனைத்து செய்திகளும் அழிக்கப்படும். நீங்கள் நிச்சயமாக இக்குழுவைவிட்டு வெளியேற விரும்புகிறீர்களா?</string>
+    <string name="group_private_confirm_leave">இக்குழுவைவிட்டு நீங்கள் வெளியேறினால், இங்கே இருக்கும் அனைத்து செய்திகளும் அழிக்கப்படும். இக்குழு பிரத்தியேக குழு என்பதால் நீங்கள் மீண்டும் இதில் இணைய யாரேனும் உங்களை இணையுமாறு அழைத்தால் மட்டுமே முடியும். நீங்கள் நிச்சயமாக இக்குழுவைவிட்டு வெளியேற விரும்புகிறீர்களா?</string>
+
+    <string name="contact_is_local">உள்ளமை தொடர்பு</string>
+    <string name="contact_has_never_been_met">இவரை சந்தித்ததில்லை</string>
+    <string name="contact_last_met">கடைசியாக சந்தித்தது:</string>
+
+    <string name="action_settings">அமைப்புகள்</string>
+    <string name="action_search">Filter</string>
+    <string name="action_compose">செய்தி உருவாக்கம்</string>
+    <string name="action_network">பிணைப்பு</string>
+    <string name="action_create_group">புதிய குழு</string>
+    <string name="action_scan_qrcode">Scan Group</string>
+    <string name="action_new_discussion">புதிய கலந்துரையாடல்</string>
+
+    <string name="popup_compose_title">செய்தி உருவாக்கம்</string>
+    <string name="popup_compose_chat_title">அரட்டை !</string>
+    <string name="chat_input_hint">செய்தியை தட்டச்சு செய்</string>
+    <string name="popup_compose_group">குழு: </string>
+    <string name="popup_create_group">புதிய குழுவை உருவாக்கு</string>
+    <string name="popup_create_group_checkbox_private">பிரத்தியேக குழு</string>
+    <string name="popup_create_group_checkbox_public">பொது குழு</string>
+
+    <string name="popup_question_yes">ஆம்</string>
+    <string name="popup_question_no">இல்லை</string>
+    <string name="popup_question_remember">தேர்வை நினைவில் கொள்</string>
+
+    <string name="menu_interfaces_title">இடைமுகங்கள்</string>
+    <string name="menu_neighbors_title">அருகில்</string>
+    <string name="interface_bluetooth">Bluetooth</string>
+    <string name="bluetooth_disabled">செயலிழக்க</string>
+    <string name="bluetooth_enabled">செயல்படுத்த</string>
+    <string name="bluetooth_discoverable">கண்டுபிடிக்கக்கூடியதாக</string>
+    <string name="interface_wifi">WiFi</string>
+    <string name="wifi_disabled">செயலிழக்க</string>
+    <string name="wifi_normal">இயல்பான</string>
+    <string name="wifi_AP">அணுகல் புள்ளி</string>
+    <string name="drawer_force_scan">Force Scan</string>
+
+    <string name="settings_title">அமைப்புகள்</string>
+    <string name="settings_action_wipe_status">செய்திகளை தரவுத்தளத்திலிருந்து நீக்கு</string>
+    <string name="settings_action_wipe_chat">அரட்டைகளை தரவுத்தளத்திலிருந்து நீக்கு</string>
+    <string name="settings_storage">சேமிப்பகம்</string>
+    <string name="settings_usage">தரவுப் பயன்பாடு/string>
+    <string name="settings_storage_total">மொத்தம்</string>
+    <string name="settings_clear_data">தரவுகளை அழி</string>
+    <string name="settings_clear_push">செய்திகளை அழி</string>
+    <string name="settings_clear_chat">அரட்டைகளை அழி</string>
+    <string name="settings_clear_files">கோப்புகளை அழி</string>
+    <string name="settings_detail_app">செயலியின் அளவு</string>
+    <string name="settings_detail_db">தரவுத்தளத்தின் அளவு</string>
+    <string name="settings_detail_file">மொத்த கோப்புகளின் அளவு</string>
+    <string name="settings_statistic">புள்ளிவிவரம்</string>
+    <string name="settings_debug">Debug</string>
+    <string name="settings_about">About</string>
+    <string name="settings_freedom">கட்டற்ற மென்பொருள் உரிமம்</string>
+
+    <string name="debug_text">logcat debugging</string>
+
+    <string name="statistic_disclaimer">Disrupted Systems சில ஆராய்ச்சி செயல்திட்டத்திற்காக ஒரு சில தரவுகளை சேகரிக்கிறது. அவ்வாறு சேகரிக்கப்படும் தரவுகள் எதுவும் எந்த ஒரு குறிப்பிட்ட நபரையோ அல்லது சாதனத்தையோ அடையாளம் காட்டாது. தேவைப்படும் இத்தரவுகளை நீங்கள் சேகரிக்க அனுமதி வழங்குவதன் மூலம், இந்த செயலிக்கான இயக்க படிமுறையை மேம்படுத்த அல்லது புதிய படிமுறையை உருவாக்க உதவுகிறீர்கள். எங்களது தரவுக் கொள்கையைப் பற்றி மேலும் அறிய, http://disruptedsystems.org/documentation/#statistics என்ற முகவரியில் பார்க்கவும். ஒருவேளை நீங்கள் இதில் பங்கேற்க விரும்பவில்லை என்றால் கீழ்வரும் தேர்வுப் பெட்டியில் உங்கள் தேர்வை பதிவு செய்யவும்.</string>
+    <string name="statistic_usage">நான் பங்கேற்க விரும்பவில்லை</string>
+
+    <string name="setting_about_rumble">இந்த வெளியீட்டின் பெயர்</string>
+    <string name="setting_about_project">செயல்திட்ட கணக்கு</string>
+    <string name="setting_about_developer">இவர்களால் உருவாக்கப்பட்டது</string>
+
+    <string name="status_created">உருவாக்கப்பட்டது: </string>
+    <string name="status_received">பெறப்பட்டது: </string>
+    <string name="second_ago">ஒரு நொடி முன்பு</string>
+    <string name="seconds_ago">நொடிகள் முன்பு</string>
+    <string name="minute_ago">ஒரு நிமிடம் முன்பு</string>
+    <string name="minutes_ago">நிமிடங்கள் முன்பு</string>
+    <string name="day_ago">ஒரு நாள் முன்பு</string>
+    <string name="days_ago">நாட்கள் முன்பு</string>
+    <string name="hour_ago">ஒரு மணிநேரம் முன்பு</string>
+    <string name="hours_ago">மணிநேரங்கள் முன்பு</string>
+    <string name="month_ago">ஒரு மாதம் முன்பு</string>
+    <string name="months_ago">மாதங்கள் முன்பு</string>
+    <string name="year_ago">ஒரு வருடம் முன்பு</string>
+    <string name="years_ago">வருடங்கள் முன்பு</string>
+    <string name="too_old">சமீபத்தில் எப்போதும் இல்லை</string>
+
+    <string name="filter_not_subscribed">சேர்ந்திருக்கவில்லை</string>
+    <string name="filter_subscribed">சேர்ந்திருக்கிறீர்கள்</string>
+    <string name="toast_subscribed_to">சேர்ந்திருக்கும்</string>
+
+    <string name="welcome_notice">வணக்கம்! ரம்புள் பிணையத்திற்கு உங்களை வரவேற்கிறோம். இந்த பிணையத்தின் சிறப்பம்சம் என்னவென்றால் இணையத்தைப் போல் இதற்கென உள்கட்டமைப்பு தேவையில்லை. நம்மை சுற்றியிருக்கும் நபர்களின் சாதனங்கள் மூலமே செய்திகளை அடுத்தவர்களுக்கு கடத்தலாம்.</string>
+    <string name="swipe_left">&lt;&lt;&lt;--- வழிநடத்தும் இழுப்பறை இடது புறம் உள்ளது. வலுதுபுறமாக தேய்க்கவும்</string>
+    <string name="swipe_right">பிணையத்திற்கான இழுப்பறை வலதுபுறம் உள்ளது. இடதுபுறமாக தேய்க்கவும் ---&gt;&gt;&gt;</string>
+    <string name="swipe_down">ஒவ்வொரு புதிய செய்தி வரும்பொழுது அதை காண கீழ்புறமாக இழுத்து புதுப்பிக்கலாம்.</string>
+    <string name="chat_message_tuto">இதோ இப்பகுதியில் நீங்கள் உங்களை சுற்றியிருக்கும் நபர்களோடு நிகழ்நேரத்தில் உடனுக்குடன் தகவல் பறிமாறிக் கொள்ளலாம் அல்லது அரட்டை அடிக்கலாம். இங்கே பகிர்ந்துக்கொள்ளப்படும் தகவல்கள் தற்போது உங்களை சுற்றியிருப்பவர்களைத் தவிர வேறு யாருக்கும் கடத்தப்படாது. பிணைய இழுப்பறையை திறந்து உங்களைச் சுற்றி யாரேனும் ரம்பிள் பயனாளர் இருக்கின்றனரா என பார்த்துக்கொண்டு பின் தகவல்களை அனுப்பவும்.</string>
+    <string name="login">உள்நுழை!</string>
+    <string name="login_username">பயனர் பெயர்</string>
+    <string name="login_bad_username">பயனர்பெயர் ஏற்புடையதல்ல, ஒரு வரி பெயர்களை தேர்வு செய்யுங்கள் (20 எழுத்துக்களுக்கு மிகாமல்)!</string>
+    <string name="warning_notice">என்னதான் உங்களால் பிரத்தியேக குழுக்களை உருவாக்கி அதிலுள்ள நபர்களோடு மட்டும் தகவல் பறிமாறிக்கொள்ளலாம் என்றாலும், இங்கே அனைத்து செய்திகளின் தன்மையும் இயல்பாகவே வெளிப்படையாகத்தான் இருக்கும். எனவே நீங்கள் பகிர்ந்துக்கொள்ளும் தகவல் பற்றி உங்களுக்கு விழிப்புணர்வும், கவனமும் தேவை.</string>
+
+</resources>
