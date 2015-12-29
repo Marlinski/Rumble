@@ -112,24 +112,24 @@ public class BluetoothUtil {
         activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
     }
 
-    public static void prependRumblePrefix() {
+    public static void prependRumblePrefix(String prefix) {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if (adapter == null)
             return;
         String name = adapter.getName();
-        if(name.startsWith("RB42-"))
+        if(name.startsWith(prefix))
             return;
         else
-            adapter.setName("RB42-"+name);
+            adapter.setName(prefix+name);
     }
 
-    public static void unprependRumblePrefix() {
+    public static void unprependRumblePrefix(String prefix) {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if (adapter == null)
             return;
         String name = adapter.getName();
-        if(name.startsWith("RB42-"))
-            adapter.setName(name.substring(5));
+        if(name.startsWith(prefix))
+            adapter.setName(name.substring(prefix.length()));
         else
             return;
     }

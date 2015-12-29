@@ -55,6 +55,7 @@ public class RumbleProtocol implements Protocol {
 
     public static final String TAG = "RumbleProtocol";
     public static final String protocolID = "Rumble";
+    public static final String RUMBLE_BLUETOOTH_PREFIX = "Rumble-";
 
     private static final Object lock = new Object();
     public static RumbleProtocol instance = null;
@@ -195,7 +196,7 @@ public class RumbleProtocol implements Protocol {
     private void openChannel(LinkLayerNeighbour neighbour) {
         if (neighbour instanceof BluetoothNeighbour) {
             BluetoothNeighbour btn = (BluetoothNeighbour)neighbour;
-            if(!btn.getBluetoothDeviceName().startsWith("RB42-"))
+            if(!btn.getBluetoothDeviceName().startsWith(RUMBLE_BLUETOOTH_PREFIX))
                 return;
             try {
                 BluetoothConnection con = new BluetoothClientConnection(
