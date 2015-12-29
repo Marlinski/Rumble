@@ -23,6 +23,8 @@ import android.support.v7.app.AppCompatActivity;
 import org.disrupted.rumble.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -110,11 +112,16 @@ public class DisplayStatusActivity extends AppCompatActivity {
         groupNameView.setText(status.getGroup().getName());
         groupNameView.setTextColor(generator.getColor(status.getGroup().getGid()));
 
-        // we draw the status (with clickable hashtag)
+        // we draw the status (with clickable links)
         textView.setText(status.getPost());
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setTextIsSelectable(true);
 
-            /* we draw the attached file (if any) */
+        Linkify.addLinks(textView, Linkify.ALL);
+
+        /* todo: clickable hashtags */
+
+        /* we draw the attached file (if any) */
         if (status.hasAttachedFile()) {
             attachedView.setVisibility(View.VISIBLE);
             try {

@@ -24,6 +24,7 @@ import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.util.Linkify;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import org.disrupted.rumble.util.Log;
@@ -167,6 +168,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                 }
                 textView.setText(ss);
                 textView.setMovementMethod(LinkMovementMethod.getInstance());
+                Linkify.addLinks(textView, Linkify.ALL);
 
                 /* we draw the attached file (if any) */
                 if (status.hasAttachedFile()) {
