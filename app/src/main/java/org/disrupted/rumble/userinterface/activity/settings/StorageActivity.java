@@ -28,6 +28,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.DatabaseFactory;
@@ -35,6 +36,8 @@ import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
 import org.disrupted.rumble.userinterface.events.UserWipeData;
 import org.disrupted.rumble.userinterface.events.UserWipeFiles;
 import org.disrupted.rumble.userinterface.events.UserWipeStatuses;
+import org.disrupted.rumble.database.events.ChatWipedEvent;
+import org.disrupted.rumble.database.events.StatusWipedEvent;
 import org.disrupted.rumble.userinterface.views.SimpleHistogram;
 import org.disrupted.rumble.util.FileUtil;
 
@@ -59,8 +62,22 @@ public class StorageActivity extends AppCompatActivity {
     private TextView fileDetailText;
 
     @Override
+    protected void onStart() {
+	super.onStart();
+	if(!EventBus.getDefault().isRegistered(this))
+	    EventBus.getDefault().register(this);
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+    }
+
+    @Override
+    protected void onStop() {
+	super.onStop();
+	if(EventBus.getDefault().isRegistered(this))
+	    EventBus.getDefault().unregister(this);
     }
 
     @Override
@@ -232,4 +249,21 @@ public class StorageActivity extends AppCompatActivity {
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 
+    /** user feedback after clearing chats **/
+    public void onEvent(ChatWipedEvent event) {
+	this.runOnUiThread(new Runnable () {
+	    public void run() {
+		Toast.makeText(getApplicationContext(), "Chats Cleared", Toast.LENGTH_LONG).show();
+	    }
+	});
+    }
+
+    /** user feedback after clearing statuses **/
+    public void onEvent(StatusWipedEvent event) {
+	this.runOnUiThread(new Runnable () {
+	    public void run() {
+	        Toast.makeText(getApplicationContext(), "All Status Cleared", Toast.LENGTH_LONG).show();
+	    }
+	});
+    }
 }
