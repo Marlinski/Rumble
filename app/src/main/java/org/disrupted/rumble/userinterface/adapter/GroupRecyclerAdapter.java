@@ -107,10 +107,9 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
             /*
              * Manage click events
              */
-            final String    gid          = group.getGid();
-            final boolean   privateGroup = group.isPrivate();
-            final SecretKey key          = group.getGroupKey();
-            final String    name         = group.getName();
+            final String    gid           = group.getGid();
+            final String    name          = group.getName();
+            final String    groupBase64ID = group.getGroupBase64ID();
 
             title.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -126,38 +125,12 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
             group_invite.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ByteBuffer byteBuffer;
-                    byte[] keybytes;
-                    if(privateGroup)
-                        keybytes = key.getEncoded();
-                    else
-                        keybytes = new byte[0];
-
-                    byteBuffer = ByteBuffer.allocate(2 + name.length() + gid.length() + keybytes.length);
-
-                    // send group name
-                    byteBuffer.put((byte)name.length());
-                    byteBuffer.put(name.getBytes(),0,name.length());
-
-                    // send group ID
-                    byteBuffer.put((byte)gid.length());
-                    byteBuffer.put(gid.getBytes());
-
-                    // send key
-                    byteBuffer.put(keybytes);
-                    String buffer = Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
-
-                    //try {
-                    //    IntentIntegrator intentIntegrator = new IntentIntegrator(activity);
-                    //    intentIntegrator.shareText(buffer);
-                    //} catch(ActivityNotFoundException notexists) {
-                    Log.d(TAG, "Barcode scanner is not installed on this device");
                     int size = 200;
                     Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
                     hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);
                     QRCodeWriter qrCodeWriter = new QRCodeWriter();
                     try {
-                        BitMatrix bitMatrix = qrCodeWriter.encode(buffer, BarcodeFormat.QR_CODE, size, size, hintMap);
+                        BitMatrix bitMatrix = qrCodeWriter.encode(groupBase64ID, BarcodeFormat.QR_CODE, size, size, hintMap);
                         Bitmap image = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
 
                         if(image != null) {
@@ -168,7 +141,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
                             }
                             Intent intent = new Intent(activity, DisplayQRCode.class);
                             intent.putExtra("EXTRA_GROUP_NAME", name);
-                            intent.putExtra("EXTRA_BUFFER", buffer);
+                            intent.putExtra("EXTRA_BUFFER", groupBase64ID);
                             intent.putExtra("EXTRA_QRCODE", image);
                             activity.startActivity(intent);
                         }

@@ -158,32 +158,7 @@ public class GroupDetailActivity extends AppCompatActivity {
     }
 
     public void invite() {
-        ByteBuffer byteBuffer;
-        byte[] keybytes;
-        if(group.isPrivate())
-            keybytes = group.getGroupKey().getEncoded();
-        else
-            keybytes = new byte[0];
-
-        byteBuffer = ByteBuffer.allocate(2 + group.getName().length() + group.getGid().length() + keybytes.length);
-
-        // send group name
-        byteBuffer.put((byte) group.getName().length());
-        byteBuffer.put(group.getName().getBytes(),0,group.getName().length());
-
-        // send group ID
-        byteBuffer.put((byte)group.getGid().length());
-        byteBuffer.put(group.getGid().getBytes());
-
-        // send key
-        byteBuffer.put(keybytes);
-        String buffer = Base64.encodeToString(byteBuffer.array(), Base64.NO_WRAP);
-
-        //try {
-        //    IntentIntegrator intentIntegrator = new IntentIntegrator(this);
-        //    intentIntegrator.shareText(buffer);
-        //} catch(ActivityNotFoundException notexists) {
-        Log.d(TAG, "Barcode scanner is not installed on this device");
+        String buffer = group.getGroupBase64ID();
         int size = 200;
         Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
         hintMap.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.L);

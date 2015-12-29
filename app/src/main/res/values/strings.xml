@@ -78,8 +78,9 @@
     <string name="action_search">Filter</string>
     <string name="action_compose">Compose</string>
     <string name="action_network">Networking</string>
-    <string name="action_create_group">New Group</string>
-    <string name="action_scan_qrcode">Scan Group</string>
+    <string name="action_create_group">Create a new group</string>
+    <string name="action_scan_qrcode">Scan an invitation (QRCode)</string>
+    <string name="action_input_key">Manually input group key</string>
     <string name="action_new_discussion">New Discussion</string>
 
     <string name="popup_compose_title">Compose</string>
@@ -89,6 +90,7 @@
     <string name="popup_create_group">Create new group</string>
     <string name="popup_create_group_checkbox_private">Private Group</string>
     <string name="popup_create_group_checkbox_public">Public Group</string>
+    <string name="popup_input_group_key">Input group key</string>
 
     <string name="popup_question_yes">Yes</string>
     <string name="popup_question_no">No</string>

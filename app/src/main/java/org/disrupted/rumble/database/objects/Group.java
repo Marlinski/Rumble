@@ -17,8 +17,12 @@
 
 package org.disrupted.rumble.database.objects;
 
+import android.util.Base64;
+
 import org.disrupted.rumble.util.CryptoUtil;
 import org.disrupted.rumble.util.HashUtil;
+
+import java.nio.ByteBuffer;
 
 import javax.crypto.SecretKey;
 
@@ -97,5 +101,63 @@ public class Group {
     @Override
     public String toString() {
         return "Group Name="+name+" GID="+gid;
+    }
+
+    public String getGroupBase64ID() {
+        ByteBuffer byteBuffer;
+        byte[] keybytes;
+        if(isPrivate())
+            keybytes = key.getEncoded();
+        else
+            keybytes = new byte[0];
+
+        byteBuffer = ByteBuffer.allocate(2 + name.length() + gid.length() + keybytes.length);
+
+        // encode group name
+        byteBuffer.put((byte)name.length());
+        byteBuffer.put(name.getBytes(),0,name.length());
+
+        // encode group ID
+        byteBuffer.put((byte)gid.length());
+        byteBuffer.put(gid.getBytes());
+
+        // encode key
+        byteBuffer.put(keybytes);
+        return Base64.encodeToString(byteBuffer.array(),Base64.NO_WRAP);
+    }
+
+    public static Group getGroupFromBase64ID(String base64ID) {
+        try {
+            if(!HashUtil.isBase64Encoded(base64ID))
+                throw new Exception();
+
+            byte[] resultbytes = Base64.decode(base64ID, Base64.NO_WRAP);
+            ByteBuffer byteBuffer = ByteBuffer.wrap(resultbytes);
+
+            // extract group name
+            int namesize = byteBuffer.get();
+            if ((namesize < 0) || (namesize > Group.GROUP_NAME_MAX_SIZE))
+                throw new Exception();
+            byte[] name = new byte[namesize];
+            byteBuffer.get(name, 0, namesize);
+
+            // extract group ID
+            int gidsize = byteBuffer.get();
+            if ((gidsize < 0) || (gidsize > HashUtil.expectedEncodedSize(Group.GROUP_GID_RAW_SIZE)))
+                throw new Exception();
+            byte[] gid = new byte[gidsize];
+            byteBuffer.get(gid, 0, gidsize);
+
+            // extract group Key
+            int keysize = (resultbytes.length - 2 - namesize - gidsize);
+            if ((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_AES_SIZE)))
+                throw new Exception();
+            byte[] key = new byte[keysize];
+            byteBuffer.get(key, 0, keysize);
+
+            return new Group(new String(name), new String(gid), CryptoUtil.getSecretKeyFromByteArray(key));
+        } catch(Exception e) {
+            return null;
+        }
     }
 }
