@@ -156,5 +156,7 @@
     <string name="group_confirm_delete">Êtes vous sur de vouloir supprimer tout les status de ce groupe ? cette action est irréversible.</string>
     <string name="group_confirm_leave">Êtes vous sur de vouloir quitter ce groupe ? Tout les status de ce groupe seront supprimés.</string>
     <string name="group_private_confirm_leave">Êtes vous sur de vouloir quitter ce groupe ? Tout les status de ce groupe seront supprimés. Ce groupe étant privée, vous devrez vous faire inviter par un membre si vous souhaitez le rejoindre plus tard.</string>
+    <string name="popup_input_group_key">Entrez la clé du groupe</string>
+    <string name="action_input_key">Taper la clé de groupe</string>
 
 </resources>

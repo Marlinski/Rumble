@@ -162,5 +162,7 @@
     <string name="login_username">Benutzername</string>
     <string name="login_bad_username">Unmöglicher Benutzername, wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
     <string name="warning_notice">Selbst wenn du eine private Gruppe erstellst, sind alle Nachrichten standardgemäß öffentlich, also sei vorsichtig mit dem, was du veröffentlichst</string>
+    <string name="action_input_key">Gruppenschlüssel von Hand eingeben</string>
+    <string name="popup_input_group_key">Gruppenschlüssel eingeben</string>
 
 </resources>
