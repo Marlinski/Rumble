@@ -159,6 +159,11 @@
             android:theme="@style/PopupActivity"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
+        <activity
+            android:name=".userinterface.activity.PopupInputGroupKey"
+            android:screenOrientation="portrait"
+            android:theme="@style/PopupActivity"
+            android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
         <activity android:name=".userinterface.activity.DisplayQRCode">
             <intent-filter>

@@ -23,8 +23,9 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.Toolbar;
-import android.util.Base64;
+
 import org.disrupted.rumble.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,10 +34,9 @@ import org.disrupted.rumble.R;
 import org.disrupted.rumble.database.objects.Group;
 import org.disrupted.rumble.userinterface.events.UserJoinGroup;
 import org.disrupted.rumble.userinterface.fragments.FragmentGroupList;
-import org.disrupted.rumble.util.CryptoUtil;
-import org.disrupted.rumble.util.HashUtil;
 
-import java.nio.ByteBuffer;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 import de.greenrobot.event.EventBus;
 import info.vividcode.android.zxing.CaptureActivity;
@@ -86,14 +86,31 @@ public class GroupListActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_scan_qrcode:
-                Intent captureIntent = new Intent(this, CaptureActivity.class);
-                CaptureActivityIntents.setPromptMessage(captureIntent, "Barcode scanning...");
-                startActivityForResult(captureIntent, 1);
-                return true;
             case R.id.action_create_group:
-                Intent create_group = new Intent(this, PopupCreateGroup.class );
-                startActivity(create_group);
+                PopupMenu popup = new PopupMenu(this, findViewById(R.id.action_create_group));
+
+                // reflection hack, maybe create a new class that inherits popupmenu instead ?
+                try {
+                    Field[] fields = popup.getClass().getDeclaredFields();
+                    for (Field field : fields) {
+                        if ("mPopup".equals(field.getName())) {
+                            field.setAccessible(true);
+                            Object menuPopupHelper = field.get(popup);
+                            Class<?> classPopupHelper = Class.forName(menuPopupHelper
+                                    .getClass().getName());
+                            Method setForceIcons = classPopupHelper.getMethod(
+                                    "setForceShowIcon", boolean.class);
+                            setForceIcons.invoke(menuPopupHelper, true);
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                popup.getMenuInflater().inflate(R.menu.popup_add_group_options, popup.getMenu());
+                popup.setOnMenuItemClickListener(addGroupPopupMenu);
+                popup.show();
                 return true;
             case android.R.id.home:
                 finish();
@@ -101,6 +118,30 @@ public class GroupListActivity extends AppCompatActivity {
         }
         return false;
     }
+
+    PopupMenu.OnMenuItemClickListener addGroupPopupMenu = new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.action_scan_qrcode:
+                    Intent captureIntent = new Intent(GroupListActivity.this, CaptureActivity.class);
+                    CaptureActivityIntents.setPromptMessage(captureIntent, "Barcode scanning...");
+                    startActivityForResult(captureIntent, 1);
+                    return true;
+                case R.id.action_create_group:
+                    Intent create_group = new Intent(GroupListActivity.this, PopupCreateGroup.class);
+                    startActivity(create_group);
+                    return true;
+                case R.id.action_input_key:
+                    Intent input_group = new Intent(GroupListActivity.this, PopupInputGroupKey.class);
+                    startActivity(input_group);
+                    return true;
+            }
+            return false;
+        }
+    };
+
+
 
 
     /*
@@ -116,43 +157,22 @@ public class GroupListActivity extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(data == null)
+            return;
         CaptureResult result = CaptureResult.parseResultIntent(data);
         if ((result != null) && (result.getContents() != null)) {
-            try {
                 Log.d(TAG, result.getContents());
-                byte[] resultbytes = Base64.decode(result.getContents().getBytes(), Base64.NO_WRAP);
-                ByteBuffer byteBuffer = ByteBuffer.wrap(resultbytes);
-
-                // extract group name
-                int namesize = byteBuffer.get();
-                if ((namesize < 0) || (namesize > Group.GROUP_NAME_MAX_SIZE))
-                    throw new Exception();
-                byte[] name = new byte[namesize];
-                byteBuffer.get(name, 0, namesize);
-
-                // extract group ID
-                int gidsize = byteBuffer.get();
-                if ((gidsize < 0) || (gidsize > HashUtil.expectedEncodedSize(Group.GROUP_GID_RAW_SIZE)))
-                    throw new Exception();
-                byte[] gid = new byte[gidsize];
-                byteBuffer.get(gid, 0, gidsize);
-
-                // extract group Key
-                int keysize = (resultbytes.length - 2 - namesize - gidsize);
-                if((keysize < 0) || (keysize > HashUtil.expectedEncodedSize(Group.GROUP_KEY_AES_SIZE)))
-                    throw new Exception();
-                byte[] key = new byte[keysize];
-                byteBuffer.get(key, 0, keysize);
-                Group group = new Group(new String(name), new String(gid), CryptoUtil.getSecretKeyFromByteArray(key));
-
-                // add Group to database
-                EventBus.getDefault().post(new UserJoinGroup(group));
-                Snackbar.make(coordinatorLayout, "the group " + name + " has been added", Snackbar.LENGTH_SHORT)
-                        .show();
-            } catch (Exception e) {
-                Snackbar.make(coordinatorLayout, "no group were added", Snackbar.LENGTH_SHORT)
-                        .show();
-            }
+                String base64ID = new String(result.getContents().getBytes());
+                Group group = Group.getGroupFromBase64ID(base64ID);
+                if(group == null) {
+                    Snackbar.make(coordinatorLayout, "no group were added", Snackbar.LENGTH_SHORT)
+                            .show();
+                } else {
+                    // add Group to database
+                    EventBus.getDefault().post(new UserJoinGroup(group));
+                    Snackbar.make(coordinatorLayout, "the group " + group.getName() + " has been added", Snackbar.LENGTH_SHORT)
+                            .show();
+                }
         }
     }
 

@@ -54,7 +54,6 @@ public class DisplayQRCode extends AppCompatActivity {
         Drawable drawable = new BitmapDrawable(getResources(), bitmap);
         qrView.setImageDrawable(drawable);
         bufView.setText(buffer);
-
     }
 
     @Override
