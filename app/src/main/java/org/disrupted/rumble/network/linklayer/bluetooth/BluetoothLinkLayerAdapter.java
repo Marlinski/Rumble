@@ -119,6 +119,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
             return;
         activated = true;
         Log.d(TAG, "[+] Bluetooth Activated");
+        BluetoothUtil.prependRumblePrefix();
         started_time_nano = System.nanoTime();
         btScanner.startScanner();
         networkCoordinator.addScanner(btScanner);
@@ -134,6 +135,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
                 started_time_nano, System.nanoTime()));
         btScanner.stopScanner();
         networkCoordinator.delScanner(btScanner);
+        BluetoothUtil.unprependRumblePrefix();
     }
 
 

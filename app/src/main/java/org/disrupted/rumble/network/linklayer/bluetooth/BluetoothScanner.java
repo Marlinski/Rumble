@@ -41,8 +41,6 @@ import org.disrupted.rumble.network.linklayer.events.BluetoothScanEnded;
 import org.disrupted.rumble.network.linklayer.events.BluetoothScanStarted;
 import org.disrupted.rumble.network.events.ChannelConnected;
 import org.disrupted.rumble.network.events.ChannelDisconnected;
-import org.disrupted.rumble.network.events.NeighbourReachable;
-import org.disrupted.rumble.network.events.NeighbourUnreachable;
 import org.disrupted.rumble.network.linklayer.LinkLayerNeighbour;
 import org.disrupted.rumble.network.linklayer.Scanner;
 

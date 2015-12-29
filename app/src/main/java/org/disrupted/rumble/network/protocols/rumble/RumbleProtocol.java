@@ -194,6 +194,9 @@ public class RumbleProtocol implements Protocol {
 
     private void openChannel(LinkLayerNeighbour neighbour) {
         if (neighbour instanceof BluetoothNeighbour) {
+            BluetoothNeighbour btn = (BluetoothNeighbour)neighbour;
+            if(!btn.getBluetoothDeviceName().startsWith("RB42-"))
+                return;
             try {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
