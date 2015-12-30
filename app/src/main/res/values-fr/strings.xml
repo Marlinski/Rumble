@@ -101,7 +101,7 @@
 
     <string name="welcome_notice">Salut! Bienvenue sur Rumble là où la parole est libre et non censurable :)</string>
     <string name="warning_notice">Tout les messages sur ce réseau son publique par défaut, donc attention à ce que vous dites!</string>
-    <string name="login">Se connecter!</string>
+    <string name="login">Start!</string>
     <string name="bluetooth_disabled">désactivé</string>
     <string name="bluetooth_discoverable">découvrable</string>
     <string name="bluetooth_enabled">activé</string>
