@@ -158,7 +158,7 @@
     <string name="swipe_right">Netzwerkeinstellungen sind auf der rechten Seite erreichbar, wischen zum Öffnen ---&gt;&gt;&gt;</string>
     <string name="swipe_down">Immer, wenn du eine neue Nachricht empfängst, kannst du die Liste durch Wischen nach unten aktualisieren.</string>
     <string name="chat_message_tuto">Hier ist das Chatfenster, in dem du in Echtzeit Nachrichten mit den Nutzern in deiner Umgebung austauschen kannst. Diese Nachrichten werden nicht weitergeleitet. Öffne die Netzwerkeinstellungen, um zu sehen, ob jemand in deiner Nähe ist und fange an, zu chatten.</string>
-    <string name="login">Einloggen!</string>
+    <string name="login">Start!</string>
     <string name="login_username">Benutzername</string>
     <string name="login_bad_username">Unmöglicher Benutzername, wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
     <string name="warning_notice">Selbst wenn du eine private Gruppe erstellst, sind alle Nachrichten standardgemäß öffentlich, also sei vorsichtig mit dem, was du veröffentlichst</string>
