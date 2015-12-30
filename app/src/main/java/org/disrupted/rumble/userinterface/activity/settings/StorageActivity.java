@@ -251,19 +251,19 @@ public class StorageActivity extends AppCompatActivity {
 
     /** user feedback after clearing chats **/
     public void onEvent(ChatWipedEvent event) {
-	this.runOnUiThread(new Runnable () {
-	    public void run() {
-		Toast.makeText(getApplicationContext(), "Chats Cleared", Toast.LENGTH_LONG).show();
-	    }
-	});
+        this.runOnUiThread(new Runnable () {
+            public void run() {
+            Toast.makeText(getApplicationContext(), "Chats Cleared", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     /** user feedback after clearing statuses **/
     public void onEvent(StatusWipedEvent event) {
-	this.runOnUiThread(new Runnable () {
-	    public void run() {
-	        Toast.makeText(getApplicationContext(), "All Status Cleared", Toast.LENGTH_LONG).show();
-	    }
-	});
+        this.runOnUiThread(new Runnable () {
+            public void run() {
+                Toast.makeText(getApplicationContext(), "All Status Cleared", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }
