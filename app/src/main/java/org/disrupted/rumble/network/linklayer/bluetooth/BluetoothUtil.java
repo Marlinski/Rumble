@@ -130,6 +130,8 @@ public class BluetoothUtil {
         if (adapter == null)
             return;
         String name = adapter.getName();
+        if(name == null)
+            return;
         if(name.startsWith(prefix))
             adapter.setName(name.substring(prefix.length()));
         else
