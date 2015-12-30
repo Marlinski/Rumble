@@ -126,8 +126,8 @@
 
     <string name="debug_text">Logcat-Debugging</string>
 
-    <string name="statistic_disclaimer">DisruptedSystems nimmt an einem Forschungsprojekt teil und möchte einige Daten sammeln. Diese Daten sind anonym und können keinem Gerät oder Individuum zugeordnet werden. Durch das Teilen dieser Daten hilfst du uns, bessere Algorithmen und Protokolle zu entwickeln. Wenn du mehr über unsere Privatsphäreregelungen wissen möchtest, besuche bitte http://disruptedsystems.org/documentation/#statistics (Englisch). Bitte wähle die folgende Auswahlbox, wenn du mit deinen Daten nicht teilnehmen möchtest.</string>
-    <string name="statistic_usage">Ich möchte nicht teilnehmen</string>
+    <string name="statistic_disclaimer">DisruptedSystems nimmt an einem Forschungsprojekt teil und möchte einige Daten sammeln. Diese Daten sind anonym und können keinem Gerät oder Individuum zugeordnet werden. Durch das Teilen dieser Daten hilfst du uns, bessere Algorithmen und Protokolle zu entwickeln. Wenn du mehr über unsere Privatsphäreregelungen wissen möchtest, besuche bitte http://disruptedsystems.org/documentation/#statistics (Englisch). Bitte wähle die folgende Auswahlbox, wenn du mit deinen Daten teilnehmen möchtest.</string>
+    <string name="statistic_usage">Ich möchte teilnehmen</string>
 
     <string name="setting_about_rumble">Versionsname</string>
     <string name="setting_about_project">Projektaccount</string>

@@ -57,7 +57,7 @@ public class RumblePreferences {
     }
 
     public static boolean UserOkWithSharingAnonymousData(Context context) {
-        return getBooleanPreference(context, PREF_USER_OK_SYNC, true);
+        return getBooleanPreference(context, PREF_USER_OK_SYNC, false);
     }
     public static void setUserPreferenceWithSharingData(Context context, Boolean bool) {
         setBooleanPreference(context, PREF_USER_OK_SYNC, bool);

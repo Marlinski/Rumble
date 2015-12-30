@@ -51,11 +51,11 @@ public class StatisticActivity extends AppCompatActivity {
         actionBar.setDisplayShowHomeEnabled(false);
 
         CheckBox checkBox = (CheckBox)findViewById(R.id.stat_check_box);
-        checkBox.setChecked(!RumblePreferences.UserOkWithSharingAnonymousData(this));
+        checkBox.setChecked(RumblePreferences.UserOkWithSharingAnonymousData(this));
         checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                RumblePreferences.setUserPreferenceWithSharingData(StatisticActivity.this, !isChecked);
+                RumblePreferences.setUserPreferenceWithSharingData(StatisticActivity.this, isChecked);
             }
         });
     }
