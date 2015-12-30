@@ -37,6 +37,7 @@ import org.disrupted.rumble.network.events.ChannelConnected;
 import org.disrupted.rumble.network.events.ChannelDisconnected;
 import org.disrupted.rumble.network.events.ContactDisconnected;
 import org.disrupted.rumble.network.protocols.events.ContactInformationReceived;
+import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.util.NetUtil;
 
 import java.util.HashMap;
@@ -327,7 +328,7 @@ public class NeighbourManager {
         }
     }
 
-    public Set<Neighbour> getNeighbourList() {
+    public Set<Neighbour> getNeighbourList(boolean everybody) {
         Set<Neighbour> ret = new HashSet<Neighbour>();
 
         synchronized (managerLock) {
@@ -356,8 +357,18 @@ public class NeighbourManager {
                         }
                     }
                 }
-                if(!found)
+                if(!found) {
+                    if(!everybody) {
+                        if (neighbour instanceof BluetoothNeighbour) {
+                            BluetoothNeighbour btn = (BluetoothNeighbour) neighbour;
+                            if (btn.getBluetoothDeviceName() == null)
+                                continue;
+                            if (!btn.getBluetoothDeviceName().startsWith(RumbleProtocol.RUMBLE_BLUETOOTH_PREFIX))
+                                continue;
+                        }
+                    }
                     ret.add(new UnknowNeighbour(neighbour, detail.channels));
+                }
             }
         }
 
