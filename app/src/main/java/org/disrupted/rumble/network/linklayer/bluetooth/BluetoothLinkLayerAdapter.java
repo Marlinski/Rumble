@@ -26,7 +26,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
 
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
 import org.disrupted.rumble.util.Log;
@@ -121,7 +120,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
             return;
         activated = true;
         Log.d(TAG, "[+] Bluetooth Activated");
-        BluetoothUtil.prependRumblePrefix(RumbleProtocol.RUMBLE_BLUETOOTH_PREFIX);
+        BluetoothUtil.prependRumblePrefixToDeviceName(RumbleProtocol.RUMBLE_BLUETOOTH_PREFIX);
         started_time_nano = System.nanoTime();
         btScanner.startScanner();
         networkCoordinator.addScanner(btScanner);
@@ -137,7 +136,7 @@ public class BluetoothLinkLayerAdapter extends HandlerThread implements LinkLaye
                 started_time_nano, System.nanoTime()));
         btScanner.stopScanner();
         networkCoordinator.delScanner(btScanner);
-        BluetoothUtil.unprependRumblePrefix(RumbleProtocol.RUMBLE_BLUETOOTH_PREFIX);
+        BluetoothUtil.unprependRumblePrefixFromDeviceName(RumbleProtocol.RUMBLE_BLUETOOTH_PREFIX);
     }
 
 

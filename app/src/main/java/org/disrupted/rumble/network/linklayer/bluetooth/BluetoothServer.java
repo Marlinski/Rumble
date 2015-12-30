@@ -109,6 +109,7 @@ public abstract class BluetoothServer implements Worker {
         }
 
         try {
+            Log.d(TAG, "[+] bluetooth server started on UUID "+bt_service_uuid);
             while(true) {
                 BluetoothSocket mmConnectedSocket = mmServerSocket.accept();
                 if (mmConnectedSocket != null) {

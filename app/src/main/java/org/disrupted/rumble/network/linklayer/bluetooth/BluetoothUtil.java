@@ -29,6 +29,8 @@ import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.app.RumbleApplication;
 
+import java.util.UUID;
+
 /**
  * @author Lucien Loiseau
  */
@@ -112,7 +114,7 @@ public class BluetoothUtil {
         activity.startActivityForResult(discoverableBTIntent, REQUEST_ENABLE_DISCOVERABLE);
     }
 
-    public static void prependRumblePrefix(String prefix) {
+    public static void prependRumblePrefixToDeviceName(String prefix) {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if (adapter == null)
             return;
@@ -123,7 +125,7 @@ public class BluetoothUtil {
             adapter.setName(prefix+name);
     }
 
-    public static void unprependRumblePrefix(String prefix) {
+    public static void unprependRumblePrefixFromDeviceName(String prefix) {
         BluetoothAdapter adapter = BluetoothUtil.getBluetoothAdapter(RumbleApplication.getContext());
         if (adapter == null)
             return;

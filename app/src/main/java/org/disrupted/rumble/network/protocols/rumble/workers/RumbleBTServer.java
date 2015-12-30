@@ -20,6 +20,8 @@
 package org.disrupted.rumble.network.protocols.rumble.workers;
 
 import android.bluetooth.BluetoothSocket;
+
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
 import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
@@ -48,14 +50,23 @@ public class RumbleBTServer extends BluetoothServer {
     /*
      * Bluetooth Configuration
      */
-    public static final UUID   RUMBLE_BT_UUID_128 = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
+    public static final UUID   RUMBLE_BT_UUID_128_DEFAULT = UUID.fromString("db64c0d0-4dff-11e4-916c-0800200c9a66");
+    public static final String RUMBLE_BT_UUID_128_PREFIX = "db64c0d0-4dff-11e4-916c-";
     public static final String RUMBLE_BT_STR      = "org.disrupted.rumble";
 
     private final RumbleProtocol protocol;
     private final NetworkCoordinator networkCoordinator;
 
+    private static UUID prepareUUID() {
+        String macAddress = BluetoothUtil.getBluetoothMacAddress();
+        if(macAddress == null)
+            return RUMBLE_BT_UUID_128_DEFAULT;
+        else
+            return UUID.fromString(RUMBLE_BT_UUID_128_PREFIX+macAddress.replaceAll(":",""));
+    }
+
     public RumbleBTServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator) {
-        super(RUMBLE_BT_UUID_128, RUMBLE_BT_STR, false);
+        super(prepareUUID(), RUMBLE_BT_STR, false);
         this.protocol = protocol;
         this.networkCoordinator = networkCoordinator;
     }

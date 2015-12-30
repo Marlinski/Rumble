@@ -45,6 +45,7 @@ import org.disrupted.rumble.network.protocols.rumble.workers.RumbleUnicastChanne
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import de.greenrobot.event.EventBus;
 
@@ -196,12 +197,15 @@ public class RumbleProtocol implements Protocol {
     private void openChannel(LinkLayerNeighbour neighbour) {
         if (neighbour instanceof BluetoothNeighbour) {
             BluetoothNeighbour btn = (BluetoothNeighbour)neighbour;
+            if(btn.getBluetoothDeviceName() == null)
+                return;
             if(!btn.getBluetoothDeviceName().startsWith(RUMBLE_BLUETOOTH_PREFIX))
                 return;
             try {
                 BluetoothConnection con = new BluetoothClientConnection(
                         neighbour.getLinkLayerAddress(),
-                        RumbleBTServer.RUMBLE_BT_UUID_128,
+                        UUID.fromString(RumbleBTServer.RUMBLE_BT_UUID_128_PREFIX+
+                                neighbour.getLinkLayerAddress().replaceAll(":","")),
                         RumbleBTServer.RUMBLE_BT_STR,
                         false);
                 Worker rumbleOverBluetooth = new RumbleUnicastChannel(this, con);
