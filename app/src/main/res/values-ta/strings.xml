@@ -39,7 +39,7 @@
     <string name="navigation_drawer_hashtag">Hash குறிசொற்கள்</string>
     <string name="navigation_drawer_status_favorites">பிடித்தவை</string>
     <string name="navigation_drawer_settings">அமைப்புகள்</string>
-    <string name="navigation_drawer_exit">பணிநிறுத்தக</string>
+    <string name="navigation_drawer_exit">பணிநிறுத்துக</string>
 
     <string name="status_viewer">நிலை</string>
     <string name="status_more_option_like">விருப்பம்</string>
