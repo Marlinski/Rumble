@@ -84,6 +84,9 @@
         android:required="false"
         android:name="android.hardware.sensor.accelerometer"/>
 
+    <!--Permission to vibrate the device on incoming events -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+
 
     <application
         android:icon="@drawable/ic_launcher_rumble"
