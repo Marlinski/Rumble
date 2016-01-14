@@ -57,16 +57,8 @@ public class RumbleBTServer extends BluetoothServer {
     private final RumbleProtocol protocol;
     private final NetworkCoordinator networkCoordinator;
 
-    private static UUID prepareUUID() {
-        String macAddress = BluetoothUtil.getBluetoothMacAddress();
-        if(macAddress == null)
-            return RUMBLE_BT_UUID_128_DEFAULT;
-        else
-            return UUID.fromString(RUMBLE_BT_UUID_128_PREFIX+macAddress.replaceAll(":",""));
-    }
-
-    public RumbleBTServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator) {
-        super(prepareUUID(), RUMBLE_BT_STR, false);
+    public RumbleBTServer(RumbleProtocol protocol, NetworkCoordinator networkCoordinator, UUID uuid) {
+        super(uuid, RUMBLE_BT_STR, false);
         this.protocol = protocol;
         this.networkCoordinator = networkCoordinator;
     }

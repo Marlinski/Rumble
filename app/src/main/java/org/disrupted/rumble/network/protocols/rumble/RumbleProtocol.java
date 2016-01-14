@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.network.protocols.rumble;
 
+import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothUtil;
 import org.disrupted.rumble.util.Log;
 
 import org.disrupted.rumble.network.NetworkCoordinator;
@@ -143,8 +144,23 @@ public class RumbleProtocol implements Protocol {
             return;
 
         if(event.linkLayerIdentifier.equals(BluetoothLinkLayerAdapter.LinkLayerIdentifier)) {
-            Worker BTServer = new RumbleBTServer(this, networkCoordinator);
+            UUID uuid;
+            String macAddress = BluetoothUtil.getBluetoothMacAddress();
+            if(macAddress == null)
+                uuid = RumbleBTServer.RUMBLE_BT_UUID_128_DEFAULT;
+            else
+                uuid = UUID.fromString(RumbleBTServer.RUMBLE_BT_UUID_128_PREFIX+macAddress.replaceAll(":",""));
+
+            Worker BTServer = new RumbleBTServer(this, networkCoordinator,uuid);
             networkCoordinator.addWorker(BTServer);
+
+            // backward compatibility
+            /*
+            if(!uuid.equals(RumbleBTServer.RUMBLE_BT_UUID_128_DEFAULT)) {
+                Worker BTServerOld = new RumbleBTServer(this, networkCoordinator, RumbleBTServer.RUMBLE_BT_UUID_128_DEFAULT);
+                networkCoordinator.addWorker(BTServer);
+            }
+            */
         }
 
         if(event.linkLayerIdentifier.equals(WifiLinkLayerAdapter.LinkLayerIdentifier)) {
