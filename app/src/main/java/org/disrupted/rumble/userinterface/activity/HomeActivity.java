@@ -52,6 +52,8 @@ import org.disrupted.rumble.userinterface.adapter.HomePagerAdapter;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessageList;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
+import org.disrupted.rumble.userinterface.events.UserEnteredChatTab;
+import org.disrupted.rumble.userinterface.events.UserLeftChatTab;
 
 import de.greenrobot.event.EventBus;
 
@@ -135,6 +137,21 @@ public class HomeActivity extends AppCompatActivity {
             EventBus.getDefault().unregister(this);
         super.onDestroy();
     }
+
+    @Override
+    protected void onResume() {
+        if (viewPager.getCurrentItem() == 1){
+	    EventBus.getDefault().post(new UserEnteredChatTab());
+	}
+	super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        EventBus.getDefault().post(new UserLeftChatTab());
+        super.onPause();
+    }
+
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -239,8 +256,10 @@ public class HomeActivity extends AppCompatActivity {
             FragmentChatMessageList fragment = (FragmentChatMessageList) pagerAdapter.getItem(1);
             if(position == 1) {
                 fragment.pageIn();
+		EventBus.getDefault().post(new UserEnteredChatTab());
             } else {
                 fragment.pageOut();
+		EventBus.getDefault().post(new UserLeftChatTab());
             }
         }
     };

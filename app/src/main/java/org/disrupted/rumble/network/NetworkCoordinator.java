@@ -19,6 +19,8 @@
 
 package org.disrupted.rumble.network;
 
+import android.os.Vibrator;
+import android.content.Context;
 
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -39,6 +41,9 @@ import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
+import org.disrupted.rumble.userinterface.events.UserEnteredChatTab;
+import org.disrupted.rumble.userinterface.events.UserLeftChatTab;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -70,6 +75,7 @@ public class NetworkCoordinator extends Service {
 
     private Looper  serviceLooper;
     private Handler serviceHandler;
+    private boolean isChatTabFocused;
 
     private List<LinkLayerAdapter>  adapters;
     private Map<String, WorkerPool> workerPools;
@@ -366,4 +372,20 @@ public class NetworkCoordinator extends Service {
     public void onEvent(NoSubscriberEvent event) {
     }
 
+    /** toggle variable **/
+    public void onEvent(UserEnteredChatTab event) {
+        isChatTabFocused = true;
+    }
+
+    public void onEvent(UserLeftChatTab event) {
+        isChatTabFocused = false;
+    }
+
+    /** Vibrates when a chat message is recieved **/
+    public void onEvent(ChatMessageReceived event) {
+        if (!isChatTabFocused) {
+	    Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+	    vibrator.vibrate(300);
+	}
+    }
 }
