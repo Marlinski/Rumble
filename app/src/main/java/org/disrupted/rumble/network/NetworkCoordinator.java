@@ -72,7 +72,7 @@ public class NetworkCoordinator extends Service {
     public static final String ACTION_MAIN_ACTION      = "org.disruptedsystems.rumble.action.mainaction";
     public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
-    // no particular rationale behind choosing this number, just followed above //
+    // no particular rationale behind choosing this number, just followed above
     public static final int    CHAT_NOTIFICATION_ID = 4343;
 
     private static final String TAG = "NetworkCoordinator";
@@ -82,7 +82,7 @@ public class NetworkCoordinator extends Service {
     private Looper  serviceLooper;
     private Handler serviceHandler;
 
-    // toggle variable to control notification & vibration //
+    // toggle variable to control notification & vibration
     private boolean isChatTabFocused;
 
     private List<LinkLayerAdapter>  adapters;
@@ -213,7 +213,7 @@ public class NetworkCoordinator extends Service {
         return START_STICKY;
     }
 
-    /** method that prepares notification and returns notification builder instance **/
+    // method that prepares notification and returns notification builder instance
     private NotificationCompat.Builder showNotification(String title, String ticker, String content, int iconId, PendingIntent pendingIntent, boolean onGoing){
         NotificationCompat.Builder notification = new NotificationCompat.Builder(this)
                         .setContentTitle(title)
@@ -393,17 +393,17 @@ public class NetworkCoordinator extends Service {
 	/* assigning true will prevent notification & vibration on new
 	 * ChatMessageReceived event since the user already in the chat
 	 * tab and application is in focus.
-	 * /
+	 */
 	isChatTabFocused = true;
 
 	/* we reset the chat notification counter whenever
 	 * user visits the chat tab and clears the notification
-	 * /
+	 */
 	 chatCounter = 0;
 
 	 /* since user visited the chat tab, any pending notifications of
 	  * chat are cleared.
-	  * /
+	  */
 	 mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 	 mNotificationManager.cancel(CHAT_NOTIFICATION_ID);
     }
@@ -412,13 +412,13 @@ public class NetworkCoordinator extends Service {
         /* assigning false will enable notification & vibration on new
 	 * ChatMessageRecevied event whenever the chat tab and application
 	 * is not in focus.
-	 * /
+	 */
         isChatTabFocused = false;
     }
 
-    /** Vibrates when a chat message is recieved **/
+    // vibrates when a chat message is recieved
     public void onEvent(ChatMessageReceived event) {
-        /** check the toggle variable before sending notification or vibration **/
+        // check the toggle variable before sending notification or vibration
         if (!isChatTabFocused) {
 	    Intent chatIntent = new Intent(this, HomeActivity.class);
 	    PendingIntent pIntent =  PendingIntent.getActivity(this, 0, chatIntent, 0);
