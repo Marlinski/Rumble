@@ -421,6 +421,10 @@ public class NetworkCoordinator extends Service {
         // check the toggle variable before sending notification or vibration
         if (!isChatTabFocused) {
 	    Intent chatIntent = new Intent(this, HomeActivity.class);
+	    // on pressing this notification should open chat tab instead of status tab
+	    chatIntent.putExtra("chatTab", 1);
+	    chatIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
 	    PendingIntent pIntent =  PendingIntent.getActivity(this, 0, chatIntent, 0);
 
 	    chatCounter++;

@@ -139,10 +139,23 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onNewIntent(Intent intent){
+        super.onNewIntent(intent);
+	setIntent(intent);
+    }
+
+    @Override
     protected void onResume() {
         if (viewPager.getCurrentItem() == 1){
 	    EventBus.getDefault().post(new UserEnteredChatTab());
 	}
+
+	/* if resumed through chat notification, open the chat
+	 * tab directly else stay in the default statusTab.
+	 */
+	int chatTab = getIntent().getIntExtra("chatTab", 0);
+	viewPager.setCurrentItem(chatTab);
+
 	super.onResume();
     }
 
