@@ -80,6 +80,7 @@
     <string name="action_network">Netzwerke</string>
     <string name="action_create_group">Neue Gruppe</string>
     <string name="action_scan_qrcode">Scanne Gruppe</string>
+    <string name="action_input_key">Gruppenschlüssel von Hand eingeben</string>
     <string name="action_new_discussion">Neue Diskussion</string>
 
     <string name="popup_compose_title">Verfassen</string>
@@ -89,6 +90,7 @@
     <string name="popup_create_group">Erstelle eine neue Gruppe</string>
     <string name="popup_create_group_checkbox_private">Private Gruppe</string>
     <string name="popup_create_group_checkbox_public">Öffentliche Gruppe</string>
+    <string name="popup_input_group_key">Gruppenschlüssel eingeben</string>
 
     <string name="popup_question_yes">Ja</string>
     <string name="popup_question_no">Nein</string>
@@ -107,13 +109,13 @@
     <string name="drawer_force_scan">Scannen erzwingen</string>
 
     <string name="settings_title">Einstellungen</string>
-    <string name="settings_action_wipe_status">Stati aus Datenbank löschen</string>
+    <string name="settings_action_wipe_status">Alle Statusnachrichten aus Datenbank löschen</string>
     <string name="settings_action_wipe_chat">Chatnachrichten aus Datenbank löschen</string>
     <string name="settings_storage">Speicher</string>
     <string name="settings_usage">Datennutzung</string>
     <string name="settings_storage_total">GESAMT</string>
     <string name="settings_clear_data">DATEN LÖSCHEN</string>
-    <string name="settings_clear_push">Stati löschen</string>
+    <string name="settings_clear_push">Statusnachrichten löschen</string>
     <string name="settings_clear_chat">Chat löschen</string>
     <string name="settings_clear_files">Dateien löschen</string>
     <string name="settings_detail_app">Anwendungsgröße</string>
@@ -126,7 +128,7 @@
 
     <string name="debug_text">Logcat-Debugging</string>
 
-    <string name="statistic_disclaimer">DisruptedSystems nimmt an einem Forschungsprojekt teil und möchte einige Daten sammeln. Diese Daten sind anonym und können keinem Gerät oder Individuum zugeordnet werden. Durch das Teilen dieser Daten hilfst du uns, bessere Algorithmen und Protokolle zu entwickeln. Wenn du mehr über unsere Privatsphäreregelungen wissen möchtest, besuche bitte http://disruptedsystems.org/documentation/#statistics (Englisch). Bitte wähle die folgende Auswahlbox, wenn du mit deinen Daten teilnehmen möchtest.</string>
+    <string name="statistic_disclaimer">DisruptedSystems nimmt an einem Forschungsprojekt teil und möchte einige Daten sammeln. Diese Daten sind anonym und können keinem Gerät oder Individuum zugeordnet werden. Durch das Teilen dieser Daten hilfst du uns, bessere Algorithmen und Protokolle zu entwickeln. Wenn du mehr über unsere Privatsphäreregelungen wissen möchtest, besuche bitte http://disruptedsystems.org/documentation/#statistics. Bitte wähle die folgende Auswahlbox, wenn du mit deinen Daten teilnehmen möchtest.</string>
     <string name="statistic_usage">Ich möchte teilnehmen</string>
 
     <string name="setting_about_rumble">Versionsname</string>
@@ -153,16 +155,14 @@
     <string name="filter_subscribed">abonniert</string>
     <string name="toast_subscribed_to">Abonniert:</string>
 
-    <string name="welcome_notice">Hallo du, wilkommen im Rumble-Netzwerk, wo die Infrastruktur in der Hand des Nutzers liegt! Jede Nachricht hier wird zu Geräten anderer Rumble-Nutzer in deiner Nähe weitergeleitet.</string>
-    <string name="swipe_left">&lt;&lt;&lt;--- Navigationsleiste ist erreichbar auf der linken Seite, wischen zum Öffnen</string>
-    <string name="swipe_right">Netzwerkeinstellungen sind auf der rechten Seite erreichbar, wischen zum Öffnen ---&gt;&gt;&gt;</string>
+    <string name="welcome_notice">Hallo und willkommen im Rumble-Netzwerk, wo die Infrastruktur in der Hand des Nutzers liegt! Jede Nachricht hier wird zu Geräten anderer Rumble-Nutzer in deiner Nähe weitergeleitet.</string>
+    <string name="swipe_left">&lt;&lt;&lt;--- Die Navigationsleiste ist auf der linken Seite erreichbar, wische über den Bildschirm zum Öffnen</string>
+    <string name="swipe_right">Die Netzwerkeinstellungen sind auf der rechten Seite erreichbar, wische über den Bildschirm zum Öffnen ---&gt;&gt;&gt;</string>
     <string name="swipe_down">Immer, wenn du eine neue Nachricht empfängst, kannst du die Liste durch Wischen nach unten aktualisieren.</string>
     <string name="chat_message_tuto">Hier ist das Chatfenster, in dem du in Echtzeit Nachrichten mit den Nutzern in deiner Umgebung austauschen kannst. Diese Nachrichten werden nicht weitergeleitet. Öffne die Netzwerkeinstellungen, um zu sehen, ob jemand in deiner Nähe ist und fange an, zu chatten.</string>
     <string name="login">Start!</string>
     <string name="login_username">Benutzername</string>
-    <string name="login_bad_username">Unmöglicher Benutzername, wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
-    <string name="warning_notice">Selbst wenn du eine private Gruppe erstellst, sind alle Nachrichten standardgemäß öffentlich, also sei vorsichtig mit dem, was du veröffentlichst</string>
-    <string name="action_input_key">Gruppenschlüssel von Hand eingeben</string>
-    <string name="popup_input_group_key">Gruppenschlüssel eingeben</string>
+    <string name="login_bad_username">Ungültiger Benutzername, bitte wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
+    <string name="warning_notice">Du kannst zwar private Gruppen erstellen, beachte jedoch, dass alle anderen Nachrichten standardmäßig öffentlich sind, also sei vorsichtig mit dem, was du veröffentlichst</string>
 
 </resources>
