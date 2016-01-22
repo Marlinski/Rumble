@@ -188,15 +188,15 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
 
                         final String filename =  status.getFileName();
 
-			/* we open the attached image through gallery */
+			            /* we open the attached image through gallery */
                         attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 Log.d(TAG, "trying to open: " + filename);
-				Intent intent = new Intent();
-				intent.setAction(Intent.ACTION_VIEW);
-				intent.setDataAndType(Uri.parse("file://"+attachedFile.getAbsolutePath()), "image/*");
-				activity.startActivity(intent);
+				                Intent intent = new Intent();
+				                intent.setAction(Intent.ACTION_VIEW);
+				                intent.setDataAndType(Uri.parse("file://"+attachedFile.getAbsolutePath()), "image/*");
+				                activity.startActivity(intent);
                             }
                         });
                     } catch (IOException ignore) {
