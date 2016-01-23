@@ -159,5 +159,6 @@
     <string name="popup_input_group_key">Entrez la clé du groupe</string>
     <string name="action_input_key">Taper la clé de groupe</string>
     <string name="default_rumble_group_desc">groupe publique pour la communication tolérant aux délais avec Rumble.</string>
+    <string name="description">Description:</string>
 
 </resources>

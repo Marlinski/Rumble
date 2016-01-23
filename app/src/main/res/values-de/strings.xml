@@ -63,8 +63,8 @@
     <string name="contact_detail_message_bluetooth_name">Bluetooth Gerätename</string>
     <string name="contact_detail_message_wifi_mac">WLAN Mac-Adresse</string>
 
-    <string name="group_action_invite_user">lad einen Benutzer ein</string>
-    <string name="group_action_delete">lösche eine Gruppe</string>
+    <string name="group_action_invite_user">Benutzer einladen</string>
+    <string name="group_action_delete">Gruppe löschen</string>
     <string name="group_confirm_delete">Bist du sicher, dass du alle Statusnachrichten dieser Gruppe löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.</string>
     <string name="group_action_leave">Gruppe verlassen</string>
     <string name="group_confirm_leave">Bist du sicher, dass du diese Gruppe verlassen möchtest? Alle Statusnachrichten dieser Gruppe werden gelöscht.</string>
@@ -165,5 +165,6 @@
     <string name="login_bad_username">Ungültiger Benutzername, bitte wähle einen einzeiligen Namen (nicht mehr als 20 Zeichen)!</string>
     <string name="warning_notice">Du kannst zwar private Gruppen erstellen, beachte jedoch, dass alle anderen Nachrichten standardmäßig öffentlich sind, also sei vorsichtig mit dem, was du veröffentlichst</string>
     <string name="default_rumble_group_desc">öffentlich zugängliche Gruppe für unterbrechungstolerante Kommunikation mit Rumble.</string>
+    <string name="description">Beschreibung:</string>
 
 </resources>

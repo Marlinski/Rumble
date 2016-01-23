@@ -165,5 +165,6 @@
     <string name="login_bad_username">Bad username, pick a one-liner username (no more than 20 characters)!</string>
     <string name="warning_notice">Even though you can create private groups, all the messages are public by default so be careful with what you disclose</string>
     <string name="default_rumble_group_desc">open and public group for delay tolerant communication with Rumble.</string>
+    <string name="description">Description:</string>
 
 </resources>
