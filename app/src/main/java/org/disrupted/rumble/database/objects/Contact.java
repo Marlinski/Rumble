@@ -93,7 +93,7 @@ public class Contact {
     }
 
     public static boolean checkUsername(String username) {
-        if(username.length() > CONTACT_NAME_MAX_SIZE)
+        if(username.length() > CONTACT_NAME_MAX_SIZE || username.trim().length() == 0)
             return false;
         if(username.contains("\n"))
             return false;
