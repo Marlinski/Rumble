@@ -162,7 +162,7 @@
     <string name="chat_message_tuto">Here is the chat window to send and receive real time message with the people around you. Those messages aren\'t forwarded any further. Open the network drawer to see if there is people around you and start chatting with them.</string>
     <string name="login">Start!</string>
     <string name="login_username">Username</string>
-    <string name="login_bad_username">Wrong username, pick a one-liner username (no more than 20 characters)!</string>
+    <string name="login_bad_username">Bad username, pick a one-liner username (no more than 20 characters)!</string>
     <string name="warning_notice">Even though you can create private groups, all the messages are public by default so be careful with what you disclose</string>
 
 </resources>
