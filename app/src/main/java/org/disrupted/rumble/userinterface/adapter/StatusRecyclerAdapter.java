@@ -36,6 +36,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.net.Uri;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
@@ -174,7 +175,7 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                 if (status.hasAttachedFile()) {
                     attachedView.setVisibility(View.VISIBLE);
                     try {
-                        File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+                        final File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
 
                         if (!attachedFile.isFile() || !attachedFile.exists())
                             throw new IOException("file does not exists");
@@ -186,13 +187,16 @@ public class StatusRecyclerAdapter extends RecyclerView.Adapter<StatusRecyclerAd
                                 .into(attachedView);
 
                         final String filename =  status.getFileName();
+
+			            /* we open the attached image through gallery */
                         attachedView.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
                                 Log.d(TAG, "trying to open: " + filename);
-                                Intent intent = new Intent(activity, DisplayImage.class);
-                                intent.putExtra("IMAGE_NAME", filename);
-                                activity.startActivity(intent);
+				                Intent intent = new Intent();
+				                intent.setAction(Intent.ACTION_VIEW);
+				                intent.setDataAndType(Uri.parse("file://"+attachedFile.getAbsolutePath()), "image/*");
+				                activity.startActivity(intent);
                             }
                         });
                     } catch (IOException ignore) {

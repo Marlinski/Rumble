@@ -28,6 +28,7 @@ import android.text.util.Linkify;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.net.Uri;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.amulyakhare.textdrawable.util.ColorGenerator;
@@ -125,7 +126,7 @@ public class DisplayStatusActivity extends AppCompatActivity {
         if (status.hasAttachedFile()) {
             attachedView.setVisibility(View.VISIBLE);
             try {
-                File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
+                final File attachedFile = new File(FileUtil.getReadableAlbumStorageDir(), status.getFileName());
 
                 if (!attachedFile.isFile() || !attachedFile.exists())
                     throw new IOException("file does not exists");
@@ -137,13 +138,17 @@ public class DisplayStatusActivity extends AppCompatActivity {
                         .into(attachedView);
 
                 final String filename =  status.getFileName();
+
+		/* we open the attached image file in gallery */
                 attachedView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         Log.d(TAG, "trying to open: " + filename);
-                        Intent intent = new Intent(DisplayStatusActivity.this, DisplayImage.class);
-                        intent.putExtra("IMAGE_NAME", filename);
-                        startActivity(intent);
+			Intent intent = new Intent();
+			intent.setAction(Intent.ACTION_VIEW);
+			intent.setDataAndType(Uri.parse("file://"+attachedFile.getAbsolutePath()), "image/*");
+			startActivity(intent);
+
                     }
                 });
             } catch (IOException ignore) {
