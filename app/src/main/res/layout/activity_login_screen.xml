@@ -47,7 +47,8 @@
             android:minWidth="200dp"
             android:textAppearance="@android:style/TextAppearance.Medium"
             android:hint="username"
-            android:imeOptions="actionGo"/>
+            android:singleLine="true"
+            android:imeOptions="actionDone"/>
 
 
         <Button

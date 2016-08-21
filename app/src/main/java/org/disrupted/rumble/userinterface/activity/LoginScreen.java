@@ -71,7 +71,7 @@ public class LoginScreen extends Activity{
         username.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if(actionId == EditorInfo.IME_ACTION_GO)
+                if(actionId == EditorInfo.IME_ACTION_DONE)
                 {
                     login();
                     return true;
