@@ -19,6 +19,8 @@ package org.disrupted.rumble.database.objects;
 
 import android.util.Base64;
 
+import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.util.CryptoUtil;
 import org.disrupted.rumble.util.HashUtil;
 
@@ -49,8 +51,8 @@ public class Group {
 
     public static Group getDefaultGroup() {
         try {
-            Group defaultGroup =  createNewGroup(DEFAULT_PUBLIC_GROUP, false);
-            defaultGroup.setDesc("open and public group for delay tolerant communication with Rumble.");
+            Group defaultGroup = createNewGroup(DEFAULT_PUBLIC_GROUP, false);
+            defaultGroup.setDesc(RumbleApplication.getContext().getString(R.string.default_rumble_group_desc));
             return defaultGroup;
         } catch ( CryptoUtil.CryptographicException impossible ) {
             return null;

@@ -101,7 +101,7 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
             if(group.getDesc().equals(""))
                 group_desc.setVisibility(View.GONE);
             else
-                group_desc.setText("Description: "+group.getDesc());
+                group_desc.setText(activity.getString(R.string.description)+ " " + group.getDesc());
 
 
             /*

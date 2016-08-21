@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class Contact {
 
-    public static final int CONTACT_NAME_MAX_SIZE = 50;
+    public static final int CONTACT_NAME_MAX_SIZE = 20;
     public static final int CONTACT_UID_RAW_SIZE  = 8;
 
     /* core attributes */
@@ -93,7 +93,7 @@ public class Contact {
     }
 
     public static boolean checkUsername(String username) {
-        if(username.length() > CONTACT_NAME_MAX_SIZE)
+        if(username.length() > CONTACT_NAME_MAX_SIZE || username.trim().length() == 0)
             return false;
         if(username.contains("\n"))
             return false;

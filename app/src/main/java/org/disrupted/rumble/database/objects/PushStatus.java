@@ -99,7 +99,7 @@ public class PushStatus {
         hashtagSet  = new HashSet<String>();
         Pattern hashtagPattern = Pattern.compile("#(\\w+|\\W+)");
         Matcher hashtagMatcher = hashtagPattern.matcher(post);
-        hashtagSet  = new HashSet<String>();
+
         while (hashtagMatcher.find()) {
             hashtagSet.add(hashtagMatcher.group(0));
         }
