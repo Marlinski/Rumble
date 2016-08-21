@@ -65,7 +65,7 @@
 
     <string name="group_action_invite_user">invite a user</string>
     <string name="group_action_delete">delete group</string>
-    <string name="group_confirm_delete">Are your sure you want to delete every status from this group ? This action cannot be cancelled.</string>
+    <string name="group_confirm_delete">Are you sure you want to delete every status from this group ? This action cannot be cancelled.</string>
     <string name="group_action_leave">leave group</string>
     <string name="group_confirm_leave">Are you sure you want to leave this group ? Every status from this group will be destroyed.</string>
     <string name="group_private_confirm_leave">Are you sure you want to leave this group ? Every status from this group will be destroyed. This group being private, you will have to be invited by a member to re-join the group.</string>
