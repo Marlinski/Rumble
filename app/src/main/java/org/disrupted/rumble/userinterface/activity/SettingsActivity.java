@@ -36,6 +36,7 @@ import org.disrupted.rumble.database.DatabaseFactory;
 import org.disrupted.rumble.userinterface.activity.settings.AboutActivity;
 import org.disrupted.rumble.userinterface.activity.settings.DebugActivity;
 import org.disrupted.rumble.userinterface.activity.settings.LicenceActivity;
+import org.disrupted.rumble.userinterface.activity.settings.MiscellaneousActivity;
 import org.disrupted.rumble.userinterface.activity.settings.StatisticActivity;
 import org.disrupted.rumble.userinterface.activity.settings.StorageActivity;
 import org.disrupted.rumble.userinterface.events.UserWipeChatMessages;
@@ -79,6 +80,9 @@ public class SettingsActivity extends AppCompatActivity{
 
         LinearLayout stat = (LinearLayout)findViewById(R.id.setting_statistic);
         stat.setOnClickListener(openActivity(StatisticActivity.class));
+
+        LinearLayout misc = (LinearLayout)findViewById(R.id.setting_misc);
+        misc.setOnClickListener(openActivity(MiscellaneousActivity.class));
 
         LinearLayout about = (LinearLayout)findViewById(R.id.setting_about);
         about.setOnClickListener(openActivity(AboutActivity.class));

@@ -30,12 +30,13 @@ import org.disrupted.rumble.app.RumbleApplication;
  */
 public class RumblePreferences {
 
+    public static final String PREF_START_ON_BOOT       = "start_on_boot";
     public static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
-    public static final String PREF_USER_OK_SYNC   = "ok_sync";
-    public static final String PREF_LOGCAT_DEBUG   = "logcat_debug";
-    public static final String USER_ANONYMOUS_ID = "anonymous_id";
-    public static final String LAST_SYNC = "last_sync";
-    private static final int   SYNC_EVERY = 3600*24*1000;
+    public static final String PREF_USER_OK_SYNC        = "ok_sync";
+    public static final String PREF_LOGCAT_DEBUG        = "logcat_debug";
+    public static final String USER_ANONYMOUS_ID        = "anonymous_id";
+    public static final String LAST_SYNC                = "last_sync";
+    private static final int   SYNC_EVERY               = 3600*24*1000;
 
     public static String getAnonymousID(Context context) {
         String id = getStringPreference(context, USER_ANONYMOUS_ID,"");
@@ -47,6 +48,13 @@ public class RumblePreferences {
     }
     private static void createAnonymousID(Context context) {
         setStringPreference(context, USER_ANONYMOUS_ID, HashUtil.generateRandomString(20));
+    }
+
+    public static boolean startOnBoot(Context context) {
+        return getBooleanPreference(context, PREF_START_ON_BOOT, false);
+    }
+    public static void setStartOnBoot(Context context, Boolean bool) {
+        setBooleanPreference(context, PREF_START_ON_BOOT, bool);
     }
 
     public static boolean hasUserLearnedDrawer(Context context) {

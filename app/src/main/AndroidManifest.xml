@@ -87,6 +87,9 @@
     <!--Permission to vibrate the device on incoming events -->
     <uses-permission android:name="android.permission.VIBRATE"/>
 
+    <!--Permission to boot on startup if enabled in the settings -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
 
     <application
         android:icon="@drawable/ic_launcher_rumble"
@@ -209,6 +212,10 @@
             android:screenOrientation="portrait">
         </activity>
         <activity
+            android:name=".userinterface.activity.settings.MiscellaneousActivity"
+            android:screenOrientation="portrait">
+        </activity>
+        <activity
             android:name=".userinterface.activity.settings.DebugActivity"
             android:screenOrientation="portrait">
         </activity>
@@ -228,6 +235,14 @@
 
         <service android:name=".network.NetworkCoordinator">
         </service>
+
+        <receiver
+            android:name=".app.StartOnBoot"
+            android:label="StartOnBoot">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 
