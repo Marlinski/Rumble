@@ -115,6 +115,7 @@
 
         <activity
             android:name=".userinterface.activity.GroupListActivity"
+            android:screenOrientation="portrait"
             android:uiOptions="splitActionBarWhenNarrow"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <meta-data android:name="android.support.UI_OPTIONS"
@@ -123,10 +124,12 @@
 
         <activity
             android:name=".userinterface.activity.GroupDetailActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
             android:name=".userinterface.activity.ContactListActivity"
+            android:screenOrientation="portrait"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
@@ -134,10 +137,12 @@
 
         <activity
             android:name=".userinterface.activity.ContactDetailActivity"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
             android:name=".userinterface.activity.HashtagListActivity"
+            android:screenOrientation="portrait"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
@@ -145,6 +150,7 @@
 
         <activity
             android:name=".userinterface.activity.HashtagDetailActivity"
+            android:screenOrientation="portrait"
             android:uiOptions="splitActionBarWhenNarrow">
             <meta-data android:name="android.support.UI_OPTIONS"
                 android:value="splitActionBarWhenNarrow" />
@@ -168,7 +174,9 @@
             android:theme="@style/PopupActivity"
             android:windowSoftInputMode="adjustPan|adjustResize|stateVisible"/>
 
-        <activity android:name=".userinterface.activity.DisplayQRCode">
+        <activity
+            android:name=".userinterface.activity.DisplayQRCode"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="org.disrupted.rumble.userinterface.activity.DisplayQRCode" />
             </intent-filter>
@@ -180,31 +188,40 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".userinterface.activity.DisplayStatusActivity">
+        <activity
+            android:name=".userinterface.activity.DisplayStatusActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="org.disrupted.rumble.userinterface.activity.DisplayStatusActivity"/>
             </intent-filter>
         </activity>
 
         <activity
-            android:name=".userinterface.activity.SettingsActivity">
+            android:name=".userinterface.activity.SettingsActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".userinterface.activity.settings.LicenceActivity">
+            android:name=".userinterface.activity.settings.LicenceActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".userinterface.activity.settings.StatisticActivity">
+            android:name=".userinterface.activity.settings.StatisticActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".userinterface.activity.settings.DebugActivity">
+            android:name=".userinterface.activity.settings.DebugActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".userinterface.activity.settings.AboutActivity">
+            android:name=".userinterface.activity.settings.AboutActivity"
+            android:screenOrientation="portrait">
         </activity>
         <activity
-            android:name=".userinterface.activity.settings.StorageActivity">
+            android:name=".userinterface.activity.settings.StorageActivity"
+            android:screenOrientation="portrait">
         </activity>
-        <activity android:name="info.vividcode.android.zxing.CaptureActivity"
+        <activity
+            android:name="info.vividcode.android.zxing.CaptureActivity"
             android:theme="@style/Theme.ZXingCaptureActivity"
             android:screenOrientation="landscape">
         </activity>
