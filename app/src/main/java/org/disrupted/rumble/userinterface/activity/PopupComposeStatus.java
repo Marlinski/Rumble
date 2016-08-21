@@ -244,7 +244,7 @@ public class PopupComposeStatus extends Activity {
             try {
                 String message = compose.getText().toString();
                 if (message.equals(""))
-                    return;
+                    message = " ";
 
                 Group group;
                 if(filter_gid == null)
