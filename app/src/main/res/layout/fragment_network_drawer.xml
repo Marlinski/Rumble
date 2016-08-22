@@ -75,7 +75,6 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:src="@android:drawable/ic_menu_search"
-        android:onClick="onForceScanClicked"
         android:contentDescription="Force Scan"/>
 
     <ListView
