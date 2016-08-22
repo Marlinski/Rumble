@@ -58,6 +58,7 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 import de.greenrobot.event.EventBus;
 
@@ -173,7 +174,7 @@ public class PopupComposeStatus extends Activity {
             if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
                 File photoFile;
                 try {
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
                     File storageDir = FileUtil.getWritableAlbumStorageDir();
                     String imageFileName = "JPEG_" + timeStamp + "_";
                     String suffix = ".jpg";
@@ -187,7 +188,6 @@ public class PopupComposeStatus extends Activity {
                     activity.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (IOException error) {
                     Log.e(TAG, "[!] cannot create photo file "+error.getMessage());
-                    return;
                 }
             }
         }
@@ -262,7 +262,7 @@ public class PopupComposeStatus extends Activity {
 
                 if(pictureChosen != null)  {
                     // copy the file into rumble directory
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
                     File chosenFile = File.createTempFile(
                             "JPEG_" + timeStamp + "_",  /* prefix */
                             ".jpg",         /* suffix */

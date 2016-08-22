@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="45">
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        <LinearLayout
             android:id="@+id/compose_layout"
             android:orientation="vertical"
             android:background="#ff373737"

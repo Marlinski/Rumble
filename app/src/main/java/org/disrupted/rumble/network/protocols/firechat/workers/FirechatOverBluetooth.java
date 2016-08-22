@@ -59,6 +59,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import de.greenrobot.event.EventBus;
@@ -243,7 +244,7 @@ public class FirechatOverBluetooth extends ProtocolChannel {
         File directory;
         try {
             directory = FileUtil.getWritableAlbumStorageDir();
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
             String imageFileName = "JPEG_" + timeStamp + "_";
             String suffix = ".jpg";
             File attachedFile = File.createTempFile(

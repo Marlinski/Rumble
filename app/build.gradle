@@ -5,9 +5,9 @@ android {
     buildToolsVersion "23.0.1"
     defaultConfig {
         applicationId 'org.disrupted.rumble'
-        minSdkVersion 11
+        minSdkVersion 16
         targetSdkVersion 23
-        versionCode 11
+        versionCode 14
         versionName "1.0.1"
         //multiDexEnabled true
     }

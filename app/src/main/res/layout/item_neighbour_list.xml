@@ -38,7 +38,7 @@
         android:src="@drawable/ic_contact_picture" />
 
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:id="@+id/neighbours_item_wireless"
         android:orientation="vertical"
         android:layout_width="wrap_content"
@@ -64,7 +64,7 @@
             android:src="@drawable/ic_signal_wifi_0_bar_grey600_18dp" />
     </LinearLayout>
 
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <LinearLayout
         android:id="@+id/neighbours_item_info"
         android:orientation="vertical"
         android:layout_width="wrap_content"

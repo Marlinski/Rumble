@@ -29,13 +29,10 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.github.amlcurran.showcaseview.ShowcaseView;
-import com.github.amlcurran.showcaseview.targets.ActionViewTarget;
 import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
 
 import org.disrupted.rumble.R;
@@ -116,8 +113,8 @@ public class HomeActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
 
         // little hack to set the icons instead of text
-        notifStatus = renderTabView(this, R.drawable.ic_world);
-        notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp);
+        notifStatus = renderTabView(this, R.drawable.ic_world,  (ViewGroup)tabLayout.getParent());
+        notifChat   = renderTabView(this, R.drawable.ic_forum_white_24dp, (ViewGroup)tabLayout.getParent());
         tabLayout.getTabAt(0).setCustomView(notifStatus);
         tabLayout.getTabAt(1).setCustomView(notifChat);
         tabLayout.setSelectedTabIndicatorHeight(10);
@@ -165,8 +162,8 @@ public class HomeActivity extends AppCompatActivity {
         }
     }
 
-    public View renderTabView(Context context, int iconResource) {
-        RelativeLayout view = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.badge_tab_layout, null);
+    public View renderTabView(Context context, int iconResource, ViewGroup parent) {
+        RelativeLayout view = (RelativeLayout) LayoutInflater.from(context).inflate(R.layout.badge_tab_layout, parent, false);
         view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
         ((ImageView)view.findViewById(R.id.tab_icon)).setImageResource(iconResource);
         ((TextView)view.findViewById(R.id.tab_badge)).setVisibility(View.INVISIBLE);

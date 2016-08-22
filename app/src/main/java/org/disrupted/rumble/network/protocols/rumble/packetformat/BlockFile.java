@@ -36,6 +36,7 @@ import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Locale;
 
 
 /**
@@ -132,7 +133,7 @@ public class BlockFile extends Block {
                 if(directory == null)
                     throw new IOException();
 
-                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+                String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
                 String imageFileName = "JPEG_" + timeStamp + "_";
                 String suffix = ".jpg";
                 File attachedFile = File.createTempFile(

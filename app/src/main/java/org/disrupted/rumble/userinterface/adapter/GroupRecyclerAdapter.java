@@ -147,8 +147,6 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
                         }
                     }catch(WriterException ignore) {
                     }
-                    //}
-
                 }
             });
 
@@ -165,11 +163,10 @@ public class GroupRecyclerAdapter extends RecyclerView.Adapter<GroupRecyclerAdap
         this.groupList = null;
     }
 
-
     @Override
     public GroupHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LinearLayout layout = (LinearLayout) LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_group_list, null, true);
+        View layout = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_group_list, parent, false);
         return new GroupHolder(layout);
     }
 

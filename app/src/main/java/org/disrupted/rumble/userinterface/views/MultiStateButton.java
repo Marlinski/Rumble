@@ -22,6 +22,7 @@ import android.os.Build;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -42,7 +43,7 @@ public class MultiStateButton extends LinearLayout {
     private final String TAG = "MultiStateButton";
 
     public interface OnMultiStateClickListener {
-        public void onMultiStateClick(int oldState, int newState);
+        void onMultiStateClick(int oldState, int newState);
     }
 
     protected TableLayout     mTableLayout;
@@ -119,7 +120,7 @@ public class MultiStateButton extends LinearLayout {
 
     public void addState(int resource) {
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        RelativeLayout buttonItem = (RelativeLayout)inflater.inflate(R.layout.item_multistate_button, null, false);
+        RelativeLayout buttonItem = (RelativeLayout)inflater.inflate(R.layout.item_multistate_button, null);
         ImageView button   = (ImageView)buttonItem.findViewById(R.id.item_image);
         button.setImageResource(resource);
         mTableRow.addView(buttonItem);
