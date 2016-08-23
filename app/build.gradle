@@ -7,8 +7,8 @@ android {
         applicationId 'org.disrupted.rumble'
         minSdkVersion 16
         targetSdkVersion 24
-        versionCode 14
-        versionName "1.0.1"
+        versionCode 15
+        versionName "1.0.2"
         //multiDexEnabled true
     }
     buildTypes {
