@@ -1,0 +1,3 @@
+[submodule "libs/SlidingMenu"]
+	path = libs/SlidingMenu
+	url = git@github.com:Marlinski/SlidingMenu.git
