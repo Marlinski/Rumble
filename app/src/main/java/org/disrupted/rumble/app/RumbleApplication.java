@@ -42,27 +42,16 @@ public class RumbleApplication extends Application{
     public static String BUILD_NUMBER = "1.0";
 
     private static RumbleApplication instance;
-    private static EventLogger logger;
 
     public RumbleApplication() {
         instance = this;
-    }
-
-    public void logcatDebugging() {
-        if(logger == null)
-            logger = new EventLogger();
-
-        if(RumblePreferences.isLogcatDebugEnabled(this))
-            logger.start();
-        else
-            logger.stop();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        logcatDebugging();
+        EventLogger.getInstance().init();
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
         StatisticManager.getInstance().start();

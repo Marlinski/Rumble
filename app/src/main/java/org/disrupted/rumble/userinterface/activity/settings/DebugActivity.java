@@ -25,6 +25,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.EventLogger;
 import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.util.RumblePreferences;
 
@@ -58,7 +59,7 @@ public class DebugActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 RumblePreferences.setLogcatDebugging(DebugActivity.this, isChecked);
-                RumbleApplication.getApplication().logcatDebugging();
+                EventLogger.getInstance().init();
             }
         });
     }
