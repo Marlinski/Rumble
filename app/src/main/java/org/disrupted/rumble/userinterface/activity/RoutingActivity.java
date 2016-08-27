@@ -27,7 +27,9 @@ import android.preference.PreferenceManager;
 import android.view.Window;
 
 import org.disrupted.rumble.R;
+import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.DatabaseFactory;
+import org.disrupted.rumble.network.NetworkCoordinator;
 
 /**
  * @author Lucien Loiseau
@@ -43,6 +45,20 @@ public class RoutingActivity extends Activity {
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         if(DatabaseFactory.getContactDatabase(this).getLocalContact() != null) {
+
+            /*
+             * We first start NetworkCoordinator.
+             * Note: the NetworkCoordinator may already be started (either because of StartOnBoot
+             * or simply because the application was already open). Anyway, it should be
+             * safe to use startIntent because from the documentation:
+             *
+             * "If this service is not already running, it will be instantiated and started
+             * (creating a process for it if needed); if it is running then it remains running."
+             */
+            Intent startIntent = new Intent(this, NetworkCoordinator.class);
+            startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
+            startService(startIntent);
+
             Intent homeActivity = new Intent(this, HomeActivity.class );
             startActivity(homeActivity);
             finish();

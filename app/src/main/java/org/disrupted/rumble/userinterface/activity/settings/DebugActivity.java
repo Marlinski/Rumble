@@ -58,7 +58,7 @@ public class DebugActivity extends AppCompatActivity {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 RumblePreferences.setLogcatDebugging(DebugActivity.this, isChecked);
-                RumbleApplication.getApplication().debugging();
+                RumbleApplication.getApplication().logcatDebugging();
             }
         });
     }

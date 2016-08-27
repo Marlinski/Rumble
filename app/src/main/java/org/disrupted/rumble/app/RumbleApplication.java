@@ -19,6 +19,7 @@
 
 package org.disrupted.rumble.app;
 
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -47,7 +48,7 @@ public class RumbleApplication extends Application{
         instance = this;
     }
 
-    public void debugging() {
+    public void logcatDebugging() {
         if(logger == null)
             logger = new EventLogger();
 
@@ -61,30 +62,10 @@ public class RumbleApplication extends Application{
     public void onCreate() {
         super.onCreate();
 
-        debugging();
-
+        logcatDebugging();
         DatabaseFactory.getInstance(this);
         CacheManager.getInstance().start();
         StatisticManager.getInstance().start();
-
-        if(DatabaseFactory.getContactDatabase(this).getLocalContact() != null) {
-            Intent startIntent = new Intent(this, NetworkCoordinator.class);
-            startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
-            startService(startIntent);
-        } else {
-            if(!EventBus.getDefault().isRegistered(this))
-                EventBus.getDefault().register(this);
-        }
-    }
-
-    public void onEvent(ContactInsertedEvent event) {
-        if(event.contact.isLocal()) {
-            Intent startIntent = new Intent(this, NetworkCoordinator.class);
-            startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
-            startService(startIntent);
-            if(EventBus.getDefault().isRegistered(this))
-                EventBus.getDefault().unregister(this);
-        }
     }
 
     public static Context getContext() {

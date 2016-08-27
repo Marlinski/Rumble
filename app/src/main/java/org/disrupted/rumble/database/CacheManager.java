@@ -73,7 +73,7 @@ import java.util.Map;
 import de.greenrobot.event.EventBus;
 
 /**
- * The CacheManager takes care ongf updati the database accordingly to the catched event
+ * The CacheManager takes care of updating the database accordingly to the catched event
  *
  * @author Lucien Loiseau
  */

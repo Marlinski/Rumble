@@ -38,10 +38,6 @@ public class StartOnBoot extends BroadcastReceiver {
             if(!RumblePreferences.startOnBoot(context))
                 return;
 
-            DatabaseFactory.getInstance(context);
-            CacheManager.getInstance().start();
-            StatisticManager.getInstance().start();
-
             if(DatabaseFactory.getContactDatabase(context).getLocalContact() != null) {
                 Intent startIntent = new Intent(context, NetworkCoordinator.class);
                 startIntent.setAction(NetworkCoordinator.ACTION_START_FOREGROUND);
