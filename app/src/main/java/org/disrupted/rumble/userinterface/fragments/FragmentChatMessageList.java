@@ -39,7 +39,6 @@ import org.disrupted.rumble.app.RumbleApplication;
 import org.disrupted.rumble.database.ChatMessageDatabase;
 import org.disrupted.rumble.database.DatabaseExecutor;
 import org.disrupted.rumble.database.DatabaseFactory;
-import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
 import org.disrupted.rumble.database.events.ChatMessageInsertedEvent;
 import org.disrupted.rumble.database.events.ChatMessageUpdatedEvent;
 import org.disrupted.rumble.database.events.ChatWipedEvent;
@@ -190,18 +189,5 @@ public class FragmentChatMessageList extends Fragment {
                     refreshChatMessages();
             }
         });
-    }
-
-    /** Vibrates when a chat message is recieved **/
-    public void onEvent(ChatMessageReceived event) {
-        getActivity().runOnUiThread(new Runnable () {
-	    @Override
-	    public void run() {
-	        if(!((HomeActivity)getActivity()).isChatHasFocus()) {
-		    Vibrator vibrator = (Vibrator) getActivity().getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
-		    vibrator.vibrate(300);
-		}
-	    }
-	});
     }
 }

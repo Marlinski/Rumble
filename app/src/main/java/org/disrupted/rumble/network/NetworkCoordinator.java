@@ -19,8 +19,11 @@
 
 package org.disrupted.rumble.network;
 
+import android.os.Vibrator;
+import android.content.Context;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
@@ -33,12 +36,16 @@ import org.disrupted.rumble.network.services.ServiceLayer;
 import org.disrupted.rumble.network.services.chat.ChatService;
 import org.disrupted.rumble.network.services.push.PushService;
 import org.disrupted.rumble.userinterface.activity.RoutingActivity;
+import org.disrupted.rumble.userinterface.activity.HomeActivity;
 import org.disrupted.rumble.network.linklayer.Scanner;
 import org.disrupted.rumble.network.linklayer.bluetooth.BluetoothLinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.LinkLayerAdapter;
 import org.disrupted.rumble.network.linklayer.wifi.WifiLinkLayerAdapter;
 import org.disrupted.rumble.network.protocols.Protocol;
 import org.disrupted.rumble.network.protocols.rumble.RumbleProtocol;
+import org.disrupted.rumble.network.protocols.events.ChatMessageReceived;
+import org.disrupted.rumble.userinterface.events.UserEnteredChatTab;
+import org.disrupted.rumble.userinterface.events.UserLeftChatTab;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -65,11 +72,18 @@ public class NetworkCoordinator extends Service {
     public static final String ACTION_MAIN_ACTION      = "org.disruptedsystems.rumble.action.mainaction";
     public static final int    FOREGROUND_SERVICE_ID   = 4242;
 
+    // no particular rationale behind choosing this number, just followed above
+    public static final int    CHAT_NOTIFICATION_ID = 4343;
+
     private static final String TAG = "NetworkCoordinator";
     private static final Object lock = new Object();
+    private static int chatCounter = 0;
 
     private Looper  serviceLooper;
     private Handler serviceHandler;
+
+    // toggle variable to control notification & vibration
+    private boolean isChatTabFocused;
 
     private List<LinkLayerAdapter>  adapters;
     private Map<String, WorkerPool> workerPools;
@@ -78,6 +92,7 @@ public class NetworkCoordinator extends Service {
 
     private List<Scanner>    scannerList;
     public  NeighbourManager neighbourManager;
+    private NotificationManager mNotificationManager;
 
     public boolean networkingStarted;
 
@@ -189,19 +204,26 @@ public class NetworkCoordinator extends Service {
                 PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                         notificationIntent, 0);
 
-                Notification notification = new NotificationCompat.Builder(this)
-                        .setContentTitle("Rumble")
-                        .setTicker("Rumble started")
-                        .setContentText("Rumble started")
-                        .setSmallIcon(R.drawable.small_icon)
-                        .setContentIntent(pendingIntent)
-                        .setOngoing(true).build();
+		NotificationCompat.Builder notification = showNotification("Rumble", "Rumble Started", "Rumble Started", R.drawable.small_icon, pendingIntent, true);
 
-                startForeground(FOREGROUND_SERVICE_ID, notification);
-            }
+                startForeground(FOREGROUND_SERVICE_ID, notification.build());
+	    }
         }
 
         return START_STICKY;
+    }
+
+    // method that prepares notification and returns notification builder instance
+    private NotificationCompat.Builder showNotification(String title, String ticker, String content, int iconId, PendingIntent pendingIntent, boolean onGoing){
+        NotificationCompat.Builder notification = new NotificationCompat.Builder(this)
+                        .setContentTitle(title)
+                        .setTicker(ticker)
+                        .setContentText(content)
+                        .setSmallIcon(iconId)
+                        .setContentIntent(pendingIntent)
+                        .setOngoing(onGoing);
+
+		return notification;
     }
 
     public Looper getServiceLooper() {
@@ -366,4 +388,61 @@ public class NetworkCoordinator extends Service {
     public void onEvent(NoSubscriberEvent event) {
     }
 
+    public void onEvent(UserEnteredChatTab event) {
+
+	/* assigning true will prevent notification & vibration on new
+	 * ChatMessageReceived event since the user already in the chat
+	 * tab and application is in focus.
+	 */
+	isChatTabFocused = true;
+
+	/* we reset the chat notification counter whenever
+	 * user visits the chat tab and clears the notification
+	 */
+	 chatCounter = 0;
+
+	 /* since user visited the chat tab, any pending notifications of
+	  * chat are cleared.
+	  */
+	 mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+	 mNotificationManager.cancel(CHAT_NOTIFICATION_ID);
+    }
+
+    public void onEvent(UserLeftChatTab event) {
+        /* assigning false will enable notification & vibration on new
+	 * ChatMessageRecevied event whenever the chat tab and application
+	 * is not in focus.
+	 */
+        isChatTabFocused = false;
+    }
+
+    // vibrates when a chat message is recieved
+    public void onEvent(ChatMessageReceived event) {
+        // check the toggle variable before sending notification or vibration
+        if (!isChatTabFocused) {
+	    Intent chatIntent = new Intent(this, HomeActivity.class);
+	    // on pressing this notification should open chat tab instead of status tab
+	    chatIntent.putExtra("chatTab", 1);
+	    chatIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+
+	    PendingIntent pIntent =  PendingIntent.getActivity(this, 0, chatIntent, 0);
+
+	    chatCounter++;
+	    String notificationContent;
+
+	    if (chatCounter == 1) {
+	       notificationContent = "" + chatCounter + " chat received";
+	    }
+	    else {
+	       notificationContent = "" + chatCounter + " chats received";
+	    }
+
+	    mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+	    NotificationCompat.Builder notification = showNotification("Rumble", notificationContent, notificationContent, R.drawable.small_icon, pIntent, false);
+	    mNotificationManager.notify(CHAT_NOTIFICATION_ID, notification.setAutoCancel(true).build());
+
+	    Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+	    vibrator.vibrate(300);
+	}
+    }
 }
