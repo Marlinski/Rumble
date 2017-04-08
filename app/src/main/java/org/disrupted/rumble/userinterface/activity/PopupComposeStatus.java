@@ -19,14 +19,20 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import org.disrupted.rumble.util.Log;
+
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -68,8 +74,9 @@ import de.greenrobot.event.EventBus;
 public class PopupComposeStatus extends Activity {
 
     private static final String TAG = "PopupCompose";
-    public static final int REQUEST_IMAGE_CAPTURE = 42;
-    public static final int REQUEST_PICK_IMAGE    = 52;
+    public static final int REQUEST_PERMISSION_CAMERA = 32;
+    public static final int REQUEST_IMAGE_CAPTURE     = 42;
+    public static final int REQUEST_PICK_IMAGE        = 52;
 
     private LinearLayout dismiss;
     private EditText    compose;
@@ -170,6 +177,16 @@ public class PopupComposeStatus extends Activity {
         @Override
         public void onClick(View view) {
             final Activity activity = PopupComposeStatus.this;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(activity,
+                            new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION_CAMERA);
+                    return;
+                }
+            }
+
             Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             if (takePictureIntent.resolveActivity(activity.getPackageManager()) != null) {
                 File photoFile;
@@ -187,7 +204,7 @@ public class PopupComposeStatus extends Activity {
                     takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
                     activity.startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
                 } catch (IOException error) {
-                    Log.e(TAG, "[!] cannot create photo file "+error.getMessage());
+                    Log.e(TAG, "[!] cannot create photo file > " + error.getMessage());
                 }
             }
         }
@@ -235,6 +252,22 @@ public class PopupComposeStatus extends Activity {
                     .fit()
                     .centerCrop()
                     .into(compose_background);
+        }
+    }
+
+    /*
+     * Receive the result of dynamic permission request for storage
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_PERMISSION_CAMERA: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "[+] permission to engage camera granted");
+                } else {
+                    Log.d(TAG, "[!] permission to engage camera refused");
+                }
+            }
         }
     }
 

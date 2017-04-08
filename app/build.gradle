@@ -20,6 +20,11 @@ android {
             renderscriptDebuggable false
             shrinkResources false
         }
+        debug {
+            debuggable true
+            jniDebuggable true
+            renderscriptDebuggable true
+        }
     }
     productFlavors {
     }

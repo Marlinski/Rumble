@@ -19,14 +19,18 @@
 
 package org.disrupted.rumble.util;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.CursorLoader;
 
 import org.disrupted.rumble.app.RumbleApplication;
@@ -51,6 +55,11 @@ public class FileUtil {
         ret = ret.replace('+','-');
         ret = ret.replaceAll("[^a-zA-Z0-9_-]", "");
         return ret;
+    }
+
+    public static boolean checkStoragePermission(Activity activity) {
+        return ContextCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     public static boolean isFileNameClean(String input) {
@@ -82,7 +91,9 @@ public class FileUtil {
         File file = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 RUMBLE_IMAGE_ALBUM_NAME);
-        file.mkdirs();
+
+        if(!file.exists() && !file.mkdirs())
+            throw  new IOException("could not create directory "+file.getAbsolutePath());
 
         if(file.getFreeSpace() < PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE)
             throw  new IOException("not enough space available ("+file.getFreeSpace()+"/"+PushStatus.STATUS_ATTACHED_FILE_MAX_SIZE+")");
@@ -97,8 +108,9 @@ public class FileUtil {
         File file = new File(
                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 RUMBLE_IMAGE_ALBUM_NAME);
-        if (!file.mkdirs()) {
-        }
+
+        if(!file.exists() && !file.mkdirs())
+            throw  new IOException("could not create directory "+file.getAbsolutePath());
 
         return file;
     }

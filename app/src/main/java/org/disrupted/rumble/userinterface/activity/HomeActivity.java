@@ -19,9 +19,14 @@
 
 package org.disrupted.rumble.userinterface.activity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -49,6 +54,8 @@ import org.disrupted.rumble.userinterface.adapter.HomePagerAdapter;
 import org.disrupted.rumble.userinterface.fragments.FragmentChatMessageList;
 import org.disrupted.rumble.userinterface.fragments.FragmentNavigationDrawer;
 import org.disrupted.rumble.userinterface.fragments.FragmentNetworkDrawer;
+import org.disrupted.rumble.util.FileUtil;
+import org.disrupted.rumble.util.Log;
 
 import de.greenrobot.event.EventBus;
 
@@ -123,7 +130,6 @@ public class HomeActivity extends AppCompatActivity {
         refreshStatusNotifications();
         refreshChatNotifications();
         EventBus.getDefault().register(this);
-
     }
 
     @Override
