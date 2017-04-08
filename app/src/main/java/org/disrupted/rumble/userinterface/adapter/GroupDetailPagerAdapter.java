@@ -39,10 +39,12 @@ public class GroupDetailPagerAdapter extends FragmentPagerAdapter {
 
     public GroupDetailPagerAdapter(FragmentManager fm, Bundle args) {
         super(fm);
-        statusFragment  = new FragmentStatusList();
         contactFragment = new FragmentContactList();
-        statusFragment.setArguments(args);
         contactFragment.setArguments(args);
+
+        statusFragment  = new FragmentStatusList();
+        //args.putBoolean("noCoordinatorLayout",true);
+        statusFragment.setArguments(args);
     }
 
     @Override
