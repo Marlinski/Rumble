@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion "24.0.2"
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId 'org.disrupted.rumble'
         minSdkVersion    16
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode      16
         versionName      "1.0.2"
         //multiDexEnabled true
@@ -37,9 +37,9 @@ dependencies {
     compile project(':SlidingMenu')
     compile 'com.google.zxing:core:3.2.0'
     compile 'info.vividcode.android.zxing:capture-activity:2.3.0-1.2'
-    compile 'com.android.support:appcompat-v7:24.2.0'
-    compile 'com.android.support:design:24.2.0'
-    compile 'com.android.support:recyclerview-v7:24.2.0'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.1'
     compile 'de.greenrobot:eventbus:2.4.0'
     compile 'com.amulyakhare:com.amulyakhare.textdrawable:1.0.0'
     compile 'com.squareup.picasso:picasso:2.5.2'
