@@ -24,6 +24,8 @@ import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
+import org.disrupted.rumble.util.Log;
+
 /**
  * @author Lucien Loiseau
  */
@@ -52,9 +54,9 @@ public class ScrollAwareFABBehavior extends FloatingActionButton.Behavior {
         super.onNestedScroll(coordinatorLayout, child, target,
                 dxConsumed, dyConsumed, dxUnconsumed,dyUnconsumed);
 
-        if (dyConsumed > 0 && child.getVisibility() == View.VISIBLE) {
+        if ((dyConsumed > 0) && (child.getVisibility() == View.VISIBLE)) {
             child.hide();
-        } else if (dyConsumed < 0 && child.getVisibility() != View.VISIBLE) {
+        } else if ((dyConsumed < 0) && (child.getVisibility() != View.VISIBLE)) {
             child.show();
         }
     }

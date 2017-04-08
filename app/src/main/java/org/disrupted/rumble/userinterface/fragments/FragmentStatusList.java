@@ -132,13 +132,6 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         swipeLayout.setProgressViewOffset(true, 10, 10+swipeDistance);
         */
 
-        // the list of status
-        mRecyclerView = (RecyclerView) mView.findViewById(R.id.status_list);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(), this);
-        mRecyclerView.setAdapter(statusRecyclerAdapter);
-        mRecyclerView.addOnScrollListener(loadMore);
-
         // the compose button, disabled for ContactDetail
         composeFAB = (FloatingActionButton) mView.findViewById(R.id.compose_fab);
         if(noCoordinatorLayout)
@@ -146,6 +139,12 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
         else
             composeFAB.setOnClickListener(onFabClicked);
 
+        // the list of status
+        mRecyclerView = (RecyclerView) mView.findViewById(R.id.status_list);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        statusRecyclerAdapter = new StatusRecyclerAdapter(getActivity(), this);
+        mRecyclerView.setAdapter(statusRecyclerAdapter);
+        mRecyclerView.addOnScrollListener(loadMore);
 
         // now get the latest status
         loadingMore = false;
@@ -295,6 +294,16 @@ public class FragmentStatusList extends Fragment implements SwipeRefreshLayout.O
                     refreshStatuses(status.getTimeOfArrival(),-1);
                 }
             }
+
+            /*
+             * since design version > 22, I can't use misc.ScrollAwareFABBehavior because
+             * hide() makes the view to GONE and thus doesn't trigger the onNestedScroll
+             * So instead we use the Recycler Scroll to trigger the hide/show.
+             */
+            if (dy > 0)
+                composeFAB.hide();
+            else if (dy < 0)
+                composeFAB.show();
         }
     };
 
